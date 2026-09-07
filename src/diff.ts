@@ -1,21 +1,26 @@
-import { ContractBenchmark, BenchmarkResult, Metrics, MetricValue } from './measurement';
+import {
+  ContractBenchmark,
+  BenchmarkResult,
+  Metrics,
+  MetricValue,
+} from "./measurement";
 
 // All 11 metric keys in display order
 export const METRIC_KEYS = [
-  'cpu_instructions',
-  'memory_bytes',
-  'ledger_read_entries',
-  'ledger_read_bytes',
-  'ledger_write_entries',
-  'ledger_write_bytes',
-  'historical_data_read_bytes',
-  'contract_data_hard_limit',
-  'tx_size_bytes',
-  'events_count',
-  'event_data_bytes',
+  "cpu_instructions",
+  "memory_bytes",
+  "ledger_read_entries",
+  "ledger_read_bytes",
+  "ledger_write_entries",
+  "ledger_write_bytes",
+  "historical_data_read_bytes",
+  "contract_data_hard_limit",
+  "tx_size_bytes",
+  "events_count",
+  "event_data_bytes",
 ] as const;
 
-export type MetricKey = typeof METRIC_KEYS[number];
+export type MetricKey = (typeof METRIC_KEYS)[number];
 
 export interface MetricDiff {
   key: MetricKey;
@@ -78,8 +83,12 @@ function diffMetrics(base: Metrics, head: Metrics): MetricDiff[] {
 
 function diffFunctions(
   baseFns: BenchmarkResult[],
-  headFns: BenchmarkResult[]
-): { functions: FunctionDiff[]; newFunctions: string[]; removedFunctions: string[] } {
+  headFns: BenchmarkResult[],
+): {
+  functions: FunctionDiff[];
+  newFunctions: string[];
+  removedFunctions: string[];
+} {
   const baseMap = new Map(baseFns.map((f) => [f.function_name, f]));
   const headMap = new Map(headFns.map((f) => [f.function_name, f]));
 
@@ -116,7 +125,7 @@ function diffFunctions(
  */
 export function diffBenchmarks(
   base: ContractBenchmark[],
-  head: ContractBenchmark[]
+  head: ContractBenchmark[],
 ): DiffResult {
   const baseMap = new Map(base.map((c) => [c.contract_id, c]));
   const headMap = new Map(head.map((c) => [c.contract_id, c]));
@@ -138,7 +147,7 @@ export function diffBenchmarks(
 
     const { functions, newFunctions, removedFunctions } = diffFunctions(
       baseContract.benchmarks,
-      headContract.benchmarks
+      headContract.benchmarks,
     );
     const hasRegression = functions.some((f) => f.hasRegression);
 

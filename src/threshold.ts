@@ -1,6 +1,6 @@
-import * as fs from 'fs';
-import * as TOML from 'toml';
-import { DiffResult, FunctionDiff, MetricDiff, MetricKey } from './diff';
+import * as fs from "fs";
+import * as TOML from "toml";
+import { DiffResult, FunctionDiff, MetricDiff, MetricKey } from "./diff";
 
 // ---------------------------------------------------------------------------
 // Config schema
@@ -14,24 +14,13 @@ import { DiffResult, FunctionDiff, MetricDiff, MetricKey } from './diff';
  *   "allow_N_percent_increase"  — N% increase allowed (e.g. "allow_10_percent_increase")
  *   "ignore"                    — never fail on this metric
  */
-export type RuleValue = string | number;
-
-export interface GlobalThresholds {
-  /** If true, any metric increase (even 1 unit) fails. Default false. */
-  fail_on_any_regression?: boolean;
-  /** Maximum allowed CPU increase as a percentage. */
-  max_allowed_cpu_increase_pct?: number;
-  /** Maximum allowed memory increase as a percentage. */
-  max_allowed_memory_increase_pct?: number;
-}
-
-export interface WeighinConfig {
-  thresholds?: {
-    global?: GlobalThresholds;
-    /** Per-function overrides keyed by function name */
-    functions?: Record<string, Partial<Record<MetricKey, RuleValue>>>;
-  };
-}
+import {
+  WeighinConfig,
+  WeighinConfigSchema,
+  formatZodError,
+  RuleValue,
+  GlobalThresholds,
+} from "./config";
 
 // ---------------------------------------------------------------------------
 // Loader
@@ -45,8 +34,18 @@ export function loadConfig(configPath: string): WeighinConfig | null {
   if (!fs.existsSync(configPath)) {
     return null;
   }
-  const raw = fs.readFileSync(configPath, 'utf8');
-  return TOML.parse(raw) as WeighinConfig;
+  const raw = fs.readFileSync(configPath, "utf8");
+  let parsed;
+  try {
+    parsed = TOML.parse(raw);
+  } catch (e: any) {
+    throw new Error(`Failed to parse TOML in ${configPath}: ${e.message}`);
+  }
+  const result = WeighinConfigSchema.safeParse(parsed);
+  if (!result.success) {
+    throw new Error(formatZodError(result.error, configPath));
+  }
+  return result.data;
 }
 
 // ---------------------------------------------------------------------------
@@ -73,15 +72,16 @@ function evaluateRule(
   rule: RuleValue,
   diff: MetricDiff,
   contractId: string,
-  functionName: string
+  functionName: string,
 ): Violation | null {
   if (!diff.regression) return null; // No increase → never a violation
 
-  const ruleStr = typeof rule === 'number' ? `allow_${rule}_percent_increase` : rule;
+  const ruleStr =
+    typeof rule === "number" ? `allow_${rule}_percent_increase` : rule;
 
-  if (ruleStr === 'ignore') return null;
+  if (ruleStr === "ignore") return null;
 
-  if (ruleStr === 'strict_zero_tolerance') {
+  if (ruleStr === "strict_zero_tolerance") {
     return {
       contract_id: contractId,
       function_name: functionName,
@@ -96,7 +96,7 @@ function evaluateRule(
   const allowedPct = parseAllowPct(ruleStr);
   if (allowedPct !== null) {
     if (diff.pct === null || diff.pct > allowedPct) {
-      const pctStr = diff.pct === null ? 'Infinity' : diff.pct.toFixed(2);
+      const pctStr = diff.pct === null ? "Infinity" : diff.pct.toFixed(2);
       return {
         contract_id: contractId,
         function_name: functionName,
@@ -111,7 +111,9 @@ function evaluateRule(
   }
 
   // Unknown rule string — warn but don't fail
-  console.warn(`[weighin] Unknown threshold rule "${ruleStr}" for ${diff.key}, ignoring.`);
+  console.warn(
+    `[weighin] Unknown threshold rule "${ruleStr}" for ${diff.key}, ignoring.`,
+  );
   return null;
 }
 
@@ -122,13 +124,13 @@ const GLOBAL_RULE_MAP: Array<{
   toRule: (val: number) => RuleValue;
 }> = [
   {
-    field: 'max_allowed_cpu_increase_pct',
-    metric: 'cpu_instructions',
+    field: "max_allowed_cpu_increase_pct",
+    metric: "cpu_instructions",
     toRule: (v) => `allow_${v}_percent_increase`,
   },
   {
-    field: 'max_allowed_memory_increase_pct',
-    metric: 'memory_bytes',
+    field: "max_allowed_memory_increase_pct",
+    metric: "memory_bytes",
     toRule: (v) => `allow_${v}_percent_increase`,
   },
 ];
@@ -139,7 +141,7 @@ const GLOBAL_RULE_MAP: Array<{
  */
 export function enforceThresholds(
   diff: DiffResult,
-  config: WeighinConfig | null
+  config: WeighinConfig | null,
 ): Violation[] {
   if (!config?.thresholds) return [];
 
@@ -154,7 +156,12 @@ export function enforceThresholds(
         const fnOverrides = perFunction[fn.function_name];
         const fnRule = fnOverrides?.[metricDiff.key];
         if (fnRule !== undefined) {
-          const v = evaluateRule(fnRule, metricDiff, contract.contract_id, fn.function_name);
+          const v = evaluateRule(
+            fnRule,
+            metricDiff,
+            contract.contract_id,
+            fn.function_name,
+          );
           if (v) violations.push(v);
           continue;
         }
@@ -167,7 +174,7 @@ export function enforceThresholds(
             metric: metricDiff.key,
             delta: metricDiff.delta,
             pct: metricDiff.pct,
-            rule: 'fail_on_any_regression',
+            rule: "fail_on_any_regression",
             message: `${metricDiff.key} increased by ${metricDiff.delta} (fail_on_any_regression)`,
           });
           continue;
@@ -178,7 +185,12 @@ export function enforceThresholds(
           if (metricDiff.key !== metric) continue;
           const val = global[field];
           if (val !== undefined) {
-            const v = evaluateRule(toRule(val as number), metricDiff, contract.contract_id, fn.function_name);
+            const v = evaluateRule(
+              toRule(val as number),
+              metricDiff,
+              contract.contract_id,
+              fn.function_name,
+            );
             if (v) violations.push(v);
           }
         }
