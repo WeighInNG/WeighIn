@@ -1,6 +1,6 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import * as crypto from 'crypto';
+import * as fs from "fs";
+import * as path from "path";
+import * as crypto from "crypto";
 import {
   xdr,
   hash,
@@ -10,10 +10,10 @@ import {
   Operation,
   Keypair,
   rpc,
-} from '@stellar/stellar-sdk';
+} from "@stellar/stellar-sdk";
 
-const DEFAULT_RPC_URL = 'http://localhost:8000/rpc';
-const NETWORK_PASSPHRASE = 'Standalone Network ; February 2017';
+const DEFAULT_RPC_URL = "http://localhost:8000/rpc";
+const NETWORK_PASSPHRASE = "Standalone Network ; February 2017";
 
 export interface MetricValue {
   consumed: number;
@@ -48,24 +48,14 @@ export interface ContractBenchmark {
   benchmarks: BenchmarkResult[];
 }
 
-export interface InvocationArg {
-  type: string;
-  value: any;
-}
-
-export interface InvocationSpec {
-  function_name: string;
-  args: InvocationArg[];
-}
-
-export interface ContractSpec {
-  wasm_path: string;
-  invocations: InvocationSpec[];
-}
-
-export interface FixturesSpec {
-  contracts: ContractSpec[];
-}
+import {
+  InvocationArg,
+  InvocationSpec,
+  ContractSpec,
+  FixturesSpec,
+  FixturesSpecSchema,
+  formatZodError,
+} from "./config";
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -76,7 +66,7 @@ export interface FixturesSpec {
  *  e.g. http://localhost:8000/rpc -> http://localhost:8000/friendbot
  */
 function friendbotUrl(rpcUrl: string, publicKey: string): string {
-  const base = rpcUrl.replace(/\/rpc\/?$/, '');
+  const base = rpcUrl.replace(/\/rpc\/?$/, "");
   return `${base}/friendbot?addr=${encodeURIComponent(publicKey)}`;
 }
 
@@ -85,15 +75,15 @@ function toScVal(arg: InvocationArg): xdr.ScVal {
   const type = arg.type.toLowerCase();
   const val = arg.value;
   switch (type) {
-    case 'symbol':
+    case "symbol":
       return xdr.ScVal.scvSymbol(val);
-    case 'string':
+    case "string":
       return xdr.ScVal.scvString(val);
-    case 'u32':
+    case "u32":
       return xdr.ScVal.scvU32(val);
-    case 'i32':
+    case "i32":
       return xdr.ScVal.scvI32(val);
-    case 'bool':
+    case "bool":
       return xdr.ScVal.scvBool(val);
     default:
       throw new Error(`Unsupported argument type: ${arg.type}`);
@@ -107,7 +97,7 @@ function calculateContractId(deployerAddress: string, salt: Buffer): string {
     new xdr.ContractIdPreimageFromAddress({
       address: addressSc,
       salt: salt,
-    })
+    }),
   );
 
   const networkId = hash(Buffer.from(NETWORK_PASSPHRASE));
@@ -115,7 +105,7 @@ function calculateContractId(deployerAddress: string, salt: Buffer): string {
     new xdr.HashIdPreimageContractId({
       networkId: networkId,
       contractIdPreimage: preimage,
-    })
+    }),
   );
 
   const contractIdBytes = hash(hashIdPreimage.toXDR());
@@ -132,21 +122,25 @@ function calculateContractId(deployerAddress: string, salt: Buffer): string {
 async function getOrInitAccount(
   server: rpc.Server,
   keyFile: string,
-  rpcUrl: string
+  rpcUrl: string,
 ): Promise<Keypair> {
   if (fs.existsSync(keyFile)) {
-    const secret = fs.readFileSync(keyFile, 'utf8').trim();
+    const secret = fs.readFileSync(keyFile, "utf8").trim();
     return Keypair.fromSecret(secret);
   }
 
   const keypair = Keypair.random();
   fs.writeFileSync(keyFile, keypair.secret(), { mode: 0o600 });
 
-  console.log(`Funding deployer account: ${keypair.publicKey()} via friendbot...`);
+  console.log(
+    `Funding deployer account: ${keypair.publicKey()} via friendbot...`,
+  );
   const url = friendbotUrl(rpcUrl, keypair.publicKey());
   const res = await fetch(url);
   if (!res.ok) {
-    throw new Error(`Friendbot funding failed (${res.status}): ${res.statusText}`);
+    throw new Error(
+      `Friendbot funding failed (${res.status}): ${res.statusText}`,
+    );
   }
   // Wait for ledger inclusion
   await new Promise((resolve) => setTimeout(resolve, 3000));
@@ -156,11 +150,11 @@ async function getOrInitAccount(
 // Poll transaction completion
 async function waitForTransaction(
   server: rpc.Server,
-  txHash: string
+  txHash: string,
 ): Promise<rpc.Api.GetTransactionResponse> {
   for (let i = 0; i < 30; i++) {
     const tx = await server.getTransaction(txHash);
-    if (tx.status !== 'NOT_FOUND') {
+    if (tx.status !== "NOT_FOUND") {
       return tx;
     }
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -171,7 +165,7 @@ async function waitForTransaction(
 // Check if contract is already deployed
 async function isContractDeployed(
   server: rpc.Server,
-  contractId: string
+  contractId: string,
 ): Promise<boolean> {
   try {
     const contractScAddress = Address.fromString(contractId).toScAddress();
@@ -180,7 +174,7 @@ async function isContractDeployed(
         contract: contractScAddress,
         key: xdr.ScVal.scvLedgerKeyContractInstance(),
         durability: xdr.ContractDataDurability.persistent(),
-      })
+      }),
     );
     const res = await server.getLedgerEntries(ledgerKey);
     return !!(res.entries && res.entries.length > 0);
@@ -193,7 +187,7 @@ async function isContractDeployed(
 async function getInstanceSize(
   server: rpc.Server,
   contractId: string,
-  stateChanges?: rpc.Api.LedgerEntryChange[]
+  stateChanges?: rpc.Api.LedgerEntryChange[],
 ): Promise<number> {
   if (stateChanges) {
     for (const change of stateChanges) {
@@ -201,10 +195,13 @@ async function getInstanceSize(
         const val = change.after.data();
         if (val.switch() === xdr.LedgerEntryType.contractData()) {
           const contractData = val.contractData();
-          const contractAddressStr = Address.fromScAddress(contractData.contract()).toString();
+          const contractAddressStr = Address.fromScAddress(
+            contractData.contract(),
+          ).toString();
           if (
             contractAddressStr === contractId &&
-            contractData.key().switch() === xdr.ScValType.scvLedgerKeyContractInstance()
+            contractData.key().switch() ===
+              xdr.ScValType.scvLedgerKeyContractInstance()
           ) {
             return change.after.toXDR().length;
           }
@@ -220,7 +217,7 @@ async function getInstanceSize(
         contract: contractScAddress,
         key: xdr.ScVal.scvLedgerKeyContractInstance(),
         durability: xdr.ContractDataDurability.persistent(),
-      })
+      }),
     );
     const res = await server.getLedgerEntries(ledgerKey);
     if (res.entries && res.entries.length > 0) {
@@ -255,15 +252,15 @@ export async function runMeasurement(
   fixturesPathOrOptions: string | RunMeasurementOptions,
   gitCommit?: string,
   sdkVersion?: string,
-  rpcUrl?: string
+  rpcUrl?: string,
 ): Promise<ContractBenchmark[]> {
   // Support both the old positional signature and the new options object
   let opts: RunMeasurementOptions;
-  if (typeof fixturesPathOrOptions === 'string') {
+  if (typeof fixturesPathOrOptions === "string") {
     opts = {
       fixturesPath: fixturesPathOrOptions,
-      gitCommit: gitCommit ?? 'unknown',
-      sdkVersion: sdkVersion ?? 'unknown',
+      gitCommit: gitCommit ?? "unknown",
+      sdkVersion: sdkVersion ?? "unknown",
       rpcUrl,
     };
   } else {
@@ -272,14 +269,26 @@ export async function runMeasurement(
 
   const effectiveRpcUrl = opts.rpcUrl ?? DEFAULT_RPC_URL;
   const fixturesDir = path.dirname(path.resolve(opts.fixturesPath));
-  const keyFile = opts.keyFile ?? path.join(fixturesDir, '.weighin-temp-key');
+  const keyFile = opts.keyFile ?? path.join(fixturesDir, ".weighin-temp-key");
 
   const server = new rpc.Server(effectiveRpcUrl, { allowHttp: true });
   const deployer = await getOrInitAccount(server, keyFile, effectiveRpcUrl);
   const deployerAddress = Address.fromString(deployer.publicKey());
 
-  const rawFixtures = fs.readFileSync(opts.fixturesPath, 'utf8');
-  const fixturesSpec: FixturesSpec = JSON.parse(rawFixtures);
+  const rawFixtures = fs.readFileSync(opts.fixturesPath, "utf8");
+  let parsed;
+  try {
+    parsed = JSON.parse(rawFixtures);
+  } catch (e: any) {
+    throw new Error(
+      `Failed to parse JSON in ${opts.fixturesPath}: ${e.message}`,
+    );
+  }
+  const result = FixturesSpecSchema.safeParse(parsed);
+  if (!result.success) {
+    throw new Error(formatZodError(result.error, opts.fixturesPath));
+  }
+  const fixturesSpec: FixturesSpec = result.data;
 
   const results: ContractBenchmark[] = [];
 
@@ -287,18 +296,20 @@ export async function runMeasurement(
     // Resolve wasm_path relative to the fixtures file's directory
     const wasmPath = path.resolve(fixturesDir, contractSpec.wasm_path);
     if (!fs.existsSync(wasmPath)) {
-      throw new Error(`WASM not found: ${wasmPath}\nBuild the contract before running measurements.`);
+      throw new Error(
+        `WASM not found: ${wasmPath}\nBuild the contract before running measurements.`,
+      );
     }
 
     const wasmBytes = fs.readFileSync(wasmPath);
-    const wasmHash = crypto.createHash('sha256').update(wasmBytes).digest();
-    const wasmSha256 = wasmHash.toString('hex');
+    const wasmHash = crypto.createHash("sha256").update(wasmBytes).digest();
+    const wasmSha256 = wasmHash.toString("hex");
 
     console.log(`WASM: ${wasmPath}`);
     console.log(`WASM SHA256: ${wasmSha256}`);
 
     // Deterministic salt based on WASM hash — same WASM always gets same contract ID
-    const salt = crypto.createHash('sha256').update(wasmHash).digest();
+    const salt = crypto.createHash("sha256").update(wasmHash).digest();
     const contractId = calculateContractId(deployer.publicKey(), salt);
 
     console.log(`Contract ID: ${contractId}`);
@@ -310,7 +321,7 @@ export async function runMeasurement(
 
       // 1. Upload WASM
       const uploadTx = new TransactionBuilder(account, {
-        fee: '1000000',
+        fee: "1000000",
         networkPassphrase: NETWORK_PASSPHRASE,
       })
         .addOperation(Operation.uploadContractWasm({ wasm: wasmBytes }))
@@ -330,7 +341,7 @@ export async function runMeasurement(
 
       // 2. Create contract instance
       const createTx = new TransactionBuilder(account, {
-        fee: '1000000',
+        fee: "1000000",
         networkPassphrase: NETWORK_PASSPHRASE,
       })
         .addOperation(
@@ -338,7 +349,7 @@ export async function runMeasurement(
             wasmHash,
             address: deployerAddress,
             salt,
-          })
+          }),
         )
         .setTimeout(30)
         .build();
@@ -364,7 +375,7 @@ export async function runMeasurement(
       const argsSc = invokeSpec.args.map(toScVal);
 
       const invokeTx = new TransactionBuilder(account, {
-        fee: '1000000',
+        fee: "1000000",
         networkPassphrase: NETWORK_PASSPHRASE,
       })
         .addOperation(
@@ -372,14 +383,16 @@ export async function runMeasurement(
             contract: contractId,
             function: invokeSpec.function_name,
             args: argsSc,
-          })
+          }),
         )
         .setTimeout(30)
         .build();
 
       const simRes = await server.simulateTransaction(invokeTx);
       if (rpc.Api.isSimulationError(simRes)) {
-        throw new Error(`Simulation failed for ${invokeSpec.function_name}: ${simRes.error}`);
+        throw new Error(
+          `Simulation failed for ${invokeSpec.function_name}: ${simRes.error}`,
+        );
       }
 
       const simSuccess = simRes as any;
@@ -389,10 +402,10 @@ export async function runMeasurement(
       const resources = parsedData.resources();
       const footprint = resources.footprint();
 
-      const readEntries  = footprint.readOnly().length;
+      const readEntries = footprint.readOnly().length;
       const writeEntries = footprint.readWrite().length;
-      const readBytes    = resources.diskReadBytes();
-      const writeBytes   = resources.writeBytes();
+      const readBytes = resources.diskReadBytes();
+      const writeBytes = resources.writeBytes();
 
       const cpuConsumed = Number(simSuccess.cost.cpuInsns);
       const memConsumed = Number(simSuccess.cost.memBytes);
@@ -400,7 +413,7 @@ export async function runMeasurement(
       const eventsCount = simSuccess.events.length;
       const eventBytes = simSuccess.events.reduce((acc: number, e: any) => {
         const event = e.event();
-        if (event.type().name !== 'contract') return acc;
+        if (event.type().name !== "contract") return acc;
         return acc + event.toXDR().length;
       }, simSuccess.result?.retval.toXDR().length || 0);
 
@@ -410,7 +423,11 @@ export async function runMeasurement(
 
       // Contract instance size
       const stateChanges = simSuccess.stateChanges || [];
-      const contractDataHardLimit = await getInstanceSize(server, contractId, stateChanges);
+      const contractDataHardLimit = await getInstanceSize(
+        server,
+        contractId,
+        stateChanges,
+      );
 
       // Historical read bytes: no size limit in protocol 25 config (fee-only)
       const historicalReadBytes = 0;
@@ -423,17 +440,20 @@ export async function runMeasurement(
       // configSettingContractEventsV0:     txMaxContractEventsSizeBytes=16_384
       // configSettingContractDataEntrySizeBytes: 65_536
       const metrics: Metrics = {
-        cpu_instructions:           { consumed: cpuConsumed,           limit: 100_000_000 },
-        memory_bytes:               { consumed: memConsumed,           limit: 41_943_040 },
-        ledger_read_entries:        { consumed: readEntries,           limit: 100 },
-        ledger_read_bytes:          { consumed: readBytes,             limit: 200_000 },
-        ledger_write_entries:       { consumed: writeEntries,          limit: 50 },
-        ledger_write_bytes:         { consumed: writeBytes,            limit: 132_096 },
-        historical_data_read_bytes: { consumed: historicalReadBytes,   limit: 0 },
-        contract_data_hard_limit:   { consumed: contractDataHardLimit, limit: 65_536 },
-        tx_size_bytes:              { consumed: txSizeBytes,           limit: 132_096 },
-        events_count:               { consumed: eventsCount,           limit: 100 },
-        event_data_bytes:           { consumed: eventBytes,            limit: 16_384 },
+        cpu_instructions: { consumed: cpuConsumed, limit: 100_000_000 },
+        memory_bytes: { consumed: memConsumed, limit: 41_943_040 },
+        ledger_read_entries: { consumed: readEntries, limit: 100 },
+        ledger_read_bytes: { consumed: readBytes, limit: 200_000 },
+        ledger_write_entries: { consumed: writeEntries, limit: 50 },
+        ledger_write_bytes: { consumed: writeBytes, limit: 132_096 },
+        historical_data_read_bytes: { consumed: historicalReadBytes, limit: 0 },
+        contract_data_hard_limit: {
+          consumed: contractDataHardLimit,
+          limit: 65_536,
+        },
+        tx_size_bytes: { consumed: txSizeBytes, limit: 132_096 },
+        events_count: { consumed: eventsCount, limit: 100 },
+        event_data_bytes: { consumed: eventBytes, limit: 16_384 },
       };
 
       benchmarks.push({

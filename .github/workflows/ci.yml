@@ -7,8 +7,45 @@ on:
     branches: [main]
 
 jobs:
+  lint-and-test:
+    name: Lint, Typecheck, and Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run test
+
+  verify-build:
+    name: Verify Bundle Freshness
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run bundle
+      - name: Verify no uncommitted changes
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "Error: Uncommitted changes detected after build. Please run 'npm run bundle' locally and commit the results."
+            git status
+            git diff
+            exit 1
+          fi
+
   benchmark:
     name: Soroban Resource Benchmark
+    needs: [lint-and-test, verify-build]
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write   # needed to post/update the PR comment
