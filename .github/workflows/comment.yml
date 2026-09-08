@@ -12,6 +12,7 @@ jobs:
     if: github.event.workflow_run.conclusion == 'success'
     permissions:
       pull-requests: write
+      actions: read
 
     steps:
       - name: Download artifacts

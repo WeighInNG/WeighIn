@@ -59,7 +59,7 @@ jobs:
           sleep 30 # Wait for network to be healthy
 
       - name: Run WeighIn
-        uses: mxrtins04/WeighIn@main
+        uses: WeighInNG/WeighIn@main
         with:
           fixtures-path: weighin-fixtures.json
           config-path: weighin.toml
@@ -94,6 +94,7 @@ jobs:
     if: github.event.workflow_run.conclusion == 'success'
     permissions:
       pull-requests: write
+      actions: read
 
     steps:
       - name: Download artifacts
@@ -104,7 +105,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Post Comment
-        uses: mxrtins04/WeighIn/comment@main
+        uses: WeighInNG/WeighIn/comment@main
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           report-path: weighin-report.md

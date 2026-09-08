@@ -52,7 +52,7 @@ jobs:
           exit 1
 
       - name: Run WeighIn
-        uses: mxrtins04/WeighIn@main
+        uses: WeighInNG/WeighIn@main
         with:
           fixtures-path: weighin-fixtures.json
           config-path: weighin.toml
