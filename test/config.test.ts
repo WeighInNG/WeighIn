@@ -158,9 +158,55 @@ describe("FixturesSpecSchema", () => {
     const res = FixturesSpecSchema.safeParse(invalid);
     expect(res.success).toBe(false);
     if (!res.success) {
-      expect(formatZodError(res.error, "fix.json")).toContain(
-        "Invalid enum value",
+      const msg = formatZodError(res.error, "fix.json");
+      expect(msg).toContain("Invalid enum value");
+
+      // Error formatting test (newline fix)
+      const lines = msg.split("\n");
+      expect(lines.length).toBe(2);
+      expect(lines[0]).toBe("Invalid WeighIn configuration in fix.json:");
+      expect(lines[1]).toContain(
+        "- contracts.0.invocations.0.args.0.type: Invalid enum value",
       );
+    }
+  });
+
+  it("parses mixed-case types correctly and round-trips to lowercase", () => {
+    const input = {
+      contracts: [
+        {
+          wasm_path: "foo.wasm",
+          invocations: [
+            {
+              function_name: "test",
+              args: [
+                { type: "SymBol", value: "hello" },
+                { type: "VEC", value: [{ type: "U32", value: 123 }] },
+                {
+                  type: "Map",
+                  value: [
+                    {
+                      key: { type: "STRING", value: "k" },
+                      value: { type: "I64", value: "10" },
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    const res = FixturesSpecSchema.safeParse(input);
+    expect(res.success).toBe(true);
+    if (res.success) {
+      const args = res.data.contracts[0].invocations[0].args;
+      expect(args[0].type).toBe("symbol");
+      expect(args[1].type).toBe("vec");
+      expect(args[1].value[0].type).toBe("u32");
+      expect(args[2].type).toBe("map");
+      expect(args[2].value[0].key.type).toBe("string");
+      expect(args[2].value[0].value.type).toBe("i64");
     }
   });
 });
