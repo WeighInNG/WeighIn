@@ -1,8 +1,10 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as crypto from "crypto";
+import { validateLargeInt } from "./config";
 import {
   xdr,
+  nativeToScVal,
   hash,
   StrKey,
   Address,
@@ -13,7 +15,6 @@ import {
 } from "@stellar/stellar-sdk";
 
 const DEFAULT_RPC_URL = "http://localhost:8000/rpc";
-const NETWORK_PASSPHRASE = "Standalone Network ; February 2017";
 
 export interface MetricValue {
   consumed: number;
@@ -71,7 +72,7 @@ function friendbotUrl(rpcUrl: string, publicKey: string): string {
 }
 
 // Convert native type/value to ScVal
-function toScVal(arg: InvocationArg): xdr.ScVal {
+export function toScVal(arg: InvocationArg): xdr.ScVal {
   const type = arg.type.toLowerCase();
   const val = arg.value;
   switch (type) {
@@ -85,13 +86,83 @@ function toScVal(arg: InvocationArg): xdr.ScVal {
       return xdr.ScVal.scvI32(val);
     case "bool":
       return xdr.ScVal.scvBool(val);
+    case "u64":
+    case "i64":
+    case "u128":
+    case "i128": {
+      const err = validateLargeInt(type, val);
+      if (err) throw new Error(err);
+      try {
+        return nativeToScVal(BigInt(val), { type });
+      } catch (e: any) {
+        throw new Error(`Invalid value for ${type}: ${e.message}`);
+      }
+    }
+    case "address": {
+      if (typeof val !== "string") {
+        throw new Error(`Invalid value for address: must be string`);
+      }
+      try {
+        return Address.fromString(val).toScVal();
+      } catch (e: any) {
+        throw new Error(`Invalid value for address: ${e.message}`);
+      }
+    }
+    case "bytes": {
+      if (typeof val !== "string") {
+        throw new Error(`Invalid value for bytes: must be hex string`);
+      }
+      if (!/^[0-9a-fA-F]*$/.test(val)) {
+        throw new Error(`Invalid value for bytes: must be valid hex string`);
+      }
+      if (val.length % 2 !== 0) {
+        throw new Error(
+          `Invalid value for bytes: hex string must have even length`,
+        );
+      }
+      return xdr.ScVal.scvBytes(Buffer.from(val, "hex"));
+    }
+    case "vec": {
+      if (!Array.isArray(val)) {
+        throw new Error(`Invalid value for vec: must be array`);
+      }
+      return xdr.ScVal.scvVec(
+        val.map((item: any, i) => {
+          if (!item || typeof item.type !== "string" || !("value" in item)) {
+            throw new Error(`Invalid vector element at index ${i}`);
+          }
+          return toScVal(item as InvocationArg);
+        }),
+      );
+    }
+    case "map": {
+      if (!Array.isArray(val)) {
+        throw new Error(
+          `Invalid value for map: must be array of {key, value} objects`,
+        );
+      }
+      const mapEntries = val.map((entry: any, i) => {
+        if (!entry || !entry.key || !entry.value) {
+          throw new Error(`Invalid map entry at index ${i}`);
+        }
+        return new xdr.ScMapEntry({
+          key: toScVal(entry.key as InvocationArg),
+          val: toScVal(entry.value as InvocationArg),
+        });
+      });
+      return xdr.ScVal.scvMap(mapEntries);
+    }
     default:
       throw new Error(`Unsupported argument type: ${arg.type}`);
   }
 }
 
 // Deterministically calculate contract ID
-function calculateContractId(deployerAddress: string, salt: Buffer): string {
+function calculateContractId(
+  deployerAddress: string,
+  salt: Buffer,
+  networkPassphrase: string,
+): string {
   const addressSc = Address.fromString(deployerAddress).toScAddress();
   const preimage = xdr.ContractIdPreimage.contractIdPreimageFromAddress(
     new xdr.ContractIdPreimageFromAddress({
@@ -100,7 +171,7 @@ function calculateContractId(deployerAddress: string, salt: Buffer): string {
     }),
   );
 
-  const networkId = hash(Buffer.from(NETWORK_PASSPHRASE));
+  const networkId = hash(Buffer.from(networkPassphrase));
   const hashIdPreimage = xdr.HashIdPreimage.envelopeTypeContractId(
     new xdr.HashIdPreimageContractId({
       networkId: networkId,
@@ -233,19 +304,12 @@ async function getInstanceSize(
 // ---------------------------------------------------------------------------
 
 export interface RunMeasurementOptions {
-  /** Absolute path to the fixtures JSON file. wasm_path entries are resolved
-   *  relative to this file's directory. */
   fixturesPath: string;
   gitCommit: string;
   sdkVersion: string;
-  /** Soroban RPC endpoint. Defaults to localhost:8000/rpc. */
   rpcUrl?: string;
-  /**
-   * Absolute path to a file used to persist the deployer keypair between
-   * base and head runs so both use the same funded on-chain account.
-   * Defaults to <fixturesDir>/.weighin-temp-key
-   */
   keyFile?: string;
+  skipBuild?: boolean;
 }
 
 export async function runMeasurement(
@@ -272,6 +336,15 @@ export async function runMeasurement(
   const keyFile = opts.keyFile ?? path.join(fixturesDir, ".weighin-temp-key");
 
   const server = new rpc.Server(effectiveRpcUrl, { allowHttp: true });
+  let networkPassphrase = "";
+  try {
+    const net = await server.getNetwork();
+    networkPassphrase = net.passphrase;
+  } catch (err: any) {
+    throw new Error(
+      `Failed to fetch network info from RPC ${effectiveRpcUrl}: ${err.message}`,
+    );
+  }
   const deployer = await getOrInitAccount(server, keyFile, effectiveRpcUrl);
   const deployerAddress = Address.fromString(deployer.publicKey());
 
@@ -296,6 +369,11 @@ export async function runMeasurement(
     // Resolve wasm_path relative to the fixtures file's directory
     const wasmPath = path.resolve(fixturesDir, contractSpec.wasm_path);
     if (!fs.existsSync(wasmPath)) {
+      if (opts.skipBuild) {
+        throw new Error(
+          `skip-build is enabled, but the expected precompiled WASM could not be found.\nCheck the WASM path referenced by the fixture configuration.\nExpected at: ${wasmPath}`,
+        );
+      }
       throw new Error(
         `WASM not found: ${wasmPath}\nBuild the contract before running measurements.`,
       );
@@ -310,7 +388,11 @@ export async function runMeasurement(
 
     // Deterministic salt based on WASM hash — same WASM always gets same contract ID
     const salt = crypto.createHash("sha256").update(wasmHash).digest();
-    const contractId = calculateContractId(deployer.publicKey(), salt);
+    const contractId = calculateContractId(
+      deployer.publicKey(),
+      salt,
+      networkPassphrase,
+    );
 
     console.log(`Contract ID: ${contractId}`);
     const deployed = await isContractDeployed(server, contractId);
@@ -322,7 +404,7 @@ export async function runMeasurement(
       // 1. Upload WASM
       const uploadTx = new TransactionBuilder(account, {
         fee: "1000000",
-        networkPassphrase: NETWORK_PASSPHRASE,
+        networkPassphrase,
       })
         .addOperation(Operation.uploadContractWasm({ wasm: wasmBytes }))
         .setTimeout(30)
@@ -342,7 +424,7 @@ export async function runMeasurement(
       // 2. Create contract instance
       const createTx = new TransactionBuilder(account, {
         fee: "1000000",
-        networkPassphrase: NETWORK_PASSPHRASE,
+        networkPassphrase,
       })
         .addOperation(
           Operation.createCustomContract({
@@ -376,7 +458,7 @@ export async function runMeasurement(
 
       const invokeTx = new TransactionBuilder(account, {
         fee: "1000000",
-        networkPassphrase: NETWORK_PASSPHRASE,
+        networkPassphrase,
       })
         .addOperation(
           Operation.invokeContractFunction({

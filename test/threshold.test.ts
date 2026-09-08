@@ -122,4 +122,128 @@ describe("enforceThresholds", () => {
     expect(violations).toHaveLength(1);
     expect(violations[0].message).toContain("Infinity");
   });
+
+  describe("Absolute limits", () => {
+    it("fails when absolute limit is exceeded", () => {
+      const config = {
+        limits: {
+          global: {
+            cpu_instructions: 50,
+          },
+        },
+      };
+      const diff = {
+        contracts: [
+          {
+            contract_id: "c1",
+            functions: [
+              {
+                function_name: "test",
+                metrics: [
+                  {
+                    key: "cpu_instructions",
+                    base: { consumed: 10, limit: 100 },
+                    head: { consumed: 51, limit: 100 },
+                    delta: 41,
+                    pct: 410,
+                    regression: true,
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      };
+
+      const v = enforceThresholds(diff as any, config as any);
+      expect(v).toHaveLength(1);
+      expect(v[0].rule).toBe("absolute_limit(50)");
+      expect(v[0].message).toContain("exceeded absolute limit");
+    });
+
+    it("passes when absolute limit is exactly met or below", () => {
+      const config = {
+        limits: {
+          global: {
+            cpu_instructions: 51,
+          },
+          functions: {
+            test: {
+              memory_bytes: 50,
+            },
+          },
+        },
+      };
+      const diff = {
+        contracts: [
+          {
+            contract_id: "c1",
+            functions: [
+              {
+                function_name: "test",
+                metrics: [
+                  {
+                    key: "cpu_instructions",
+                    base: { consumed: 0, limit: 100 },
+                    head: { consumed: 51, limit: 100 },
+                    delta: 51,
+                    pct: null,
+                    regression: true,
+                  },
+                  {
+                    key: "memory_bytes",
+                    base: { consumed: 0, limit: 100 },
+                    head: { consumed: 40, limit: 100 },
+                    delta: 40,
+                    pct: null,
+                    regression: true,
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      };
+
+      const v = enforceThresholds(diff as any, config as any);
+      expect(v).toHaveLength(0);
+    });
+
+    it("evaluates absolute and regression limits independently (both fail)", () => {
+      const config = {
+        limits: {
+          global: { cpu_instructions: 50 },
+        },
+        thresholds: {
+          global: { max_allowed_cpu_increase_pct: 10 },
+        },
+      };
+      const diff = {
+        contracts: [
+          {
+            contract_id: "c1",
+            functions: [
+              {
+                function_name: "test",
+                metrics: [
+                  {
+                    key: "cpu_instructions",
+                    base: { consumed: 10, limit: 100 },
+                    head: { consumed: 51, limit: 100 },
+                    delta: 41,
+                    pct: 410,
+                    regression: true,
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      };
+      const v = enforceThresholds(diff as any, config as any);
+      expect(v).toHaveLength(2);
+      expect(v[0].rule).toBe("absolute_limit(50)");
+      expect(v[1].rule).toBe("allow_10_percent_increase");
+    });
+  });
 });

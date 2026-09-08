@@ -103,7 +103,27 @@ function getSdkVersion(repoDir: string): string {
  * wasm_path entries are relative to the fixtures file's directory.
  * Walks up from each wasm_path to find the owning Cargo.toml workspace/crate.
  */
-async function buildContracts(fixturesPath: string): Promise<void> {
+export async function buildContracts(
+  fixturesPath: string,
+  worktreeRoot: string,
+  buildCommand: string,
+  skipBuild: boolean,
+): Promise<void> {
+  if (skipBuild) {
+    core.info(`skip-build is enabled; assuming WASM is precompiled`);
+    return;
+  }
+
+  if (buildCommand) {
+    core.info(`Executing custom build command: ${buildCommand}`);
+    try {
+      await exec.exec("sh", ["-c", buildCommand], { cwd: worktreeRoot });
+    } catch (err: any) {
+      throw new Error(`Custom build command failed: ${err.message}`);
+    }
+    return;
+  }
+
   const fixturesDir = path.dirname(path.resolve(fixturesPath));
   const raw = fs.readFileSync(fixturesPath, "utf8");
   const fixtures = JSON.parse(raw) as {
@@ -187,6 +207,11 @@ async function removeWorktree(repoRoot: string, dir: string): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
+// Report file management
+// ---------------------------------------------------------------------------
+import { writeReportFile } from "./report";
+
+// ---------------------------------------------------------------------------
 // PR comment management
 // ---------------------------------------------------------------------------
 
@@ -241,10 +266,18 @@ async function run(): Promise<void> {
   const rpcUrl = core.getInput("rpc-url") || "http://localhost:8000/rpc";
   const githubToken = core.getInput("github-token");
   const baseRefInput = core.getInput("base-ref");
+  const reportPathInput = core.getInput("report-path");
+  const buildCommand = core.getInput("build-command");
+  const skipBuild = core.getInput("skip-build") === "true";
 
   // The runner's checkout of the PR head is at GITHUB_WORKSPACE
   const headWorkspace = process.env["GITHUB_WORKSPACE"] ?? process.cwd();
 
+  if (buildCommand && skipBuild) {
+    throw new Error(
+      "build-command and skip-build cannot be used together.\nChoose either a custom build command or precompiled WASM.",
+    );
+  }
   const baseRef =
     baseRefInput || github.context.payload.pull_request?.base?.ref || "main";
 
@@ -278,13 +311,19 @@ async function run(): Promise<void> {
 
   let headResults: ContractBenchmark[];
   try {
-    await buildContracts(headFixturesPath);
+    await buildContracts(
+      headFixturesPath,
+      headWorkspace,
+      buildCommand,
+      skipBuild,
+    );
     headResults = await runMeasurement({
       fixturesPath: headFixturesPath,
       gitCommit: headSha,
       sdkVersion: getSdkVersion(headWorkspace),
       rpcUrl,
       keyFile: sharedKeyFile,
+      skipBuild,
     });
   } catch (err: any) {
     core.setFailed(`HEAD measurement failed: ${err.message}`);
@@ -317,13 +356,14 @@ async function run(): Promise<void> {
     if (!fs.existsSync(baseFixturesPath)) {
       core.warning(`fixtures-path not found in base ref; skipping baseline.`);
     } else {
-      await buildContracts(baseFixturesPath);
+      await buildContracts(baseFixturesPath, baseDir, buildCommand, skipBuild);
       baseResults = await runMeasurement({
         fixturesPath: baseFixturesPath,
         gitCommit: baseSha,
         sdkVersion: getSdkVersion(baseDir),
         rpcUrl,
         keyFile: sharedKeyFile,
+        skipBuild,
       });
 
       // Log WASM hashes from base
@@ -350,18 +390,23 @@ async function run(): Promise<void> {
     core.setOutput("diff-json", "{}");
     core.info("No baseline; emitting head-only measurements.");
 
+    const body = [
+      "## ⚪ WeighIn Benchmark Report",
+      "",
+      "No baseline available for comparison. Head measurements recorded.",
+      "",
+      "```json",
+      JSON.stringify(headResults, null, 2),
+      "```",
+      "",
+      COMMENT_MARKER,
+    ].join("\n");
+
+    if (reportPathInput) {
+      writeReportFile(reportPathInput, headWorkspace, body);
+    }
+
     if (githubToken) {
-      const body = [
-        "## ⚪ WeighIn Benchmark Report",
-        "",
-        "No baseline available for comparison. Head measurements recorded.",
-        "",
-        "```json",
-        JSON.stringify(headResults, null, 2),
-        "```",
-        "",
-        COMMENT_MARKER,
-      ].join("\n");
       await upsertPrComment(githubToken, body).catch((e) =>
         core.warning(`PR comment failed: ${e.message}`),
       );
@@ -396,11 +441,16 @@ async function run(): Promise<void> {
   core.setOutput("diff-json", JSON.stringify(diff));
 
   // 9. PR comment
+  const finalBody = renderComment(diff, violations, baseRef, headSha);
+
+  if (reportPathInput) {
+    writeReportFile(reportPathInput, headWorkspace, finalBody);
+  }
+
   if (githubToken) {
     core.startGroup("Posting PR comment");
     try {
-      const body = renderComment(diff, violations, baseRef, headSha);
-      await upsertPrComment(githubToken, body);
+      await upsertPrComment(githubToken, finalBody);
     } catch (err: any) {
       core.warning(`Failed to post PR comment: ${err.message}`);
     }
@@ -413,4 +463,4 @@ async function run(): Promise<void> {
   }
 }
 
-run();
+run().catch((e) => core.setFailed(e.message));

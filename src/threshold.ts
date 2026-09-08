@@ -143,18 +143,42 @@ export function enforceThresholds(
   diff: DiffResult,
   config: WeighinConfig | null,
 ): Violation[] {
-  if (!config?.thresholds) return [];
+  if (!config) return [];
 
-  const global = config.thresholds.global ?? {};
-  const perFunction = config.thresholds.functions ?? {};
+  const thresholdsGlobal = config.thresholds?.global ?? {};
+  const thresholdsFn = config.thresholds?.functions ?? {};
+
+  const limitsGlobal = config.limits?.global ?? {};
+  const limitsFn = config.limits?.functions ?? {};
+
   const violations: Violation[] = [];
 
   for (const contract of diff.contracts) {
     for (const fn of contract.functions) {
       for (const metricDiff of fn.metrics) {
-        // 1. Per-function overrides take priority over global rules
-        const fnOverrides = perFunction[fn.function_name];
-        const fnRule = fnOverrides?.[metricDiff.key];
+        // --- 1. Evaluate Absolute Limits ---
+        const fnLimit = limitsFn[fn.function_name]?.[metricDiff.key];
+        const globalLimit = limitsGlobal[metricDiff.key];
+        const limitToApply = fnLimit !== undefined ? fnLimit : globalLimit;
+
+        if (limitToApply !== undefined) {
+          if (metricDiff.head.consumed > limitToApply) {
+            violations.push({
+              contract_id: contract.contract_id,
+              function_name: fn.function_name,
+              metric: metricDiff.key,
+              delta: metricDiff.head.consumed - limitToApply,
+              pct: null,
+              rule: `absolute_limit(${limitToApply})`,
+              message: `${metricDiff.key} exceeded absolute limit: limit ${limitToApply}, actual ${metricDiff.head.consumed}`,
+            });
+          }
+        }
+
+        // --- 2. Evaluate Regression Thresholds ---
+        if (!config.thresholds) continue;
+
+        const fnRule = thresholdsFn[fn.function_name]?.[metricDiff.key];
         if (fnRule !== undefined) {
           const v = evaluateRule(
             fnRule,
@@ -166,8 +190,7 @@ export function enforceThresholds(
           continue;
         }
 
-        // 2. Global fail_on_any_regression
-        if (global.fail_on_any_regression && metricDiff.regression) {
+        if (thresholdsGlobal.fail_on_any_regression && metricDiff.regression) {
           violations.push({
             contract_id: contract.contract_id,
             function_name: fn.function_name,
@@ -180,10 +203,9 @@ export function enforceThresholds(
           continue;
         }
 
-        // 3. Named global rules (cpu, memory caps)
         for (const { field, metric, toRule } of GLOBAL_RULE_MAP) {
           if (metricDiff.key !== metric) continue;
-          const val = global[field];
+          const val = thresholdsGlobal[field];
           if (val !== undefined) {
             const v = evaluateRule(
               toRule(val as number),
