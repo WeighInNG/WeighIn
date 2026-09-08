@@ -12,6 +12,7 @@ import {
   Operation,
   Keypair,
   rpc,
+  scvSortedMap,
 } from "@stellar/stellar-sdk";
 
 const DEFAULT_RPC_URL = "http://localhost:8000/rpc";
@@ -150,7 +151,7 @@ export function toScVal(arg: InvocationArg): xdr.ScVal {
           val: toScVal(entry.value as InvocationArg),
         });
       });
-      return xdr.ScVal.scvMap(mapEntries);
+      return scvSortedMap(mapEntries);
     }
     default:
       throw new Error(`Unsupported argument type: ${arg.type}`);

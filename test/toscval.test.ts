@@ -107,4 +107,35 @@ describe("toScVal", () => {
       toScVal({ type: "map", value: [{ key: { type: "u32", value: 1 } }] }),
     ).toThrow(/Invalid map entry at index 0/);
   });
+
+  it("sorts map entries canonically by key", () => {
+    // Deliberately unsorted inputs: c, a, b
+    const m = toScVal({
+      type: "map",
+      value: [
+        {
+          key: { type: "symbol", value: "c" },
+          value: { type: "u32", value: 3 },
+        },
+        {
+          key: { type: "symbol", value: "a" },
+          value: { type: "u32", value: 1 },
+        },
+        {
+          key: { type: "symbol", value: "b" },
+          value: { type: "u32", value: 2 },
+        },
+      ],
+    });
+
+    expect(m.switch().name).toBe("scvMap");
+    const entries = m.map();
+    expect(entries).toBeDefined();
+    if (entries) {
+      // Should be ordered a, b, c
+      expect(entries[0].key().sym().toString()).toBe("a");
+      expect(entries[1].key().sym().toString()).toBe("b");
+      expect(entries[2].key().sym().toString()).toBe("c");
+    }
+  });
 });

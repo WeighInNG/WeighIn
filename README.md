@@ -106,11 +106,14 @@ Defines the contracts and functions to test:
 Defines regression rules:
 
 ```toml
-[limits]
-cpu_instructions = 50_000_000
+[limits.global]
+cpu_instructions = 50000000
 
-[regressions]
-memory_bytes = "5%"
+[thresholds.global]
+fail_on_any_regression = true
+
+[thresholds.functions.my_function]
+memory_bytes = "allow_5_percent_increase"
 ```
 
 ## Architecture

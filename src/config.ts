@@ -117,21 +117,24 @@ export function validateLargeInt(type: string, val: any): string | null {
 export const InvocationArgSchema: z.ZodType<any> = z.lazy(() =>
   z
     .object({
-      type: z.enum([
-        "symbol",
-        "string",
-        "u32",
-        "i32",
-        "bool",
-        "u64",
-        "i64",
-        "u128",
-        "i128",
-        "address",
-        "bytes",
-        "vec",
-        "map",
-      ]),
+      type: z.preprocess(
+        (val) => (typeof val === "string" ? val.toLowerCase() : val),
+        z.enum([
+          "symbol",
+          "string",
+          "u32",
+          "i32",
+          "bool",
+          "u64",
+          "i64",
+          "u128",
+          "i128",
+          "address",
+          "bytes",
+          "vec",
+          "map",
+        ]),
+      ),
       value: z.any(),
     })
     .strict()
@@ -159,6 +162,8 @@ export const InvocationArgSchema: z.ZodType<any> = z.lazy(() =>
               res.error.issues.forEach((issue) => {
                 ctx.addIssue({ ...issue, path: ["value", idx, ...issue.path] });
               });
+            } else {
+              data.value[idx] = res.data;
             }
           });
         }
@@ -179,21 +184,27 @@ export const InvocationArgSchema: z.ZodType<any> = z.lazy(() =>
               });
             } else {
               const resK = InvocationArgSchema.safeParse(entry.key);
-              if (!resK.success)
+              if (!resK.success) {
                 resK.error.issues.forEach((issue) =>
                   ctx.addIssue({
                     ...issue,
                     path: ["value", idx, "key", ...issue.path],
                   }),
                 );
+              } else {
+                data.value[idx].key = resK.data;
+              }
               const resV = InvocationArgSchema.safeParse(entry.value);
-              if (!resV.success)
+              if (!resV.success) {
                 resV.error.issues.forEach((issue) =>
                   ctx.addIssue({
                     ...issue,
                     path: ["value", idx, "value", ...issue.path],
                   }),
                 );
+              } else {
+                data.value[idx].value = resV.data;
+              }
             }
           });
         }
@@ -233,7 +244,7 @@ export function formatZodError(error: z.ZodError, fileName: string): string {
     const path = issue.path.join(".");
     lines.push(`- ${path || "root"}: ${issue.message}`);
   }
-  return lines.join("\\n");
+  return lines.join("\n");
 }
 
 export type RuleValue = z.infer<typeof RuleValueSchema>;

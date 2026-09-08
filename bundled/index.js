@@ -34101,21 +34101,24 @@ function validateLargeInt(type, val) {
 }
 var InvocationArgSchema = external_exports.lazy(
   () => external_exports.object({
-    type: external_exports.enum([
-      "symbol",
-      "string",
-      "u32",
-      "i32",
-      "bool",
-      "u64",
-      "i64",
-      "u128",
-      "i128",
-      "address",
-      "bytes",
-      "vec",
-      "map"
-    ]),
+    type: external_exports.preprocess(
+      (val) => typeof val === "string" ? val.toLowerCase() : val,
+      external_exports.enum([
+        "symbol",
+        "string",
+        "u32",
+        "i32",
+        "bool",
+        "u64",
+        "i64",
+        "u128",
+        "i128",
+        "address",
+        "bytes",
+        "vec",
+        "map"
+      ])
+    ),
     value: external_exports.any()
   }).strict().superRefine((data, ctx) => {
     if (["u64", "i64", "u128", "i128"].includes(data.type)) {
@@ -34141,6 +34144,8 @@ var InvocationArgSchema = external_exports.lazy(
             res.error.issues.forEach((issue) => {
               ctx.addIssue({ ...issue, path: ["value", idx, ...issue.path] });
             });
+          } else {
+            data.value[idx] = res.data;
           }
         });
       }
@@ -34161,21 +34166,27 @@ var InvocationArgSchema = external_exports.lazy(
             });
           } else {
             const resK = InvocationArgSchema.safeParse(entry.key);
-            if (!resK.success)
+            if (!resK.success) {
               resK.error.issues.forEach(
                 (issue) => ctx.addIssue({
                   ...issue,
                   path: ["value", idx, "key", ...issue.path]
                 })
               );
+            } else {
+              data.value[idx].key = resK.data;
+            }
             const resV = InvocationArgSchema.safeParse(entry.value);
-            if (!resV.success)
+            if (!resV.success) {
               resV.error.issues.forEach(
                 (issue) => ctx.addIssue({
                   ...issue,
                   path: ["value", idx, "value", ...issue.path]
                 })
               );
+            } else {
+              data.value[idx].value = resV.data;
+            }
           }
         });
       }
@@ -34199,7 +34210,7 @@ function formatZodError(error2, fileName) {
     const path4 = issue.path.join(".");
     lines.push(`- ${path4 || "root"}: ${issue.message}`);
   }
-  return lines.join("\\n");
+  return lines.join("\n");
 }
 
 // node_modules/@stellar/stellar-sdk/lib/esm/utils.js
@@ -51058,7 +51069,7 @@ function toScVal(arg) {
           val: toScVal(entry.value)
         });
       });
-      return types.ScVal.scvMap(mapEntries);
+      return scvSortedMap(mapEntries);
     }
     default:
       throw new Error(`Unsupported argument type: ${arg.type}`);
