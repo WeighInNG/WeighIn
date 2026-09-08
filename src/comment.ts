@@ -7,6 +7,8 @@ import {
 } from "./diff";
 import { Violation } from "./threshold";
 
+export const COMMENT_MARKER = "<!-- weighin-report -->";
+
 // Human-readable labels for the 11 metrics
 const METRIC_LABELS: Record<MetricKey, string> = {
   cpu_instructions: "CPU Instructions",
@@ -162,7 +164,47 @@ export function renderComment(
   lines.push("");
   lines.push("</details>");
   lines.push("");
-  lines.push(`<!-- weighin-report -->`);
+  lines.push(COMMENT_MARKER);
 
   return lines.join("\n");
+}
+
+import * as github from "@actions/github";
+import * as core from "@actions/core";
+
+export async function upsertPrComment(
+  token: string,
+  prNumber: number,
+  body: string,
+): Promise<void> {
+  const octokit = github.getOctokit(token);
+  const { owner, repo } = github.context.repo;
+
+  const { data: comments } = await octokit.rest.issues.listComments({
+    owner,
+    repo,
+    issue_number: prNumber,
+  });
+
+  const existing = comments.find((c: { id: number; body?: string | null }) =>
+    c.body?.includes(COMMENT_MARKER),
+  );
+
+  if (existing) {
+    await octokit.rest.issues.updateComment({
+      owner,
+      repo,
+      comment_id: existing.id,
+      body,
+    });
+    core.info(`Updated PR comment #${existing.id}`);
+  } else {
+    await octokit.rest.issues.createComment({
+      owner,
+      repo,
+      issue_number: prNumber,
+      body,
+    });
+    core.info("Created new PR comment");
+  }
 }

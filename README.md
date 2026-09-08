@@ -28,9 +28,10 @@ WeighIn moves detection into CI, automatically measuring your contract's footpri
 
 ## Installation
 
-Add WeighIn to your GitHub Actions workflow. First, ensure you start a local Stellar network (e.g., via `stellar/quickstart`) and install the Rust toolchain, then run WeighIn.
+Add WeighIn to your GitHub Actions workflow. Because Soroban requires building untrusted Rust code from PRs, but posting comments requires write permissions, WeighIn uses a secure two-workflow setup to support PRs from forks securely.
 
-Create `.github/workflows/weighin.yml`:
+1. **Measurement Workflow** (builds WASM, runs benchmarks, saves artifacts).
+   Create `.github/workflows/weighin.yml`:
 
 ```yaml
 name: WeighIn Benchmark
@@ -41,9 +42,7 @@ on:
 jobs:
   benchmark:
     runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write
-      contents: read
+    # Default token permissions (read-only) are sufficient.
     steps:
       - uses: actions/checkout@v4
         with:
@@ -60,12 +59,56 @@ jobs:
           sleep 30 # Wait for network to be healthy
 
       - name: Run WeighIn
-        uses: WeighInNG/WeighIn@main
+        uses: mxrtins04/WeighIn@main
         with:
           fixtures-path: weighin-fixtures.json
           config-path: weighin.toml
           rpc-url: http://localhost:8000/rpc
+          report-path: weighin-report.md
+          metadata-path: pr-metadata.json
+
+      - name: Upload Report Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: weighin-artifacts
+          path: |
+            weighin-report.md
+            pr-metadata.json
+```
+
+2. **Comment Workflow** (securely posts the comment with elevated permissions).
+   Create `.github/workflows/weighin-comment.yml`:
+
+```yaml
+name: WeighIn Comment
+on:
+  workflow_run:
+    workflows: ["WeighIn Benchmark"]
+    types:
+      - completed
+
+jobs:
+  post-comment:
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success'
+    permissions:
+      pull-requests: write
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: weighin-artifacts
+          run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Post Comment
+        uses: mxrtins04/WeighIn/comment@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          report-path: weighin-report.md
+          metadata-path: pr-metadata.json
 ```
 
 ## Configuration
