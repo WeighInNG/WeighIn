@@ -84,6 +84,32 @@ describe("loadConfig (TOML parsing & Zod Validation)", () => {
     `);
     expect(() => loadConfig("weighin.toml")).toThrow("Invalid enum value");
   });
+
+  it("parses valid absolute limits", () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+    vi.mocked(fs.readFileSync).mockReturnValue(`
+      [limits.global]
+      tx_size_bytes = 100000
+      [limits.functions.hello_world]
+      cpu_instructions = 50000000
+    `);
+    const config = loadConfig("weighin.toml");
+    expect(config?.limits?.global?.tx_size_bytes).toBe(100000);
+    expect(config?.limits?.functions?.hello_world?.cpu_instructions).toBe(
+      50000000,
+    );
+  });
+
+  it("throws on negative limit values", () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+    vi.mocked(fs.readFileSync).mockReturnValue(`
+      [limits.global]
+      tx_size_bytes = -1
+    `);
+    expect(() => loadConfig("weighin.toml")).toThrow(
+      /greater than or equal to 0/,
+    );
+  });
 });
 
 describe("FixturesSpecSchema", () => {

@@ -37,7 +37,7 @@ jobs:
       # 2. Install the pinned Rust toolchain declared in rust-toolchain.toml.
       #    The action does not install toolchains; this must come first.
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@master
+        uses: dtolnay/rust-toolchain@d1031067263f94b142dd6c0ce24c5eb9d02d52a0
         with:
           # Read from your repo's rust-toolchain.toml, or pin explicitly:
           toolchain: "1.95.0"

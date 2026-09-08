@@ -50,6 +50,21 @@ inputs:
     required: false
     default: ''
 
+  report-path:
+    description: "Optional path where the generated Markdown benchmark report should be written"
+    required: false
+    default: ''
+
+  build-command:
+    description: "Optional custom command used to build the Soroban contract WASM"
+    required: false
+    default: ""
+
+  skip-build:
+    description: "Skip compilation and use the precompiled WASM referenced by the fixtures"
+    required: false
+    default: "false"
+
 outputs:
   result:
     description: >
