@@ -27,10 +27,10 @@ inputs:
     required: false
     default: 'http://localhost:8000/rpc'
 
-  github-token:
+  metadata-path:
     description: >
-      GitHub token used to post the benchmark diff comment on the pull request.
-      Pass secrets.GITHUB_TOKEN. If omitted, the PR comment step is skipped.
+      Optional path where the action should write a JSON file containing the PR
+      number and HEAD SHA (e.g. pr-metadata.json). Used for split workflows.
     required: false
     default: ''
 

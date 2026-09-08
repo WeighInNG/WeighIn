@@ -8,7 +8,7 @@
   },
   "scripts": {
     "build": "tsc",
-    "bundle": "tsc --noEmit && esbuild src/action.ts --bundle --platform=node --target=node20 --outfile=bundled/index.js --format=cjs",
+    "bundle": "tsc --noEmit && esbuild src/action.ts --bundle --platform=node --target=node20 --outfile=bundled/index.js --format=cjs && esbuild src/comment-action.ts --bundle --platform=node --target=node20 --outfile=bundled/comment-action.js --format=cjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",

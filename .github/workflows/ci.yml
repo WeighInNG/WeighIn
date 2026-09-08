@@ -47,9 +47,7 @@ jobs:
     name: Soroban Resource Benchmark
     needs: [lint-and-test, verify-build]
     runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write   # needed to post/update the PR comment
-      contents: read
+    # Default token permissions are fine (read-only)
 
     steps:
       - name: Checkout PR head
@@ -74,5 +72,14 @@ jobs:
           fixtures-path: weighin-fixtures.json
           config-path: weighin.toml
           rpc-url: http://localhost:8000/rpc
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          # base-ref is inferred from the pull_request event automatically
+          report-path: weighin-report.md
+          metadata-path: pr-metadata.json
+
+      - name: Upload Report Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: weighin-artifacts
+          path: |
+            weighin-report.md
+            pr-metadata.json

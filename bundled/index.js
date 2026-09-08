@@ -19549,12 +19549,12 @@ var require_lib = __commonJS({
             throw new Error("Client has already been disposed.");
           }
           const parsedUrl = new URL(requestUrl);
-          let info3 = this._prepareRequest(verb, parsedUrl, headers);
+          let info4 = this._prepareRequest(verb, parsedUrl, headers);
           const maxTries = this._allowRetries && RetryableHttpVerbs.includes(verb) ? this._maxRetries + 1 : 1;
           let numTries = 0;
           let response;
           do {
-            response = yield this.requestRaw(info3, data);
+            response = yield this.requestRaw(info4, data);
             if (response && response.message && response.message.statusCode === HttpCodes.Unauthorized) {
               let authenticationHandler;
               for (const handler2 of this.handlers) {
@@ -19564,7 +19564,7 @@ var require_lib = __commonJS({
                 }
               }
               if (authenticationHandler) {
-                return authenticationHandler.handleAuthentication(this, info3, data);
+                return authenticationHandler.handleAuthentication(this, info4, data);
               } else {
                 return response;
               }
@@ -19587,8 +19587,8 @@ var require_lib = __commonJS({
                   }
                 }
               }
-              info3 = this._prepareRequest(verb, parsedRedirectUrl, headers);
-              response = yield this.requestRaw(info3, data);
+              info4 = this._prepareRequest(verb, parsedRedirectUrl, headers);
+              response = yield this.requestRaw(info4, data);
               redirectsRemaining--;
             }
             if (!response.message.statusCode || !HttpResponseRetryCodes.includes(response.message.statusCode)) {
@@ -19617,7 +19617,7 @@ var require_lib = __commonJS({
        * @param info
        * @param data
        */
-      requestRaw(info3, data) {
+      requestRaw(info4, data) {
         return __awaiter2(this, void 0, void 0, function* () {
           return new Promise((resolve4, reject) => {
             function callbackForResult(err, res) {
@@ -19629,7 +19629,7 @@ var require_lib = __commonJS({
                 resolve4(res);
               }
             }
-            this.requestRawWithCallback(info3, data, callbackForResult);
+            this.requestRawWithCallback(info4, data, callbackForResult);
           });
         });
       }
@@ -19639,12 +19639,12 @@ var require_lib = __commonJS({
        * @param data
        * @param onResult
        */
-      requestRawWithCallback(info3, data, onResult) {
+      requestRawWithCallback(info4, data, onResult) {
         if (typeof data === "string") {
-          if (!info3.options.headers) {
-            info3.options.headers = {};
+          if (!info4.options.headers) {
+            info4.options.headers = {};
           }
-          info3.options.headers["Content-Length"] = Buffer.byteLength(data, "utf8");
+          info4.options.headers["Content-Length"] = Buffer.byteLength(data, "utf8");
         }
         let callbackCalled = false;
         function handleResult2(err, res) {
@@ -19653,7 +19653,7 @@ var require_lib = __commonJS({
             onResult(err, res);
           }
         }
-        const req = info3.httpModule.request(info3.options, (msg) => {
+        const req = info4.httpModule.request(info4.options, (msg) => {
           const res = new HttpClientResponse(msg);
           handleResult2(void 0, res);
         });
@@ -19665,7 +19665,7 @@ var require_lib = __commonJS({
           if (socket) {
             socket.end();
           }
-          handleResult2(new Error(`Request timeout: ${info3.options.path}`));
+          handleResult2(new Error(`Request timeout: ${info4.options.path}`));
         });
         req.on("error", function(err) {
           handleResult2(err);
@@ -19701,27 +19701,27 @@ var require_lib = __commonJS({
         return this._getProxyAgentDispatcher(parsedUrl, proxyUrl);
       }
       _prepareRequest(method, requestUrl, headers) {
-        const info3 = {};
-        info3.parsedUrl = requestUrl;
-        const usingSsl = info3.parsedUrl.protocol === "https:";
-        info3.httpModule = usingSsl ? https : http;
+        const info4 = {};
+        info4.parsedUrl = requestUrl;
+        const usingSsl = info4.parsedUrl.protocol === "https:";
+        info4.httpModule = usingSsl ? https : http;
         const defaultPort = usingSsl ? 443 : 80;
-        info3.options = {};
-        info3.options.host = info3.parsedUrl.hostname;
-        info3.options.port = info3.parsedUrl.port ? parseInt(info3.parsedUrl.port) : defaultPort;
-        info3.options.path = (info3.parsedUrl.pathname || "") + (info3.parsedUrl.search || "");
-        info3.options.method = method;
-        info3.options.headers = this._mergeHeaders(headers);
+        info4.options = {};
+        info4.options.host = info4.parsedUrl.hostname;
+        info4.options.port = info4.parsedUrl.port ? parseInt(info4.parsedUrl.port) : defaultPort;
+        info4.options.path = (info4.parsedUrl.pathname || "") + (info4.parsedUrl.search || "");
+        info4.options.method = method;
+        info4.options.headers = this._mergeHeaders(headers);
         if (this.userAgent != null) {
-          info3.options.headers["user-agent"] = this.userAgent;
+          info4.options.headers["user-agent"] = this.userAgent;
         }
-        info3.options.agent = this._getAgent(info3.parsedUrl);
+        info4.options.agent = this._getAgent(info4.parsedUrl);
         if (this.handlers) {
           for (const handler2 of this.handlers) {
-            handler2.prepareRequest(info3.options);
+            handler2.prepareRequest(info4.options);
           }
         }
-        return info3;
+        return info4;
       }
       _mergeHeaders(headers) {
         if (this.requestOptions && this.requestOptions.headers) {
@@ -21712,7 +21712,7 @@ var require_core = __commonJS({
     exports2.error = error2;
     exports2.warning = warning2;
     exports2.notice = notice;
-    exports2.info = info3;
+    exports2.info = info4;
     exports2.startGroup = startGroup2;
     exports2.endGroup = endGroup2;
     exports2.group = group;
@@ -21809,7 +21809,7 @@ Support boolean input list: \`true | True | TRUE | false | False | FALSE\``);
     function notice(message, properties = {}) {
       (0, command_1.issueCommand)("notice", (0, utils_1.toCommandProperties)(properties), message instanceof Error ? message.toString() : message);
     }
-    function info3(message) {
+    function info4(message) {
       process.stdout.write(message + os2.EOL);
     }
     function startGroup2(name) {
@@ -25794,7 +25794,7 @@ __export(action_exports, {
   buildContracts: () => buildContracts
 });
 module.exports = __toCommonJS(action_exports);
-var core2 = __toESM(require_core());
+var core3 = __toESM(require_core());
 var exec = __toESM(require_exec());
 
 // node_modules/@actions/github/lib/context.js
@@ -25878,14 +25878,6 @@ var __awaiter = function(thisArg, _arguments, P2, generator) {
     step((generator = generator.apply(thisArg, _arguments || [])).next());
   });
 };
-function getAuthString(token, options) {
-  if (!token && !options.auth) {
-    throw new Error("Parameter token or opts.auth is required");
-  } else if (token && options.auth) {
-    throw new Error("Parameters token and opts.auth may not both be specified");
-  }
-  return typeof options.auth === "string" ? options.auth : `token ${token}`;
-}
 function getProxyAgent(destinationUrl) {
   const hc = new httpClient.HttpClient();
   return hc.getAgent(destinationUrl);
@@ -25903,19 +25895,6 @@ function getProxyFetch(destinationUrl) {
 }
 function getApiBaseUrl() {
   return process.env["GITHUB_API_URL"] || "https://api.github.com";
-}
-function getUserAgentWithOrchestrationId(baseUserAgent) {
-  var _a2;
-  const orchId = (_a2 = process.env["ACTIONS_ORCHESTRATION_ID"]) === null || _a2 === void 0 ? void 0 : _a2.trim();
-  if (orchId) {
-    const sanitizedId = orchId.replace(/[^a-z0-9_.-]/gi, "_");
-    const tag = `actions_orchestration_id/${sanitizedId}`;
-    if (baseUserAgent === null || baseUserAgent === void 0 ? void 0 : baseUserAgent.includes(tag))
-      return baseUserAgent;
-    const ua = baseUserAgent ? `${baseUserAgent} ` : "";
-    return `${ua}${tag}`;
-  }
-  return baseUserAgent;
 }
 
 // node_modules/universal-user-agent/index.js
@@ -29862,25 +29841,9 @@ var defaults = {
   }
 };
 var GitHub = Octokit.plugin(restEndpointMethods, paginateRest).defaults(defaults);
-function getOctokitOptions(token, options) {
-  const opts = Object.assign({}, options || {});
-  const auth2 = getAuthString(token, opts);
-  if (auth2) {
-    opts.auth = auth2;
-  }
-  const userAgent2 = getUserAgentWithOrchestrationId(opts.userAgent);
-  if (userAgent2) {
-    opts.userAgent = userAgent2;
-  }
-  return opts;
-}
 
 // node_modules/@actions/github/lib/github.js
 var context2 = new Context();
-function getOctokit(token, options, ...additionalPlugins) {
-  const GitHubWithPlugins = GitHub.plugin(...additionalPlugins);
-  return new GitHubWithPlugins(getOctokitOptions(token, options));
-}
 
 // src/action.ts
 var fs4 = __toESM(require("fs"));
@@ -40634,17 +40597,17 @@ function checkOpts(defaults2, opts, title = "opts") {
   const merged = Object.assign(/* @__PURE__ */ Object.create(null), defaults2, opts);
   return merged;
 }
-function createHasher(hashCons, info3 = {}) {
+function createHasher(hashCons, info4 = {}) {
   if (typeof hashCons !== "function")
     throw new TypeError('"hashCons" expected function, got type=' + typeof hashCons);
-  info3 = checkOpts({}, info3, "info");
+  info4 = checkOpts({}, info4, "info");
   const hashC = (msg, opts) => hashCons(opts).update(msg).digest();
   const tmp = hashCons(void 0);
   hashC.outputLen = tmp.outputLen;
   hashC.blockLen = tmp.blockLen;
   hashC.canXOF = tmp.canXOF;
   hashC.create = (opts) => hashCons(opts);
-  Object.assign(hashC, info3);
+  Object.assign(hashC, info4);
   return Object.freeze(hashC);
 }
 var oidNist = (suffix) => ({
@@ -49450,7 +49413,7 @@ function parseRawSendTransaction(raw) {
 }
 function parseTransactionInfo(raw) {
   const meta = types.TransactionMeta.fromXDR(raw.resultMetaXdr, "base64");
-  const info3 = {
+  const info4 = {
     ledger: raw.ledger,
     createdAt: raw.createdAt,
     applicationOrder: raw.applicationOrder,
@@ -49472,16 +49435,16 @@ function parseTransactionInfo(raw) {
     case 4: {
       const metaV = meta.value();
       if (metaV.sorobanMeta() !== null) {
-        info3.returnValue = metaV.sorobanMeta()?.returnValue() ?? void 0;
+        info4.returnValue = metaV.sorobanMeta()?.returnValue() ?? void 0;
       }
     }
   }
   if (raw.diagnosticEventsXdr) {
-    info3.diagnosticEventsXdr = raw.diagnosticEventsXdr.map(
+    info4.diagnosticEventsXdr = raw.diagnosticEventsXdr.map(
       (e) => types.DiagnosticEvent.fromXDR(e, "base64")
     );
   }
-  return info3;
+  return info4;
 }
 function parseRawTransactions(r) {
   return {
@@ -51502,6 +51465,8 @@ function enforceThresholds(diff, config2) {
 }
 
 // src/comment.ts
+var core = __toESM(require_core());
+var COMMENT_MARKER = "<!-- weighin-report -->";
 var METRIC_LABELS = {
   cpu_instructions: "CPU Instructions",
   memory_bytes: "Memory Bytes",
@@ -51622,14 +51587,14 @@ function renderComment(diff, violations, baseRef, headSha) {
   lines.push("");
   lines.push("</details>");
   lines.push("");
-  lines.push(`<!-- weighin-report -->`);
+  lines.push(COMMENT_MARKER);
   return lines.join("\n");
 }
 
 // src/report.ts
 var fs3 = __toESM(require("fs"));
 var path2 = __toESM(require("path"));
-var core = __toESM(require_core());
+var core2 = __toESM(require_core());
 function writeReportFile(reportPathInput, headWorkspace, body) {
   if (!reportPathInput) return;
   const targetPath = path2.resolve(headWorkspace, reportPathInput);
@@ -51639,7 +51604,7 @@ function writeReportFile(reportPathInput, headWorkspace, body) {
       fs3.mkdirSync(parentDir, { recursive: true });
     }
     fs3.writeFileSync(targetPath, body, "utf8");
-    core.info(`Wrote Markdown report to ${targetPath}`);
+    core2.info(`Wrote Markdown report to ${targetPath}`);
   } catch (err) {
     throw new Error(
       `Failed to write WeighIn report to ${targetPath}: ${err.message}`
@@ -51649,7 +51614,7 @@ function writeReportFile(reportPathInput, headWorkspace, body) {
 
 // src/action.ts
 async function assertRpcHealthy(rpcUrl) {
-  core2.info(`Checking RPC health at ${rpcUrl} ...`);
+  core3.info(`Checking RPC health at ${rpcUrl} ...`);
   try {
     const res = await fetch(rpcUrl, {
       method: "POST",
@@ -51664,11 +51629,11 @@ async function assertRpcHealthy(rpcUrl) {
     if (json.error) {
       throw new Error(`RPC error: ${JSON.stringify(json.error)}`);
     }
-    core2.info(
+    core3.info(
       `RPC healthy \u2014 network: ${json.result?.passphrase ?? "(no passphrase)"}`
     );
   } catch (err) {
-    core2.setFailed(
+    core3.setFailed(
       `Soroban RPC at ${rpcUrl} is not reachable: ${err.message}
 Start the network before invoking this action (e.g. via stellar/quickstart or scripts/start-local-network.sh), then pass its URL as the rpc-url input.`
     );
@@ -51711,11 +51676,11 @@ function getSdkVersion(repoDir) {
 }
 async function buildContracts(fixturesPath, worktreeRoot, buildCommand, skipBuild) {
   if (skipBuild) {
-    core2.info(`skip-build is enabled; assuming WASM is precompiled`);
+    core3.info(`skip-build is enabled; assuming WASM is precompiled`);
     return;
   }
   if (buildCommand) {
-    core2.info(`Executing custom build command: ${buildCommand}`);
+    core3.info(`Executing custom build command: ${buildCommand}`);
     try {
       await exec.exec("sh", ["-c", buildCommand], { cwd: worktreeRoot });
     } catch (err) {
@@ -51742,7 +51707,7 @@ async function buildContracts(fixturesPath, worktreeRoot, buildCommand, skipBuil
     throw new Error(`No Cargo.toml found for any wasm_path in ${fixturesPath}`);
   }
   for (const dir of cargoDirs) {
-    core2.info(
+    core3.info(
       `cargo build --release --target wasm32-unknown-unknown in ${dir}`
     );
     await exec.exec(
@@ -51754,7 +51719,7 @@ async function buildContracts(fixturesPath, worktreeRoot, buildCommand, skipBuil
 }
 async function checkoutRef(repoRoot, ref, label) {
   const dir = fs4.mkdtempSync(path3.join(os.tmpdir(), `weighin-${label}-`));
-  core2.info(`Checking out ${ref} into ${dir}`);
+  core3.info(`Checking out ${ref} into ${dir}`);
   await exec.exec("git", ["fetch", "--depth=1", "origin", ref], {
     cwd: repoRoot
   });
@@ -51764,7 +51729,7 @@ async function checkoutRef(repoRoot, ref, label) {
     { cwd: repoRoot }
   );
   const sha = await getHeadSha(dir);
-  core2.info(`${label} SHA: ${sha}`);
+  core3.info(`${label} SHA: ${sha}`);
   return { dir, sha };
 }
 async function removeWorktree(repoRoot, dir) {
@@ -51773,53 +51738,17 @@ async function removeWorktree(repoRoot, dir) {
       cwd: repoRoot
     });
   } catch {
-    core2.warning(`Could not remove git worktree at ${dir}`);
-  }
-}
-var COMMENT_MARKER = "<!-- weighin-report -->";
-async function upsertPrComment(token, body) {
-  const octokit = getOctokit(token);
-  const { owner, repo } = context2.repo;
-  const prNumber = context2.payload.pull_request?.number;
-  if (!prNumber) {
-    core2.warning("Not in a pull_request context; skipping PR comment.");
-    return;
-  }
-  const { data: comments } = await octokit.rest.issues.listComments({
-    owner,
-    repo,
-    issue_number: prNumber
-  });
-  const existing = comments.find(
-    (c) => c.body?.includes(COMMENT_MARKER)
-  );
-  if (existing) {
-    await octokit.rest.issues.updateComment({
-      owner,
-      repo,
-      comment_id: existing.id,
-      body
-    });
-    core2.info(`Updated PR comment #${existing.id}`);
-  } else {
-    await octokit.rest.issues.createComment({
-      owner,
-      repo,
-      issue_number: prNumber,
-      body
-    });
-    core2.info("Created new PR comment");
+    core3.warning(`Could not remove git worktree at ${dir}`);
   }
 }
 async function run() {
-  const fixturesPathRel = core2.getInput("fixtures-path", { required: true });
-  const configPathRel = core2.getInput("config-path");
-  const rpcUrl = core2.getInput("rpc-url") || "http://localhost:8000/rpc";
-  const githubToken = core2.getInput("github-token");
-  const baseRefInput = core2.getInput("base-ref");
-  const reportPathInput = core2.getInput("report-path");
-  const buildCommand = core2.getInput("build-command");
-  const skipBuild = core2.getInput("skip-build") === "true";
+  const fixturesPathRel = core3.getInput("fixtures-path", { required: true });
+  const configPathRel = core3.getInput("config-path");
+  const rpcUrl = core3.getInput("rpc-url") || "http://localhost:8000/rpc";
+  const baseRefInput = core3.getInput("base-ref");
+  const reportPathInput = core3.getInput("report-path");
+  const buildCommand = core3.getInput("build-command");
+  const skipBuild = core3.getInput("skip-build") === "true";
   const headWorkspace = process.env["GITHUB_WORKSPACE"] ?? process.cwd();
   if (buildCommand && skipBuild) {
     throw new Error(
@@ -51828,10 +51757,10 @@ async function run() {
   }
   const baseRef = baseRefInput || context2.payload.pull_request?.base?.ref || "main";
   const sharedKeyFile = path3.join(os.tmpdir(), "weighin-deployer.key");
-  core2.info(`Base ref:   ${baseRef}`);
-  core2.info(`RPC URL:    ${rpcUrl}`);
-  core2.info(`Fixtures:   ${fixturesPathRel}`);
-  core2.info(`Key file:   ${sharedKeyFile}`);
+  core3.info(`Base ref:   ${baseRef}`);
+  core3.info(`RPC URL:    ${rpcUrl}`);
+  core3.info(`Fixtures:   ${fixturesPathRel}`);
+  core3.info(`Key file:   ${sharedKeyFile}`);
   await assertRpcHealthy(rpcUrl);
   const headFixturesPath = path3.resolve(headWorkspace, fixturesPathRel);
   const configPath = path3.resolve(
@@ -51839,12 +51768,12 @@ async function run() {
     configPathRel || "weighin.toml"
   );
   if (!fs4.existsSync(headFixturesPath)) {
-    core2.setFailed(`fixtures-path not found: ${headFixturesPath}`);
+    core3.setFailed(`fixtures-path not found: ${headFixturesPath}`);
     return;
   }
-  core2.startGroup("Building + measuring HEAD");
+  core3.startGroup("Building + measuring HEAD");
   const headSha = await getHeadSha(headWorkspace);
-  core2.info(`HEAD SHA: ${headSha}`);
+  core3.info(`HEAD SHA: ${headSha}`);
   let headResults;
   try {
     await buildContracts(
@@ -51862,18 +51791,18 @@ async function run() {
       skipBuild
     });
   } catch (err) {
-    core2.setFailed(`HEAD measurement failed: ${err.message}`);
+    core3.setFailed(`HEAD measurement failed: ${err.message}`);
     return;
   }
-  core2.endGroup();
+  core3.endGroup();
   for (const contract of headResults) {
     for (const bench of contract.benchmarks) {
-      core2.info(
+      core3.info(
         `[HEAD] WASM SHA256 (${bench.function_name}): ${bench.wasm_sha256}`
       );
     }
   }
-  core2.startGroup(`Building + measuring base (${baseRef})`);
+  core3.startGroup(`Building + measuring base (${baseRef})`);
   let baseResults = null;
   let baseDir = null;
   let baseSha = "unknown";
@@ -51883,7 +51812,7 @@ async function run() {
     baseSha = checkout.sha;
     const baseFixturesPath = path3.resolve(baseDir, fixturesPathRel);
     if (!fs4.existsSync(baseFixturesPath)) {
-      core2.warning(`fixtures-path not found in base ref; skipping baseline.`);
+      core3.warning(`fixtures-path not found in base ref; skipping baseline.`);
     } else {
       await buildContracts(baseFixturesPath, baseDir, buildCommand, skipBuild);
       baseResults = await runMeasurement({
@@ -51896,24 +51825,24 @@ async function run() {
       });
       for (const contract of baseResults) {
         for (const bench of contract.benchmarks) {
-          core2.info(
+          core3.info(
             `[BASE] WASM SHA256 (${bench.function_name}): ${bench.wasm_sha256}`
           );
         }
       }
     }
   } catch (err) {
-    core2.warning(
+    core3.warning(
       `Base measurement failed (${err.message}); reporting head-only.`
     );
   } finally {
     if (baseDir) await removeWorktree(headWorkspace, baseDir);
   }
-  core2.endGroup();
+  core3.endGroup();
   if (!baseResults) {
-    core2.setOutput("result", "no-baseline");
-    core2.setOutput("diff-json", "{}");
-    core2.info("No baseline; emitting head-only measurements.");
+    core3.setOutput("result", "no-baseline");
+    core3.setOutput("diff-json", "{}");
+    core3.info("No baseline; emitting head-only measurements.");
     const body = [
       "## \u26AA WeighIn Benchmark Report",
       "",
@@ -51928,51 +51857,69 @@ async function run() {
     if (reportPathInput) {
       writeReportFile(reportPathInput, headWorkspace, body);
     }
-    if (githubToken) {
-      await upsertPrComment(githubToken, body).catch(
-        (e) => core2.warning(`PR comment failed: ${e.message}`)
-      );
+    const metadataPathInput2 = core3.getInput("metadata-path");
+    if (metadataPathInput2) {
+      const prNumber = context2.payload.pull_request?.number;
+      if (prNumber) {
+        const metadata = {
+          prNumber,
+          headSha
+        };
+        const dest = path3.resolve(headWorkspace, metadataPathInput2);
+        fs4.mkdirSync(path3.dirname(dest), { recursive: true });
+        fs4.writeFileSync(dest, JSON.stringify(metadata, null, 2), "utf8");
+        core3.info(`Wrote PR metadata to ${metadataPathInput2}`);
+      } else {
+        core3.info("Not a pull_request event; skipping metadata generation");
+      }
     }
     return;
   }
-  core2.startGroup("Computing diff");
+  core3.startGroup("Computing diff");
   const diff = diffBenchmarks(baseResults, headResults);
-  core2.info(`Any regression: ${diff.hasRegression}`);
-  core2.endGroup();
-  core2.startGroup("Enforcing thresholds");
+  core3.info(`Any regression: ${diff.hasRegression}`);
+  core3.endGroup();
+  core3.startGroup("Enforcing thresholds");
   const config2 = loadConfig(configPath);
   if (config2) {
-    core2.info("weighin.toml loaded");
+    core3.info("weighin.toml loaded");
   } else {
-    core2.info("No weighin.toml found \u2014 no thresholds enforced");
+    core3.info("No weighin.toml found \u2014 no thresholds enforced");
   }
   const violations = enforceThresholds(diff, config2);
-  core2.info(`Violations: ${violations.length}`);
+  core3.info(`Violations: ${violations.length}`);
   for (const v of violations) {
-    core2.error(`[${v.function_name}] ${v.message}`);
+    core3.error(`[${v.function_name}] ${v.message}`);
   }
-  core2.endGroup();
+  core3.endGroup();
   const result = violations.length > 0 ? "fail" : "pass";
-  core2.setOutput("result", result);
-  core2.setOutput("diff-json", JSON.stringify(diff));
+  core3.setOutput("result", result);
+  core3.setOutput("diff-json", JSON.stringify(diff));
   const finalBody = renderComment(diff, violations, baseRef, headSha);
   if (reportPathInput) {
     writeReportFile(reportPathInput, headWorkspace, finalBody);
   }
-  if (githubToken) {
-    core2.startGroup("Posting PR comment");
-    try {
-      await upsertPrComment(githubToken, finalBody);
-    } catch (err) {
-      core2.warning(`Failed to post PR comment: ${err.message}`);
+  const metadataPathInput = core3.getInput("metadata-path");
+  if (metadataPathInput) {
+    const prNumber = context2.payload.pull_request?.number;
+    if (prNumber) {
+      const metadata = {
+        prNumber,
+        headSha
+      };
+      const dest = path3.resolve(headWorkspace, metadataPathInput);
+      fs4.mkdirSync(path3.dirname(dest), { recursive: true });
+      fs4.writeFileSync(dest, JSON.stringify(metadata, null, 2), "utf8");
+      core3.info(`Wrote PR metadata to ${metadataPathInput}`);
+    } else {
+      core3.info("Not a pull_request event; skipping metadata generation");
     }
-    core2.endGroup();
   }
   if (violations.length > 0) {
-    core2.setFailed(`${violations.length} threshold violation(s) detected`);
+    core3.setFailed(`${violations.length} threshold violation(s) detected`);
   }
 }
-run().catch((e) => core2.setFailed(e.message));
+run().catch((e) => core3.setFailed(e.message));
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   buildContracts

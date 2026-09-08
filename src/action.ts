@@ -8,7 +8,7 @@ import * as os from "os";
 import { runMeasurement, ContractBenchmark } from "./measurement";
 import { diffBenchmarks, DiffResult } from "./diff";
 import { loadConfig, enforceThresholds, Violation } from "./threshold";
-import { renderComment } from "./comment";
+import { renderComment, COMMENT_MARKER } from "./comment";
 
 // ---------------------------------------------------------------------------
 // RPC health check
@@ -212,51 +212,6 @@ async function removeWorktree(repoRoot: string, dir: string): Promise<void> {
 import { writeReportFile } from "./report";
 
 // ---------------------------------------------------------------------------
-// PR comment management
-// ---------------------------------------------------------------------------
-
-const COMMENT_MARKER = "<!-- weighin-report -->";
-
-async function upsertPrComment(token: string, body: string): Promise<void> {
-  const octokit = github.getOctokit(token);
-  const { owner, repo } = github.context.repo;
-  const prNumber = github.context.payload.pull_request?.number;
-
-  if (!prNumber) {
-    core.warning("Not in a pull_request context; skipping PR comment.");
-    return;
-  }
-
-  const { data: comments } = await octokit.rest.issues.listComments({
-    owner,
-    repo,
-    issue_number: prNumber,
-  });
-
-  const existing = comments.find((c: { id: number; body?: string | null }) =>
-    c.body?.includes(COMMENT_MARKER),
-  );
-
-  if (existing) {
-    await octokit.rest.issues.updateComment({
-      owner,
-      repo,
-      comment_id: existing.id,
-      body,
-    });
-    core.info(`Updated PR comment #${existing.id}`);
-  } else {
-    await octokit.rest.issues.createComment({
-      owner,
-      repo,
-      issue_number: prNumber,
-      body,
-    });
-    core.info("Created new PR comment");
-  }
-}
-
-// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 
@@ -264,7 +219,6 @@ async function run(): Promise<void> {
   const fixturesPathRel = core.getInput("fixtures-path", { required: true });
   const configPathRel = core.getInput("config-path");
   const rpcUrl = core.getInput("rpc-url") || "http://localhost:8000/rpc";
-  const githubToken = core.getInput("github-token");
   const baseRefInput = core.getInput("base-ref");
   const reportPathInput = core.getInput("report-path");
   const buildCommand = core.getInput("build-command");
@@ -406,10 +360,21 @@ async function run(): Promise<void> {
       writeReportFile(reportPathInput, headWorkspace, body);
     }
 
-    if (githubToken) {
-      await upsertPrComment(githubToken, body).catch((e) =>
-        core.warning(`PR comment failed: ${e.message}`),
-      );
+    const metadataPathInput = core.getInput("metadata-path");
+    if (metadataPathInput) {
+      const prNumber = github.context.payload.pull_request?.number;
+      if (prNumber) {
+        const metadata = {
+          prNumber,
+          headSha,
+        };
+        const dest = path.resolve(headWorkspace, metadataPathInput);
+        fs.mkdirSync(path.dirname(dest), { recursive: true });
+        fs.writeFileSync(dest, JSON.stringify(metadata, null, 2), "utf8");
+        core.info(`Wrote PR metadata to ${metadataPathInput}`);
+      } else {
+        core.info("Not a pull_request event; skipping metadata generation");
+      }
     }
     return;
   }
@@ -447,14 +412,21 @@ async function run(): Promise<void> {
     writeReportFile(reportPathInput, headWorkspace, finalBody);
   }
 
-  if (githubToken) {
-    core.startGroup("Posting PR comment");
-    try {
-      await upsertPrComment(githubToken, finalBody);
-    } catch (err: any) {
-      core.warning(`Failed to post PR comment: ${err.message}`);
+  const metadataPathInput = core.getInput("metadata-path");
+  if (metadataPathInput) {
+    const prNumber = github.context.payload.pull_request?.number;
+    if (prNumber) {
+      const metadata = {
+        prNumber,
+        headSha,
+      };
+      const dest = path.resolve(headWorkspace, metadataPathInput);
+      fs.mkdirSync(path.dirname(dest), { recursive: true });
+      fs.writeFileSync(dest, JSON.stringify(metadata, null, 2), "utf8");
+      core.info(`Wrote PR metadata to ${metadataPathInput}`);
+    } else {
+      core.info("Not a pull_request event; skipping metadata generation");
     }
-    core.endGroup();
   }
 
   // 10. Exit status

@@ -1,0 +1,33 @@
+name: WeighIn Comment
+on:
+  workflow_run:
+    workflows: ["WeighIn CI"]
+    types:
+      - completed
+
+jobs:
+  post-comment:
+    name: Post PR Comment
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success'
+    permissions:
+      pull-requests: write
+      actions: read
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: weighin-artifacts
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Checkout Action
+        uses: actions/checkout@v4
+
+      - name: Post Comment
+        uses: ./comment
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          report-path: weighin-report.md
+          metadata-path: pr-metadata.json
