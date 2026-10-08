@@ -1,0 +1,63 @@
+{
+  "node": "v24.13.1",
+  "npm": "11.8.0",
+  "temporary_storage": "Owned workspace directory; system /tmp has observed quota failures.",
+  "checks": [
+    {
+      "command": [
+        "npm",
+        "ci"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "npm",
+        "run",
+        "lint"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "npm",
+        "test"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "npm",
+        "run",
+        "bundle"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "npm",
+        "pack",
+        "--dry-run",
+        "--json"
+      ],
+      "exit": 0
+    }
+  ],
+  "hosted_verification": "Pending publication/default-branch activation; no new remote branch or PR authorized."
+}

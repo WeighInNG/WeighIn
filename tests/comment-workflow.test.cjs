@@ -6,13 +6,26 @@ const http = require('node:http');
 const YAML = require('yaml');
 const root = path.resolve(__dirname, '..');
 const workflow = YAML.parse(fs.readFileSync(path.join(root, '.github/workflows/comment.yml'), 'utf8'));
-const steps = workflow.jobs['post-comment'].steps;
+const commentJob = workflow.jobs['post-comment'];
+const steps = commentJob.steps;
 const report = '<!-- weighin-comment -->\n# Resource report\nCPU instructions: 565371\n';
 function git(directory, ...args) {
   const result = spawnSync('git', args, { cwd: directory, encoding: 'utf8' });
   assert.equal(result.status, 0, result.stdout + result.stderr); return result.stdout;
 }
-async function execute(order, includeMetadata = true) {
+// Evaluate the actual YAML guard's supported expression subset. Reject any
+// unfamiliar syntax so a future workflow change cannot silently bypass coverage.
+function shouldRun(condition, run) {
+  const terms = condition.split(/\s*&&\s*/).map(term => {
+    const match = /^github\.event\.workflow_run\.(conclusion|event)\s*==\s*'([^']+)'$/.exec(term.trim());
+    assert.ok(match, `Unmodeled workflow condition: ${term}`);
+    return run[match[1]] === match[2];
+  });
+  return terms.every(Boolean);
+}
+const successfulPr = { conclusion: 'success', event: 'pull_request' };
+async function execute(order, includeMetadata = true, run = successfulPr, condition = commentJob.if) {
+  if (!shouldRun(condition, run)) return { skipped: true, executedSteps: [], calls: [] };
   const temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'weighin-comment-test-'));
   const workspace = path.join(temporary, 'workspace'), calls = [];
   const server = http.createServer((request, response) => {
@@ -67,11 +80,12 @@ async function execute(order, includeMetadata = true) {
       } else throw new Error(`Unmodeled workflow step: ${step.uses}`);
     }
     assert.ok(result, 'Workflow must execute the comment Action');
-    return { ...result, calls };
+    return { ...result, skipped: false, executedSteps: order.map(step => step.name), calls };
   } finally { await new Promise(resolve => server.close(resolve)); fs.rmSync(temporary, { recursive: true, force: true }); }
 }
 test('comment workflow preserves downloaded report/metadata and sends their contents through the bundled Action', async () => {
   const result = await execute(steps);
+  assert.equal(result.skipped, false);
   assert.equal(result.status, 0, result.stdout + result.stderr);
   assert.deepEqual(result.calls.map(call => call.method), ['GET', 'POST']);
   assert.equal(result.calls[1].body.body, report);
@@ -98,4 +112,34 @@ test('comment test transport rejects non-local sockets before connecting', () =>
   const result = spawnSync(process.execPath, ['--require', path.join(root, 'tests/support/comment-transport-hook.cjs'), '-e', "require('node:net').connect(443, 'api.github.com')"], { encoding: 'utf8' });
   assert.equal(result.status, 1);
   assert.match(result.stderr, /Non-local network connection forbidden/);
+});
+
+test('successful main push skips checkout, artifact download and comment execution', async () => {
+  const result = await execute(steps, false, { conclusion: 'success', event: 'push' });
+  assert.deepEqual(result, { skipped: true, executedSteps: [], calls: [] });
+});
+test('the historical success-only guard executes on a push and fails without PR metadata', async () => {
+  const result = await execute(steps, false, { conclusion: 'success', event: 'push' }, "github.event.workflow_run.conclusion == 'success'");
+  assert.equal(result.skipped, false);
+  assert.equal(result.status, 1);
+  assert.match(result.stdout + result.stderr, /Metadata file not found/);
+  assert.deepEqual(result.calls, []);
+});
+for (const conclusion of ['failure', 'cancelled', 'timed_out', 'skipped', 'neutral']) {
+  test(`${conclusion} PR CI skips all comment-job steps`, async () => {
+    const result = await execute(steps, false, { conclusion, event: 'pull_request' });
+    assert.deepEqual(result, { skipped: true, executedSteps: [], calls: [] });
+  });
+}
+for (const event of ['workflow_dispatch', 'pull_request_target', undefined]) {
+  test(`${event ?? 'missing event'} does not qualify for PR comment delivery`, async () => {
+    const result = await execute(steps, false, { conclusion: 'success', event });
+    assert.deepEqual(result, { skipped: true, executedSteps: [], calls: [] });
+  });
+}
+test('a successful fork PR uses the same comment delivery path', async () => {
+  const result = await execute(steps, true, { ...successfulPr, head_repository: { fork: true } });
+  assert.equal(result.skipped, false);
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.equal(result.calls[1].body.body, report);
 });

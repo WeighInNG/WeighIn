@@ -1,0 +1,70 @@
+{
+  "attempt": 1,
+  "conclusion": "success",
+  "databaseId": 37775914155,
+  "event": "workflow_run",
+  "headSha": "cb43433bda828f6d43172944c5825768362a273e",
+  "jobs": [
+    {
+      "completedAt": "2026-10-08T12:18:26Z",
+      "conclusion": "success",
+      "databaseId": 113306571834,
+      "name": "Post PR Comment",
+      "startedAt": "2026-10-08T12:18:18Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-10-08T12:18:20Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-10-08T12:18:19Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T12:18:21Z",
+          "conclusion": "success",
+          "name": "Checkout Action",
+          "number": 2,
+          "startedAt": "2026-10-08T12:18:20Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T12:18:22Z",
+          "conclusion": "success",
+          "name": "Download artifacts",
+          "number": 3,
+          "startedAt": "2026-10-08T12:18:21Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T12:18:24Z",
+          "conclusion": "success",
+          "name": "Post Comment",
+          "number": 4,
+          "startedAt": "2026-10-08T12:18:22Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T12:18:24Z",
+          "conclusion": "success",
+          "name": "Post Checkout Action",
+          "number": 8,
+          "startedAt": "2026-10-08T12:18:24Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T12:18:24Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 9,
+          "startedAt": "2026-10-08T12:18:24Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/WeighInNG/WeighIn/actions/runs/37775914155/job/113306571834"
+    }
+  ],
+  "status": "completed",
+  "url": "https://github.com/WeighInNG/WeighIn/actions/runs/37775914155"
+}

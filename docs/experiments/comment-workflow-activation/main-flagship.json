@@ -1,0 +1,380 @@
+{
+  "attempt": 1,
+  "conclusion": "success",
+  "databaseId": 37775380572,
+  "event": "push",
+  "headSha": "cb43433bda828f6d43172944c5825768362a273e",
+  "jobs": [
+    {
+      "completedAt": "2026-10-08T12:17:25Z",
+      "conclusion": "success",
+      "databaseId": 113304781252,
+      "name": "Flagship control",
+      "startedAt": "2026-10-08T12:13:43Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-10-08T12:13:45Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-10-08T12:13:44Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T12:13:47Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "startedAt": "2026-10-08T12:13:45Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T12:13:54Z",
+          "conclusion": "success",
+          "name": "Run actions/setup-node@v4",
+          "number": 3,
+          "startedAt": "2026-10-08T12:13:47Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T12:14:02Z",
+          "conclusion": "success",
+          "name": "Run dtolnay/rust-toolchain@master",
+          "number": 4,
+          "startedAt": "2026-10-08T12:13:54Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T12:15:56Z",
+          "conclusion": "success",
+          "name": "Install dependencies and validate source",
+          "number": 5,
+          "startedAt": "2026-10-08T12:14:02Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T12:15:57Z",
+          "conclusion": "success",
+          "name": "Install checksum-verified Stellar CLI",
+          "number": 6,
+          "startedAt": "2026-10-08T12:15:56Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T12:16:44Z",
+          "conclusion": "success",
+          "name": "Start pinned standalone network",
+          "number": 7,
+          "startedAt": "2026-10-08T12:15:57Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T12:17:17Z",
+          "conclusion": "success",
+          "name": "Execute real bundled Action on isolated revisions",
+          "number": 8,
+          "startedAt": "2026-10-08T12:16:44Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T12:17:17Z",
+          "conclusion": "success",
+          "name": "Require verified result and genuine policy failure",
+          "number": 9,
+          "startedAt": "2026-10-08T12:17:17Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T12:17:18Z",
+          "conclusion": "success",
+          "name": "Retain reports, source, WASM and raw evidence",
+          "number": 10,
+          "startedAt": "2026-10-08T12:17:17Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T12:17:23Z",
+          "conclusion": "success",
+          "name": "Stop owned sidecar",
+          "number": 11,
+          "startedAt": "2026-10-08T12:17:18Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T12:17:23Z",
+          "conclusion": "success",
+          "name": "Post Run actions/setup-node@v4",
+          "number": 21,
+          "startedAt": "2026-10-08T12:17:23Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T12:17:23Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v4",
+          "number": 22,
+          "startedAt": "2026-10-08T12:17:23Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T12:17:23Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 23,
+          "startedAt": "2026-10-08T12:17:23Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/WeighInNG/WeighIn/actions/runs/37775380572/job/113304781252"
+    },
+    {
+      "completedAt": "2026-10-08T12:17:26Z",
+      "conclusion": "success",
+      "databaseId": 113304781473,
+      "name": "Flagship threshold",
+      "startedAt": "2026-10-08T12:13:44Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-10-08T12:13:47Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-10-08T12:13:45Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T12:13:50Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "startedAt": "2026-10-08T12:13:47Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T12:13:51Z",
+          "conclusion": "success",
+          "name": "Run actions/setup-node@v4",
+          "number": 3,
+          "startedAt": "2026-10-08T12:13:50Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T12:14:01Z",
+          "conclusion": "success",
+          "name": "Run dtolnay/rust-toolchain@master",
+          "number": 4,
+          "startedAt": "2026-10-08T12:13:51Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T12:15:53Z",
+          "conclusion": "success",
+          "name": "Install dependencies and validate source",
+          "number": 5,
+          "startedAt": "2026-10-08T12:14:01Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T12:15:54Z",
+          "conclusion": "success",
+          "name": "Install checksum-verified Stellar CLI",
+          "number": 6,
+          "startedAt": "2026-10-08T12:15:53Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T12:16:45Z",
+          "conclusion": "success",
+          "name": "Start pinned standalone network",
+          "number": 7,
+          "startedAt": "2026-10-08T12:15:54Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T12:17:18Z",
+          "conclusion": "success",
+          "name": "Execute real bundled Action on isolated revisions",
+          "number": 8,
+          "startedAt": "2026-10-08T12:16:45Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T12:17:18Z",
+          "conclusion": "success",
+          "name": "Require verified result and genuine policy failure",
+          "number": 9,
+          "startedAt": "2026-10-08T12:17:18Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T12:17:19Z",
+          "conclusion": "success",
+          "name": "Retain reports, source, WASM and raw evidence",
+          "number": 10,
+          "startedAt": "2026-10-08T12:17:18Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T12:17:23Z",
+          "conclusion": "success",
+          "name": "Stop owned sidecar",
+          "number": 11,
+          "startedAt": "2026-10-08T12:17:19Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T12:17:23Z",
+          "conclusion": "success",
+          "name": "Post Run actions/setup-node@v4",
+          "number": 21,
+          "startedAt": "2026-10-08T12:17:23Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T12:17:23Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v4",
+          "number": 22,
+          "startedAt": "2026-10-08T12:17:23Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T12:17:23Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 23,
+          "startedAt": "2026-10-08T12:17:23Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/WeighInNG/WeighIn/actions/runs/37775380572/job/113304781473"
+    },
+    {
+      "completedAt": "2026-10-08T12:17:06Z",
+      "conclusion": "success",
+      "databaseId": 113304781583,
+      "name": "Flagship regression",
+      "startedAt": "2026-10-08T12:13:43Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-10-08T12:13:45Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-10-08T12:13:44Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T12:13:46Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "startedAt": "2026-10-08T12:13:45Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T12:13:47Z",
+          "conclusion": "success",
+          "name": "Run actions/setup-node@v4",
+          "number": 3,
+          "startedAt": "2026-10-08T12:13:46Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T12:13:55Z",
+          "conclusion": "success",
+          "name": "Run dtolnay/rust-toolchain@master",
+          "number": 4,
+          "startedAt": "2026-10-08T12:13:47Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T12:15:38Z",
+          "conclusion": "success",
+          "name": "Install dependencies and validate source",
+          "number": 5,
+          "startedAt": "2026-10-08T12:13:55Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T12:15:39Z",
+          "conclusion": "success",
+          "name": "Install checksum-verified Stellar CLI",
+          "number": 6,
+          "startedAt": "2026-10-08T12:15:38Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T12:16:22Z",
+          "conclusion": "success",
+          "name": "Start pinned standalone network",
+          "number": 7,
+          "startedAt": "2026-10-08T12:15:39Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T12:16:57Z",
+          "conclusion": "success",
+          "name": "Execute real bundled Action on isolated revisions",
+          "number": 8,
+          "startedAt": "2026-10-08T12:16:22Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T12:16:57Z",
+          "conclusion": "success",
+          "name": "Require verified result and genuine policy failure",
+          "number": 9,
+          "startedAt": "2026-10-08T12:16:57Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T12:16:58Z",
+          "conclusion": "success",
+          "name": "Retain reports, source, WASM and raw evidence",
+          "number": 10,
+          "startedAt": "2026-10-08T12:16:57Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T12:17:04Z",
+          "conclusion": "success",
+          "name": "Stop owned sidecar",
+          "number": 11,
+          "startedAt": "2026-10-08T12:16:58Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T12:17:04Z",
+          "conclusion": "success",
+          "name": "Post Run actions/setup-node@v4",
+          "number": 21,
+          "startedAt": "2026-10-08T12:17:04Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T12:17:04Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v4",
+          "number": 22,
+          "startedAt": "2026-10-08T12:17:04Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T12:17:04Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 23,
+          "startedAt": "2026-10-08T12:17:04Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/WeighInNG/WeighIn/actions/runs/37775380572/job/113304781583"
+    }
+  ],
+  "status": "completed",
+  "url": "https://github.com/WeighInNG/WeighIn/actions/runs/37775380572"
+}

@@ -96,50 +96,41 @@ Flagship comparison identity statement now supported:
 
 # Current blocker
 
-## Comment workflow repaired locally; reviewed default-branch delivery and external CI remain
+## PR-only comment guard proven locally; publication and external CI remain
 
-PR #1 now publishes cc4e5a080f4fe47d3af6b1908bb082e30844f96a on its existing
-head branch test/no-op-baseline. All seven core checks passed: lint/typecheck/test,
-bundle freshness, both benchmark jobs, and flagship control/regression/threshold.
-Earlier c32/conflict records below are historical. Main has not been merged.
-One separate default-branch comment workflow passes; the other fails after checkout
-deletes its downloaded report. This also occurred before the safeguard push.
+PR #1 was merged with explicit user approval on 2026-10-08. Reviewed head
+1c844ce9708a9d709ec39aed4309942d66dbd9a3 is included in main merge commit
+cb43433bda828f6d43172944c5825768362a273e. Main CI and the flagship control,
+regression and strict-threshold proof all PASS. The corrected default-branch
+comment workflow now actually updates PR1's benchmark report successfully.
 
-Stage 6 now proves the real Soroban Forge escrow query locally: control CPU
-565371 -> 565371 (all eight measured deltas zero), intentional regression
-565371 -> 679455 (+114084), and one strict CPU violation with genuine Action
-exit 1. Changed WASM/runtime addresses pair with the same logical benchmark;
-return XDR and raw RPC/native parity are verified. External publication remains
-unproven and has not been authorized. Three unavailable metrics remain explicit.
+Main-push comment run37775873034 failed because successful push CI uploads a
+report but produces no PR metadata. User approved the narrow repair: the own
+comment job now requires both success and a pull_request triggering event.
+Sixteen focused workflow tests PASS; all 230 JavaScript assertions and existing
+install/lint/typecheck/build/bundle/package gates PASS. Production runtime and
+both bundles are unchanged. See Stage 6G for local proof and boundaries.
 
-Stage 6B isolates the optimizer difference to temporary storage. Changing only
-TMPDIR reproduces the two hashes five times per mode. System /tmp writes fail
-with EDQUOT and leave zero-byte convergence files; healthy workspace writes pass.
-Five full builds per storage mode reproduce the same artifacts. Five fresh live
-measurements per artifact repeat all eight measured values exactly, with the
-same two-instruction CPU difference and verified raw RPC/native parity.
-Concurrency and path-spelling candidates did not resolve the difference.
+Highest-priority next dependency: publish the concrete guard repair through a
+new reviewed PR, activate it on main, and prove that push comments skip while PR
+comments still deliver. PR1 is already merged; prior push approval was scoped to
+that PR. New branch/PR publication and merge require explicit authorization.
+No hosted run has exercised the guard yet.
 
-Stage 6C implements pre/post write/fsync/read checks and directs optimizer temp
-files into verified owned storage. Actual system-temp write failure is rejected.
-Five full Action controls on real Soroban Forge repeat identical WASM/all eight
-measured resources; regression remains +114084 CPU and strict policy exits1.
-Checks cannot reserve capacity or exclude a transient optimizer-only failure.
+Stage 6C proves five full Action controls on real Soroban Forge with identical
+WASM and all eight measured deltas zero, CPU 565371 -> 565371. The isolated
+regression changes WASM/runtime identity but still pairs logically, CPU
+565371 -> 679455 (+114084); strict policy yields one violation and Action exit1.
+Return XDR and raw RPC/native parity are verified. Three unavailable metrics
+remain explicit. Temporary-storage pre/post probes reject the observed optimizer
+storage failure; they do not reserve capacity or exclude a transient failure
+confined to the optimizer interval. External hosted publication remains unproven.
 
-Stage 6E now repairs the own-repository comment workflow by checking out trusted
-Action code before artifact download. Real Git cleanup reproduces the old failure;
-the repaired order preserves files and the actual bundled comment Action delivers
-the exact report to a local test API. Missing metadata fails before posting and
-non-local connections are blocked. Full source/build/package gates pass.
-
-Highest-priority unresolved dependency: publish the validated repair to the same
-existing PR, verify hosted source checks, then obtain explicit reviewed merge
-approval. workflow_run uses main, so PR publication alone cannot activate the fix.
-Next deliver the external fixture baseline and dependent workflow/regression proof.
-No external push, merge or Drips submission is authorized. Prior WeighIn push
-authorization continues for the same existing PR; merge requires explicit approval.
-See docs/external-soroban-forge.md and Stage 6 below. No appeal-readiness or
-Drips-approval claim is supported yet.
+After the comment guard, deliver the external fixture baseline and dependent
+workflow/regression proof, then evidence/docs truth alignment. No external push,
+merge or Drips submission is authorized. Existing records below are historical;
+see Stage 6F for current activation evidence. Campaign completion and Drips
+approval are not established.
 
 # Approved native integration — completed 2026-10-07
 
@@ -1160,7 +1151,10 @@ external hosted delivery. Separate stage approval; no automatic stage expansion.
 
 ## Stage 6E — Preserve reports in the own-repository comment workflow
 
-Status: IMPLEMENTED AND LOCALLY VALIDATED — 2026-10-08
+Status: MERGED; PR COMMENT DELIVERY VERIFIED — 2026-10-08
+
+The publication/approval notes below are historical. Stage 6F records activation
+and the newly observed main-push comment limitation.
 
 User approved the narrow workflow ordering repair. Checkout Action now precedes
 Download artifacts in .github/workflows/comment.yml. Trusted default checkout,
@@ -1180,9 +1174,88 @@ PASS; native suite not rerun because native/measurement unchanged. Eleven existi
 dependency audit findings remain. Validation logs retained under
 `docs/experiments/comment-workflow-repair`. No README/architecture cleanup.
 
-Publish to the already-authorized existing WeighIn PR, then verify source gates.
-Default-branch activation and live posting for this workflow remain pending merge
-approval: workflow_run executes main. No test comments sent to maintainers.
+Published 1c844ce9708a9d709ec39aed4309942d66dbd9a3 to exact existing PR1 branch
+under continuing WeighIn push approval. All seven hosted checks PASS:
+- CI: https://github.com/WeighInNG/WeighIn/actions/runs/37774203112
+- Flagship proofs: https://github.com/WeighInNG/WeighIn/actions/runs/37774203374
+- Example: https://github.com/WeighInNG/WeighIn/actions/runs/37774203526
+Transient GitHub API connection errors recovered on retry. Exact head confirmed;
+PR is CLEAN/MERGEABLE, no review decision. Default-branch activation/live posting
+for this workflow remain pending explicit reviewed merge approval. workflow_run
+executes main, not PR HEAD. No test comments sent to maintainers. No merge or
+external-repository publication. This hosted-result tracking update is committed
+locally after publication; the remote reviewed head remains1c844ce.
+
+---
+
+## Stage 6F — Approved merge and live report delivery
+
+Status: COMPLETE FOR PR ACTIVATION; MAIN-PUSH COMMENT DEFECT RECORDED — 2026-10-08
+
+Merged PR1 using --match-head-commit at approved head1c844ce. GitHub confirms
+MERGED at cb43433bda828f6d43172944c5825768362a273e. Main push proof:
+- CI PASS: https://github.com/WeighInNG/WeighIn/actions/runs/37775380694
+- Flagship control/regression/threshold PASS:
+  https://github.com/WeighInNG/WeighIn/actions/runs/37775380572
+
+Reran the original PR CI37774203112 (attempt2), which PASSes and supplies PR
+metadata. This rerun uses its historical PR merge ref, separately from main proof.
+Default-branch comment workflow37775914155 PASSes, downloads that run's artifact,
+and updates comment6056259444. Local artifact download first hit system /tmp
+quota; retry with owned workspace TMPDIR passed. Downloaded report contents exactly equal the
+published comment body; metadata identifies PR1. Evidence and selected safe log
+lines are retained in docs/experiments/comment-workflow-activation.
+
+Main-push comment workflow37775873034 FAILs with
+"Metadata file not found: pr-metadata.json". Its report survived checkout;
+this is a separate trigger-context defect, not the repaired report deletion.
+No source repair was added under merge approval. Proposed next approved change:
+require successful pull_request workflow events for this PR-comment job, add
+behavior tests for push skip and PR execution, run existing gates and verify
+hosted delivery. Do not silently accept missing metadata in genuine PR runs.
+
+Only hosted merge/verification and local evidence/progress recording were done.
+No external project publication, artificial production regression or appeal.
+
+---
+
+## Stage 6G — Restrict own-repository commenting to PR CI events
+
+Status: IMPLEMENTED AND LOCALLY VERIFIED; HOSTED ACTIVATION PENDING — 2026-10-08
+
+Approved narrow repair: .github/workflows/comment.yml now requires a successful
+workflow_run whose event is pull_request. Checkout/artifact selection, trusted
+code, permissions and comment runtime are unchanged. The separate consumer
+example only has a PR producer trigger and was not modified. Missing metadata
+in eligible PR runs still fails; no fabricated metadata or silent success.
+
+Extended tests/comment-workflow.test.cjs: reads the actual YAML guard and evaluates
+its two equality terms through an explicit supported-syntax model. Push success
+skips the entire job; PR success runs actual Git cleanup/artifact staging and the
+bundled Action through the existing local-only API transport. Historical success-
+only guard reproduces the push missing-metadata failure. Failed/cancelled/timed-
+out/skipped/neutral PR runs, dispatch/target/missing events skip. Fork PR success
+uses the same delivery path. Sixteen focused tests PASS (eleven added).
+
+This is local workflow modeling, not a GitHub expression-engine or hosted skip
+claim. Actual bundled comment behavior executes; artifact staging is controlled.
+No live GitHub comments were sent by tests. Hosted guard activation requires a
+new reviewed publication because PR1 is already merged; no new push/PR/merge
+was performed under the implementation approval.
+
+Node24.13.1/npm11.8.0, owned healthy workspace TMPDIR. npm ci, lint, typecheck,
+npm test (178 Node +52 Vitest), build, bundle and package dry run PASS. Both bundles
+remain byte-identical to baseline. Native tests were not rerun: native, metrics,
+policy, contract/build source and dependencies did not change. Eleven existing
+npm audit findings remain (5 moderate,4 high,2 critical); no unrelated repair.
+Logs, command exits and hashes: docs/experiments/comment-event-guard.
+Original user checkout/untracked files are preserved. README/architecture were
+not changed; their general truth alignment remains a later approved stage.
+
+Next: explicit approval to publish this tested patch as a new WeighIn PR; after
+reviewed activation verify push skipping and PR delivery on GitHub. External
+project publication/evidence alignment remain afterward. No appeal-ready or
+Drips-approval claim.
 
 ---
 

@@ -15,5 +15,8 @@
   "final_transport": "Local HTTP server and socket guard prohibit non-local connections; real bundled Action exercised",
   "live_github_posting_test": false,
   "default_branch_activation": "Pending reviewed merge; workflow_run executes main",
-  "preexisting_dependency_vulnerabilities": 11
+  "preexisting_dependency_vulnerabilities": 11,
+  "published_sha": "1c844ce9708a9d709ec39aed4309942d66dbd9a3",
+  "hosted_core_checks": "PASS: all seven",
+  "merge_state": "CLEAN/MERGEABLE; activation pending explicit merge approval"
 }

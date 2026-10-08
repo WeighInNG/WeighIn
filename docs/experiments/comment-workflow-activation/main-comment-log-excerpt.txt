@@ -1,0 +1,5 @@
+Post PR Comment	Download artifacts	2026-10-08T12:18:00.1543999Z   run-id: 37775380694
+Post PR Comment	Download artifacts	2026-10-08T12:18:00.9391927Z Artifact download completed successfully.
+Post PR Comment	Post Comment	2026-10-08T12:18:00.9548577Z   report-path: weighin-report.md
+Post PR Comment	Post Comment	2026-10-08T12:18:00.9548731Z   metadata-path: pr-metadata.json
+Post PR Comment	Post Comment	2026-10-08T12:18:01.0029129Z ##[error]Metadata file not found: pr-metadata.json

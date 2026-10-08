@@ -1,0 +1,12 @@
+{
+  "pr": 1,
+  "merge_commit": "cb43433bda828f6d43172944c5825768362a273e",
+  "report_equals_posted_comment": true,
+  "pr_comment_run": 37775914155,
+  "main_ci": "success",
+  "main_flagship": "success",
+  "pr_ci_rerun_attempt": 2,
+  "main_comment_failure": "Metadata file not found: pr-metadata.json",
+  "download_environment": "Initial system /tmp download failed with disk quota exceeded; owned workspace TMPDIR retry passed.",
+  "limitation": "PR CI rerun executes its historical pull-request merge ref; separate from the main push proof."
+}
