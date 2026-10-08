@@ -1,0 +1,5 @@
+{
+  "status": 0,
+  "stdout": "\n> weighin@1.0.0 bundle\n> tsc --noEmit && esbuild src/action.ts --bundle --platform=node --target=node20 --outfile=bundled/index.js --format=cjs\n\n",
+  "stderr": "\n  bundled/index.js  1.8mb ⚠️\n\n⚡ Done in 230ms\n"
+}

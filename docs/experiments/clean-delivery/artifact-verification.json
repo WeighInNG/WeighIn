@@ -1,0 +1,10 @@
+{
+  "current_bundle_matches_verified_checkout": true,
+  "bundle_sha256": "0f4221e6b870a17dcdea185ebada958583d4d04eba7e33e52239534897d0539f",
+  "tarball_sha256": "7d0cb47d1a347e876cfa923caedc209ce8dc14e0a50cd24d9b40ae83b11e1a0a",
+  "valid_stellar_private_seeds_found": 0,
+  "files_scanned": 102,
+  "scan_scope": "Captured evidence/source plus archive bytes; not a general secret audit",
+  "node": "v22.23.2",
+  "verified_source_commit": "0e8e894b669b89a73be59d25ae8862c61e03689c"
+}

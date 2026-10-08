@@ -1,0 +1,157 @@
+[
+  {
+    "id": "weighin@1.0.0",
+    "name": "weighin",
+    "version": "1.0.0",
+    "size": 925290,
+    "unpackedSize": 4379962,
+    "shasum": "acc41a7e16372ebc8bfd11270d27c8d2b420cb9d",
+    "integrity": "sha512-DWzkU6GvHEoybZ8y+AYF6L55q51PWia+SthjNhk0GUVSp0KLfm0mgaZ8xMOfONmEo0P5UV53drvI/A2q8y+tPw==",
+    "filename": "weighin-1.0.0.tgz",
+    "files": [
+      {
+        "path": "README.md",
+        "size": 10,
+        "mode": 420
+      },
+      {
+        "path": "action.yml",
+        "size": 2543,
+        "mode": 420
+      },
+      {
+        "path": "bundled/index.js",
+        "size": 1899165,
+        "mode": 420
+      },
+      {
+        "path": "dist/account.js",
+        "size": 4673,
+        "mode": 420
+      },
+      {
+        "path": "dist/action.js",
+        "size": 14582,
+        "mode": 420
+      },
+      {
+        "path": "dist/build.js",
+        "size": 6619,
+        "mode": 420
+      },
+      {
+        "path": "dist/bundled/index.js",
+        "size": 2263136,
+        "mode": 420
+      },
+      {
+        "path": "dist/bundled/licenses.txt",
+        "size": 30187,
+        "mode": 420
+      },
+      {
+        "path": "dist/cli.js",
+        "size": 3777,
+        "mode": 420
+      },
+      {
+        "path": "dist/comment.js",
+        "size": 7464,
+        "mode": 420
+      },
+      {
+        "path": "dist/diff.js",
+        "size": 11612,
+        "mode": 420
+      },
+      {
+        "path": "dist/identity.js",
+        "size": 4634,
+        "mode": 420
+      },
+      {
+        "path": "dist/measurement.js",
+        "size": 15509,
+        "mode": 420
+      },
+      {
+        "path": "dist/simulation.js",
+        "size": 18598,
+        "mode": 420
+      },
+      {
+        "path": "dist/threshold.js",
+        "size": 8809,
+        "mode": 420
+      },
+      {
+        "path": "docs/contract-build.md",
+        "size": 5081,
+        "mode": 420
+      },
+      {
+        "path": "docs/fixture-migration.md",
+        "size": 8173,
+        "mode": 420
+      },
+      {
+        "path": "docs/metric-provenance.md",
+        "size": 11340,
+        "mode": 420
+      },
+      {
+        "path": "docs/native-measurement.md",
+        "size": 11173,
+        "mode": 420
+      },
+      {
+        "path": "docs/network-readiness.md",
+        "size": 4989,
+        "mode": 420
+      },
+      {
+        "path": "docs/snapshot-recovery.md",
+        "size": 5442,
+        "mode": 420
+      },
+      {
+        "path": "native/simulation/Cargo.lock",
+        "size": 34201,
+        "mode": 420
+      },
+      {
+        "path": "native/simulation/Cargo.toml",
+        "size": 418,
+        "mode": 420
+      },
+      {
+        "path": "native/simulation/src/main.rs",
+        "size": 6390,
+        "mode": 420
+      },
+      {
+        "path": "package.json",
+        "size": 1437,
+        "mode": 420
+      }
+    ],
+    "entryCount": 25,
+    "bundled": []
+  }
+]
+
+> weighin@1.0.0 prepack
+> npm run build && npm run bundle
+
+
+> weighin@1.0.0 build
+> tsc
+
+
+> weighin@1.0.0 bundle
+> tsc --noEmit && esbuild src/action.ts --bundle --platform=node --target=node20 --outfile=bundled/index.js --format=cjs
+
+
+  bundled/index.js  1.8mb ⚠️
+
+⚡ Done in 251ms

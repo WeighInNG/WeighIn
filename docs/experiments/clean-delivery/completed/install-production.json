@@ -1,0 +1,5 @@
+{
+  "status": 0,
+  "stdout": "\nadded 71 packages, and audited 72 packages in 12s\n\n16 packages are looking for funding\n  run `npm fund` for details\n\n4 vulnerabilities (1 moderate, 3 high)\n\nTo address issues that do not require attention, run:\n  npm audit fix\n\nSome issues need review, and may require choosing\na different dependency.\n\nRun `npm audit` for details.\n",
+  "stderr": ""
+}

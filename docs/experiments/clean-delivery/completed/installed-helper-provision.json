@@ -1,0 +1,5 @@
+{
+  "status": 0,
+  "stdout": "Building protocol-28 simulation helper (Rust 1.95.0, locked dependencies)...\n/tmp/weighin-clean-install-jlBp4N/consumer/node_modules/weighin/native/simulation/target/x86_64-unknown-linux-gnu/release/weighin-simulation\n",
+  "stderr": ""
+}

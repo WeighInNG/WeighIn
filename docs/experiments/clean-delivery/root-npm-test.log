@@ -1,0 +1,1608 @@
+
+> weighin@1.0.0 test
+> npm run build && node --test tests/*.test.cjs
+
+
+> weighin@1.0.0 build
+> tsc
+
+TAP version 13
+# Deployer account confirmed in RPC: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 502 
+# Subtest: existing account is confirmed without calling Friendbot
+ok 1 - existing account is confirmed without calling Friendbot
+  ---
+  duration_ms: 213.694542
+  type: 'test'
+  ...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Deployer account confirmed in RPC: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Subtest: temporary Friendbot 502 recovers with the same address and confirmed inclusion
+ok 2 - temporary Friendbot 502 recovers with the same address and confirmed inclusion
+  ---
+  duration_ms: 107.427219
+  type: 'test'
+  ...
+# Deployer account confirmed in RPC: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Subtest: accepted funding is not repeated while RPC inclusion is delayed
+ok 3 - accepted funding is not repeated while RPC inclusion is delayed
+  ---
+  duration_ms: 50.482201
+  type: 'test'
+  ...
+# Account readiness retry: HTTP 503 
+# Account readiness retry: HTTP 429 
+# Account readiness retry: HTTP 429 
+# Account readiness retry: HTTP 429 
+# Deployer account confirmed in RPC: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Subtest: ambiguous temporary funding response checks account before attempting another funding
+ok 4 - ambiguous temporary funding response checks account before attempting another funding
+  ---
+  duration_ms: 19.309622
+  type: 'test'
+  ...
+# Account readiness retry: HTTP 429 
+# Account readiness retry: HTTP 429 
+# Account readiness retry: HTTP 429 
+# Account readiness retry: HTTP 429 
+# Account readiness retry: HTTP 429 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 429 
+# Account readiness retry: HTTP 429 
+# Account readiness retry: HTTP 429 
+# Account readiness retry: HTTP 429 
+# Account readiness retry: HTTP 429 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 429 
+# Account readiness retry: HTTP 429 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 429 
+# Account readiness retry: HTTP 429 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 429 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 429 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 429 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 429 
+# Account readiness retry: HTTP 429 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 429 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 429 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 429 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 429 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 429 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 429 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 429 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 429 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 429 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 429 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 429 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 429 
+# Account readiness retry: HTTP 429 
+# Account readiness retry: HTTP 429 
+# Account readiness retry: HTTP 429 
+# Account readiness retry: HTTP 429 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 429 
+# Account readiness retry: HTTP 429 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 429 
+# Account readiness retry: HTTP 429 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 429 
+# Account readiness retry: HTTP 429 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 429 
+# Account readiness retry: HTTP 429 
+# Account readiness retry: HTTP 429 
+# Account readiness retry: HTTP 429 
+# Account readiness retry: HTTP 429 
+# Account readiness retry: HTTP 429 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 429 
+# Account readiness retry: HTTP 429 
+# Account readiness retry: HTTP 429 
+# Account readiness retry: HTTP 429 
+# Account readiness retry: HTTP 429 
+# Account readiness retry: HTTP 429 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 429 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 429 
+# Account readiness retry: HTTP 429 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 429 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 500 
+# Subtest: persistent HTTP 429 exhausts the deadline and never succeeds
+ok 5 - persistent HTTP 429 exhausts the deadline and never succeeds
+  ---
+  duration_ms: 240.95732
+  type: 'test'
+  ...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 500 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 500 
+# Account readiness retry: HTTP 500 
+# Account readiness retry: HTTP 500 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 500 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 500 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 500 
+# Account readiness retry: HTTP 500 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 500 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 500 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 500 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 500 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 500 
+# Account readiness retry: HTTP 500 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 500 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 500 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 500 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 500 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 500 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 500 
+# Account readiness retry: HTTP 500 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 500 
+# Account readiness retry: HTTP 500 
+# Account readiness retry: HTTP 500 
+# Account readiness retry: HTTP 500 
+# Account readiness retry: HTTP 500 
+# Account readiness retry: HTTP 500 
+# Account readiness retry: HTTP 500 
+# Account readiness retry: HTTP 500 
+# Account readiness retry: HTTP 500 
+# Account readiness retry: HTTP 500 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 500 
+# Account readiness retry: HTTP 500 
+# Account readiness retry: HTTP 500 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 500 
+# Account readiness retry: HTTP 500 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 500 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 500 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 500 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 500 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 500 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 500 
+# Account readiness retry: HTTP 500 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 500 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 500 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 500 
+# Account readiness retry: HTTP 500 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 500 
+# Account readiness retry: HTTP 500 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 500 
+# Account readiness retry: HTTP 500 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 500 
+# Account readiness retry: HTTP 500 
+# Account readiness retry: HTTP 500 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 500 
+# Account readiness retry: HTTP 500 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 500 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 500 
+# Account readiness retry: HTTP 500 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 502 
+# Subtest: persistent HTTP 500 exhausts the deadline and never succeeds
+ok 6 - persistent HTTP 500 exhausts the deadline and never succeeds
+  ---
+  duration_ms: 221.563179
+  type: 'test'
+  ...
+# Account readiness retry: HTTP 502 
+# Account readiness retry: HTTP 502 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 502 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 502 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 502 
+# Account readiness retry: HTTP 502 
+# Account readiness retry: HTTP 502 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 502 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 502 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 502 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 502 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 502 
+# Account readiness retry: HTTP 502 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 502 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 502 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 502 
+# Account readiness retry: HTTP 502 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 502 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 502 
+# Account readiness retry: HTTP 502 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 502 
+# Account readiness retry: HTTP 502 
+# Account readiness retry: HTTP 502 
+# Account readiness retry: HTTP 502 
+# Account readiness retry: HTTP 502 
+# Account readiness retry: HTTP 502 
+# Account readiness retry: HTTP 502 
+# Account readiness retry: HTTP 502 
+# Account readiness retry: HTTP 502 
+# Account readiness retry: HTTP 502 
+# Account readiness retry: HTTP 502 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 502 
+# Account readiness retry: HTTP 502 
+# Account readiness retry: HTTP 502 
+# Account readiness retry: HTTP 502 
+# Account readiness retry: HTTP 502 
+# Account readiness retry: HTTP 502 
+# Account readiness retry: HTTP 502 
+# Account readiness retry: HTTP 502 
+# Account readiness retry: HTTP 502 
+# Account readiness retry: HTTP 502 
+# Account readiness retry: HTTP 502 
+# Account readiness retry: HTTP 502 
+# Account readiness retry: HTTP 502 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 502 
+# Account readiness retry: HTTP 502 
+# Account readiness retry: HTTP 502 
+# Account readiness retry: HTTP 502 
+# Account readiness retry: HTTP 502 
+# Account readiness retry: HTTP 502 
+# Account readiness retry: HTTP 502 
+# Account readiness retry: HTTP 502 
+# Account readiness retry: HTTP 502 
+# Account readiness retry: HTTP 502 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 502 
+# Account readiness retry: HTTP 502 
+# Account readiness retry: HTTP 502 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 502 
+# Account readiness retry: HTTP 502 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 503 
+# Subtest: persistent HTTP 502 exhausts the deadline and never succeeds
+ok 7 - persistent HTTP 502 exhausts the deadline and never succeeds
+  ---
+  duration_ms: 180.53163
+  type: 'test'
+  ...
+# Account readiness retry: HTTP 503 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 503 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 503 
+# Account readiness retry: HTTP 503 
+# Account readiness retry: HTTP 503 
+# Account readiness retry: HTTP 503 
+# Account readiness retry: HTTP 503 
+# Account readiness retry: HTTP 503 
+# Account readiness retry: HTTP 503 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 503 
+# Account readiness retry: HTTP 503 
+# Account readiness retry: HTTP 503 
+# Account readiness retry: HTTP 503 
+# Account readiness retry: HTTP 503 
+# Account readiness retry: HTTP 503 
+# Account readiness retry: HTTP 503 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 503 
+# Account readiness retry: HTTP 503 
+# Account readiness retry: HTTP 503 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 503 
+# Account readiness retry: HTTP 503 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 503 
+# Account readiness retry: HTTP 503 
+# Account readiness retry: HTTP 503 
+# Account readiness retry: HTTP 503 
+# Account readiness retry: HTTP 503 
+# Account readiness retry: HTTP 503 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 503 
+# Account readiness retry: HTTP 503 
+# Account readiness retry: HTTP 503 
+# Account readiness retry: HTTP 503 
+# Account readiness retry: HTTP 503 
+# Account readiness retry: HTTP 503 
+# Account readiness retry: HTTP 503 
+# Account readiness retry: HTTP 503 
+# Account readiness retry: HTTP 503 
+# Account readiness retry: HTTP 503 
+# Account readiness retry: HTTP 503 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 503 
+# Account readiness retry: HTTP 503 
+# Account readiness retry: HTTP 503 
+# Account readiness retry: HTTP 503 
+# Account readiness retry: HTTP 503 
+# Account readiness retry: HTTP 503 
+# Account readiness retry: HTTP 503 
+# Account readiness retry: HTTP 503 
+# Account readiness retry: HTTP 503 
+# Account readiness retry: HTTP 503 
+# Account readiness retry: HTTP 503 
+# Account readiness retry: HTTP 503 
+# Account readiness retry: HTTP 503 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 503 
+# Account readiness retry: HTTP 503 
+# Account readiness retry: HTTP 503 
+# Account readiness retry: HTTP 503 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 503 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 503 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 503 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 503 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 504 
+# Subtest: persistent HTTP 503 exhausts the deadline and never succeeds
+ok 8 - persistent HTTP 503 exhausts the deadline and never succeeds
+  ---
+  duration_ms: 170.729113
+  type: 'test'
+  ...
+# Account readiness retry: HTTP 504 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 504 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 504 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 504 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 504 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 504 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 504 
+# Account readiness retry: HTTP 504 
+# Account readiness retry: HTTP 504 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 504 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 504 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 504 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 504 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 504 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 504 
+# Account readiness retry: HTTP 504 
+# Account readiness retry: HTTP 504 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 504 
+# Account readiness retry: HTTP 504 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 504 
+# Account readiness retry: HTTP 504 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 504 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 504 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 504 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 504 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 504 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 504 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 504 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 504 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 504 
+# Account readiness retry: HTTP 504 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 504 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 504 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 504 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 504 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 504 
+# Account readiness retry: HTTP 504 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 504 
+# Account readiness retry: HTTP 504 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 504 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 504 
+# Account readiness retry: HTTP 504 
+# Account readiness retry: HTTP 504 
+# Account readiness retry: HTTP 504 
+# Account readiness retry: HTTP 504 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 504 
+# Account readiness retry: HTTP 504 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 504 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 504 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 504 
+# Account readiness retry: HTTP 504 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 504 
+# Account readiness retry: HTTP 504 
+# Account readiness retry: HTTP 504 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 504 
+# Account readiness retry: HTTP 504 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: HTTP 504 
+# Account readiness retry: HTTP 504 
+# Account readiness retry: HTTP 504 
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Subtest: persistent HTTP 504 exhausts the deadline and never succeeds
+ok 9 - persistent HTTP 504 exhausts the deadline and never succeeds
+  ---
+  duration_ms: 167.064749
+  type: 'test'
+  ...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Account readiness retry: transport failure: timed out
+# Subtest: successful funding without RPC inclusion exhausts the deadline
+ok 10 - successful funding without RPC inclusion exhausts the deadline
+  ---
+  duration_ms: 54.717074
+  type: 'test'
+  ...
+# Subtest: permanent funding HTTP 400 fails immediately
+ok 11 - permanent funding HTTP 400 fails immediately
+  ---
+  duration_ms: 4.893066
+  type: 'test'
+  ...
+# Subtest: permanent funding HTTP 401 fails immediately
+ok 12 - permanent funding HTTP 401 fails immediately
+  ---
+  duration_ms: 3.3039
+  type: 'test'
+  ...
+# Subtest: permanent funding HTTP 403 fails immediately
+ok 13 - permanent funding HTTP 403 fails immediately
+  ---
+  duration_ms: 3.484129
+  type: 'test'
+  ...
+# Subtest: permanent funding HTTP 404 fails immediately
+ok 14 - permanent funding HTTP 404 fails immediately
+  ---
+  duration_ms: 3.312952
+  type: 'test'
+  ...
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Account readiness retry: transport failure: fetch failed
+# Deployer account confirmed in RPC: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV
+# Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+# Subtest: transport timeout can recover; persistent transport failure exhausts the deadline
+ok 15 - transport timeout can recover; persistent transport failure exhausts the deadline
+  ---
+  duration_ms: 41.92178
+  type: 'test'
+  ...
+# Subtest: RPC error is not interpreted as account absence and does not trigger funding
+ok 16 - RPC error is not interpreted as account absence and does not trigger funding
+  ---
+  duration_ms: 2.597047
+  type: 'test'
+  ...
+# Subtest: malformed or unrelated account rows are rejected before measurement
+ok 17 - malformed or unrelated account rows are rejected before measurement
+  ---
+  duration_ms: 6.471173
+  type: 'test'
+  ...
+# Subtest: permanent HTTP error with a stalled body fails from headers without retrying
+ok 18 - permanent HTTP error with a stalled body fails from headers without retrying
+  ---
+  duration_ms: 5.725198
+  type: 'test'
+  ...
+# Subtest: identical logical contract, fixture, function, and case pair successfully
+ok 19 - identical logical contract, fixture, function, and case pair successfully
+  ---
+  duration_ms: 36.518767
+  type: 'test'
+  ...
+# Subtest: changed WASM hash and runtime address still pair as the configured benchmark
+ok 20 - changed WASM hash and runtime address still pair as the configured benchmark
+  ---
+  duration_ms: 4.96801
+  type: 'test'
+  ...
+# Subtest: different logical contracts do not pair, even at the same runtime address
+ok 21 - different logical contracts do not pair, even at the same runtime address
+  ---
+  duration_ms: 3.01837
+  type: 'test'
+  ...
+# Subtest: different functions do not pair within the same logical contract
+ok 22 - different functions do not pair within the same logical contract
+  ---
+  duration_ms: 4.78202
+  type: 'test'
+  ...
+# Subtest: multiple cases of one function compare independently even when reordered
+ok 23 - multiple cases of one function compare independently even when reordered
+  ---
+  duration_ms: 7.068347
+  type: 'test'
+  ...
+# Subtest: removed case is reported even if its function still has other cases
+ok 24 - removed case is reported even if its function still has other cases
+  ---
+  duration_ms: 3.78666
+  type: 'test'
+  ...
+# Subtest: new case is reported even if its function already exists
+ok 25 - new case is reported even if its function already exists
+  ---
+  duration_ms: 3.196556
+  type: 'test'
+  ...
+# Subtest: matched benchmark with higher CPU produces regression delta and percentage
+ok 26 - matched benchmark with higher CPU produces regression delta and percentage
+  ---
+  duration_ms: 11.966362
+  type: 'test'
+  ...
+# Subtest: matched benchmark with lower CPU produces improvement delta and percentage
+ok 27 - matched benchmark with lower CPU produces improvement delta and percentage
+  ---
+  duration_ms: 4.020278
+  type: 'test'
+  ...
+# Subtest: multiple contracts remain independent even with the same WASM and address
+ok 28 - multiple contracts remain independent even with the same WASM and address
+  ---
+  duration_ms: 9.465329
+  type: 'test'
+  ...
+# Subtest: identical contract/case names in different fixture files do not pair
+ok 29 - identical contract/case names in different fixture files do not pair
+  ---
+  duration_ms: 2.321373
+  type: 'test'
+  ...
+# Subtest: existing fixture format derives stable identities from the full path and arguments
+ok 30 - existing fixture format derives stable identities from the full path and arguments
+  ---
+  duration_ms: 2.826802
+  type: 'test'
+  ...
+# Subtest: same WASM basename in different directories does not match
+ok 31 - same WASM basename in different directories does not match
+  ---
+  duration_ms: 1.857311
+  type: 'test'
+  ...
+# Subtest: explicit fixture and contract IDs preserve comparison across path changes
+ok 32 - explicit fixture and contract IDs preserve comparison across path changes
+  ---
+  duration_ms: 2.141723
+  type: 'test'
+  ...
+# Subtest: unconfigured cases use arguments, not invocation position
+ok 33 - unconfigured cases use arguments, not invocation position
+  ---
+  duration_ms: 3.594637
+  type: 'test'
+  ...
+# Subtest: argument object key order and type capitalization do not alter default case identity
+ok 34 - argument object key order and type capitalization do not alter default case identity
+  ---
+  duration_ms: 1.773065
+  type: 'test'
+  ...
+# Subtest: duplicate logical contracts or cases are rejected instead of overwritten
+ok 35 - duplicate logical contracts or cases are rejected instead of overwritten
+  ---
+  duration_ms: 5.958558
+  type: 'test'
+  ...
+# Subtest: blank explicit IDs and absolute fallback WASM paths are rejected
+ok 36 - blank explicit IDs and absolute fallback WASM paths are rejected
+  ---
+  duration_ms: 4.646748
+  type: 'test'
+  ...
+# Subtest: legacy measurements pair by runtime address only, and never guess a mixed-schema match
+ok 37 - legacy measurements pair by runtime address only, and never guess a mixed-schema match
+  ---
+  duration_ms: 3.254667
+  type: 'test'
+  ...
+# Subtest: partial version 2 identities fail rather than falling back to runtime address
+ok 38 - partial version 2 identities fail rather than falling back to runtime address
+  ---
+  duration_ms: 2.485258
+  type: 'test'
+  ...
+# Subtest: strict threshold sees a changed-WASM regression and identifies its logical case
+ok 39 - strict threshold sees a changed-WASM regression and identifies its logical case
+  ---
+  duration_ms: 3.938147
+  type: 'test'
+  ...
+# Subtest: reports show logical identity, both runtime addresses, independent cases, and additions/removals
+ok 40 - reports show logical identity, both runtime addresses, independent cases, and additions/removals
+  ---
+  duration_ms: 127.357021
+  type: 'test'
+  ...
+# Built hello-contract: /tmp/weighin-build-test-ayCge2/target/wasm32v1-none/release/hello_contract.wasm; SHA256 ed329ca3ea51d9310bbae0e2b594595dda73ff5b72ace36d1eda4a6391696473; stellar 28.1.0; rustc 1.95.0
+# Built first: /tmp/weighin-build-test-RwiyCh/artifacts/first.wasm; SHA256 ed329ca3ea51d9310bbae0e2b594595dda73ff5b72ace36d1eda4a6391696473; stellar 28.1.0; rustc 1.95.0
+# Built second: /tmp/weighin-build-test-RwiyCh/artifacts/second.wasm; SHA256 ed329ca3ea51d9310bbae0e2b594595dda73ff5b72ace36d1eda4a6391696473; stellar 28.1.0; rustc 1.95.0
+# Built first: /tmp/weighin-build-test-RwiyCh/other/first.wasm; SHA256 ed329ca3ea51d9310bbae0e2b594595dda73ff5b72ace36d1eda4a6391696473; stellar 28.1.0; rustc 1.95.0
+# Built hello-contract: /tmp/weighin-build-test-QTqnZJ/target/wasm32v1-none/release/hello_contract.wasm; SHA256 ed329ca3ea51d9310bbae0e2b594595dda73ff5b72ace36d1eda4a6391696473; stellar 28.1.0; rustc 1.95.0
+# Built hello-contract: /tmp/weighin-build-test-QTqnZJ/target/wasm32-unknown-unknown/release/hello_contract.wasm; SHA256 ed329ca3ea51d9310bbae0e2b594595dda73ff5b72ace36d1eda4a6391696473; stellar 28.1.0; rustc 1.95.0
+# Subtest: modern optimized build replaces stale configured WASM with fresh selected-package output
+ok 41 - modern optimized build replaces stale configured WASM with fresh selected-package output
+  ---
+  duration_ms: 51.184345
+  type: 'test'
+  ...
+# Subtest: multiple workspace contracts select independent packages; repeated package aliases build once
+ok 42 - multiple workspace contracts select independent packages; repeated package aliases build once
+  ---
+  duration_ms: 27.529067
+  type: 'test'
+  ...
+# Subtest: temporary migration alias receives the same fresh WASM from one modern build
+ok 43 - temporary migration alias receives the same fresh WASM from one modern build
+  ---
+  duration_ms: 10.976368
+  type: 'test'
+  ...
+# Subtest: ambiguous Cargo packages are rejected before building
+ok 44 - ambiguous Cargo packages are rejected before building
+  ---
+  duration_ms: 8.176588
+  type: 'test'
+  ...
+# Subtest: unknown artifact basename is rejected before building any package
+ok 45 - unknown artifact basename is rejected before building any package
+  ---
+  duration_ms: 8.461534
+  type: 'test'
+  ...
+# Subtest: build fails explicitly for missing CLI
+ok 46 - build fails explicitly for missing CLI
+  ---
+  duration_ms: 6.357524
+  type: 'test'
+  ...
+# Subtest: build fails explicitly for obsolete Rust
+ok 47 - build fails explicitly for obsolete Rust
+  ---
+  duration_ms: 5.585414
+  type: 'test'
+  ...
+# Subtest: build fails explicitly for obsolete CLI
+ok 48 - build fails explicitly for obsolete CLI
+  ---
+  duration_ms: 5.258049
+  type: 'test'
+  ...
+# Subtest: build fails explicitly for failed build
+ok 49 - build fails explicitly for failed build
+  ---
+  duration_ms: 10.089893
+  type: 'test'
+  ...
+# Subtest: build fails explicitly for missing output despite stale destination
+ok 50 - build fails explicitly for missing output despite stale destination
+  ---
+  duration_ms: 10.366714
+  type: 'test'
+  ...
+# Subtest: build fails explicitly for invalid WASM output
+ok 51 - build fails explicitly for invalid WASM output
+  ---
+  duration_ms: 6.460304
+  type: 'test'
+  ...
+# Subtest: build fails explicitly for optimization skipped
+ok 52 - build fails explicitly for optimization skipped
+  ---
+  duration_ms: 5.993462
+  type: 'test'
+  ...
+# Subtest: every declared contract must have a manifest, even when another one is valid
+ok 53 - every declared contract must have a manifest, even when another one is valid
+  ---
+  duration_ms: 8.121797
+  type: 'test'
+  ...
+# Subtest: configuration rejects unsupported rules and typos even without regressions
+ok 54 - configuration rejects unsupported rules and typos even without regressions
+  ---
+  duration_ms: 39.947353
+  type: 'test'
+  ...
+# Subtest: valid percentage policies handle exact caps and scientific numeric notation
+ok 55 - valid percentage policies handle exact caps and scientific numeric notation
+  ---
+  duration_ms: 16.535878
+  type: 'test'
+  ...
+# Subtest: policy referring to an unpaired function cannot silently pass
+ok 56 - policy referring to an unpaired function cannot silently pass
+  ---
+  duration_ms: 3.909213
+  type: 'test'
+  ...
+# Subtest: empty fixture suites and contracts are rejected; zero argument invocations remain valid
+ok 57 - empty fixture suites and contracts are rejected; zero argument invocations remain valid
+  ---
+  duration_ms: 5.066477
+  type: 'test'
+  ...
+# Subtest: Action exits 1 and reports failure for funding-exhausted
+ok 58 - Action exits 1 and reports failure for funding-exhausted
+  ---
+  duration_ms: 2282.918171
+  type: 'test'
+  ...
+# Subtest: Action exits 1 and reports failure for rpc-unhealthy
+ok 59 - Action exits 1 and reports failure for rpc-unhealthy
+  ---
+  duration_ms: 715.210418
+  type: 'test'
+  ...
+# Subtest: Action exits 1 and reports failure for checkout
+ok 60 - Action exits 1 and reports failure for checkout
+  ---
+  duration_ms: 658.387168
+  type: 'test'
+  ...
+# Subtest: Action exits 1 and reports failure for worktree
+ok 61 - Action exits 1 and reports failure for worktree
+  ---
+  duration_ms: 627.830615
+  type: 'test'
+  ...
+# Subtest: Action exits 1 and reports failure for build
+ok 62 - Action exits 1 and reports failure for build
+  ---
+  duration_ms: 570.682671
+  type: 'test'
+  ...
+# Subtest: Action exits 1 and reports failure for measurement
+ok 63 - Action exits 1 and reports failure for measurement
+  ---
+  duration_ms: 463.72925
+  type: 'test'
+  ...
+# Subtest: Action exits 1 and reports failure for missing-fixtures
+ok 64 - Action exits 1 and reports failure for missing-fixtures
+  ---
+  duration_ms: 467.687657
+  type: 'test'
+  ...
+# Subtest: Action exits 1 and reports failure for schema
+ok 65 - Action exits 1 and reports failure for schema
+  ---
+  duration_ms: 467.799596
+  type: 'test'
+  ...
+# Subtest: Action exits 1 and reports failure for provenance
+ok 66 - Action exits 1 and reports failure for provenance
+  ---
+  duration_ms: 474.652177
+  type: 'test'
+  ...
+# Subtest: Action exits 1 and reports failure for empty
+ok 67 - Action exits 1 and reports failure for empty
+  ---
+  duration_ms: 478.697314
+  type: 'test'
+  ...
+# Subtest: Action exits 1 and reports failure for unmatched
+ok 68 - Action exits 1 and reports failure for unmatched
+  ---
+  duration_ms: 475.817923
+  type: 'test'
+  ...
+# Subtest: Action exits 1 and reports failure for head-measurement
+ok 69 - Action exits 1 and reports failure for head-measurement
+  ---
+  duration_ms: 457.201515
+  type: 'test'
+  ...
+# Subtest: Action exits 1 and reports failure for head-fixtures
+ok 70 - Action exits 1 and reports failure for head-fixtures
+  ---
+  duration_ms: 466.418767
+  type: 'test'
+  ...
+# Subtest: Action exits 1 and reports failure for malformed-fixtures
+ok 71 - Action exits 1 and reports failure for malformed-fixtures
+  ---
+  duration_ms: 472.981713
+  type: 'test'
+  ...
+# Subtest: Action exits 1 and reports failure for empty-fixtures
+ok 72 - Action exits 1 and reports failure for empty-fixtures
+  ---
+  duration_ms: 469.887098
+  type: 'test'
+  ...
+# Subtest: Action fails malformed policy: not valid toml = 
+ok 73 - Action fails malformed policy: not valid toml = 
+  ---
+  duration_ms: 415.968273
+  type: 'test'
+  ...
+# Subtest: Action fails malformed policy: [thresholds.functions.hello]\\ncpu_instructions="typo"
+ok 74 - Action fails malformed policy: [thresholds.functions.hello]\\ncpu_instructions="typo"
+  ---
+  duration_ms: 452.797239
+  type: 'test'
+  ...
+# Subtest: Action fails malformed policy: [thresholds.global]\\nfail_on_any_regression="false"
+ok 75 - Action fails malformed policy: [thresholds.global]\\nfail_on_any_regression="false"
+  ---
+  duration_ms: 433.507169
+  type: 'test'
+  ...
+# Subtest: Action unchanged control and optional absent policy still pass; regression fails
+ok 76 - Action unchanged control and optional absent policy still pass; regression fails
+  ---
+  duration_ms: 1542.766714
+  type: 'test'
+  ...
+# Subtest: direct historical path to stable ID has no match and must not guess by filename
+ok 77 - direct historical path to stable ID has no match and must not guess by filename
+  ---
+  duration_ms: 26.999922
+  type: 'test'
+  ...
+# Subtest: first migration retains the exact historical contract/function/case and adds a distinct stable identity
+ok 78 - first migration retains the exact historical contract/function/case and adds a distinct stable identity
+  ---
+  duration_ms: 17.799967
+  type: 'test'
+  ...
+# Subtest: strict policy still evaluates the matched historical benchmark during migration
+ok 79 - strict policy still evaluates the matched historical benchmark during migration
+  ---
+  duration_ms: 17.269896
+  type: 'test'
+  ...
+# Subtest: second migration can remove the bridge only when BASE already contains the stable ID
+ok 80 - second migration can remove the bridge only when BASE already contains the stable ID
+  ---
+  duration_ms: 8.582444
+  type: 'test'
+  ...
+# Subtest: a changed WASM/address regression remains comparable after bridge retirement
+ok 81 - a changed WASM/address regression remains comparable after bridge retirement
+  ---
+  duration_ms: 6.68883
+  type: 'test'
+  ...
+# Subtest: bridge reports show the matched historical benchmark and the new stable identity explicitly
+ok 82 - bridge reports show the matched historical benchmark and the new stable identity explicitly
+  ---
+  duration_ms: 125.820349
+  type: 'test'
+  ...
+# Subtest: unrelated contracts at the same basename do not gain a migration match
+ok 83 - unrelated contracts at the same basename do not gain a migration match
+  ---
+  duration_ms: 3.64329
+  type: 'test'
+  ...
+# Subtest: schema 3 pairs changed WASM/address and compares genuine measured CPU while retaining unavailable metrics
+ok 84 - schema 3 pairs changed WASM/address and compares genuine measured CPU while retaining unavailable metrics
+  ---
+  duration_ms: 33.277916
+  type: 'test'
+  ...
+# Subtest: unchanged measured CPU passes its policy despite unrelated unavailable metrics
+ok 85 - unchanged measured CPU passes its policy despite unrelated unavailable metrics
+  ---
+  duration_ms: 9.892926
+  type: 'test'
+  ...
+# Subtest: unavailable consumption is not confused with measured zero or improvement
+ok 86 - unavailable consumption is not confused with measured zero or improvement
+  ---
+  duration_ms: 3.996659
+  type: 'test'
+  ...
+# Subtest: per-function, global caps and all-metric policies require availability; ignore explicitly opts out
+ok 87 - per-function, global caps and all-metric policies require availability; ignore explicitly opts out
+  ---
+  duration_ms: 7.772014
+  type: 'test'
+  ...
+# Subtest: zero measured consumption is comparable and available
+ok 88 - zero measured consumption is comparable and available
+  ---
+  duration_ms: 6.313388
+  type: 'test'
+  ...
+# Subtest: negative/nonfinite/missing consumption and false unavailable zero records are rejected
+ok 89 - negative/nonfinite/missing consumption and false unavailable zero records are rejected
+  ---
+  duration_ms: 5.859225
+  type: 'test'
+  ...
+# Subtest: reports retain human identity, measured values, unavailable reasons and snapshot provenance
+ok 90 - reports retain human identity, measured values, unavailable reasons and snapshot provenance
+  ---
+  duration_ms: 124.437893
+  type: 'test'
+  ...
+# Subtest: different protocol/config/helper/network/auth/seed provenance refuses comparison
+ok 91 - different protocol/config/helper/network/auth/seed provenance refuses comparison
+  ---
+  duration_ms: 4.365081
+  type: 'test'
+  ...
+# Subtest: schema 3 requires provenance and never silently compares legacy source semantics
+ok 92 - schema 3 requires provenance and never silently compares legacy source semantics
+  ---
+  duration_ms: 2.722759
+  type: 'test'
+  ...
+# Subtest: fee-only configuration/metadata changes remain visible without invalidating unchanged compute calibration
+ok 93 - fee-only configuration/metadata changes remain visible without invalidating unchanged compute calibration
+  ---
+  duration_ms: 3.488079
+  type: 'test'
+  ...
+# Subtest: all six real cases map the native output and immutable captured caps to production metrics
+ok 94 - all six real cases map the native output and immutable captured caps to production metrics
+  ---
+  duration_ms: 131.496124
+  type: 'test'
+  ...
+# Subtest: promoted consumption agrees directly with parity-accepted raw RPC fields and event XDR
+ok 95 - promoted consumption agrees directly with parity-accepted raw RPC fields and event XDR
+  ---
+  duration_ms: 31.633286
+  type: 'test'
+  ...
+# Subtest: repeated reads and queried absence count distinct footprint keys; live Soroban disk bytes are measured zero
+ok 96 - repeated reads and queried absence count distinct footprint keys; live Soroban disk bytes are measured zero
+  ---
+  duration_ms: 3.76072
+  type: 'test'
+  ...
+# Subtest: no-op write charges a postimage; deletion retains RW footprint but has zero postimage bytes
+ok 97 - no-op write charges a postimage; deletion retains RW footprint but has zero postimage bytes
+  ---
+  duration_ms: 1.37837
+  type: 'test'
+  ...
+# Subtest: diagnostic events are excluded and return bytes contribute with no emitted contract event
+ok 98 - diagnostic events are excluded and return bytes contribute with no emitted contract event
+  ---
+  duration_ms: 1.652528
+  type: 'test'
+  ...
+# Subtest: schema 4 control compares all eight measured fields and explicitly retains three unavailable metrics
+ok 99 - schema 4 control compares all eight measured fields and explicitly retains three unavailable metrics
+  ---
+  duration_ms: 21.2647
+  type: 'test'
+  ...
+# Subtest: measured event count without independent network cap can fail a configured regression policy
+ok 100 - measured event count without independent network cap can fail a configured regression policy
+  ---
+  duration_ms: 15.695409
+  type: 'test'
+  ...
+# Subtest: resource cap/source/availability changes refuse schema 4 comparison
+ok 101 - resource cap/source/availability changes refuse schema 4 comparison
+  ---
+  duration_ms: 21.700373
+  type: 'test'
+  ...
+# Subtest: missing cap provenance/resource hash and schema 3 migration fail explicitly, including unmatched records
+ok 102 - missing cap provenance/resource hash and schema 3 migration fail explicitly, including unmatched records
+  ---
+  duration_ms: 14.813009
+  type: 'test'
+  ...
+# Subtest: schema 4 report distinguishes footprint, disk bytes, events plus return, no cap and unavailable metrics
+ok 103 - schema 4 report distinguishes footprint, disk bytes, events plus return, no cap and unavailable metrics
+  ---
+  duration_ms: 163.351393
+  type: 'test'
+  ...
+# Subtest: startup fails closed for unhealthy RPC
+ok 104 - startup fails closed for unhealthy RPC
+  ---
+  duration_ms: 1316.118396
+  type: 'test'
+  ...
+# Subtest: startup fails closed for metadata-only RPC
+ok 105 - startup fails closed for metadata-only RPC
+  ---
+  duration_ms: 1111.235024
+  type: 'test'
+  ...
+# Subtest: healthy RPC with persistent Friendbot failure does not report network readiness
+ok 106 - healthy RPC with persistent Friendbot failure does not report network readiness
+  ---
+  duration_ms: 919.462196
+  type: 'test'
+  ...
+# Subtest: startup reports readiness only after healthy RPC and account inclusion
+ok 107 - startup reports readiness only after healthy RPC and account inclusion
+  ---
+  duration_ms: 843.612329
+  type: 'test'
+  ...
+# Subtest: package main loads the existing measurement API
+ok 108 - package main loads the existing measurement API
+  ---
+  duration_ms: 760.739046
+  type: 'test'
+  ...
+# Subtest: declared CLI entry runs and fails clearly without producing results for missing fixtures
+ok 109 - declared CLI entry runs and fails clearly without producing results for missing fixtures
+  ---
+  duration_ms: 1067.684809
+  type: 'test'
+  ...
+# Subtest: five unchanged measured samples produce stable min/max/range and keep unsupported values null
+ok 110 - five unchanged measured samples produce stable min/max/range and keep unsupported values null
+  ---
+  duration_ms: 78.538763
+  type: 'test'
+  ...
+# Subtest: a CPU increase is preserved as variance and a regression, rather than averaged away
+ok 111 - a CPU increase is preserved as variance and a regression, rather than averaged away
+  ---
+  duration_ms: 61.640943
+  type: 'test'
+  ...
+# Subtest: a decrease still marks repeatability variation even when no metric regresses
+ok 112 - a decrease still marks repeatability variation even when no metric regresses
+  ---
+  duration_ms: 48.636483
+  type: 'test'
+  ...
+# Subtest: different WASM with stable consumption is separately identified as artifact variation
+ok 113 - different WASM with stable consumption is separately identified as artifact variation
+  ---
+  duration_ms: 32.913647
+  type: 'test'
+  ...
+# Subtest: four samples, duplicate run numbers, changed source and nonempty target cannot prove five clean runs
+ok 114 - four samples, duplicate run numbers, changed source and nonempty target cannot prove five clean runs
+  ---
+  duration_ms: 47.462915
+  type: 'test'
+  ...
+# Subtest: measurement/build hash disagreement and changed benchmark cases fail instead of disappearing from the series
+ok 115 - measurement/build hash disagreement and changed benchmark cases fail instead of disappearing from the series
+  ---
+  duration_ms: 37.195124
+  type: 'test'
+  ...
+# Subtest: different compute calibration fails and full-config metadata drift is recorded independently of metric stability
+ok 116 - different compute calibration fails and full-config metadata drift is recorded independently of metric stability
+  ---
+  duration_ms: 52.811699
+  type: 'test'
+  ...
+# Subtest: saved live evidence contains five separate empty-target builds of the exact saved source
+ok 117 - saved live evidence contains five separate empty-target builds of the exact saved source
+  ---
+  duration_ms: 103.950733
+  type: 'test'
+  ...
+# Subtest: all 35 saved measurements link to real native inputs and matching raw RPC simulation values
+ok 118 - all 35 saved measurements link to real native inputs and matching raw RPC simulation values
+  ---
+  duration_ms: 118.440269
+  type: 'test'
+  ...
+# Subtest: versioned transport accepts captured metered values and separate budget
+ok 119 - versioned transport accepts captured metered values and separate budget
+  ---
+  duration_ms: 55.114076
+  type: 'test'
+  ...
+# Subtest: transport rejects missing/negative/nonfinite/string meters and unknown schema/version
+ok 120 - transport rejects missing/negative/nonfinite/string meters and unknown schema/version
+  ---
+  duration_ms: 33.875899
+  type: 'test'
+  ...
+# Subtest: transport rejects malformed JSON and resource fields inconsistent with XDR
+ok 121 - transport rejects malformed JSON and resource fields inconsistent with XDR
+  ---
+  duration_ms: 10.758431
+  type: 'test'
+  ...
+# Subtest: helper exit failures do not produce successful or zero benchmark values
+ok 122 - helper exit failures do not produce successful or zero benchmark values
+  ---
+  duration_ms: 5.87311
+  type: 'test'
+  ...
+# Subtest: helper diagnostic events cannot be accepted as charged contract events
+ok 123 - helper diagnostic events cannot be accepted as charged contract events
+  ---
+  duration_ms: 10.818643
+  type: 'test'
+  ...
+# Subtest: missing helper is an explicit provisioning failure
+ok 124 - missing helper is an explicit provisioning failure
+  ---
+  duration_ms: 2.328663
+  type: 'test'
+  ...
+# Deployer account confirmed in RPC: GAGQVAJOZANKK4E45XHQCTYNWADQCFOG4KV5RUZTSEH2PVW3BHE5LK6U
+# WASM: /tmp/weighin-simulation-test-HZxbtj/contract.wasm
+# WASM SHA256: 3b6130d18e134ad31a9b5ffcedefb4b74b1debcaef9454986106ffe956afe7cc
+# Contract ID: CC6YOHAENV324PEHLQ5RMN4CJNK7FK73NRJD2UNQRKQ4EV55FYVY2YAZ
+# Already deployed at CC6YOHAENV324PEHLQ5RMN4CJNK7FK73NRJD2UNQRKQ4EV55FYVY2YAZ
+# Simulating hello...
+# Deployer account confirmed in RPC: GAOKHY4EHZ7YNQKO4FPT4GZZQ5MDDCNOCJFZOIKPPOWWUNBJATOPQFHA
+# WASM: /tmp/weighin-simulation-test-JqWIo4/contract.wasm
+# WASM SHA256: 3b6130d18e134ad31a9b5ffcedefb4b74b1debcaef9454986106ffe956afe7cc
+# Contract ID: CAY3LDNLTEMMXEQ7AC3UWGU6MQPYGWSUJPMH73XJPYHZ2UA5YETRHW7Z
+# Already deployed at CAY3LDNLTEMMXEQ7AC3UWGU6MQPYGWSUJPMH73XJPYHZ2UA5YETRHW7Z
+# Simulating hello...
+# Deployer account confirmed in RPC: GAMORMKLKI5BDUEX4N6IC4QMNUCM4LAKF5HEGL5KBWMVUERSZTKKK3QV
+# WASM: /tmp/weighin-simulation-test-uHgcOt/contract.wasm
+# WASM SHA256: 3b6130d18e134ad31a9b5ffcedefb4b74b1debcaef9454986106ffe956afe7cc
+# Contract ID: CBRJ7CCXH5F6Z7DEAIJXOHQWBFKGVISF736DSAXLDOLH6NSIJYMDF4WG
+# Already deployed at CBRJ7CCXH5F6Z7DEAIJXOHQWBFKGVISF736DSAXLDOLH6NSIJYMDF4WG
+# Simulating hello...
+# Deployer account confirmed in RPC: GDQLXOHQV2MKG56R27C6NJ3CBEW3MSHELSICJ3OCO3ZQ3HYBZA7LLYV3
+# WASM: /tmp/weighin-simulation-test-QrDVcF/contract.wasm
+# WASM SHA256: 3b6130d18e134ad31a9b5ffcedefb4b74b1debcaef9454986106ffe956afe7cc
+# Contract ID: CC3RHHQCUOJMQF7UBXNBB7NGCY42KECRAEDQGNLZQ725ZN5ZG7GTTBG7
+# Already deployed at CC3RHHQCUOJMQF7UBXNBB7NGCY42KECRAEDQGNLZQ725ZN5ZG7GTTBG7
+# Simulating hello...
+# Deployer account confirmed in RPC: GDEJ2FE7G5OWFDFVNIZ6IKQXXFRUVQJXRP7PLNMCOCAVIXU3UFBI4AO3
+# WASM: /tmp/weighin-simulation-test-CC5J23/contract.wasm
+# WASM SHA256: 3b6130d18e134ad31a9b5ffcedefb4b74b1debcaef9454986106ffe956afe7cc
+# Contract ID: CCUQP4D7NGEIVDQ66LP7W6BDW2MU3EAH5KXO5QR253UO525UG7RWB2LJ
+# Already deployed at CCUQP4D7NGEIVDQ66LP7W6BDW2MU3EAH5KXO5QR253UO525UG7RWB2LJ
+# Simulating hello...
+# Deployer account confirmed in RPC: GCS5TY7H2OWF65PBXHR6CVGJNHL6KC2Y3J2LHBLOT7KJ75RK2I6QY3WV
+# WASM: /tmp/weighin-simulation-test-3CnQhP/contract.wasm
+# WASM SHA256: 3b6130d18e134ad31a9b5ffcedefb4b74b1debcaef9454986106ffe956afe7cc
+# Contract ID: CCJ32I7NBQ5OP7NEUG3QU7UGR3MAIND2D35B6C7WJILRSVBWL7LEKKOO
+# Already deployed at CCJ32I7NBQ5OP7NEUG3QU7UGR3MAIND2D35B6C7WJILRSVBWL7LEKKOO
+# Simulating hello...
+# Subtest: the live unchanged control has identical transaction resource fields
+ok 125 - the live unchanged control has identical transaction resource fields
+  ---
+  duration_ms: 10.616593
+  type: 'test'
+  ...
+# Subtest: the same live invocation has a different instruction budget when leeway changes
+ok 126 - the same live invocation has a different instruction budget when leeway changes
+  ---
+  duration_ms: 10.758261
+  type: 'test'
+  ...
+# Subtest: base: captured successful RPC response survives SDK parsing without compute consumption
+ok 127 - base: captured successful RPC response survives SDK parsing without compute consumption
+  ---
+  duration_ms: 3.333371
+  type: 'test'
+  ...
+# Subtest: head: captured successful RPC response survives SDK parsing without compute consumption
+ok 128 - head: captured successful RPC response survives SDK parsing without compute consumption
+  ---
+  duration_ms: 3.25991
+  type: 'test'
+  ...
+# Subtest: captured raw and SDK parsed IO resource values agree exactly
+ok 129 - captured raw and SDK parsed IO resource values agree exactly
+  ---
+  duration_ms: 3.222961
+  type: 'test'
+  ...
+# Subtest: base: missing native helper fails explicitly and produces no benchmark
+ok 130 - base: missing native helper fails explicitly and produces no benchmark
+  ---
+  duration_ms: 302.647898
+  type: 'test'
+  ...
+# Subtest: head: missing native helper fails explicitly and produces no benchmark
+ok 131 - head: missing native helper fails explicitly and produces no benchmark
+  ---
+  duration_ms: 30.913295
+  type: 'test'
+  ...
+# Subtest: a larger transaction instruction budget cannot masquerade as measured CPU
+ok 132 - a larger transaction instruction budget cannot masquerade as measured CPU
+  ---
+  duration_ms: 26.253507
+  type: 'test'
+  ...
+# Subtest: legacy cost values are not trusted as an unverified consumption source
+ok 133 - legacy cost values are not trusted as an unverified consumption source
+  ---
+  duration_ms: 23.298856
+  type: 'test'
+  ...
+# Subtest: simulation errors retain their original failure reason
+ok 134 - simulation errors retain their original failure reason
+  ---
+  duration_ms: 21.8406
+  type: 'test'
+  ...
+# Subtest: a response without transaction data fails before attempting metric extraction
+ok 135 - a response without transaction data fails before attempting metric extraction
+  ---
+  duration_ms: 17.518437
+  type: 'test'
+  ...
+# Subtest: observed ledger-read failure recovers by re-simulating and returning only the new snapshot
+ok 136 - observed ledger-read failure recovers by re-simulating and returning only the new snapshot
+  ---
+  duration_ms: 110.071466
+  type: 'test'
+  ...
+# Subtest: three transient read failures recover on the fourth complete capture with bounded delays
+ok 137 - three transient read failures recover on the fourth complete capture with bounded delays
+  ---
+  duration_ms: 30.119988
+  type: 'test'
+  ...
+# Subtest: persistent observed errors exhaust retries and return no successful or zero-valued measurement
+ok 138 - persistent observed errors exhaust retries and return no successful or zero-valued measurement
+  ---
+  duration_ms: 14.909507
+  type: 'test'
+  ...
+# Subtest: a failure after a successful first batch discards its rows before the next full capture
+ok 139 - a failure after a successful first batch discards its rows before the next full capture
+  ---
+  duration_ms: 642.579896
+  type: 'test'
+  ...
+# Subtest: unrelated RPC codes/messages and HTTP 404 fail immediately without recovery
+ok 140 - unrelated RPC codes/messages and HTTP 404 fail immediately without recovery
+  ---
+  duration_ms: 11.316526
+  type: 'test'
+  ...
+# Subtest: the same error from simulation or ledger-header RPC is not treated as a snapshot-read failure
+ok 141 - the same error from simulation or ledger-header RPC is not treated as a snapshot-read failure
+  ---
+  duration_ms: 8.849558
+  type: 'test'
+  ...
+# Subtest: malformed ledger rows, header disagreement and native parity disagreement still fail closed
+ok 142 - malformed ledger rows, header disagreement and native parity disagreement still fail closed
+  ---
+  duration_ms: 24.899209
+  type: 'test'
+  ...
+# Subtest: ledger drift still recaptures, and transient failures do not bypass the fresh-ledger guard
+ok 143 - ledger drift still recaptures, and transient failures do not bypass the fresh-ledger guard
+  ---
+  duration_ms: 16.922809
+  type: 'test'
+  ...
+# Subtest: transient errors cannot extend the existing 30-capture budget
+ok 144 - transient errors cannot extend the existing 30-capture budget
+  ---
+  duration_ms: 69.844455
+  type: 'test'
+  ...
+# Subtest: recovery does not permit a subsequent native/RPC parity disagreement
+ok 145 - recovery does not permit a subsequent native/RPC parity disagreement
+  ---
+  duration_ms: 12.357755
+  type: 'test'
+  ...
+1..145
+# tests 145
+# suites 0
+# pass 145
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 12956.08789

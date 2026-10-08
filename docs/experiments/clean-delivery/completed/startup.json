@@ -1,0 +1,5 @@
+{
+  "status": 0,
+  "stdout": "Checking if container 'stellar-quickstart' is already running...\nStarting stellar/quickstart@sha256:4c8bad1ef7341205b898f83d9489321da80c7bd74183100fc8e2a39a5938c7d5 in local standalone mode...\ne92ec9359a26b55c998623702e9ff09e8bfca6c5c2871c2899fe760d6d7f2342\nWaiting for RPC health, Friendbot funding and RPC account inclusion at http://localhost:8000/rpc...\nRPC reports healthy; checking real Friendbot funding and RPC account inclusion...\nFunding deployer account: GDR7QG2XOOTBMMQCJATH2AIERTA6BCXWWCQQOH3EM5M5SPXOMYYGYRQ4 via friendbot...\nFunding deployer account: GDR7QG2XOOTBMMQCJATH2AIERTA6BCXWWCQQOH3EM5M5SPXOMYYGYRQ4 via friendbot...\nFunding deployer account: GDR7QG2XOOTBMMQCJATH2AIERTA6BCXWWCQQOH3EM5M5SPXOMYYGYRQ4 via friendbot...\nDeployer account confirmed in RPC: GDR7QG2XOOTBMMQCJATH2AIERTA6BCXWWCQQOH3EM5M5SPXOMYYGYRQ4\nStellar Quickstart local network is ready for account funding and RPC reads.\n",
+  "stderr": "Account readiness retry: HTTP 502 Bad Gateway\nAccount readiness retry: HTTP 502 Bad Gateway\n"
+}

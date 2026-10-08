@@ -1,0 +1,5 @@
+{
+  "status": 0,
+  "stdout": "unbridged: real source build / live Action in progress\nunbridged: real source build / live Action in progress\nunbridged: real source build / live Action in progress\nunbridged: expected exit 1, actual 1; matched contracts 0\nbridge: expected exit 0, actual 0; matched contracts 1\nretirement: expected exit 0, actual 0; matched contracts 1\nregression: expected exit 1, actual 1; matched contracts 1\n",
+  "stderr": ""
+}

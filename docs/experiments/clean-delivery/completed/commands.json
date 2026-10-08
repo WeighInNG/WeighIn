@@ -1,0 +1,217 @@
+[
+  {
+    "label": "clone",
+    "file": "git",
+    "args": [
+      "clone",
+      "--no-hardlinks",
+      "/home/mxr/Documents/localRepo/Weighin",
+      "/tmp/weighin-clean-install-jlBp4N/checkout"
+    ],
+    "status": 0
+  },
+  {
+    "label": "checkout-sha",
+    "file": "git",
+    "args": [
+      "rev-parse",
+      "HEAD"
+    ],
+    "status": 0
+  },
+  {
+    "label": "ci",
+    "file": "npm",
+    "args": [
+      "ci"
+    ],
+    "status": 0
+  },
+  {
+    "label": "test",
+    "file": "npm",
+    "args": [
+      "test"
+    ],
+    "status": 0
+  },
+  {
+    "label": "native-tests",
+    "file": "npm",
+    "args": [
+      "run",
+      "test:native"
+    ],
+    "status": 0
+  },
+  {
+    "label": "build",
+    "file": "npm",
+    "args": [
+      "run",
+      "build"
+    ],
+    "status": 0
+  },
+  {
+    "label": "bundle",
+    "file": "npm",
+    "args": [
+      "run",
+      "bundle"
+    ],
+    "status": 0
+  },
+  {
+    "label": "bundle-consistency",
+    "file": "git",
+    "args": [
+      "diff",
+      "--exit-code",
+      "--",
+      "bundled/index.js"
+    ],
+    "status": 0
+  },
+  {
+    "label": "pack",
+    "file": "npm",
+    "args": [
+      "pack",
+      "--json"
+    ],
+    "status": 0
+  },
+  {
+    "label": "install-production",
+    "file": "npm",
+    "args": [
+      "install",
+      "--omit=dev",
+      "/tmp/weighin-clean-install-jlBp4N/checkout/weighin-1.0.0.tgz"
+    ],
+    "status": 0
+  },
+  {
+    "label": "module-entry",
+    "file": "/home/mxr/.nvm/versions/node/v22.23.2/bin/node",
+    "args": [
+      "-e",
+      "const assert=require('node:assert/strict'); assert.equal(typeof require('weighin').runMeasurement,'function'); console.log('Installed measurement API loads');"
+    ],
+    "status": 0
+  },
+  {
+    "label": "cli-missing-fixture",
+    "file": "/tmp/weighin-clean-install-jlBp4N/consumer/node_modules/.bin/weighin",
+    "args": [
+      "/tmp/weighin-clean-install-jlBp4N/consumer/missing.json",
+      "--output",
+      "/tmp/weighin-clean-install-jlBp4N/consumer/absent.json"
+    ],
+    "status": 1
+  },
+  {
+    "label": "installed-helper-provision",
+    "file": "/home/mxr/.nvm/versions/node/v22.23.2/bin/node",
+    "args": [
+      "-e",
+      "require('weighin/dist/simulation').resolveSimulationHelper().then(p=>console.log(p)).catch(e=>{console.error(e);process.exitCode=1})"
+    ],
+    "status": 0
+  },
+  {
+    "label": "installed-helper-replay",
+    "file": "/tmp/weighin-clean-install-jlBp4N/consumer/node_modules/weighin/native/simulation/target/x86_64-unknown-linux-gnu/release/weighin-simulation",
+    "args": [],
+    "status": 0
+  },
+  {
+    "label": "contract-build",
+    "file": "/home/mxr/.nvm/versions/node/v22.23.2/bin/node",
+    "args": [
+      "-e",
+      "require('./dist/build').buildContracts('weighin-fixtures.json','1.95.0').catch(e=>{console.error(e);process.exitCode=1})"
+    ],
+    "status": 0
+  },
+  {
+    "label": "existing-sidecar",
+    "file": "docker",
+    "args": [
+      "ps",
+      "-a",
+      "-q",
+      "-f",
+      "name=^/stellar-quickstart$"
+    ],
+    "status": 0
+  },
+  {
+    "label": "startup",
+    "file": "bash",
+    "args": [
+      "scripts/start-local-network.sh"
+    ],
+    "status": 0
+  },
+  {
+    "label": "container-inspect",
+    "file": "docker",
+    "args": [
+      "inspect",
+      "stellar-quickstart"
+    ],
+    "status": 0
+  },
+  {
+    "label": "installed-cli-live",
+    "file": "/tmp/weighin-clean-install-jlBp4N/consumer/node_modules/.bin/weighin",
+    "args": [
+      "weighin-fixtures.json",
+      "--rpc-url",
+      "http://localhost:8000/rpc",
+      "--output",
+      "/home/mxr/Documents/localRepo/Weighin/docs/experiments/clean-delivery/completed/installed-cli/results.json"
+    ],
+    "status": 0
+  },
+  {
+    "label": "historical-migration",
+    "file": "/home/mxr/.nvm/versions/node/v22.23.2/bin/node",
+    "args": [
+      "tests/experiments/verify-fixture-migration.cjs",
+      "/home/mxr/Documents/localRepo/Weighin/docs/experiments/clean-delivery/completed/historical-migration"
+    ],
+    "status": 0
+  },
+  {
+    "label": "network-logs",
+    "file": "docker",
+    "args": [
+      "logs",
+      "--tail",
+      "100",
+      "stellar-quickstart"
+    ],
+    "status": 0
+  },
+  {
+    "label": "network-stop",
+    "file": "docker",
+    "args": [
+      "stop",
+      "stellar-quickstart"
+    ],
+    "status": 0
+  },
+  {
+    "label": "final-checkout-status",
+    "file": "git",
+    "args": [
+      "status",
+      "--short"
+    ],
+    "status": 0
+  }
+]

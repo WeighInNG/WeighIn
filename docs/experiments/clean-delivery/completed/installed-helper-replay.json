@@ -1,0 +1,5 @@
+{
+  "status": 0,
+  "stdout": "{\"auth_mode\":\"recording(true,true)\",\"contract_events_xdr\":[],\"cpu_instructions_consumed\":266842,\"cpu_limit\":400000000,\"disk_read_bytes\":0,\"host_features\":[\"recording_mode\",\"testutils\"],\"instruction_budget\":316842,\"memory_bytes_consumed\":1123942,\"memory_limit\":41943040,\"modified_entries\":0,\"protocol\":28,\"read_only_keys\":[\"AAAABgAAAAE7hPiLoSqT43eLlbZjwF+pYxZixw48WrL1Ba1sSsxhvAAAABQAAAAB\",\"AAAAB3GLoYN4otlOx78MdbOBPH0LtbZb6y+0xEWzpHJuzVZo\"],\"read_write_keys\":[],\"retval_xdr\":\"AAAAEAAAAAEAAAACAAAADwAAAAVIZWxsbwAAAAAAAA8AAAAFd29ybGQAAAA=\",\"schema_version\":1,\"source\":\"soroban-simulation\",\"source_version\":\"28.0.1\",\"transaction_data_xdr\":\"AAAAAAAAAAIAAAAGAAAAATuE+IuhKpPjd4uVtmPAX6ljFmLHDjxasvUFrWxKzGG8AAAAFAAAAAEAAAAHcYuhg3ii2U7Hvwx1s4E8fQu1tlvrL7TERbOkcm7NVmgAAAAAAATVqgAAAAAAAAAAAAAAAAAAMic=\",\"write_bytes\":0}\n",
+  "stderr": ""
+}

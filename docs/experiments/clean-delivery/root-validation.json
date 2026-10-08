@@ -1,0 +1,37 @@
+[
+  {
+    "command": "npm ci",
+    "status": 0,
+    "log": "root-npm-ci.log"
+  },
+  {
+    "command": "npm test",
+    "status": 0,
+    "log": "root-npm-test.log"
+  },
+  {
+    "command": "npm run test:native",
+    "status": 0,
+    "log": "root-npm-run-testnative.log"
+  },
+  {
+    "command": "npm run build",
+    "status": 0,
+    "log": "root-npm-run-build.log"
+  },
+  {
+    "command": "npm run bundle",
+    "status": 0,
+    "log": "root-npm-run-bundle.log"
+  },
+  {
+    "command": "npm pack --dry-run --json",
+    "status": 0,
+    "log": "root-npm-pack---dry-run---json.log"
+  },
+  {
+    "command": "git diff --check",
+    "status": 0,
+    "log": "root-git-diff---check.log"
+  }
+]

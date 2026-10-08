@@ -1,0 +1,6 @@
+{
+  "packed_bundle_matches_checkout": true,
+  "packed_native_source_matches_checkout": true,
+  "packed_native_lock_matches_checkout": true,
+  "production_typescript_present": false
+}
