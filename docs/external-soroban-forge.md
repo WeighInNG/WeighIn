@@ -133,7 +133,8 @@ PR to obtain a real hosted unchanged-contract control. Finally open a clearly
 temporary intentional-regression PR and retain the failed threshold job and
 report. Close that regression PR without merging the artificial reads.
 
-No publication, external merge, maintainer message, or Drips submission occurred.
+No external publication, external merge or maintainer message occurred in this
+recorded experiment.
 This single empty-index view does not prove funded settlement, populated
 pagination, token/auth workflows, public-network costs, or all-contract coverage.
 It does not complete Soroban Forge issues #338/#348 or add stateful-fixture support.

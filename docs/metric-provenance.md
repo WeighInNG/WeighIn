@@ -85,7 +85,8 @@ full config hashes and do not change the resource-limit identity.
 
 Snapshots are per invocation. Live state and ledger-sensitive behavior can still
 differ across revisions. Random/auth/archived compatibility limitations remain.
-This stage does not establish clean-build or live five-run repeatability.
+This source audit alone does not establish clean-build or live repeatability;
+see the separate [repeatability experiment](repeatability.md).
 
 ## Explicit schema migration
 
@@ -173,6 +174,8 @@ CLI exits 0 and emits six schema-4 measurements with SDK 28.0.0 on the real netw
 [operational/test failures](experiments/metric-provenance/validation-failures.json)
 record failed attempts and recovery. The proof network was stopped afterward.
 
-The source/build/data are local evidence, not public workflow runs. Clean/live
-repeatability, external-project demonstration, public CI and historical target-
-path fixture migration are outstanding. No Drips approval claim is made.
+These original source/build/data records are local evidence. Subsequent
+[repeatability](repeatability.md), [fixture migration](fixture-migration.md),
+[local external-project evidence](external-soroban-forge.md) and
+[hosted comparison proof](EVIDENCE.md) are recorded separately with their own
+producer identities. They do not change the provenance of these earlier records.

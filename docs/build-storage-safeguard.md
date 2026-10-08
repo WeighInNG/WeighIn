@@ -96,9 +96,9 @@ confined to the optimizer interval. Provide healthy storage throughout the run.
 Custom/prebuilt modes remain caller-owned. See [build policy](contract-build.md)
 and [storage investigation](optimizer-repeatability.md).
 
-The configured local flagship path is proven. This change and its external proof
-have not been pushed; hosted validation of the safeguard and public external
-control/regression/threshold runs remain pending. The prepared external workflow
-must pin the reviewed published safeguard revision before delivery. General
-stateful fixture sequences, public-network equivalence, documentation truth
-alignment, and the final appeal review remain separate work.
+The safeguard is included in public main `eaeea48ca77d1ff74c3a4cdee5f158a44fb4819e`.
+[Hosted internal control/regression/threshold verification](EVIDENCE.md) passed
+with the production builder. The local external proof above remains local;
+no hosted external-repository proof is claimed. The prepared external workflow
+must pin a reviewed published engine revision before delivery. Stateful fixture
+sequences and public-network equivalence remain unsupported.

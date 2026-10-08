@@ -99,5 +99,6 @@ not guarantee reproducing the transient error itself.
 
 This handles one observed failure shape, not all network errors. The underlying
 RPC/captive-core issue is not repaired. Unknown errors and persistent failures
-continue to fail closed. Linux x64/protocol-28 fixture scope remains. Public CI,
-historical fixture identity migration and external-project proof are still pending.
+continue to fail closed. Linux x64/protocol-28 fixture scope remains. Subsequent [hosted CI](EVIDENCE.md), [fixture migration](fixture-migration.md) and
+[local external-project proof](external-soroban-forge.md) are separate evidence;
+hosted external-project CI remains unverified.

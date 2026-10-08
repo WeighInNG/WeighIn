@@ -1,0 +1,22 @@
+{
+  "producer_sha": "d0959ab25ccf827b2955c1cd0cda53e477a3c8f4",
+  "node": "v24.21.0",
+  "stellar": "stellar 28.1.0 (c0f4d0da891bbf214c08b8c5035ae6db80e9a3bd)\nstellar-xdr 28.0.0 (d0f1330e43c3a2c0c616da30698b24140d4eea72)\nxdr (9c9c145953e80990d6ff1ae3a6a973a0ce6d0694)",
+  "rust": "rustc 1.95.0 (59807616e 2026-04-14)",
+  "sdk": "28.0.0",
+  "target": "wasm32v1-none",
+  "quickstart_image": "stellar/quickstart@sha256:4c8bad1ef7341205b898f83d9489321da80c7bd74183100fc8e2a39a5938c7d5",
+  "bundle_sha256": "104be8ef72ebc176986f577a4479d040be7684f4e1a9f5a4e0928eeee32591a0",
+  "helper_sha256": "e7785adc8b991dfd83dc28b12bde717384dc76229cc53c19971db7867db313ea",
+  "reused_external_cargo_cache": false,
+  "shared_base_head_cargo_cache": true,
+  "native_helper_prebuilt_from_repository_source": true,
+  "temporary_git_history_only": true,
+  "producer_files": {
+    "tests/experiments/verify-flagship-ci.cjs": "916a48ae01b63361abe899a85da0c58a516571de14d9ece6b7e47aa6fc906e71",
+    "tests/experiments/flagship-analysis.cjs": "997836912e0fb7ea0ce244f9d40768d592106b4184e561cc217f70bfcfe1f5c3",
+    "tests/support/record-migration-io.cjs": "e4e145f0189e32b87b30659cfd176d813a93f4b8a3f7b7eef1747a3aaae62a3a",
+    ".github/workflows/flagship-proof.yml": "0336f54bd29fbed66161638dd6dbaf60bf0ff4200b59168bfc1fb61564106418"
+  },
+  "github_run_url": "https://github.com/WeighInNG/WeighIn/actions/runs/37777040210"
+}

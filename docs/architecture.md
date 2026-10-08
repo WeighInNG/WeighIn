@@ -1,52 +1,150 @@
 # Architecture
 
-WeighIn is a TypeScript GitHub Action and CLI for comparing configured Soroban
-benchmarks between a base revision and HEAD. It builds each revision, executes
-the same fixture cases against a local Soroban RPC, records resource metrics,
-compares logical benchmark identities, evaluates policy, and writes a Markdown
-report. The Action exits unsuccessfully when a required comparison fails or a
-configured threshold is violated.
+WeighIn consists of a TypeScript GitHub Action, a measurement CLI/API, and a
+protocol-matched Rust simulation helper. The Action compares configured
+benchmarks between a fetched BASE revision and its existing HEAD checkout.
+The CLI only measures existing WASMs. [Evidence](EVIDENCE.md) records tested
+behavior; [limitations](KNOWN_LIMITATIONS.md) defines the supported scope.
 
-## Benchmark lifecycle
+## Entry point and configuration
 
-1. `src/action.ts` resolves the configured fixture and policy from the HEAD
-   workspace and checks that the supplied RPC is healthy.
-2. The HEAD revision is built and measured. The base ref is fetched into a
-   detached Git worktree, then built and measured using the same fixture
-   declaration and RPC.
-3. `src/build.ts` selects Cargo packages from fixture WASM paths and builds
-   them with the optimized Stellar CLI contract build command. The default
-   target is `wasm32v1-none`. An explicit custom build command or prebuilt-WASM
-   mode can be selected through Action inputs.
-4. `src/measurement.ts` deploys each selected WASM and invokes configured
-   functions through Soroban RPC simulation and the native snapshot-measurement
-   helper. Runtime contract IDs and WASM hashes describe each deployment and
-   artifact; they do not define whether two benchmark cases are logically the
-   same.
-5. `src/identity.ts` derives stable fixture, contract, and case identities.
-   `src/diff.ts` pairs records using those identities and the function name,
-   then calculates metric deltas. Runtime contract IDs remain in results for
-   diagnostics.
-6. `src/threshold.ts` validates relative regression policies and configured
-   absolute limits. Required comparisons, invalid inputs, and unavailable
-   policy metrics fail closed.
-7. `src/comment.ts` renders the report. The Action can write a Markdown report
-   and PR metadata as artifacts; the separate `comment/` Action posts it with a
-   narrowly scoped token in a fork-safe workflow.
+`action.yml` executes `bundled/index.js` on Node 24. `src/action.ts::run` reads
+the declared inputs, resolves the existing GitHub workspace/cwd, and loads HEAD's
+policy from the configured TOML path (default `weighin.toml`). Missing optional
+policy means report-only. `loadConfig` validates known configuration keys/types;
+`validateConfig` rejects malformed/nonfinite/negative rules before measuring.
+Fixtures are parsed by `src/identity.ts::parseFixtures`, not the older generic
+fixture schema exported from `src/config.ts`.
 
-## Measurement boundaries
+HEAD is built and measured first. BASE defaults to the PR base branch, otherwise
+`main`, or the supplied `base-ref`. The Action fetches that ref from `origin` with
+depth 1, then creates a detached worktree at `FETCH_HEAD`. This is not a merge-base
+calculation. BASE reads its own fixture file at the same relative path and builds
+and measures its own declarations. HEAD policy governs the resulting diff. The
+BASE worktree is removed in `finally`; HEAD remains the caller's checkout.
 
-Resource values come from the local Soroban simulation environment and the
-native measurement adapter. Their provenance, limits, and unavailable fields
-are retained in result records and reports. See
-[Metric provenance](metric-provenance.md) for which values are measured,
-derived, or unavailable. A successful comparison describes the configured
-fixtures and local simulation environment; it does not claim equivalence to
-all public networks or production validator settings.
+## Contract build selection
 
-## Build and workflow boundaries
+`src/build-selection.ts` locates owning Cargo manifests from fixture paths,
+reads locked Cargo workspace metadata, and selects uniquely matching workspace
+cdylib packages by normalized WASM basename. Multiple declarations of a selected
+package share a build. Unknown/ambiguous packages fail before compilation.
 
-The Action expects the caller to provide a healthy Soroban RPC endpoint and a
-compatible Stellar CLI/Rust toolchain. The bundled GitHub Action runs from
-`bundled/index.js`; `npm run bundle` regenerates its runtime artifact. CI checks
-formatting, types, tests, bundle freshness, and the configured benchmark proof.
+`src/build.ts::buildContracts` uses locked optimized `stellar contract build`
+with a fresh output directory, producing the modern `wasm32v1-none` artifact.
+The builder verifies CLI/Rust gates, optimization, pre/post temporary-storage
+write/fsync/read probes and fresh WASM headers before copying to declared paths.
+Actual tool versions/artifact hashes are logged. Per-revision Rustup resolution
+is preserved unless `rust-toolchain` supplies `RUSTUP_TOOLCHAIN`.
+
+A custom shell command runs in each revision instead, or `skip-build: true`
+consumes prebuilt artifacts. These modes bypass default build guarantees; they
+cannot be selected together. The [build document](contract-build.md) describes
+the tested versions and storage bounds. The reference's temporary historical
+path alias receives modern bytes; it does not compile the obsolete target.
+
+## Two distinct identities
+
+### Logical identity
+
+`parseFixtures` derives the structured tuple:
+
+```text
+(fixture_id, logical_id, function_name, case_id)
+```
+
+Fixture/contract/invocation `id` fields provide explicit scoped identities.
+Fallbacks are normalized workspace-relative fixture path, full fixture-relative
+WASM path, and canonical typed arguments. Top-level argument type names are
+lowercased; object keys are sorted; array order and values matter. Duplicate
+identities fail. Reports use logical fixture/contract/function/case labels.
+An explicit ID is the caller's assertion of continuity across revisions.
+
+### Deployment/runtime identity
+
+`src/measurement.ts::runMeasurement` hashes the WASM. That hash determines the
+deployment salt; the address also depends on the deployer and standalone network
+ID. The same WASM may reuse a deployment; changed WASM can change the address.
+Upload and creation transactions are real submitted transactions. A generated
+private deployer key is shared across BASE/HEAD in a private temporary file.
+`src/account.ts::ensureAccountReady` checks RPC account inclusion and uses local
+Friendbot when necessary. The current path assumes the standalone passphrase.
+
+Measurement records retain `wasm_sha256`, runtime `contract_id`, revision SHA and
+logical identities separately. Runtime addresses are diagnostics, not the diff
+key. `diffBenchmarks` therefore pairs changed WASM/address cases correctly without
+silently treating unrelated contracts as the same. See [identity](comparison-identity.md).
+
+## Simulation and resource extraction
+
+Each fixture invocation is converted to ScVals and sent to RPC simulation;
+benchmark invocation writes are not submitted or carried into subsequent cases.
+`src/simulation.ts::measureInvocation` captures the invocation's footprint and
+network configuration at the reported ledger, checks a matching ledger header,
+and requires every capture batch to agree. Discovered keys trigger recapture;
+ledger drift/incomplete state must resolve within 30 attempts. The exact observed
+captive-core JSON-RPC 404 has three bounded retries; arbitrary RPC errors do not.
+
+The adapter provisions the packaged helper source with pinned Rust 1.95.0 and
+locked official `soroban-simulation`/`soroban-env-host` 28.0.1 dependencies, or
+validates an explicit executable override. Default support is Linux x64,
+protocol 28. The helper consumes immutable entries/config/header, recording auth
+and a zero seed, and returns consumed native CPU/memory plus resources/XDR.
+Archived entries and invalid/missing state fail.
+
+The adapter requires full transaction-data XDR, return ScVal and ordered
+successful non-diagnostic event parity with RPC. RPC does not expose direct
+consumed CPU/memory. The helper's consumed cost-model values supply compute;
+RPC/native resource data supplies audited IO/events. No adjusted instruction
+budget is substituted for consumption.
+
+`src/measurement.ts::metricsFromSimulation` emits schema 4: eight measured resource fields and three
+unavailable fields with null values/reasons. Caps are decoded from the same
+captured configuration; event count has no independent cap. Exact definitions
+and source locations are in [metric provenance](metric-provenance.md).
+
+Provenance records helper/library/network/protocol identities, seed/auth/features,
+ledger, input/header/snapshot/full-config hashes, compute calibration and resource
+limit hashes. Different invocation snapshots may use different ledgers. This
+records environment differences; it does not freeze state across the suite.
+
+## Diff and policy
+
+`src/diff.ts::diffBenchmarks` validates all records, including unmatched ones.
+Contracts pair by fixture/logical identity, invocations by function/case identity.
+It requires equal schemas and compatible compute/resource/source semantics.
+Ledger/full-config metadata can change while comparable calibration/caps remain
+constant. Mixed historical/current schemas fail explicitly; legacy records only
+retain their legacy runtime-address matching against other legacy records.
+
+Comparable deltas are HEAD minus BASE. Positive values mark regressions;
+negative values mark improvements. A zero baseline has null percentage, not an
+invented finite percentage. Unavailable comparisons have null delta/percentage
+and a reason. New/removed contracts/cases are listed separately. The Action
+requires at least one matched benchmark, even with no thresholds.
+
+`src/threshold.ts::enforceThresholds` applies HEAD's validated per-function and
+global relative rules and absolute HEAD caps. Per-function rules affect every
+matching case of that function. Requiring an unavailable metric, exceeding a
+cap/relative rule, or configuring a nonignored unmatched function is a failure.
+Explicit `ignore` opts out. Numeric caps equal to HEAD consumption pass.
+
+## Reporting and Action outcome
+
+`src/comment.ts::renderComment` renders logical identities, both runtime addresses,
+metric sources/caps, both revisions' provenance, deltas, additions/removals and
+violations. `src/report.ts` writes optional Markdown and PR metadata; metadata
+is written only for PR events. The same report goes to `GITHUB_STEP_SUMMARY`.
+
+The Action emits `result` and `diff-json` before failing a valid policy violation.
+Comparison/build/measurement/configuration errors emit `fail` and `{}`, an error
+summary, and unsuccessful execution. There is no successful no-baseline fallback.
+Optional direct-comment failure is warning-only.
+
+The separate `comment/` Action runs `bundled/comment-action.js`, reads downloaded
+report/PR metadata, and creates or updates the comment carrying
+`<!-- weighin-report -->`. It fails on missing artifacts/API failure. The example
+consumer runs only after successful PR producers, on trusted default-branch
+workflow code; it does not execute downloaded PR code. Failed policy reports
+remain in producer artifacts and summaries. Hosted expected-negative proof jobs
+separately assert genuine Action exit 1, then finish green once verified.

@@ -24,8 +24,8 @@ fields can name the fixture document, each contract, and each invocation:
 
 Without explicit IDs, the fixture identity is its normalized workspace-relative
 path, the contract identity is the full normalized fixture-relative WASM path,
-and the case identity is canonical typed arguments. Object key order and type
-capitalization do not affect case identity; argument order and values do.
+and the case identity is canonical typed arguments. Object key order and top-level argument type
+capitalization do not affect case identity; nested type strings are preserved; argument order and values do.
 Identity strings use `id:`, `path:`, `wasm:`, or `args:` prefixes to distinguish
 configured IDs from derived IDs. Matching uses structured tuples, not joined
 display labels, array positions, filenames alone, or runtime addresses.

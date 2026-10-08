@@ -1,4 +1,8 @@
-# Stage 1B follow-up: measured compute source design
+# Historical native measurement design
+
+This records the earlier design and acceptance gates, not the current runtime
+status. See [architecture](architecture.md), [metric provenance](metric-provenance.md)
+and [Evidence](EVIDENCE.md) for the implemented path and verified hosted results.
 
 Status: DESIGN COMPLETE; temporary source feasibility passed on 2026-10-07.
 Production integration has now been implemented for Linux x64/protocol 28; see
@@ -163,5 +167,5 @@ configured for unavailable metrics must produce an explicit policy failure.
 This required subset of Stage 3 now precedes the integrated regression proof.
 
 Build/toolchain modernization, baseline-policy repair, general metric auditing,
-public CI delivery and appeal work remain separate stages. A local helper proof
+public CI delivery were separate dependencies at this historical design snapshot. A local helper proof
 does not establish that the GitHub Action fails a real CI job on a regression.

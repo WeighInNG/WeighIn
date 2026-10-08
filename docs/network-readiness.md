@@ -71,7 +71,8 @@ IO, container identities, source-build logs, process exits and reports. Private
 seeds stay in temporary runner directories; nothing is pushed or published.
 
 See `docs/experiments/network-readiness/` for recorded validation and live outcomes.
-Public GitHub CI remains separate verification.
+Subsequent [public GitHub CI verification](EVIDENCE.md) has separate producer/run
+records; it does not relabel these local readiness trials.
 
 Recorded local result (2026-10-08): three distinct fresh containers each returned
 Friendbot HTTP **502 before 200** (sequences: 502/502/200, 502/200,
