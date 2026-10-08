@@ -866,6 +866,11 @@ migration harness also currently derives historical revision from HEAD; after
 local delivery commits, its reproduction needs an explicit fixed historical ref
 in the upcoming clean-delivery review. Historical saved proof remains valid.
 
+Local delivery commit: 488a4b987f0621084761df520108340ba416c4f3 on
+test/no-op-baseline. Readiness implementation/tests/docs and exact live evidence
+are committed. No push. Remaining untracked files are the preserved local
+AGENTS.override.md, WEIGHIN_DRIPS_APPEAL_CONTEXT.md and scratch_test.js.
+
 Next recommended dependency: clean-checkout/package verification, then public
 flagship CI. Separate stage approval and explicit push authorization are required.
 
