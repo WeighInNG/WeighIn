@@ -1,0 +1,172 @@
+control: real builds / live measurement in progress
+Base ref:   main
+RPC URL:    http://localhost:8000/rpc
+Fixtures:   weighin-fixtures.json
+Key file:   /home/mxr/Documents/localRepo/Weighin/.stage7-work/tmp/weighin-flagship-private-CPNmpE/runner/weighin-deployer.key
+Checking RPC health at http://localhost:8000/rpc ...
+RPC healthy — network: Standalone Network ; February 2017
+::group::Building + measuring HEAD
+HEAD SHA: 1c247591423da542d802c30abd8ce0cc9df9d8aa
+ℹ️  CARGO_BUILD_RUSTFLAGS=--remap-path-prefix=/home/mxr/.cargo/registry/src= SOROBAN_SDK_BUILD_SYSTEM_SUPPORTS_SPEC_SHAKING_V2=1 STELLAR_CLI_VERSION=28.1.0 cargo rustc --locked --manifest-path=Cargo.toml --crate-type=cdylib --target=wasm32v1-none --release
+   Compiling proc-macro2 v1.0.106
+   Compiling quote v1.0.46
+   Compiling unicode-ident v1.0.24
+   Compiling serde_core v1.0.228
+   Compiling syn v2.0.118
+   Compiling serde v1.0.228
+   Compiling zmij v1.0.21
+   Compiling serde_json v1.0.150
+   Compiling itoa v1.0.18
+   Compiling memchr v2.8.2
+   Compiling strsim v0.11.1
+   Compiling ident_case v1.0.1
+   Compiling version_check v0.9.5
+   Compiling serde_derive v1.0.228
+   Compiling generic-array v0.14.9
+   Compiling typenum v1.20.1
+   Compiling autocfg v1.5.1
+   Compiling darling_core v0.23.0
+   Compiling crate-git-revision v0.0.9
+   Compiling crate-git-revision v0.0.6
+   Compiling schemars v0.8.22
+   Compiling stellar-strkey v0.0.13
+   Compiling crypto-common v0.1.6
+   Compiling block-buffer v0.10.4
+   Compiling dyn-clone v1.0.20
+   Compiling darling_macro v0.23.0
+   Compiling darling v0.23.0
+   Compiling serde_with_macros v3.21.0
+   Compiling digest v0.10.7
+   Compiling stellar-xdr v28.0.0
+   Compiling cpufeatures v0.2.17
+   Compiling data-encoding v2.11.0
+   Compiling cfg-if v1.0.4
+   Compiling sha2 v0.10.9
+   Compiling serde_with v3.21.0
+   Compiling hex v0.4.3
+   Compiling cfg_eval v0.1.2
+   Compiling escape-bytes v0.1.1
+   Compiling ethnum v1.5.3
+   Compiling num-traits v0.2.19
+   Compiling semver v1.0.28
+   Compiling soroban-env-common v28.0.2
+   Compiling either v1.16.0
+   Compiling itertools v0.13.0
+   Compiling equivalent v1.0.2
+   Compiling thiserror v1.0.69
+   Compiling hashbrown v0.17.1
+   Compiling indexmap v2.14.0
+   Compiling num-derive v0.4.2
+   Compiling thiserror-impl v1.0.69
+   Compiling fnv v1.0.7
+   Compiling prettyplease v0.2.37
+   Compiling darling_core v0.20.11
+   Compiling wasmparser v0.116.1
+   Compiling byteorder v1.5.0
+   Compiling heapless v0.8.0
+   Compiling base64 v0.22.1
+   Compiling soroban-env-macros v28.0.2
+   Compiling soroban-spec v28.0.0
+   Compiling hash32 v0.3.1
+   Compiling darling_macro v0.20.11
+   Compiling num-integer v0.1.46
+   Compiling rustc_version v0.4.1
+   Compiling stellar-strkey v0.0.16
+   Compiling static_assertions v1.1.0
+   Compiling stable_deref_trait v1.2.1
+   Compiling soroban-sdk v28.0.0
+   Compiling soroban-spec-rust v28.0.0
+   Compiling num-bigint v0.4.8
+   Compiling darling v0.20.11
+   Compiling macro-string v0.1.4
+   Compiling heck v0.5.0
+   Compiling soroban-sdk-macros v28.0.0
+   Compiling bytes-lit v0.0.6
+   Compiling soroban-env-guest v28.0.2
+   Compiling visibility v0.1.1
+   Compiling contract_test v0.1.0 (/home/mxr/Documents/localRepo/Weighin/.stage7-work/tmp/weighin-flagship-private-CPNmpE/project/contract)
+    Finished `release` profile [optimized] target(s) in 42.98s
+ℹ️  Build Summary:
+    Wasm File: /home/mxr/Documents/localRepo/Weighin/.stage7-work/tmp/weighin-flagship-private-CPNmpE/runner/weighin-build-mo3kSh/contract_test.wasm (776 bytes optimized (original size was 986 bytes))
+    Wasm Hash: 718ba18378a2d94ec7bf0c75b3813c7d0bb5b65beb2fb4c445b3a4726ecd5668
+    Wasm Size: 776 bytes optimized (original size was 986 bytes)
+    Exported Functions: 1 found
+      • hello
+✅ Build Complete
+
+Built contract_test: /home/mxr/Documents/localRepo/Weighin/.stage7-work/tmp/weighin-flagship-private-CPNmpE/project/contract/target/wasm32v1-none/release/contract_test.wasm; SHA256 718ba18378a2d94ec7bf0c75b3813c7d0bb5b65beb2fb4c445b3a4726ecd5668; stellar 28.1.0 (c0f4d0da891bbf214c08b8c5035ae6db80e9a3bd)
+stellar-xdr 28.0.0 (d0f1330e43c3a2c0c616da30698b24140d4eea72)
+xdr (9c9c145953e80990d6ff1ae3a6a973a0ce6d0694); rustc 1.95.0 (59807616e 2026-04-14)
+Built contract_test: /home/mxr/Documents/localRepo/Weighin/.stage7-work/tmp/weighin-flagship-private-CPNmpE/project/contract/target/wasm32-unknown-unknown/release/contract_test.wasm; SHA256 718ba18378a2d94ec7bf0c75b3813c7d0bb5b65beb2fb4c445b3a4726ecd5668; stellar 28.1.0 (c0f4d0da891bbf214c08b8c5035ae6db80e9a3bd)
+stellar-xdr 28.0.0 (d0f1330e43c3a2c0c616da30698b24140d4eea72)
+xdr (9c9c145953e80990d6ff1ae3a6a973a0ce6d0694); rustc 1.95.0 (59807616e 2026-04-14)
+Funding deployer account: GDPYA424WBMW6TXIG7Y7R4KOLADYMQY7446PUDQRNGUMJF6CCYBR6HKT via friendbot...
+Deployer account confirmed in RPC: GDPYA424WBMW6TXIG7Y7R4KOLADYMQY7446PUDQRNGUMJF6CCYBR6HKT
+WASM: /home/mxr/Documents/localRepo/Weighin/.stage7-work/tmp/weighin-flagship-private-CPNmpE/project/contract/target/wasm32v1-none/release/contract_test.wasm
+WASM SHA256: 718ba18378a2d94ec7bf0c75b3813c7d0bb5b65beb2fb4c445b3a4726ecd5668
+Contract ID: CBZV3MDHTXYBG7SOXR6ZTMEA2MR63TSIYDLWZ7OOR2TWTRG2O4CGOL4Y
+Installing WASM...
+WASM installed. Deploying contract instance...
+Deployed at CBZV3MDHTXYBG7SOXR6ZTMEA2MR63TSIYDLWZ7OOR2TWTRG2O4CGOL4Y
+Simulating hello...
+WASM: /home/mxr/Documents/localRepo/Weighin/.stage7-work/tmp/weighin-flagship-private-CPNmpE/project/contract/target/wasm32-unknown-unknown/release/contract_test.wasm
+WASM SHA256: 718ba18378a2d94ec7bf0c75b3813c7d0bb5b65beb2fb4c445b3a4726ecd5668
+Contract ID: CBZV3MDHTXYBG7SOXR6ZTMEA2MR63TSIYDLWZ7OOR2TWTRG2O4CGOL4Y
+Already deployed at CBZV3MDHTXYBG7SOXR6ZTMEA2MR63TSIYDLWZ7OOR2TWTRG2O4CGOL4Y
+Simulating hello...
+::endgroup::
+[HEAD] WASM SHA256 (hello): 718ba18378a2d94ec7bf0c75b3813c7d0bb5b65beb2fb4c445b3a4726ecd5668
+[HEAD] WASM SHA256 (hello): 718ba18378a2d94ec7bf0c75b3813c7d0bb5b65beb2fb4c445b3a4726ecd5668
+::group::Building + measuring base (main)
+[command]/usr/bin/git fetch --depth=1 origin main
+From /home/mxr/Documents/localRepo/Weighin/.stage7-work/tmp/weighin-flagship-private-CPNmpE/origin
+ * branch            main       -> FETCH_HEAD
+ * [new branch]      main       -> origin/main
+Checking out main into /home/mxr/Documents/localRepo/Weighin/.stage7-work/tmp/weighin-flagship-private-CPNmpE/runner/weighin-base-iq04nP
+[command]/usr/bin/git worktree add --detach /home/mxr/Documents/localRepo/Weighin/.stage7-work/tmp/weighin-flagship-private-CPNmpE/runner/weighin-base-iq04nP FETCH_HEAD
+Preparing worktree (detached HEAD 1c24759)
+HEAD is now at 1c24759 Isolated reference BASE
+base SHA: 1c247591423da542d802c30abd8ce0cc9df9d8aa
+ℹ️  CARGO_BUILD_RUSTFLAGS=--remap-path-prefix=/home/mxr/.cargo/registry/src= SOROBAN_SDK_BUILD_SYSTEM_SUPPORTS_SPEC_SHAKING_V2=1 STELLAR_CLI_VERSION=28.1.0 cargo rustc --locked --manifest-path=Cargo.toml --crate-type=cdylib --target=wasm32v1-none --release
+   Compiling contract_test v0.1.0 (/home/mxr/Documents/localRepo/Weighin/.stage7-work/tmp/weighin-flagship-private-CPNmpE/runner/weighin-base-iq04nP/contract)
+    Finished `release` profile [optimized] target(s) in 0.28s
+ℹ️  Build Summary:
+    Wasm File: /home/mxr/Documents/localRepo/Weighin/.stage7-work/tmp/weighin-flagship-private-CPNmpE/runner/weighin-build-YKVpJc/contract_test.wasm (776 bytes optimized (original size was 986 bytes))
+    Wasm Hash: 718ba18378a2d94ec7bf0c75b3813c7d0bb5b65beb2fb4c445b3a4726ecd5668
+    Wasm Size: 776 bytes optimized (original size was 986 bytes)
+    Exported Functions: 1 found
+      • hello
+✅ Build Complete
+
+Built contract_test: /home/mxr/Documents/localRepo/Weighin/.stage7-work/tmp/weighin-flagship-private-CPNmpE/runner/weighin-base-iq04nP/contract/target/wasm32v1-none/release/contract_test.wasm; SHA256 718ba18378a2d94ec7bf0c75b3813c7d0bb5b65beb2fb4c445b3a4726ecd5668; stellar 28.1.0 (c0f4d0da891bbf214c08b8c5035ae6db80e9a3bd)
+stellar-xdr 28.0.0 (d0f1330e43c3a2c0c616da30698b24140d4eea72)
+xdr (9c9c145953e80990d6ff1ae3a6a973a0ce6d0694); rustc 1.95.0 (59807616e 2026-04-14)
+Built contract_test: /home/mxr/Documents/localRepo/Weighin/.stage7-work/tmp/weighin-flagship-private-CPNmpE/runner/weighin-base-iq04nP/contract/target/wasm32-unknown-unknown/release/contract_test.wasm; SHA256 718ba18378a2d94ec7bf0c75b3813c7d0bb5b65beb2fb4c445b3a4726ecd5668; stellar 28.1.0 (c0f4d0da891bbf214c08b8c5035ae6db80e9a3bd)
+stellar-xdr 28.0.0 (d0f1330e43c3a2c0c616da30698b24140d4eea72)
+xdr (9c9c145953e80990d6ff1ae3a6a973a0ce6d0694); rustc 1.95.0 (59807616e 2026-04-14)
+Deployer account confirmed in RPC: GDPYA424WBMW6TXIG7Y7R4KOLADYMQY7446PUDQRNGUMJF6CCYBR6HKT
+WASM: /home/mxr/Documents/localRepo/Weighin/.stage7-work/tmp/weighin-flagship-private-CPNmpE/runner/weighin-base-iq04nP/contract/target/wasm32v1-none/release/contract_test.wasm
+WASM SHA256: 718ba18378a2d94ec7bf0c75b3813c7d0bb5b65beb2fb4c445b3a4726ecd5668
+Contract ID: CBZV3MDHTXYBG7SOXR6ZTMEA2MR63TSIYDLWZ7OOR2TWTRG2O4CGOL4Y
+Already deployed at CBZV3MDHTXYBG7SOXR6ZTMEA2MR63TSIYDLWZ7OOR2TWTRG2O4CGOL4Y
+Simulating hello...
+WASM: /home/mxr/Documents/localRepo/Weighin/.stage7-work/tmp/weighin-flagship-private-CPNmpE/runner/weighin-base-iq04nP/contract/target/wasm32-unknown-unknown/release/contract_test.wasm
+WASM SHA256: 718ba18378a2d94ec7bf0c75b3813c7d0bb5b65beb2fb4c445b3a4726ecd5668
+Contract ID: CBZV3MDHTXYBG7SOXR6ZTMEA2MR63TSIYDLWZ7OOR2TWTRG2O4CGOL4Y
+Already deployed at CBZV3MDHTXYBG7SOXR6ZTMEA2MR63TSIYDLWZ7OOR2TWTRG2O4CGOL4Y
+Simulating hello...
+[BASE] WASM SHA256 (hello): 718ba18378a2d94ec7bf0c75b3813c7d0bb5b65beb2fb4c445b3a4726ecd5668
+[BASE] WASM SHA256 (hello): 718ba18378a2d94ec7bf0c75b3813c7d0bb5b65beb2fb4c445b3a4726ecd5668
+[command]/usr/bin/git worktree remove --force /home/mxr/Documents/localRepo/Weighin/.stage7-work/tmp/weighin-flagship-private-CPNmpE/runner/weighin-base-iq04nP
+::endgroup::
+::group::Computing diff
+Any regression: false
+::endgroup::
+::group::Enforcing thresholds
+weighin.toml loaded
+Violations: 0
+::endgroup::
+
+(node:475759) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+

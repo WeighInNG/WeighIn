@@ -1,0 +1,41 @@
+{
+  "status": "VERIFIED",
+  "scenario": "control",
+  "action_exit": 0,
+  "result": "pass",
+  "cpu": [
+    {
+      "logical_id": "id:reference-contract",
+      "base": 266842,
+      "head": 266842,
+      "delta": 0
+    },
+    {
+      "logical_id": "wasm:contract/target/wasm32-unknown-unknown/release/contract_test.wasm",
+      "base": 266842,
+      "head": 266842,
+      "delta": 0
+    }
+  ],
+  "violations": [],
+  "base_sha": "082f8918f41296eeaf4f47a5fa2f00bd430e7837",
+  "head_sha": "082f8918f41296eeaf4f47a5fa2f00bd430e7837",
+  "build_hashes": [
+    "718ba18378a2d94ec7bf0c75b3813c7d0bb5b65beb2fb4c445b3a4726ecd5668",
+    "718ba18378a2d94ec7bf0c75b3813c7d0bb5b65beb2fb4c445b3a4726ecd5668",
+    "718ba18378a2d94ec7bf0c75b3813c7d0bb5b65beb2fb4c445b3a4726ecd5668",
+    "718ba18378a2d94ec7bf0c75b3813c7d0bb5b65beb2fb4c445b3a4726ecd5668"
+  ],
+  "policy": {
+    "thresholds": {
+      "functions": {
+        "hello": {
+          "cpu_instructions": "strict_zero_tolerance"
+        }
+      }
+    }
+  },
+  "real_git_build_rpc_native_action": true,
+  "io_observers_only": true,
+  "github_hosted_execution": true
+}

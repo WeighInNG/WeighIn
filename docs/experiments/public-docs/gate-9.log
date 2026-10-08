@@ -1,0 +1,256 @@
+
+> weighin@1.0.0 prepack
+> npm run build && npm run bundle
+
+
+> weighin@1.0.0 build
+> tsc
+
+
+> weighin@1.0.0 bundle
+> tsc --noEmit && esbuild src/action.ts --bundle --platform=node --target=node20 --outfile=bundled/index.js --format=cjs && esbuild src/comment-action.ts --bundle --platform=node --target=node20 --outfile=bundled/comment-action.js --format=cjs
+
+
+  bundled/index.js  1.9mb ⚠️
+
+⚡ Done in 2436ms
+
+  bundled/comment-action.js  1.0mb ⚠️
+
+⚡ Done in 666ms
+[
+  {
+    "id": "weighin@1.0.0",
+    "name": "weighin",
+    "version": "1.0.0",
+    "size": 701116,
+    "unpackedSize": 3393089,
+    "shasum": "949c6f019b1931f21618f36b567b1623cbac5b73",
+    "integrity": "sha512-WRkZ+lFor+L4trRUFW14Wkj6WLVLuuHgjOcExYhgNGd47hwty4oy1w1WXP1kwN6voy2AP8ZM5eo9BIiOx4hqyA==",
+    "filename": "weighin-1.0.0.tgz",
+    "files": [
+      {
+        "path": "LICENSE",
+        "size": 11357,
+        "mode": 420
+      },
+      {
+        "path": "README.md",
+        "size": 9088,
+        "mode": 420
+      },
+      {
+        "path": "action.yml",
+        "size": 3514,
+        "mode": 420
+      },
+      {
+        "path": "bundled/comment-action.js",
+        "size": 1074524,
+        "mode": 420
+      },
+      {
+        "path": "bundled/index.js",
+        "size": 1966471,
+        "mode": 420
+      },
+      {
+        "path": "comment/action.yml",
+        "size": 438,
+        "mode": 420
+      },
+      {
+        "path": "dist/account.js",
+        "size": 4962,
+        "mode": 420
+      },
+      {
+        "path": "dist/action.js",
+        "size": 15810,
+        "mode": 420
+      },
+      {
+        "path": "dist/build-selection.js",
+        "size": 2589,
+        "mode": 420
+      },
+      {
+        "path": "dist/build.js",
+        "size": 8736,
+        "mode": 420
+      },
+      {
+        "path": "dist/cli.js",
+        "size": 3789,
+        "mode": 420
+      },
+      {
+        "path": "dist/comment-action.js",
+        "size": 2538,
+        "mode": 420
+      },
+      {
+        "path": "dist/comment.js",
+        "size": 10637,
+        "mode": 420
+      },
+      {
+        "path": "dist/config.js",
+        "size": 8132,
+        "mode": 420
+      },
+      {
+        "path": "dist/diff.js",
+        "size": 12963,
+        "mode": 420
+      },
+      {
+        "path": "dist/identity.js",
+        "size": 4970,
+        "mode": 420
+      },
+      {
+        "path": "dist/measurement.js",
+        "size": 17886,
+        "mode": 420
+      },
+      {
+        "path": "dist/report.js",
+        "size": 2200,
+        "mode": 420
+      },
+      {
+        "path": "dist/simulation.js",
+        "size": 20120,
+        "mode": 420
+      },
+      {
+        "path": "dist/threshold.js",
+        "size": 11999,
+        "mode": 420
+      },
+      {
+        "path": "docs/architecture.md",
+        "size": 8636,
+        "mode": 420
+      },
+      {
+        "path": "docs/build-storage-safeguard.md",
+        "size": 5998,
+        "mode": 420
+      },
+      {
+        "path": "docs/clean-delivery.md",
+        "size": 5417,
+        "mode": 420
+      },
+      {
+        "path": "docs/comparison-identity.md",
+        "size": 4035,
+        "mode": 420
+      },
+      {
+        "path": "docs/compute-source-feasibility.md",
+        "size": 7327,
+        "mode": 420
+      },
+      {
+        "path": "docs/contract-build.md",
+        "size": 6856,
+        "mode": 420
+      },
+      {
+        "path": "docs/DEPENDENCY_SECURITY.md",
+        "size": 9907,
+        "mode": 420
+      },
+      {
+        "path": "docs/EVIDENCE.md",
+        "size": 14302,
+        "mode": 420
+      },
+      {
+        "path": "docs/external-soroban-forge.md",
+        "size": 9352,
+        "mode": 420
+      },
+      {
+        "path": "docs/fixture-migration.md",
+        "size": 8173,
+        "mode": 420
+      },
+      {
+        "path": "docs/flagship-ci.md",
+        "size": 2551,
+        "mode": 420
+      },
+      {
+        "path": "docs/KNOWN_LIMITATIONS.md",
+        "size": 5659,
+        "mode": 420
+      },
+      {
+        "path": "docs/measurement-source-design.md",
+        "size": 10807,
+        "mode": 420
+      },
+      {
+        "path": "docs/metric-provenance.md",
+        "size": 11549,
+        "mode": 420
+      },
+      {
+        "path": "docs/native-measurement.md",
+        "size": 11173,
+        "mode": 420
+      },
+      {
+        "path": "docs/network-readiness.md",
+        "size": 5082,
+        "mode": 420
+      },
+      {
+        "path": "docs/optimizer-repeatability.md",
+        "size": 6333,
+        "mode": 420
+      },
+      {
+        "path": "docs/repeatability.md",
+        "size": 11722,
+        "mode": 420
+      },
+      {
+        "path": "docs/simulation-compatibility.md",
+        "size": 6896,
+        "mode": 420
+      },
+      {
+        "path": "docs/snapshot-recovery.md",
+        "size": 5558,
+        "mode": 420
+      },
+      {
+        "path": "native/simulation/Cargo.lock",
+        "size": 34201,
+        "mode": 420
+      },
+      {
+        "path": "native/simulation/Cargo.toml",
+        "size": 418,
+        "mode": 420
+      },
+      {
+        "path": "native/simulation/src/main.rs",
+        "size": 6390,
+        "mode": 420
+      },
+      {
+        "path": "package.json",
+        "size": 2024,
+        "mode": 420
+      }
+    ],
+    "entryCount": 44,
+    "bundled": []
+  }
+]

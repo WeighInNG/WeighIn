@@ -16,7 +16,7 @@ jobs:
   post-comment:
     name: Post PR Comment
     runs-on: ubuntu-latest
-    if: github.event.workflow_run.conclusion == 'success'
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'pull_request'
     permissions:
       pull-requests: write
       actions: read
@@ -30,7 +30,8 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Post Comment
-        uses: WeighInNG/WeighIn/comment@main
+        # Immutable public revision verified by PR #13 hosted control/regression/threshold and core CI.
+        uses: WeighInNG/WeighIn/comment@bbbe9001bbd375fd6a1ff75be5da2593c86fff20
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           report-path: weighin-report.md

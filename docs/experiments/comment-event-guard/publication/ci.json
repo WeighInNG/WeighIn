@@ -1,0 +1,9 @@
+{
+  "attempt": 1,
+  "conclusion": "success",
+  "databaseId": 37777040190,
+  "event": "pull_request",
+  "headSha": "36294f695c7e5a46268e0087910299b6f3c60b33",
+  "status": "completed",
+  "url": "https://github.com/WeighInNG/WeighIn/actions/runs/37777040190"
+}

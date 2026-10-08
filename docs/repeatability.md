@@ -45,9 +45,9 @@ on successful capture; it does not establish failure-free network operation.
 
 Final checks passed: `npm ci`, `npm test` (101 tests), `npm run test:native`
 (15 tests), `npm run build`, `npm run bundle`, `npm pack --dry-run --json`,
-native `cargo fmt --check` and `git diff --check`. No lint/typecheck scripts
-exist; build/bundle check TypeScript. Existing npm audit findings remain one
-moderate and four high. Packaging proves inclusion only, not clean installation.
+native `cargo fmt --check` and `git diff --check`. At that experiment snapshot no lint/typecheck scripts existed and audit reported
+one moderate/four high. Current scripts and the dated dependency audit are in
+[CONTRIBUTING](../CONTRIBUTING.md) and [dependency security](DEPENDENCY_SECURITY.md). Packaging proves inclusion only, not clean installation.
 The helper binary's hash remained unchanged after validation; saved evidence was
 checked for private account seeds. The isolated proof container was stopped.
 
@@ -56,7 +56,7 @@ checked for private account seeds. The isolated proof container was stopped.
 The reference source, Cargo manifest/lockfile, toolchain and fixture files are
 copied byte-for-byte into five independent work directories. Their individual
 SHA256 values and a combined source-snapshot hash are recorded. The repository
-HEAD is recorded separately: this campaign is an uncommitted working-tree
+HEAD is recorded separately: this recorded experiment used an uncommitted working-tree
 snapshot, so its contents must not be inferred from that Git SHA alone.
 
 Each reference build starts with a newly created, verified-empty Cargo target
@@ -194,6 +194,6 @@ measurements. Current production provenance guards some of these differences;
 it does not freeze arbitrary live state or record every caller build option.
 
 Repeated immutable native snapshot replay remains a separate check. It cannot
-substitute for these five fresh source builds and live captures. Public CI,
-historical fixture-path migration and an external-project demonstration remain
-separate campaign work.
+substitute for these five fresh source builds and live captures. Subsequent [hosted CI](EVIDENCE.md), [fixture-path migration](fixture-migration.md)
+and [local external-project evidence](external-soroban-forge.md) have their own
+records. Hosted external-repository CI remains unverified.

@@ -1,0 +1,25 @@
+{
+  "total_count": 1,
+  "artifacts": [
+    {
+      "id": 11583745202,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU4Mzc0NTIwMg==",
+      "name": "weighin-artifacts",
+      "size_in_bytes": 1988,
+      "url": "https://api.github.com/repos/WeighInNG/WeighIn/actions/artifacts/11583745202",
+      "archive_download_url": "https://api.github.com/repos/WeighInNG/WeighIn/actions/artifacts/11583745202/zip",
+      "expired": false,
+      "digest": "sha256:92afb4a9d8c3c170ee065a71d1bcb70232eead4e9faed5a3efbeb9a4c35e93eb",
+      "created_at": "2026-10-08T22:33:44Z",
+      "updated_at": "2026-10-08T22:33:44Z",
+      "expires_at": "2027-01-06T22:29:41Z",
+      "workflow_run": {
+        "id": 37853815131,
+        "repository_id": 1290291210,
+        "head_repository_id": 1290291210,
+        "head_branch": "docs/public-evidence-truth-alignment",
+        "head_sha": "bbbe9001bbd375fd6a1ff75be5da2593c86fff20"
+      }
+    }
+  ]
+}

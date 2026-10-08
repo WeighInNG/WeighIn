@@ -1,0 +1,2 @@
+[thresholds.functions.hello]
+cpu_instructions="strict_zero_tolerance"

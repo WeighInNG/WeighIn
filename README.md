@@ -1,216 +1,207 @@
 # WeighIn
 
-WeighIn is a resource-cost benchmarking and CI regression toolkit for Soroban/Stellar smart contracts. It tracks WebAssembly (WASM) execution footprints across your pull requests to prevent unexpected gas and resource regressions.
+WeighIn benchmarks configured Soroban contract functions in BASE and HEAD,
+compares their resource usage, and fails a GitHub Action when a configured policy
+is violated. It is for contract maintainers who want resource regressions visible
+in pull requests.
 
-## Why WeighIn?
+**Tested scope:** Linux x64, protocol 28, a standalone Stellar network, Soroban
+SDK 28.0.0, Stellar CLI 28.1.0 and Rust 1.95.0. See
+[verified evidence](docs/EVIDENCE.md) and [known limitations](docs/KNOWN_LIMITATIONS.md).
 
-In the Stellar ecosystem, Soroban smart contracts have strict resource limits (CPU instructions, memory, ledger I/O, event sizes) and fees are directly proportional to this consumption.
-Resource consumption can easily change between revisions as dependencies update or code is refactored, and these changes can be difficult to notice manually.
-WeighIn moves detection into CI, automatically measuring your contract's footprint on every pull request and warning you before expensive or oversized contracts are merged.
+## Why WeighIn
+
+A contract change can preserve its interface while increasing metered compute,
+memory, footprint or write usage. WeighIn compares repeatable fixture cases so
+maintainers can review those changes and choose which increases should block CI.
+These are Soroban simulation resources, not hardware performance or fee estimates.
 
 ## How It Works
 
-1. **Pull Request**: A developer opens a PR modifying a Soroban contract.
-2. **Build**: WeighIn builds the WASM for both the PR branch and the base branch.
-3. **Benchmark**: Using a local Soroban RPC, WeighIn simulates transactions defined in your fixtures file.
-4. **Compare**: The action compares the resource consumption (CPU, memory, ledger read/writes, etc.) of the PR against the baseline.
-5. **Evaluate**: WeighIn checks the results against custom thresholds defined in `weighin.toml`.
-6. **Report**: A markdown table summarizing the resource diffs is posted directly on the PR.
-7. **CI Result**: The action fails if any limits or regressions exceed your defined thresholds.
-
-## Features
-
-- **Automated Resource Benchmarking**: Measures CPU instructions, memory bytes, ledger I/O, and events.
-- **Diff Generation**: Automatically checks out the base branch using a lightweight `git worktree` to produce accurate before-and-after metrics.
-- **Configurable Thresholds**: Define strict limits or allowed percentage regressions using a `weighin.toml` file.
-- **PR Comments**: Posts a detailed markdown report on pull requests showing exactly what changed.
-- **RPC Simulation**: Accurately simulates transactions against a real Soroban standalone network.
-
-## Installation
-
-Add WeighIn to your GitHub Actions workflow. Because Soroban requires building untrusted Rust code from PRs, but posting comments requires write permissions, WeighIn uses a secure two-workflow setup to support PRs from forks securely.
-
-1. **Measurement Workflow** (builds WASM, runs benchmarks, saves artifacts).
-   Create `.github/workflows/weighin.yml`:
-
-```yaml
-name: WeighIn Benchmark
-on:
-  pull_request:
-    branches: [main]
-
-jobs:
-  benchmark:
-    runs-on: ubuntu-latest
-    # Default token permissions (read-only) are sufficient.
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: "1.95.0"
-          targets: wasm32v1-none
-
-      - name: Install pinned Stellar CLI
-        run: |
-          curl -fsSL https://github.com/stellar/stellar-cli/releases/download/v28.1.0/stellar-cli-28.1.0-x86_64-unknown-linux-gnu.tar.gz -o "$RUNNER_TEMP/stellar-cli.tar.gz"
-          echo "c1680deee94301d33ada7a17f98411e642a4248c727afbd2e43050d345746462  $RUNNER_TEMP/stellar-cli.tar.gz" | sha256sum -c -
-          mkdir -p "$RUNNER_TEMP/stellar-cli"
-          tar -xzf "$RUNNER_TEMP/stellar-cli.tar.gz" -C "$RUNNER_TEMP/stellar-cli"
-          echo "$RUNNER_TEMP/stellar-cli" >> "$GITHUB_PATH"
-
-      - name: Start local Stellar network
-        run: |
-          docker run --rm -d -p 8000:8000 stellar/quickstart@sha256:4c8bad1ef7341205b898f83d9489321da80c7bd74183100fc8e2a39a5938c7d5 --local
-          # Wait for healthy RPC and account readiness before measuring.
-          for i in $(seq 1 60); do
-            if curl -sf -X POST -H "Content-Type: application/json" \
-                -d '{"jsonrpc":"2.0","id":1,"method":"getHealth"}' \
-                http://localhost:8000/rpc | grep -q '"status":"healthy"'; then
-              break
-            fi
-            sleep 2
-          done
-
-      - name: Run WeighIn
-        uses: WeighInNG/WeighIn@main
-        with:
-          fixtures-path: weighin-fixtures.json
-          config-path: weighin.toml
-          rpc-url: http://localhost:8000/rpc
-          report-path: weighin-report.md
-          metadata-path: pr-metadata.json
-
-      - name: Upload Report Artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: weighin-artifacts
-          path: |
-            weighin-report.md
-            pr-metadata.json
+```text
+HEAD checkout + fetched BASE worktree
+  → build each revision's configured contracts
+  → deploy WASM and simulate each revision's fixtures
+  → capture RPC state and measure with protocol-matched native simulation
+  → pair logical benchmarks independently of runtime addresses
+  → calculate resource deltas
+  → enforce HEAD thresholds and absolute caps
+  → write report and outputs
+  → pass / fail
 ```
 
-2. **Comment Workflow** (securely posts the comment with elevated permissions).
-   Create `.github/workflows/weighin-comment.yml`:
+The default builder uses `stellar contract build --locked --optimize=true` and
+`wasm32v1-none`. It builds the Cargo packages selected by fixture WASM paths.
+The Action requires at least one matched benchmark; missing baselines, invalid
+policies, incompatible provenance and required unavailable metrics fail.
+The baseline is the fetched base ref, not a computed merge base.
+[Architecture](docs/architecture.md) explains the implementation.
 
-```yaml
-name: WeighIn Comment
-on:
-  workflow_run:
-    workflows: ["WeighIn Benchmark"]
-    types:
-      - completed
+## Example Result
 
-jobs:
-  post-comment:
-    runs-on: ubuntu-latest
-    if: github.event.workflow_run.conclusion == 'success'
-    permissions:
-      pull-requests: write
-      actions: read
+An actual isolated change added one persistent write to `hello` while preserving
+its arguments and return value:
 
-    steps:
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: weighin-artifacts
-          run-id: ${{ github.event.workflow_run.id }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+| Metric | BASE | HEAD | Delta |
+|---|---:|---:|---:|
+| CPU cost-model instructions | 266,842 | 309,171 | +42,329 (+15.86%) |
+| Ledger write bytes | 0 | 88 | +88 |
 
-      - name: Post Comment
-        uses: WeighInNG/WeighIn/comment@main
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          report-path: weighin-report.md
-          metadata-path: pr-metadata.json
-```
+The WASM hash and runtime contract address changed. The logical benchmark still
+paired. Report-only execution passed; `strict_zero_tolerance` on CPU produced
+violations and Action exit 1. The [hosted proof](https://github.com/WeighInNG/WeighIn/actions/runs/37853815025)
+verified that expected failure. Its enclosing verification job is intentionally
+green. [Exact source, hashes, reports and raw responses](docs/EVIDENCE.md) are retained.
 
-## Configuration
+## Quick Start
 
-WeighIn is configured via action inputs and two files:
+1. Put fixture declarations in **both** the baseline and HEAD. Commit a baseline
+   containing those fixtures before the first comparison. Give logical contracts
+   and cases stable IDs.
+2. Provision Linux x64, Rust 1.95.0 with `wasm32v1-none`, Stellar CLI 28.1.0,
+   Docker and the pinned protocol-28 standalone network.
+3. Copy the [benchmark workflow](.github/workflows/weighin.yml) into your
+   repository and adapt its fixture/config paths. It includes tool and sidecar
+   provisioning. Pin the Action to a reviewed commit; the excerpt below uses
+   the hosted-verified public immutable revision.
 
-### Action Inputs
-
-- `fixtures-path` (default: `weighin-fixtures.json`): Path to the JSON file declaring which WASM files to benchmark and functions to invoke.
-- `config-path` (default: `weighin.toml`): Path to the threshold configuration file. If omitted, the action runs without enforcing regression rules (report only).
-- `rpc-url` (default: `http://localhost:8000/rpc`): The Soroban RPC endpoint to use for simulation.
-- `github-token` (default: `''`): GitHub token to post the benchmark diff comment on the pull request. Pass `secrets.GITHUB_TOKEN`.
-- `base-ref` (default: `''`): Git ref to use as the baseline. Defaults to the PR base branch.
-- `rust-toolchain` (default: `''`): Rust toolchain channel to use when building WASM.
-
-### Fixtures File (`weighin-fixtures.json`)
-
-Defines the contracts and functions to test:
+For a contract whose Cargo package is `contract-test`, `weighin-fixtures.json`:
 
 ```json
 {
-  "contracts": [
-    {
-      "wasm_path": "contract/target/wasm32v1-none/release/my_contract.wasm",
-      "invocations": [
-        {
-          "function_name": "hello",
-          "args": [{"type": "Symbol", "value": "world"}]
-        }
-      ]
-    }
-  ]
+  "id": "greeting-suite",
+  "contracts": [{
+    "id": "greeting",
+    "wasm_path": "contract/target/wasm32v1-none/release/contract_test.wasm",
+    "invocations": [{
+      "id": "world",
+      "function_name": "hello",
+      "args": [{"type": "symbol", "value": "world"}]
+    }]
+  }]
 }
 ```
 
-### Thresholds (`weighin.toml`)
+Adapt the WASM basename to your Cargo package and the function/arguments to your
+contract interface. The path is relative to the fixture file. The default
+builder finds the owning Cargo manifest; merely renaming an unrelated artifact
+is not supported.
 
-Defines regression rules:
+`weighin.toml`:
 
 ```toml
-[limits.global]
-cpu_instructions = 50000000
-
-[thresholds.global]
-fail_on_any_regression = true
-
-[thresholds.functions.my_function]
-memory_bytes = "allow_5_percent_increase"
+[thresholds.functions.hello]
+cpu_instructions = "strict_zero_tolerance"
+memory_bytes = "allow_10_percent_increase"
 ```
 
-## Architecture
+The pin below passed hosted control, regression, threshold and core CI checks.
+See [publication evidence](docs/EVIDENCE.md#published-revision-validation) and
+[dependency security review](docs/DEPENDENCY_SECURITY.md).
 
-WeighIn is built using TypeScript and runs as a Node24 GitHub Action. The core modules are:
-- `action.ts`: The main entrypoint orchestrating Git checkouts, WASM compilation, and the pipeline.
-- `measurement.ts`: Interacts with the Soroban RPC via `@stellar/stellar-sdk` to simulate transactions and extract resource metrics.
-- `diff.ts`: Compares the benchmark metrics between the base and head branches.
-- `threshold.ts`: Parses `weighin.toml` and evaluates the diffs against user-defined rules.
-- `comment.ts`: Generates the markdown table posted to GitHub PRs.
+After checkout, tool installation and network readiness, the Action step is:
 
-## Local Development
-
-To run the action locally, you need Node.js 24+.
-
-```bash
-# Install dependencies
-npm install
-
-# Build the TypeScript source
-npm run build
-
-# Bundle the action for distribution
-npm run bundle
+```yaml
+- uses: WeighInNG/WeighIn@bbbe9001bbd375fd6a1ff75be5da2593c86fff20
+  with:
+    fixtures-path: weighin-fixtures.json
+    config-path: weighin.toml
+    rpc-url: http://localhost:8000/rpc
+    report-path: weighin-report.md
+    metadata-path: pr-metadata.json
 ```
 
-## Testing
+Upload the report with `if: always()` so failed policies remain inspectable.
+For PR comments, add the [separate comment workflow](.github/workflows/weighin-comment.yml)
+to the default branch. It reads report artifacts without executing PR code with
+a write token. The supplied consumer posts only after a successful PR producer;
+failed policy reports remain in artifacts and job summaries.
 
-Integration testing relies on running the action against the dummy contract in `contract/`. Currently, there is no unit test framework configured. A full unit test suite is on the roadmap.
+## Configuration
 
-## Contributing
+All supported inputs are declared in [action.yml](action.yml):
 
-Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to set up the project, run tests, and submit pull requests.
+| Input | Meaning |
+|---|---|
+| `fixtures-path` | Required fixture path; default `weighin-fixtures.json` |
+| `config-path` | HEAD policy file; default `weighin.toml`. A missing file means report-only |
+| `rpc-url` | Compatible standalone RPC; default `http://localhost:8000/rpc` |
+| `base-ref` | Fetched baseline ref; PR base branch, otherwise `main`, if omitted |
+| `rust-toolchain` | Contract-build Rustup override; does not change pinned native-helper toolchain |
+| `build-command` | Custom shell build command in each revision; replaces default build guarantees |
+| `skip-build` | `true` uses prebuilt fixture WASMs in both revisions; incompatible with `build-command` |
+| `report-path` | Optional Markdown report destination |
+| `metadata-path` | Optional PR-number/HEAD-SHA JSON destination; emitted only in a PR context |
+| `github-token` | Optional direct PR-comment token; omit for the separate comment workflow |
+
+Outputs: `result` is `pass` or `fail`; `diff-json` contains the comparison.
+An unsuccessful comparison emits `fail` and `{}`. A valid comparison with policy
+violations emits its real diff, writes the report, then fails the Action.
+
+Relative rules accept `strict_zero_tolerance`, `allow_X_percent_increase`, a
+nonnegative numeric percentage, or `ignore`. Rules are scoped by function name
+and apply to every matching contract/case with that function. Global CPU/memory
+percentage rules and all-metric strict policy are also supported. Absolute caps
+are configured under `[limits.global]` or `[limits.functions.hello]`:
+
+```toml
+[limits.functions.hello]
+cpu_instructions = 350000
+```
+
+Caps are maximum HEAD consumption; equality passes. A zero BASE with positive
+HEAD has an undefined percentage in the report and violates finite percentage
+rules. Unknown/invalid policy keys fail. A nonignored rule without a matched
+function fails. Unavailable metrics required by a policy fail; global
+`fail_on_any_regression = true` needs explicit per-function ignores for the three
+unavailable metrics. Prefer targeted rules as in the quick start.
+Omitting `config-path` still loads the default file if it exists.
+
+## Benchmark Identity
+
+The comparison tuple is `(fixture_id, logical_id, function_name, case_id)`.
+Explicit fixture/contract/invocation `id` values are stable across code changes.
+Without them, normalized fixture/WASM paths and canonical typed arguments supply
+identity. Different paths/arguments become new/removed cases unless both revisions
+share explicit IDs. Duplicate identities fail. Runtime `contract_id` and WASM
+SHA256 remain diagnostics. See [comparison identity](docs/comparison-identity.md)
+and [fixture migration](docs/fixture-migration.md).
+
+## Metrics
+
+Eight resource fields are measured on the supported path: CPU and memory cost
+units, RO+RW footprint entries, disk read bytes, RW footprint entries, encoded
+write bytes, successful contract/system event count, and encoded events plus
+return bytes. CPU/memory come from official native Soroban simulation with
+captured network cost settings; RPC resource budgets are not consumed CPU values.
+Limits come from that captured configuration. Event count has no independent cap.
+
+Historical read bytes, instance-only contract data size and signed transaction
+size are **unavailable**, represented by `null` and a reason. A measured zero is
+distinct from unavailable. [Metric provenance](docs/metric-provenance.md) defines
+all eleven keys and their exact semantics.
+
+The CLI measures existing WASMs and writes JSON; it does not build, compare
+revisions, enforce thresholds or post comments. Provision the native helper/RPC,
+then run `node dist/cli.js <fixtures.json> --rpc-url <standalone-rpc> --output <results.json>`
+from a built checkout. See [native provisioning](docs/native-measurement.md).
+
+## Evidence
+
+[WeighIn Evidence](docs/EVIDENCE.md) links hosted control/regression/threshold
+proof, raw RPC/native captures, five clean builds and five measurements per case.
+Evidence conclusions are bounded by the recorded environment.
+
+## Known Limitations
+
+[Known limitations](docs/KNOWN_LIMITATIONS.md) covers protocol/platform scope,
+state/auth/randomness, custom builds, fixture types, CLI and GitHub behavior.
+
+## Development
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for installation, formatting, types, tests,
+native replay and packaging checks. CI runs real tests and checks bundle freshness.
 
 ## License
 
-This project is licensed under the [Apache License 2.0](LICENSE).
-
-### Configuration Validation
-WeighIn strictly validates both `weighin.toml` and `weighin-fixtures.json` before any benchmarking begins. Typos in metric names or unsupported rule strings will cause the GitHub Action to fail early, protecting your CI pipeline from silently ignoring invalid threshold policies.
+[Apache License 2.0](LICENSE).

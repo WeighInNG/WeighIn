@@ -1,0 +1,81 @@
+{
+  "total_count": 1,
+  "jobs": [
+    {
+      "id": 113574512580,
+      "run_id": 37854252900,
+      "workflow_name": "WeighIn Comment",
+      "head_branch": "main",
+      "run_url": "https://api.github.com/repos/WeighInNG/WeighIn/actions/runs/37854252900",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOTOhICs8AAAAacZGHxA",
+      "head_sha": "eaeea48ca77d1ff74c3a4cdee5f158a44fb4819e",
+      "url": "https://api.github.com/repos/WeighInNG/WeighIn/actions/jobs/113574512580",
+      "html_url": "https://github.com/WeighInNG/WeighIn/actions/runs/37854252900/job/113574512580",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-10-08T22:33:49Z",
+      "started_at": "2026-10-08T22:33:51Z",
+      "completed_at": "2026-10-08T22:33:58Z",
+      "name": "Post PR Comment",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-08T22:33:52Z",
+          "completed_at": "2026-10-08T22:33:53Z"
+        },
+        {
+          "name": "Checkout Action",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-10-08T22:33:53Z",
+          "completed_at": "2026-10-08T22:33:55Z"
+        },
+        {
+          "name": "Download artifacts",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-10-08T22:33:55Z",
+          "completed_at": "2026-10-08T22:33:56Z"
+        },
+        {
+          "name": "Post Comment",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-10-08T22:33:56Z",
+          "completed_at": "2026-10-08T22:33:57Z"
+        },
+        {
+          "name": "Post Checkout Action",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8,
+          "started_at": "2026-10-08T22:33:57Z",
+          "completed_at": "2026-10-08T22:33:57Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9,
+          "started_at": "2026-10-08T22:33:57Z",
+          "completed_at": "2026-10-08T22:33:57Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/WeighInNG/WeighIn/check-runs/113574512580",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000000108,
+      "runner_name": "GitHub Actions 1000000108",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    }
+  ]
+}

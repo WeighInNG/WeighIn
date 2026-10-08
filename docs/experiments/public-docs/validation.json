@@ -1,0 +1,316 @@
+{
+  "status": "VERIFIED",
+  "baseline": "c030b96",
+  "merged_main_verified": "eaeea48ca77d1ff74c3a4cdee5f158a44fb4819e",
+  "baseline_tests": {
+    "node": 178,
+    "vitest": 52,
+    "exit": 0
+  },
+  "dependency_audit_after": {
+    "info": 0,
+    "low": 0,
+    "moderate": 0,
+    "high": 0,
+    "critical": 0,
+    "total": 0
+  },
+  "final_gates": "PASS",
+  "producer_sha": "e5161b8cb44fa7e786f80e43544706632c2b09b1",
+  "node": "v24.13.1",
+  "npm": "11.8.0",
+  "gates": [
+    {
+      "command": "npm ci",
+      "exit": 0,
+      "seconds": 59.423,
+      "log": "gate-1.log"
+    },
+    {
+      "command": "npm run lint",
+      "exit": 0,
+      "seconds": 11.004,
+      "log": "gate-2.log"
+    },
+    {
+      "command": "npm run typecheck",
+      "exit": 0,
+      "seconds": 26.644,
+      "log": "gate-3.log"
+    },
+    {
+      "command": "npm test",
+      "exit": 0,
+      "seconds": 91.024,
+      "log": "gate-4.log"
+    },
+    {
+      "command": "npm run build",
+      "exit": 0,
+      "seconds": 28.474,
+      "log": "gate-5.log"
+    },
+    {
+      "command": "npm run bundle",
+      "exit": 0,
+      "seconds": 41.78,
+      "log": "gate-6.log"
+    },
+    {
+      "command": "git diff --check",
+      "exit": 0,
+      "seconds": 0.408,
+      "log": "gate-7.log"
+    },
+    {
+      "command": "npm audit --json",
+      "exit": 0,
+      "seconds": 5.415,
+      "log": "gate-8.log"
+    },
+    {
+      "command": "npm pack --dry-run --json",
+      "exit": 0,
+      "seconds": 104.85,
+      "log": "gate-9.log"
+    }
+  ],
+  "node_tests": 189,
+  "vitest_tests": 52,
+  "native_tests": 15,
+  "native_exit": 0,
+  "helper_sha256": "1e7ef88e974bd09d5b683a3e94c101dea1b9524304c7124699ae0e8d279d964c",
+  "startup_attempts": [
+    {
+      "command": "bash scripts/start-local-network.sh",
+      "exit": 1,
+      "reason": "Friendbot HTTP 502 until readiness deadline",
+      "log": "network-attempt-1.txt"
+    },
+    {
+      "command": "node scripts/wait-for-local-network.cjs http://localhost:8000/rpc",
+      "exit": 0,
+      "log": "network-attempt-2.txt"
+    }
+  ],
+  "clean_first_test": {
+    "exit": 1,
+    "reason": "Documentation link targeted validation.json before that record was committed",
+    "resolution": "Commit retained validation record, refresh isolated checkout and rerun tests",
+    "log": "clean-first-test.log"
+  },
+  "native_cache": "Fresh build in this delivery checkout; helper can be reused for live proof",
+  "live_scenarios": {
+    "control": {
+      "status": "VERIFIED",
+      "scenario": "control",
+      "action_exit": 0,
+      "result": "pass",
+      "cpu": [
+        {
+          "logical_id": "id:reference-contract",
+          "base": 266842,
+          "head": 266842,
+          "delta": 0
+        },
+        {
+          "logical_id": "wasm:contract/target/wasm32-unknown-unknown/release/contract_test.wasm",
+          "base": 266842,
+          "head": 266842,
+          "delta": 0
+        }
+      ],
+      "violations": [],
+      "base_sha": "1c247591423da542d802c30abd8ce0cc9df9d8aa",
+      "head_sha": "1c247591423da542d802c30abd8ce0cc9df9d8aa",
+      "build_hashes": [
+        "718ba18378a2d94ec7bf0c75b3813c7d0bb5b65beb2fb4c445b3a4726ecd5668",
+        "718ba18378a2d94ec7bf0c75b3813c7d0bb5b65beb2fb4c445b3a4726ecd5668",
+        "718ba18378a2d94ec7bf0c75b3813c7d0bb5b65beb2fb4c445b3a4726ecd5668",
+        "718ba18378a2d94ec7bf0c75b3813c7d0bb5b65beb2fb4c445b3a4726ecd5668"
+      ],
+      "policy": {
+        "thresholds": {
+          "functions": {
+            "hello": {
+              "cpu_instructions": "strict_zero_tolerance"
+            }
+          }
+        }
+      },
+      "real_git_build_rpc_native_action": true,
+      "io_observers_only": true,
+      "github_hosted_execution": false
+    },
+    "regression": {
+      "status": "VERIFIED",
+      "scenario": "regression",
+      "action_exit": 0,
+      "result": "pass",
+      "cpu": [
+        {
+          "logical_id": "id:reference-contract",
+          "base": 266842,
+          "head": 309171,
+          "delta": 42329
+        },
+        {
+          "logical_id": "wasm:contract/target/wasm32-unknown-unknown/release/contract_test.wasm",
+          "base": 266842,
+          "head": 309171,
+          "delta": 42329
+        }
+      ],
+      "violations": [],
+      "base_sha": "f52685b0955d012a28a42b4690e88b9279acd5bd",
+      "head_sha": "b3a6b4c28db92a932b378b8c6be1b7cc9b89945f",
+      "build_hashes": [
+        "5878fa37dfcec8eaebc72111dfdbfa92447cb735bd88d23dcaf0e8edf9f7f3e8",
+        "5878fa37dfcec8eaebc72111dfdbfa92447cb735bd88d23dcaf0e8edf9f7f3e8",
+        "718ba18378a2d94ec7bf0c75b3813c7d0bb5b65beb2fb4c445b3a4726ecd5668",
+        "718ba18378a2d94ec7bf0c75b3813c7d0bb5b65beb2fb4c445b3a4726ecd5668"
+      ],
+      "policy": {},
+      "real_git_build_rpc_native_action": true,
+      "io_observers_only": true,
+      "github_hosted_execution": false
+    },
+    "threshold": {
+      "status": "VERIFIED",
+      "scenario": "threshold",
+      "action_exit": 1,
+      "result": "fail",
+      "cpu": [
+        {
+          "logical_id": "id:reference-contract",
+          "base": 266842,
+          "head": 309171,
+          "delta": 42329
+        },
+        {
+          "logical_id": "wasm:contract/target/wasm32-unknown-unknown/release/contract_test.wasm",
+          "base": 266842,
+          "head": 309171,
+          "delta": 42329
+        }
+      ],
+      "violations": [
+        {
+          "contract_id": "CA7EPJIQEBWP35YTOKQBAFRKBO4ZSK5XC66XFM7R3PRBM36BZGGLBU46",
+          "function_name": "hello",
+          "metric": "cpu_instructions",
+          "delta": 42329,
+          "pct": 15.862945113587815,
+          "rule": "strict_zero_tolerance",
+          "message": "cpu_instructions increased by 42329 (strict zero tolerance)",
+          "fixture_id": "path:weighin-fixtures.json",
+          "logical_id": "id:reference-contract",
+          "case_id": "args:[{\"type\":\"symbol\",\"value\":\"world\"}]"
+        },
+        {
+          "contract_id": "CA7EPJIQEBWP35YTOKQBAFRKBO4ZSK5XC66XFM7R3PRBM36BZGGLBU46",
+          "function_name": "hello",
+          "metric": "cpu_instructions",
+          "delta": 42329,
+          "pct": 15.862945113587815,
+          "rule": "strict_zero_tolerance",
+          "message": "cpu_instructions increased by 42329 (strict zero tolerance)",
+          "fixture_id": "path:weighin-fixtures.json",
+          "logical_id": "wasm:contract/target/wasm32-unknown-unknown/release/contract_test.wasm",
+          "case_id": "args:[{\"type\":\"symbol\",\"value\":\"world\"}]"
+        }
+      ],
+      "base_sha": "e2af0ddf8e959f599c9f12141cafb5997b86faaa",
+      "head_sha": "21162a1234abe061943f4217c9612296fbde43a2",
+      "build_hashes": [
+        "5878fa37dfcec8eaebc72111dfdbfa92447cb735bd88d23dcaf0e8edf9f7f3e8",
+        "5878fa37dfcec8eaebc72111dfdbfa92447cb735bd88d23dcaf0e8edf9f7f3e8",
+        "718ba18378a2d94ec7bf0c75b3813c7d0bb5b65beb2fb4c445b3a4726ecd5668",
+        "718ba18378a2d94ec7bf0c75b3813c7d0bb5b65beb2fb4c445b3a4726ecd5668"
+      ],
+      "policy": {
+        "thresholds": {
+          "functions": {
+            "hello": {
+              "cpu_instructions": "strict_zero_tolerance"
+            }
+          }
+        }
+      },
+      "real_git_build_rpc_native_action": true,
+      "io_observers_only": true,
+      "github_hosted_execution": false
+    }
+  },
+  "final_test_exit": 0,
+  "final_audit_exit": 0,
+  "final_audit_vulnerabilities": 0,
+  "clean_first_test_resolved": true,
+  "clean_checkout_and_live": {
+    "checkout_sha": "7f990b5e52923dc390548957bd94153f8b797969",
+    "tracked_status": "",
+    "runs": [
+      {
+        "command": "npm test",
+        "exit": 0,
+        "expected_exit": 0,
+        "seconds": 10.698,
+        "log": "clean-test.log"
+      },
+      {
+        "command": "npm run bundle",
+        "exit": 0,
+        "expected_exit": 0,
+        "seconds": 3.119,
+        "log": "clean-bundle.log"
+      },
+      {
+        "command": "git diff --exit-code -- bundled/index.js bundled/comment-action.js",
+        "exit": 0,
+        "expected_exit": 0,
+        "seconds": 0.014,
+        "log": "clean-bundle-freshness.log"
+      },
+      {
+        "command": "node tests/experiments/verify-flagship-ci.cjs control /home/mxr/Documents/localRepo/Weighin/.stage6-delivery/docs/experiments/public-docs/control",
+        "exit": 0,
+        "expected_exit": 0,
+        "seconds": 52.599,
+        "log": "control.log"
+      },
+      {
+        "command": "node tests/experiments/verify-flagship-ci.cjs regression /home/mxr/Documents/localRepo/Weighin/.stage6-delivery/docs/experiments/public-docs/regression",
+        "exit": 0,
+        "expected_exit": 0,
+        "seconds": 12.992,
+        "log": "regression.log"
+      },
+      {
+        "command": "node tests/experiments/verify-flagship-ci.cjs threshold /home/mxr/Documents/localRepo/Weighin/.stage6-delivery/docs/experiments/public-docs/threshold",
+        "exit": 1,
+        "expected_exit": 1,
+        "seconds": 11.446,
+        "log": "threshold.log"
+      }
+    ]
+  },
+  "private_seed_scan_findings": 0,
+  "owned_sidecar_stopped": true,
+  "final_validation_source_base": "cd7b493fe322c8fb7ea0c124d7c289d2dca64218",
+  "source_is_worktree_snapshot": true,
+  "validated_source_files": {
+    "README.md": "d555e03387b211edc5242e1cc2f4bd9c8e1c015ca04b17f70268708f2fc4cd04",
+    "CONTRIBUTING.md": "7d7ff9aa03e98870c94868dbc89e6a2a33361787d5a40bd7601b9fba4c024eab",
+    "docs/EVIDENCE.md": "bc2201759028e5884bb951a38dda5b8e916a2a8acd8a040df537a1cab18df395",
+    "docs/KNOWN_LIMITATIONS.md": "81d45aa4164a80044fdcd540fd07b2502fd4c2e1276ee34aa4ed1511cb04ff4a",
+    "docs/architecture.md": "bbc61b895210dacf683583d927add06f94d6a3b601a40d680a77e0c7363ce746",
+    "docs/DEPENDENCY_SECURITY.md": "c7dd1286602a37ccf24b70d26d0001d0b5f3777ec14d23f8f8e6f2cdb0cbc399",
+    "package.json": "1ed997dfdf694bf052e2088b8e2f279620ad760de6886cabf3972b87fbad6456",
+    "package-lock.json": "492e3e9b1bec64039b8ab30976b30ee6dee0b6a1dfdbce6231d49a9e03d7076c",
+    "bundled/index.js": "88a84534eabc00599094cd212252dfa98c63fded479f1d626d311a8239a83466",
+    "bundled/comment-action.js": "daee9b2794939b2485bb93354333c485ef7f49f3b569e96cdd3ab47a4a5dfdf0",
+    "tests/public-evidence.test.cjs": "f0b4d4b3be0ec5ab23194ff517875818ee1abc299f62ffdb8dfc995686f9f08c",
+    "tests/documentation.test.cjs": "b1fa37e041c886840255c93c29bffbe6a11d98ea89de289aa01005e4ee7ae717",
+    "tests/dependency-security.test.cjs": "47121885568a0f0988ae73c672ce9e3de8e370e5dfc25f368d7b25988bb24828"
+  }
+}

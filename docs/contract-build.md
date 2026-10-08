@@ -94,8 +94,8 @@ silently pair filenames. The reference now uses a temporary duplicate declaratio
 to retain the exact historical identity while introducing `id:reference-contract`.
 Both destinations receive the same modern build output. See the explicit
 [two-step fixture migration](fixture-migration.md), including when the temporary
-alias may be retired and how to prepare both artifacts for the CLI. This local
-proof does not establish a green public migration PR.
+alias may be retired and how to prepare both artifacts for the CLI. The original local proof does not establish hosted execution by itself;
+subsequent hosted proof is indexed in [Evidence](EVIDENCE.md).
 
 Initial build proof: [verification](experiments/modern-build/verification.json).
 `tests/experiments/verify-build-path.cjs` creates isolated temporary Git history,
@@ -113,6 +113,8 @@ npm run bundle
 node tests/experiments/verify-build-path.cjs /tmp/weighin-modern-build-proof
 ```
 
-This uses a shared Cargo artifact cache. Five clean builds/live runs, other
-platforms/networks, public GitHub CI, custom build features and external project
-integration remain separate work.
+This original build-path experiment uses a shared Cargo cache. Separate
+[five-clean-build/live evidence](repeatability.md), [hosted CI](EVIDENCE.md), and
+[local external-project proof](external-soroban-forge.md) retain their own
+producer records. Other platforms/networks and hosted external-project CI are
+not established by these experiments.

@@ -8,7 +8,9 @@ inputs:
       Path to the weighin-fixtures.json file in the caller repo, relative to the
       repository root. Declares which WASM files to benchmark and which functions
       to invoke. The Action builds with Stellar CLI 28.1+ (optimization enabled)
-      and Rust 1.84+; callers must provision these tools and wasm32v1-none.
+      and Rust 1.84+ as a minimum gate; SDK-specific requirements may be higher.
+      Tested versions are Stellar CLI 28.1.0 and Rust 1.95.0. Callers must provision
+      these tools, wasm32v1-none, and Rust 1.95.0 for the native helper.
     required: true
     default: 'weighin-fixtures.json'
 
@@ -24,7 +26,8 @@ inputs:
     description: >
       Soroban RPC endpoint to use for simulation. Defaults to the
       protocol-28 standalone network provisioned by the caller.
-      Override this if you bring your own RPC sidecar.
+      Override only for a compatible standalone sidecar; public networks and other
+      protocols are not supported by the current measurement path.
     required: false
     default: 'http://localhost:8000/rpc'
 
@@ -65,12 +68,12 @@ inputs:
     default: ''
 
   build-command:
-    description: "Optional custom command used to build the Soroban contract WASM"
+    description: "Optional shell command run in each revision; bypasses default build checks and cannot be combined with skip-build"
     required: false
     default: ""
 
   skip-build:
-    description: "Skip compilation and use the precompiled WASM referenced by the fixtures"
+    description: "Skip compilation and use precompiled fixture WASMs in both revisions; bypasses default build checks"
     required: false
     default: "false"
 
