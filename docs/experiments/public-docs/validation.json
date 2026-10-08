@@ -1,0 +1,104 @@
+{
+  "status": "REQUIRED_GATES_PASS_LIVE_PENDING",
+  "baseline": "c030b96",
+  "merged_main_verified": "eaeea48ca77d1ff74c3a4cdee5f158a44fb4819e",
+  "baseline_tests": {
+    "node": 178,
+    "vitest": 52,
+    "exit": 0
+  },
+  "dependency_audit_after": {
+    "info": 0,
+    "low": 0,
+    "moderate": 0,
+    "high": 0,
+    "critical": 0,
+    "total": 0
+  },
+  "final_gates": "PASS",
+  "producer_sha": "e5161b8cb44fa7e786f80e43544706632c2b09b1",
+  "node": "v24.13.1",
+  "npm": "11.8.0",
+  "gates": [
+    {
+      "command": "npm ci",
+      "exit": 0,
+      "seconds": 59.423,
+      "log": "gate-1.log"
+    },
+    {
+      "command": "npm run lint",
+      "exit": 0,
+      "seconds": 11.004,
+      "log": "gate-2.log"
+    },
+    {
+      "command": "npm run typecheck",
+      "exit": 0,
+      "seconds": 26.644,
+      "log": "gate-3.log"
+    },
+    {
+      "command": "npm test",
+      "exit": 0,
+      "seconds": 91.024,
+      "log": "gate-4.log"
+    },
+    {
+      "command": "npm run build",
+      "exit": 0,
+      "seconds": 28.474,
+      "log": "gate-5.log"
+    },
+    {
+      "command": "npm run bundle",
+      "exit": 0,
+      "seconds": 41.78,
+      "log": "gate-6.log"
+    },
+    {
+      "command": "git diff --check",
+      "exit": 0,
+      "seconds": 0.408,
+      "log": "gate-7.log"
+    },
+    {
+      "command": "npm audit --json",
+      "exit": 0,
+      "seconds": 5.415,
+      "log": "gate-8.log"
+    },
+    {
+      "command": "npm pack --dry-run --json",
+      "exit": 0,
+      "seconds": 104.85,
+      "log": "gate-9.log"
+    }
+  ],
+  "node_tests": 186,
+  "vitest_tests": 52,
+  "native_tests": 15,
+  "native_exit": 0,
+  "helper_sha256": "1e7ef88e974bd09d5b683a3e94c101dea1b9524304c7124699ae0e8d279d964c",
+  "startup_attempts": [
+    {
+      "command": "bash scripts/start-local-network.sh",
+      "exit": 1,
+      "reason": "Friendbot HTTP 502 until readiness deadline",
+      "log": "network-attempt-1.txt"
+    },
+    {
+      "command": "node scripts/wait-for-local-network.cjs http://localhost:8000/rpc",
+      "exit": 0,
+      "log": "network-attempt-2.txt"
+    }
+  ],
+  "clean_first_test": {
+    "exit": 1,
+    "reason": "Documentation link targeted validation.json before that record was committed",
+    "resolution": "Commit retained validation record, refresh isolated checkout and rerun tests",
+    "log": "clean-first-test.log"
+  },
+  "native_cache": "Fresh build in this delivery checkout; helper can be reused for live proof",
+  "live_scenarios": "pending"
+}
