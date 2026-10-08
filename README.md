@@ -95,6 +95,12 @@ cpu_instructions = "strict_zero_tolerance"
 memory_bytes = "allow_10_percent_increase"
 ```
 
+The published pin below predates the dependency patches in this checkout.
+[Dependency security review](docs/DEPENDENCY_SECURITY.md) identifies those fixes.
+After publication and hosted validation, consumers should replace this pin with
+the reviewed patched revision. The existing pin establishes valid public Action
+syntax; new local validation is recorded separately.
+
 After checkout, tool installation and network readiness, the Action step is:
 
 ```yaml

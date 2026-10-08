@@ -30,6 +30,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Post Comment
+        # Published example pin; replace after the dependency patches receive hosted validation.
         uses: WeighInNG/WeighIn/comment@eaeea48ca77d1ff74c3a4cdee5f158a44fb4819e
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}

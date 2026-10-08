@@ -26,7 +26,7 @@ see [Evidence](EVIDENCE.md), [metric provenance](metric-provenance.md) and
 | Policy scope | Supported with constraints | Per-function rules apply to all logical contracts/cases using that name; no contract/case-specific selectors. No historical trend storage or webhook export exists |
 | Historical results | Unsupported mixed-schema comparison | Schema 4 uses current audited semantics. Legacy results retain address matching only against legacy; schemas 2/3/4 cannot be mixed. Remeasure both revisions |
 | CLI | Intentionally limited | Measurement JSON from prebuilt WASM only. Comparison, thresholds and GitHub reporting belong to the Action/API |
-| GitHub comments | Supported with constraints | Separate consumer runs only for successful PR producers, so policy-failure reports remain artifacts/summaries. Direct comment API errors warn without failing an otherwise valid benchmark. Artifacts require retention/auth permissions |
+| GitHub comments | Supported with constraints | Separate consumer runs only for successful PR producers, so policy-failure reports remain artifacts/summaries. Direct comment API errors warn without failing an otherwise valid benchmark. Artifacts require retention/auth permissions. Comment upsert scans one comments API response; it does not paginate or disambiguate multiple marker comments (`src/comment.ts`) |
 | Public external-project CI | Not yet validated | Local external-project evidence is retained in [the external experiment](external-soroban-forge.md). It does not prove a hosted workflow in that external repository |
 
 ## Dependency audit

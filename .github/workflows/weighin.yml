@@ -74,6 +74,7 @@ jobs:
 
       - name: Run WeighIn (consumer example)
         if: github.repository != 'WeighInNG/WeighIn'
+        # Published example pin; replace after the dependency patches receive hosted validation.
         uses: WeighInNG/WeighIn@eaeea48ca77d1ff74c3a4cdee5f158a44fb4819e
         with:
           fixtures-path: weighin-fixtures.json
