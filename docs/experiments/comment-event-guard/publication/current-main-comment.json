@@ -1,0 +1,9 @@
+{
+  "attempt": 1,
+  "conclusion": "success",
+  "databaseId": 37777582263,
+  "event": "workflow_run",
+  "headSha": "cb43433bda828f6d43172944c5825768362a273e",
+  "status": "completed",
+  "url": "https://github.com/WeighInNG/WeighIn/actions/runs/37777582263"
+}

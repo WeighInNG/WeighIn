@@ -96,7 +96,7 @@ Flagship comparison identity statement now supported:
 
 # Current blocker
 
-## PR-only comment guard proven locally; publication and external CI remain
+## PR-only comment guard published; reviewed activation and external CI remain
 
 PR #1 was merged with explicit user approval on 2026-10-08. Reviewed head
 1c844ce9708a9d709ec39aed4309942d66dbd9a3 is included in main merge commit
@@ -111,11 +111,13 @@ Sixteen focused workflow tests PASS; all 230 JavaScript assertions and existing
 install/lint/typecheck/build/bundle/package gates PASS. Production runtime and
 both bundles are unchanged. See Stage 6G for local proof and boundaries.
 
-Highest-priority next dependency: publish the concrete guard repair through a
-new reviewed PR, activate it on main, and prove that push comments skip while PR
-comments still deliver. PR1 is already merged; prior push approval was scoped to
-that PR. New branch/PR publication and merge require explicit authorization.
-No hosted run has exercised the guard yet.
+Highest-priority next dependency: obtain reviewed merge approval for PR12,
+https://github.com/WeighInNG/WeighIn/pull/12, exact head
+36294f695c7e5a46268e0087910299b6f3c60b33. User approved publication; branch
+fix/pr-only-comment-job is pushed. All seven hosted PR checks PASS and GitHub
+reports CLEAN/MERGEABLE. Main was integrated without changing the tested tree.
+Actual PR report delivery still PASSes on existing main cb43433b. Guard activation
+and a hosted main-push job skip remain unproven until merge. No merge authorized.
 
 Stage 6C proves five full Action controls on real Soroban Forge with identical
 WASM and all eight measured deltas zero, CPU 565371 -> 565371. The isolated
@@ -1221,7 +1223,7 @@ No external project publication, artificial production regression or appeal.
 
 ## Stage 6G — Restrict own-repository commenting to PR CI events
 
-Status: IMPLEMENTED AND LOCALLY VERIFIED; HOSTED ACTIVATION PENDING — 2026-10-08
+Status: PUBLISHED AND SEVEN HOSTED CHECKS VERIFIED; ACTIVATION PENDING — 2026-10-08
 
 Approved narrow repair: .github/workflows/comment.yml now requires a successful
 workflow_run whose event is pull_request. Checkout/artifact selection, trusted
@@ -1256,6 +1258,33 @@ Next: explicit approval to publish this tested patch as a new WeighIn PR; after
 reviewed activation verify push skipping and PR delivery on GitHub. External
 project publication/evidence alignment remain afterward. No appeal-ready or
 Drips-approval claim.
+
+---
+
+### Stage 6G publication — 2026-10-08
+
+User approved pushing and opening a new PR. Published fix/pr-only-comment-job at
+36294f695c7e5a46268e0087910299b6f3c60b33 and opened PR12. This includes the
+previous local progress/live-comment evidence commits. Main cb43433b was merged
+locally; diff checks confirm the tested workflow/test/runtime/dependency trees
+are unchanged. No force push, external publication or merge.
+
+All seven exact-head checks PASS:
+- CI: https://github.com/WeighInNG/WeighIn/actions/runs/37777040190
+- Flagship control/regression/threshold:
+  https://github.com/WeighInNG/WeighIn/actions/runs/37777040210
+- Example benchmark: https://github.com/WeighInNG/WeighIn/actions/runs/37777040348
+
+Own PR report comment workflow37777582263 also PASSes, selecting CI37777040190;
+it runs main cb43433b, so this proves continued PR delivery on current main,
+not hosted activation of the new guard. Metadata, result assertions, safe comment
+log excerpts and checksums: docs/experiments/comment-event-guard/publication.
+GitHub reports CLEAN/MERGEABLE, all seven checks completed. No reviewed merge
+authorization yet. New guard push skipping remains pending. Publication progress
+is committed locally afterward; the reviewed remote head remains36294f6.
+
+Next: approve exact-head merge, then verify main CI, the skipped push comment
+job and retained PR commenting. Do not mark the guard hosted-proven before this.
 
 ---
 

@@ -1,0 +1,81 @@
+{
+  "baseRefName": "main",
+  "headRefName": "fix/pr-only-comment-job",
+  "headRefOid": "36294f695c7e5a46268e0087910299b6f3c60b33",
+  "mergeStateStatus": "CLEAN",
+  "mergeable": "MERGEABLE",
+  "state": "OPEN",
+  "statusCheckRollup": [
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-10-08T12:31:51Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/WeighInNG/WeighIn/actions/runs/37777040210/job/113310405872",
+      "name": "Flagship control",
+      "startedAt": "2026-10-08T12:27:59Z",
+      "status": "COMPLETED",
+      "workflowName": "Flagship comparison proof"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-10-08T12:31:24Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/WeighInNG/WeighIn/actions/runs/37777040348/job/113310411766",
+      "name": "Soroban Resource Benchmark",
+      "startedAt": "2026-10-08T12:28:00Z",
+      "status": "COMPLETED",
+      "workflowName": "WeighIn Benchmark"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-10-08T12:28:28Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/WeighInNG/WeighIn/actions/runs/37777040190/job/113310405828",
+      "name": "Lint, Typecheck, and Test",
+      "startedAt": "2026-10-08T12:27:59Z",
+      "status": "COMPLETED",
+      "workflowName": "WeighIn CI"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-10-08T12:34:30Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/WeighInNG/WeighIn/actions/runs/37777040210/job/113310405899",
+      "name": "Flagship regression",
+      "startedAt": "2026-10-08T12:28:02Z",
+      "status": "COMPLETED",
+      "workflowName": "Flagship comparison proof"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-10-08T12:31:49Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/WeighInNG/WeighIn/actions/runs/37777040210/job/113310405470",
+      "name": "Flagship threshold",
+      "startedAt": "2026-10-08T12:28:00Z",
+      "status": "COMPLETED",
+      "workflowName": "Flagship comparison proof"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-10-08T12:28:13Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/WeighInNG/WeighIn/actions/runs/37777040190/job/113310405493",
+      "name": "Verify Bundle Freshness",
+      "startedAt": "2026-10-08T12:27:58Z",
+      "status": "COMPLETED",
+      "workflowName": "WeighIn CI"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-10-08T12:32:18Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/WeighInNG/WeighIn/actions/runs/37777040190/job/113310622349",
+      "name": "Soroban Resource Benchmark",
+      "startedAt": "2026-10-08T12:28:31Z",
+      "status": "COMPLETED",
+      "workflowName": "WeighIn CI"
+    }
+  ],
+  "url": "https://github.com/WeighInNG/WeighIn/pull/12"
+}
