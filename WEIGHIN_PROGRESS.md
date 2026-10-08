@@ -116,8 +116,14 @@ in isolated fixture history. The bridge must stay until BASE contains the stable
 ID; it has not been publicly merged or retired in the working fixture.
 
 Stage 5D prepared and locally proved the internal flagship CI suite.
-Highest-priority unresolved dependency: explicitly authorized publication and
-real hosted execution on the internal reference contract. Stage 5C now proves clean source gates, real tarball install,
+Highest-priority unresolved dependency: resolve the existing PR conflict against
+current main, then obtain real hosted execution of the internal proof. The Stage
+5D branch has been pushed to the repository's current `WeighInNG/WeighIn` location
+(the old `mxrtins04/WeighIn` remote announced its move and accepted the push).
+The existing PR #1 points at the pushed SHA but GitHub reports `CONFLICTING` /
+`DIRTY`, with no status checks at this head. Its latest listed CI runs are older
+and failed; they are not validation for this push. Do not claim hosted CI passed.
+Stage 5C proves clean source gates, real tarball install,
 default installed native provisioning/CLI execution and fixed historical
 comparison/threshold scenarios. The concrete control/regression/threshold workflow and retained local evidence
 are ready for review; request explicit push/publication approval before hosting
@@ -1077,7 +1083,7 @@ Codex must not automatically progress through multiple major stages without appr
 
 ## Stage 5D — Public internal flagship CI preparation
 
-Status: PREPARED AND PROVEN LOCALLY; PUBLIC EXECUTION PENDING — 2026-10-08
+Status: PREPARED AND PROVEN LOCALLY; PUSHED; HOSTED EXECUTION BLOCKED ON PR CONFLICT — 2026-10-08
 
 Existing CI has no retained control/intentional-regression/threshold-failure proof.
 Added a separate read-only-permissions workflow with three isolated modern
@@ -1131,9 +1137,13 @@ not refreshed. Example self-check now uses ./ in this repository; copied workflo
 in other repositories keep the existing remote Action. YAML/bash checks pass for
 both workflows; hosted checkout/step/artifact behavior remains unproven.
 
-Implementation committed locally as 398d32d; final evidence/self-check alignment
-is a separate coherent local commit. README, production source/schema/fixtures/
+Implementation and final evidence/self-check alignment are committed as
+398d32d5b808f2b1e4efb3fefa0726354e873e25 and
+fbfd2096390484341a26e510f3e59fe97e782f92. The latter is pushed and verified at
+the current repository location. README, production source/schema/fixtures/
 policy and core application workflow unchanged. Preserved scratch/local context
 files untracked. No push, issue creation, external changes or appeal submission.
-Next: explicit publication approval, then actual hosted runs and retained public
-run/artifact links. Do not skip to external integration or claim campaign complete.
+Next: resolve PR #1's current main conflict, then rerun hosted CI and retain public
+run/artifact links. External project proof, final truth alignment, issue triage,
+red-team review and appeal preparation remain afterward. Do not claim campaign
+complete or Drips approval.
