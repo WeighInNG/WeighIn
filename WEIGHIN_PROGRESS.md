@@ -96,7 +96,7 @@ Flagship comparison identity statement now supported:
 
 # Current blocker
 
-## Safeguard published and core CI green; comment workflow repair and external CI remain
+## Comment workflow repaired locally; reviewed default-branch delivery and external CI remain
 
 PR #1 now publishes cc4e5a080f4fe47d3af6b1908bb082e30844f96a on its existing
 head branch test/no-op-baseline. All seven core checks passed: lint/typecheck/test,
@@ -126,15 +126,18 @@ Five full Action controls on real Soroban Forge repeat identical WASM/all eight
 measured resources; regression remains +114084 CPU and strict policy exits1.
 Checks cannot reserve capacity or exclude a transient optimizer-only failure.
 
-Highest-priority unresolved dependency: repair the own-repository comment
-workflow's artifact/checkout order, retaining the report through posting. Proposed
-next stage is a narrow workflow change with behavior-level ordering validation;
-requires separate stage approval. The existing workflow_run uses main, so hosted
-activation also requires reviewed merge/default-branch delivery authorization.
-Then deliver the external fixture baseline through the existing fork and obtain
-maintainer merge before its dependent workflow/regression proof. External push/PR,
-merge and Drips submission are not authorized. The current user approved only
-publication of the tested WeighIn work; that publication and core CI are complete.
+Stage 6E now repairs the own-repository comment workflow by checking out trusted
+Action code before artifact download. Real Git cleanup reproduces the old failure;
+the repaired order preserves files and the actual bundled comment Action delivers
+the exact report to a local test API. Missing metadata fails before posting and
+non-local connections are blocked. Full source/build/package gates pass.
+
+Highest-priority unresolved dependency: publish the validated repair to the same
+existing PR, verify hosted source checks, then obtain explicit reviewed merge
+approval. workflow_run uses main, so PR publication alone cannot activate the fix.
+Next deliver the external fixture baseline and dependent workflow/regression proof.
+No external push, merge or Drips submission is authorized. Prior WeighIn push
+authorization continues for the same existing PR; merge requires explicit approval.
 See docs/external-soroban-forge.md and Stage 6 below. No appeal-readiness or
 Drips-approval claim is supported yet.
 
@@ -1152,6 +1155,34 @@ Live PR/run metadata and focused failed-job log retained under
 is a local tracking commit after publication; remote tested source remains cc4e5a0.
 Next proposed stage: minimal comment-workflow report-preservation repair before
 external hosted delivery. Separate stage approval; no automatic stage expansion.
+
+---
+
+## Stage 6E — Preserve reports in the own-repository comment workflow
+
+Status: IMPLEMENTED AND LOCALLY VALIDATED — 2026-10-08
+
+User approved the narrow workflow ordering repair. Checkout Action now precedes
+Download artifacts in .github/workflows/comment.yml. Trusted default checkout,
+triggering workflow/run selection, inputs and permissions remain unchanged.
+No measurement/native/threshold/comment runtime changes; both bundles identical.
+YAML2.9.1 is a pinned development-only parser for the actual workflow in tests.
+
+Five behavior checks prove: downloaded report/metadata survive actual Git clean;
+the real bundled Action sends exact contents via local HTTP; historical ordering
+removes files and fails before posting; missing metadata fails before posting;
+trusted checkout/run selection preserved; non-local sockets forbidden. The first
+global-fetch interception missed bundled Undici and a dummy-token GET returned
+Bad credentials; no comment was posted. Corrected transport is local-only.
+
+npm ci/lint/typecheck/test/build/bundle/package dry-run PASS. 167 Node +52 Vitest
+PASS; native suite not rerun because native/measurement unchanged. Eleven existing
+dependency audit findings remain. Validation logs retained under
+`docs/experiments/comment-workflow-repair`. No README/architecture cleanup.
+
+Publish to the already-authorized existing WeighIn PR, then verify source gates.
+Default-branch activation and live posting for this workflow remain pending merge
+approval: workflow_run executes main. No test comments sent to maintainers.
 
 ---
 

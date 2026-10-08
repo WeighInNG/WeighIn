@@ -1,0 +1,34 @@
+✖ comment workflow preserves downloaded report/metadata and sends their contents through the bundled Action (2030.252111ms)
+✔ the historical download-before-checkout order deletes the report and fails before any posting request (570.623332ms)
+✔ missing downloaded metadata fails before any posting request (497.859514ms)
+✔ comment delivery retains trusted checkout and triggering-run artifact selection (1.377567ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 3
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3522.624941
+
+✖ failing tests:
+
+test at tests/comment-workflow.test.cjs:52:1
+✖ comment workflow preserves downloaded report/metadata and sends their contents through the bundled Action (2030.252111ms)
+  AssertionError [ERR_ASSERTION]: ::error::Bad credentials - https://docs.github.com/rest
+  
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/comment-workflow.test.cjs:54:10)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.start (node:internal/test_runner/test:1000:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:358:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

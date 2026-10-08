@@ -1,0 +1,191 @@
+
+> weighin@1.0.0 prepack
+> npm run build && npm run bundle
+
+
+> weighin@1.0.0 build
+> tsc
+
+
+> weighin@1.0.0 bundle
+> tsc --noEmit && esbuild src/action.ts --bundle --platform=node --target=node20 --outfile=bundled/index.js --format=cjs && esbuild src/comment-action.ts --bundle --platform=node --target=node20 --outfile=bundled/comment-action.js --format=cjs
+
+
+  bundled/index.js  1.9mb ⚠️
+
+⚡ Done in 253ms
+
+  bundled/comment-action.js  1.0mb ⚠️
+
+⚡ Done in 136ms
+[
+  {
+    "id": "weighin@1.0.0",
+    "name": "weighin",
+    "version": "1.0.0",
+    "size": 661474,
+    "unpackedSize": 3270260,
+    "shasum": "586e42e918f12477f355e877aab1abac42199bd3",
+    "integrity": "sha512-GFAQGgP2fkUsvRfLFE2vbtw2ydnINhJhd5mNfVC7O2hjy6q7tnJVtKT1XNb/eleUNYocXf5TJ3l9Vcu8MC7tow==",
+    "filename": "weighin-1.0.0.tgz",
+    "files": [
+      {
+        "path": "LICENSE",
+        "size": 11357,
+        "mode": 420
+      },
+      {
+        "path": "README.md",
+        "size": 8320,
+        "mode": 420
+      },
+      {
+        "path": "action.yml",
+        "size": 3179,
+        "mode": 420
+      },
+      {
+        "path": "bundled/comment-action.js",
+        "size": 1074524,
+        "mode": 420
+      },
+      {
+        "path": "bundled/index.js",
+        "size": 1948916,
+        "mode": 420
+      },
+      {
+        "path": "comment/action.yml",
+        "size": 438,
+        "mode": 420
+      },
+      {
+        "path": "dist/account.js",
+        "size": 4962,
+        "mode": 420
+      },
+      {
+        "path": "dist/action.js",
+        "size": 15810,
+        "mode": 420
+      },
+      {
+        "path": "dist/build-selection.js",
+        "size": 2589,
+        "mode": 420
+      },
+      {
+        "path": "dist/build.js",
+        "size": 8736,
+        "mode": 420
+      },
+      {
+        "path": "dist/cli.js",
+        "size": 3789,
+        "mode": 420
+      },
+      {
+        "path": "dist/comment-action.js",
+        "size": 2538,
+        "mode": 420
+      },
+      {
+        "path": "dist/comment.js",
+        "size": 10637,
+        "mode": 420
+      },
+      {
+        "path": "dist/config.js",
+        "size": 8132,
+        "mode": 420
+      },
+      {
+        "path": "dist/diff.js",
+        "size": 12963,
+        "mode": 420
+      },
+      {
+        "path": "dist/identity.js",
+        "size": 4970,
+        "mode": 420
+      },
+      {
+        "path": "dist/measurement.js",
+        "size": 17886,
+        "mode": 420
+      },
+      {
+        "path": "dist/report.js",
+        "size": 2200,
+        "mode": 420
+      },
+      {
+        "path": "dist/simulation.js",
+        "size": 20120,
+        "mode": 420
+      },
+      {
+        "path": "dist/threshold.js",
+        "size": 11999,
+        "mode": 420
+      },
+      {
+        "path": "docs/contract-build.md",
+        "size": 6632,
+        "mode": 420
+      },
+      {
+        "path": "docs/fixture-migration.md",
+        "size": 8173,
+        "mode": 420
+      },
+      {
+        "path": "docs/flagship-ci.md",
+        "size": 5510,
+        "mode": 420
+      },
+      {
+        "path": "docs/metric-provenance.md",
+        "size": 11340,
+        "mode": 420
+      },
+      {
+        "path": "docs/native-measurement.md",
+        "size": 11173,
+        "mode": 420
+      },
+      {
+        "path": "docs/network-readiness.md",
+        "size": 4989,
+        "mode": 420
+      },
+      {
+        "path": "docs/snapshot-recovery.md",
+        "size": 5442,
+        "mode": 420
+      },
+      {
+        "path": "native/simulation/Cargo.lock",
+        "size": 34201,
+        "mode": 420
+      },
+      {
+        "path": "native/simulation/Cargo.toml",
+        "size": 418,
+        "mode": 420
+      },
+      {
+        "path": "native/simulation/src/main.rs",
+        "size": 6390,
+        "mode": 420
+      },
+      {
+        "path": "package.json",
+        "size": 1927,
+        "mode": 420
+      }
+    ],
+    "entryCount": 31,
+    "bundled": []
+  }
+]
