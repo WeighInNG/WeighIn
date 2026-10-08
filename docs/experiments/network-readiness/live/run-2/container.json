@@ -1,0 +1,241 @@
+[
+  {
+    "Id": "e36478e95632c130a7a557f4c19562f903f076df4a9132f9a4e90db0a0d96d28",
+    "Created": "2026-10-08T07:14:40.498027668Z",
+    "Path": "/start",
+    "Args": [
+      "--local"
+    ],
+    "State": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 200701,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-08T07:14:41.567633818Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    },
+    "Image": "sha256:4c8bad1ef7341205b898f83d9489321da80c7bd74183100fc8e2a39a5938c7d5",
+    "ResolvConfPath": "/var/lib/docker/containers/e36478e95632c130a7a557f4c19562f903f076df4a9132f9a4e90db0a0d96d28/resolv.conf",
+    "HostnamePath": "/var/lib/docker/containers/e36478e95632c130a7a557f4c19562f903f076df4a9132f9a4e90db0a0d96d28/hostname",
+    "HostsPath": "/var/lib/docker/containers/e36478e95632c130a7a557f4c19562f903f076df4a9132f9a4e90db0a0d96d28/hosts",
+    "LogPath": "/var/lib/docker/containers/e36478e95632c130a7a557f4c19562f903f076df4a9132f9a4e90db0a0d96d28/e36478e95632c130a7a557f4c19562f903f076df4a9132f9a4e90db0a0d96d28-json.log",
+    "Name": "/stellar-quickstart",
+    "RestartCount": 0,
+    "Driver": "overlayfs",
+    "Platform": "linux",
+    "MountLabel": "system_u:object_r:container_file_t:s0:c300,c588",
+    "ProcessLabel": "system_u:system_r:container_t:s0:c300,c588",
+    "AppArmorProfile": "",
+    "ExecIDs": null,
+    "HostConfig": {
+      "Binds": null,
+      "ContainerIDFile": "",
+      "LogConfig": {
+        "Type": "json-file",
+        "Config": {}
+      },
+      "NetworkMode": "bridge",
+      "PortBindings": {
+        "8000/tcp": [
+          {
+            "HostIp": "",
+            "HostPort": "8000"
+          }
+        ]
+      },
+      "RestartPolicy": {
+        "Name": "no",
+        "MaximumRetryCount": 0
+      },
+      "AutoRemove": true,
+      "VolumeDriver": "",
+      "VolumesFrom": null,
+      "ConsoleSize": [
+        0,
+        0
+      ],
+      "CapAdd": null,
+      "CapDrop": null,
+      "CgroupnsMode": "private",
+      "Dns": null,
+      "DnsOptions": [],
+      "DnsSearch": [],
+      "ExtraHosts": null,
+      "GroupAdd": null,
+      "IpcMode": "private",
+      "Cgroup": "",
+      "Links": null,
+      "OomScoreAdj": 0,
+      "PidMode": "",
+      "Privileged": false,
+      "PublishAllPorts": false,
+      "ReadonlyRootfs": false,
+      "SecurityOpt": null,
+      "UTSMode": "",
+      "UsernsMode": "",
+      "ShmSize": 67108864,
+      "Runtime": "runc",
+      "Isolation": "",
+      "CpuShares": 0,
+      "Memory": 0,
+      "NanoCpus": 0,
+      "CgroupParent": "",
+      "BlkioWeight": 0,
+      "BlkioWeightDevice": [],
+      "BlkioDeviceReadBps": [],
+      "BlkioDeviceWriteBps": [],
+      "BlkioDeviceReadIOps": [],
+      "BlkioDeviceWriteIOps": [],
+      "CpuPeriod": 0,
+      "CpuQuota": 0,
+      "CpuRealtimePeriod": 0,
+      "CpuRealtimeRuntime": 0,
+      "CpusetCpus": "",
+      "CpusetMems": "",
+      "Devices": [],
+      "DeviceCgroupRules": null,
+      "DeviceRequests": null,
+      "MemoryReservation": 0,
+      "MemorySwap": 0,
+      "MemorySwappiness": null,
+      "OomKillDisable": null,
+      "PidsLimit": null,
+      "Ulimits": [],
+      "CpuCount": 0,
+      "CpuPercent": 0,
+      "IOMaximumIOps": 0,
+      "IOMaximumBandwidth": 0,
+      "MaskedPaths": [
+        "/proc/acpi",
+        "/proc/asound",
+        "/proc/interrupts",
+        "/proc/kcore",
+        "/proc/keys",
+        "/proc/latency_stats",
+        "/proc/sched_debug",
+        "/proc/scsi",
+        "/proc/timer_list",
+        "/proc/timer_stats",
+        "/sys/devices/virtual/powercap",
+        "/sys/firmware",
+        "/sys/devices/system/cpu/cpu0/thermal_throttle",
+        "/sys/devices/system/cpu/cpu1/thermal_throttle",
+        "/sys/devices/system/cpu/cpu2/thermal_throttle",
+        "/sys/devices/system/cpu/cpu3/thermal_throttle",
+        "/sys/devices/system/cpu/cpu4/thermal_throttle",
+        "/sys/devices/system/cpu/cpu5/thermal_throttle",
+        "/sys/devices/system/cpu/cpu6/thermal_throttle",
+        "/sys/devices/system/cpu/cpu7/thermal_throttle"
+      ],
+      "ReadonlyPaths": [
+        "/proc/bus",
+        "/proc/fs",
+        "/proc/irq",
+        "/proc/sys",
+        "/proc/sysrq-trigger"
+      ]
+    },
+    "Storage": {
+      "RootFS": {
+        "Snapshot": {
+          "Name": "overlayfs"
+        }
+      }
+    },
+    "Mounts": [],
+    "Config": {
+      "Hostname": "e36478e95632",
+      "Domainname": "",
+      "User": "",
+      "AttachStdin": false,
+      "AttachStdout": false,
+      "AttachStderr": false,
+      "ExposedPorts": {
+        "11625/tcp": {},
+        "11626/tcp": {},
+        "5432/tcp": {},
+        "6060/tcp": {},
+        "6061/tcp": {},
+        "8000/tcp": {},
+        "8002/tcp": {},
+        "8100/tcp": {}
+      },
+      "Tty": false,
+      "OpenStdin": false,
+      "StdinOnce": false,
+      "Env": [
+        "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+        "REVISION=3a367f3f009f3ec4199889e922d28ce70add1753"
+      ],
+      "Cmd": [
+        "--local"
+      ],
+      "Image": "stellar/quickstart@sha256:4c8bad1ef7341205b898f83d9489321da80c7bd74183100fc8e2a39a5938c7d5",
+      "Volumes": null,
+      "WorkingDir": "",
+      "Entrypoint": [
+        "/start"
+      ],
+      "Labels": {
+        "org.opencontainers.image.revision": "3a367f3f009f3ec4199889e922d28ce70add1753",
+        "org.opencontainers.image.version": "24.04"
+      }
+    },
+    "NetworkSettings": {
+      "SandboxID": "4138beff7809e8f7d21777a8ebf8e531ace266c86a3761c410fed2bd8d9571eb",
+      "SandboxKey": "/var/run/docker/netns/4138beff7809",
+      "Ports": {
+        "11625/tcp": null,
+        "11626/tcp": null,
+        "5432/tcp": null,
+        "6060/tcp": null,
+        "6061/tcp": null,
+        "8000/tcp": [
+          {
+            "HostIp": "0.0.0.0",
+            "HostPort": "8000"
+          },
+          {
+            "HostIp": "::",
+            "HostPort": "8000"
+          }
+        ],
+        "8002/tcp": null,
+        "8100/tcp": null
+      },
+      "Networks": {
+        "bridge": {
+          "IPAMConfig": null,
+          "Links": null,
+          "Aliases": null,
+          "DriverOpts": null,
+          "GwPriority": 0,
+          "NetworkID": "44902eaa47b937847fbb627a865549a20e05ccfd9b1b80040ff8257e8c2a094b",
+          "EndpointID": "834c9d9389d34376b03527a3850809c50329a2907d50a86ab605d1349c34147c",
+          "Gateway": "172.17.0.1",
+          "IPAddress": "172.17.0.2",
+          "MacAddress": "c2:2a:b9:34:37:25",
+          "IPPrefixLen": 16,
+          "IPv6Gateway": "",
+          "GlobalIPv6Address": "",
+          "GlobalIPv6PrefixLen": 0,
+          "DNSNames": null
+        }
+      }
+    },
+    "ImageManifestDescriptor": {
+      "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+      "digest": "sha256:9e7eb3511204ac056b3ccf5d7735cde02709181c869e338fa121768083d171e5",
+      "size": 6171,
+      "platform": {
+        "architecture": "amd64",
+        "os": "linux"
+      }
+    }
+  }
+]

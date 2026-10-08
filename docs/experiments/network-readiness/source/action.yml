@@ -1,0 +1,70 @@
+name: 'WeighIn'
+description: 'Measure and diff Soroban contract resource costs on pull requests (Linux x64, protocol 28)'
+author: 'Ijioma Makwochukwu'
+
+inputs:
+  fixtures-path:
+    description: >
+      Path to the weighin-fixtures.json file in the caller repo, relative to the
+      repository root. Declares which WASM files to benchmark and which functions
+      to invoke. The Action builds with Stellar CLI 28.1+ (optimization enabled)
+      and Rust 1.84+; callers must provision these tools and wasm32v1-none.
+    required: true
+    default: 'weighin-fixtures.json'
+
+  config-path:
+    description: >
+      Path to the weighin.toml threshold configuration file, relative to the
+      repository root. If the file does not exist the action runs without
+      enforcing any regression rules.
+    required: false
+    default: 'weighin.toml'
+
+  rpc-url:
+    description: >
+      Soroban RPC endpoint to use for simulation. Defaults to the
+      protocol-28 standalone network provisioned by the caller.
+      Override this if you bring your own RPC sidecar.
+    required: false
+    default: 'http://localhost:8000/rpc'
+
+  github-token:
+    description: >
+      GitHub token used to post the benchmark diff comment on the pull request.
+      Pass secrets.GITHUB_TOKEN. If omitted, the PR comment step is skipped.
+    required: false
+    default: ''
+
+  base-ref:
+    description: >
+      Git ref to use as the baseline for comparison. Defaults to the PR base
+      branch (github.base_ref). Override for manual dispatch or scheduled runs.
+    required: false
+    default: ''
+
+  rust-toolchain:
+    description: >
+      Rustup toolchain override for both contract builds. Passed as
+      RUSTUP_TOOLCHAIN to Cargo, rustc and Stellar CLI. When omitted, Rustup
+      resolves each revision's toolchain normally, including rust-toolchain.toml.
+      This does not change the native simulation helper's pinned toolchain.
+      The action does not install toolchains itself.
+    required: false
+    default: ''
+
+outputs:
+  result:
+    description: >
+      'pass' if configured policies passed, 'fail' if a policy was violated
+      or a required comparison, measurement or configuration was invalid.
+      Missing/failed baselines return 'fail' and fail the Action; no-baseline
+      success is no longer emitted.
+
+  diff-json:
+    description: >
+      JSON string containing the full diff result. Useful for downstream steps
+      that want to process the numbers without parsing the PR comment.
+
+runs:
+  using: 'node24'
+  main: 'bundled/index.js'

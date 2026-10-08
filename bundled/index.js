@@ -33564,12 +33564,6 @@ function parseFixtures(raw, fixturePath) {
   return { ...fixtures, fixture_id, contracts };
 }
 
-// src/simulation.ts
-var fs = __toESM(require("fs"));
-var path2 = __toESM(require("path"));
-var crypto2 = __toESM(require("crypto"));
-var import_child_process = require("child_process");
-
 // node_modules/@stellar/stellar-sdk/lib/esm/utils.js
 var Utils = class {
   /**
@@ -50019,15 +50013,15 @@ var RpcServer = class {
    *    });
    * ```
    */
-  async requestAirdrop(address, friendbotUrl2) {
+  async requestAirdrop(address, friendbotUrl) {
     const account = typeof address === "string" ? address : address.accountId();
-    friendbotUrl2 = friendbotUrl2 || (await this.getNetwork()).friendbotUrl;
-    if (!friendbotUrl2) {
+    friendbotUrl = friendbotUrl || (await this.getNetwork()).friendbotUrl;
+    if (!friendbotUrl) {
       throw new Error("No friendbot URL configured for current network");
     }
     try {
       const response = await this.httpClient.post(
-        `${friendbotUrl2}?addr=${encodeURIComponent(account)}`
+        `${friendbotUrl}?addr=${encodeURIComponent(account)}`
       );
       let meta;
       if (!response.data.result_meta_xdr) {
@@ -50087,19 +50081,19 @@ var RpcServer = class {
    * console.log("Contract funded! Hash:", tx.txHash);
    * ```
    */
-  async fundAddress(address, friendbotUrl2) {
+  async fundAddress(address, friendbotUrl) {
     if (!StrKey.isValidEd25519PublicKey(address) && !StrKey.isValidContract(address)) {
       throw new Error(
         `Invalid address: ${address}. Expected a Stellar account (G...) or contract (C...) address.`
       );
     }
-    friendbotUrl2 = friendbotUrl2 || (await this.getNetwork()).friendbotUrl;
-    if (!friendbotUrl2) {
+    friendbotUrl = friendbotUrl || (await this.getNetwork()).friendbotUrl;
+    if (!friendbotUrl) {
       throw new Error("No friendbot URL configured for current network");
     }
     try {
       const response = await this.httpClient.post(
-        `${friendbotUrl2}?addr=${encodeURIComponent(address)}`
+        `${friendbotUrl}?addr=${encodeURIComponent(address)}`
       );
       const txResponse = await this.getTransaction(response.data.hash);
       if (txResponse.status !== Api.GetTransactionStatus.SUCCESS) {
@@ -50292,7 +50286,89 @@ var RpcServer = class {
   }
 };
 
+// src/account.ts
+var DEADLINE_MS = 12e4;
+var REQUEST_MS = 15e3;
+var RETRY_MS = 2e3;
+var TRANSIENT_HTTP = /* @__PURE__ */ new Set([429, 500, 502, 503, 504]);
+var TemporaryReadinessError = class extends Error {
+};
+async function ensureAccountReady(rpcUrl, publicKey) {
+  const base = new URL(rpcUrl);
+  base.pathname = base.pathname.replace(/\/rpc\/?$/, "").replace(/\/$/, "") + "/friendbot";
+  base.search = "";
+  base.hash = "";
+  base.searchParams.set("addr", publicKey);
+  const key = types.LedgerKey.account(new types.LedgerKeyAccount({
+    accountId: Keypair.fromPublicKey(publicKey).xdrPublicKey()
+  })).toXDR("base64");
+  const deadline = Date.now() + DEADLINE_MS;
+  let funded = false, lastError = "account has not appeared in RPC";
+  async function request3(url, options = {}) {
+    try {
+      if (Date.now() >= deadline) throw new TemporaryReadinessError("readiness deadline elapsed");
+      const response = await fetch(url, {
+        ...options,
+        signal: AbortSignal.timeout(Math.max(1, Math.min(REQUEST_MS, deadline - Date.now())))
+      });
+      if (!response.ok) {
+        void response.body?.cancel().catch(() => {
+        });
+        const message = `HTTP ${response.status} ${response.statusText}`;
+        if (TRANSIENT_HTTP.has(response.status)) throw new TemporaryReadinessError(message);
+        throw new Error(message);
+      }
+      return await response.text();
+    } catch (error2) {
+      if (error2 instanceof TemporaryReadinessError) throw error2;
+      if (error2 instanceof TypeError || ["TimeoutError", "AbortError"].includes(error2?.name)) {
+        throw new TemporaryReadinessError(`transport failure: ${error2.message}`);
+      }
+      throw error2;
+    }
+  }
+  while (Date.now() < deadline) {
+    try {
+      const response = await request3(rpcUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "getLedgerEntries", params: { keys: [key] } })
+      });
+      const json = JSON.parse(response);
+      if (json.error) throw new Error(`Account readiness RPC error: ${JSON.stringify(json.error)}`);
+      const entries = json.result?.entries;
+      if (!Number.isInteger(json.result?.latestLedger) || json.result.latestLedger <= 0 || !Array.isArray(entries) || entries.length > 1) throw new Error("Invalid account readiness RPC response");
+      if (entries.length === 1) {
+        const entry = entries[0];
+        const value = types.LedgerEntryData.fromXDR(entry.xdr, "base64");
+        if (entry.key !== key || value.switch().name !== "account" || value.account().accountId().toXDR("base64") !== Keypair.fromPublicKey(publicKey).xdrPublicKey().toXDR("base64")) {
+          throw new Error("Account readiness RPC returned an unrelated account");
+        }
+        console.log(`Deployer account confirmed in RPC: ${publicKey}`);
+        return;
+      }
+      if (!funded) {
+        console.log(`Funding deployer account: ${publicKey} via friendbot...`);
+        await request3(base.toString());
+        funded = true;
+      }
+      lastError = "funded account has not appeared in RPC";
+    } catch (error2) {
+      if (!(error2 instanceof TemporaryReadinessError) && !["TimeoutError", "AbortError"].includes(error2?.name)) throw error2;
+      lastError = error2.message;
+      console.warn(`Account readiness retry: ${lastError}`);
+    }
+    const remaining = deadline - Date.now();
+    if (remaining > 0) await new Promise((resolve5) => setTimeout(resolve5, Math.min(RETRY_MS, remaining)));
+  }
+  throw new Error(`Account readiness failed within ${DEADLINE_MS / 1e3}s: ${lastError}`);
+}
+
 // src/simulation.ts
+var fs = __toESM(require("fs"));
+var path2 = __toESM(require("path"));
+var crypto2 = __toESM(require("crypto"));
+var import_child_process = require("child_process");
 var sha2562 = (value) => crypto2.createHash("sha256").update(value).digest("hex");
 var integer = external_exports.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER);
 var encoded = external_exports.string().min(1);
@@ -50654,10 +50730,6 @@ function metricsFromSimulation(output, limits) {
     )
   };
 }
-function friendbotUrl(rpcUrl, publicKey) {
-  const base = rpcUrl.replace(/\/rpc\/?$/, "");
-  return `${base}/friendbot?addr=${encodeURIComponent(publicKey)}`;
-}
 function toScVal(arg) {
   const type = arg.type.toLowerCase();
   const val = arg.value;
@@ -50694,7 +50766,7 @@ function calculateContractId(deployerAddress, salt) {
   const contractIdBytes = hash(hashIdPreimage.toXDR());
   return StrKey.encodeContract(contractIdBytes);
 }
-async function getOrInitAccount(server, keyFile, rpcUrl) {
+async function getOrInitAccount(keyFile, rpcUrl) {
   let keypair;
   if (fs2.existsSync(keyFile)) {
     const secret = fs2.readFileSync(keyFile, "utf8").trim();
@@ -50703,17 +50775,7 @@ async function getOrInitAccount(server, keyFile, rpcUrl) {
     keypair = Keypair.random();
     fs2.writeFileSync(keyFile, keypair.secret(), { mode: 384 });
   }
-  try {
-    await server.getAccount(keypair.publicKey());
-  } catch (err2) {
-    console.log(`Funding deployer account: ${keypair.publicKey()} via friendbot...`);
-    const url = friendbotUrl(rpcUrl, keypair.publicKey());
-    const res = await fetch(url);
-    if (!res.ok) {
-      throw new Error(`Friendbot funding failed (${res.status}): ${res.statusText}`);
-    }
-    await new Promise((resolve5) => setTimeout(resolve5, 3e3));
-  }
+  await ensureAccountReady(rpcUrl, keypair.publicKey());
   return keypair;
 }
 async function waitForTransaction(server, txHash) {
@@ -50763,7 +50825,7 @@ async function runMeasurement(fixturesPathOrOptions, gitCommit, sdkVersion, rpcU
     opts.fixtureId ?? path3.relative(process.cwd(), path3.resolve(opts.fixturesPath))
   );
   const server = new rpc_exports.Server(effectiveRpcUrl, { allowHttp: true });
-  const deployer = await getOrInitAccount(server, keyFile, effectiveRpcUrl);
+  const deployer = await getOrInitAccount(keyFile, effectiveRpcUrl);
   const deployerAddress = Address.fromString(deployer.publicKey());
   const results = [];
   for (const contractSpec of fixturesSpec.contracts) {
@@ -51476,7 +51538,7 @@ async function assertRpcHealthy(rpcUrl) {
     const res = await fetch(rpcUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "getNetwork" }),
+      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "getHealth" }),
       signal: AbortSignal.timeout(1e4)
     });
     if (!res.ok) {
@@ -51486,7 +51548,19 @@ async function assertRpcHealthy(rpcUrl) {
     if (json.error) {
       throw new Error(`RPC error: ${JSON.stringify(json.error)}`);
     }
-    core.info(`RPC healthy \u2014 network: ${json.result?.passphrase ?? "(no passphrase)"}`);
+    if (json.result?.status !== "healthy") throw new Error("RPC has not reported healthy");
+    const network = await fetch(rpcUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 2, method: "getNetwork" }),
+      signal: AbortSignal.timeout(1e4)
+    });
+    if (!network.ok) throw new Error(`HTTP ${network.status} ${network.statusText}`);
+    const metadata = await network.json();
+    if (metadata.error || typeof metadata.result?.passphrase !== "string" || !metadata.result.passphrase.trim()) {
+      throw new Error("Invalid RPC network metadata");
+    }
+    core.info(`RPC healthy \u2014 network: ${metadata.result.passphrase}`);
   } catch (err2) {
     core.setFailed(
       `Soroban RPC at ${rpcUrl} is not reachable: ${err2.message}

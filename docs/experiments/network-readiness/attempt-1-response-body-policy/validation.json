@@ -1,0 +1,57 @@
+[
+  {
+    "command": "npm ci",
+    "status": 0,
+    "log": "validation-npm-ci.log"
+  },
+  {
+    "command": "npm test",
+    "status": 0,
+    "log": "validation-npm-test.log"
+  },
+  {
+    "command": "npm run test:native",
+    "status": 0,
+    "log": "validation-npm-run-testnative.log"
+  },
+  {
+    "command": "npm run build",
+    "status": 0,
+    "log": "validation-npm-run-build.log"
+  },
+  {
+    "command": "npm run bundle",
+    "status": 0,
+    "log": "validation-npm-run-bundle.log"
+  },
+  {
+    "command": "npm pack --dry-run --json",
+    "status": 0,
+    "log": "validation-npm-pack---dry-run---json.log"
+  },
+  {
+    "command": "bash -n scripts/start-local-network.sh",
+    "status": 0,
+    "log": "validation-bash--n-scriptsstart-local-networksh.log"
+  },
+  {
+    "command": "node --check scripts/wait-for-local-network.cjs",
+    "status": 0,
+    "log": "validation-node---check-scriptswait-for-local-networkcjs.log"
+  },
+  {
+    "command": "node --check tests/experiments/verify-network-readiness.cjs",
+    "status": 0,
+    "log": "validation-node---check-testsexperimentsverify-network-readinesscjs.log"
+  },
+  {
+    "command": "cargo +1.95.0 fmt --check --manifest-path native/simulation/Cargo.toml",
+    "status": 0,
+    "log": "validation-cargo-1950-fmt---check---manifest-path-nativesimulationCargotoml.log"
+  },
+  {
+    "command": "git diff --check",
+    "status": 0,
+    "log": "validation-git-diff---check.log"
+  }
+]

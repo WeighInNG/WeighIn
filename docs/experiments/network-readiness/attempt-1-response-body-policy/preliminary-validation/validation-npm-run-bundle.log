@@ -1,0 +1,8 @@
+
+> weighin@1.0.0 bundle
+> tsc --noEmit && esbuild src/action.ts --bundle --platform=node --target=node20 --outfile=bundled/index.js --format=cjs
+
+
+  bundled/index.js  1.8mb ⚠️
+
+⚡ Done in 263ms
