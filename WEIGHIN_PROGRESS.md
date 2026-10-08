@@ -96,7 +96,7 @@ Flagship comparison identity statement now supported:
 
 # Current blocker
 
-## Comment workflow repaired locally; reviewed default-branch delivery and external CI remain
+## Comment workflow published and validated; default-branch activation and external CI remain
 
 PR #1 now publishes cc4e5a080f4fe47d3af6b1908bb082e30844f96a on its existing
 head branch test/no-op-baseline. All seven core checks passed: lint/typecheck/test,
@@ -132,9 +132,10 @@ the repaired order preserves files and the actual bundled comment Action deliver
 the exact report to a local test API. Missing metadata fails before posting and
 non-local connections are blocked. Full source/build/package gates pass.
 
-Highest-priority unresolved dependency: publish the validated repair to the same
-existing PR, verify hosted source checks, then obtain explicit reviewed merge
-approval. workflow_run uses main, so PR publication alone cannot activate the fix.
+Highest-priority unresolved dependency: obtain reviewed merge approval for
+PR1 at 1c844ce9708a9d709ec39aed4309942d66dbd9a3. The repair and tracking commit
+were pushed to the exact existing test/no-op-baseline branch. All seven current
+PR checks PASS and GitHub reports CLEAN/MERGEABLE. No merge is authorized yet. workflow_run uses main, so PR publication alone cannot activate the fix.
 Next deliver the external fixture baseline and dependent workflow/regression proof.
 No external push, merge or Drips submission is authorized. Prior WeighIn push
 authorization continues for the same existing PR; merge requires explicit approval.
@@ -1160,7 +1161,7 @@ external hosted delivery. Separate stage approval; no automatic stage expansion.
 
 ## Stage 6E — Preserve reports in the own-repository comment workflow
 
-Status: IMPLEMENTED AND LOCALLY VALIDATED — 2026-10-08
+Status: PUBLISHED AND SOURCE CHECKS VERIFIED; ACTIVATION PENDING — 2026-10-08
 
 User approved the narrow workflow ordering repair. Checkout Action now precedes
 Download artifacts in .github/workflows/comment.yml. Trusted default checkout,
@@ -1180,9 +1181,17 @@ PASS; native suite not rerun because native/measurement unchanged. Eleven existi
 dependency audit findings remain. Validation logs retained under
 `docs/experiments/comment-workflow-repair`. No README/architecture cleanup.
 
-Publish to the already-authorized existing WeighIn PR, then verify source gates.
-Default-branch activation and live posting for this workflow remain pending merge
-approval: workflow_run executes main. No test comments sent to maintainers.
+Published 1c844ce9708a9d709ec39aed4309942d66dbd9a3 to exact existing PR1 branch
+under continuing WeighIn push approval. All seven hosted checks PASS:
+- CI: https://github.com/WeighInNG/WeighIn/actions/runs/37774203112
+- Flagship proofs: https://github.com/WeighInNG/WeighIn/actions/runs/37774203374
+- Example: https://github.com/WeighInNG/WeighIn/actions/runs/37774203526
+Transient GitHub API connection errors recovered on retry. Exact head confirmed;
+PR is CLEAN/MERGEABLE, no review decision. Default-branch activation/live posting
+for this workflow remain pending explicit reviewed merge approval. workflow_run
+executes main, not PR HEAD. No test comments sent to maintainers. No merge or
+external-repository publication. This hosted-result tracking update is committed
+locally after publication; the remote reviewed head remains1c844ce.
 
 ---
 
