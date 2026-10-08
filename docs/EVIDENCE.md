@@ -8,7 +8,74 @@ policy. A changed WASM/runtime address does not prevent comparison. Conclusions
 apply to the fixtures and environments below. This page distinguishes real live
 experiments, frozen replay tests and expected-negative hosted verification.
 
-## Tested environment
+## Published revision validation
+
+[PR #13](https://github.com/WeighInNG/WeighIn/pull/13) published and tested reviewed
+commit `bbbe9001bbd375fd6a1ff75be5da2593c86fff20`. All seven PR checks passed.
+The actual GitHub merge checkout was `85cc2766b2323ffa26cf761b8c70581e1a96c22c`;
+the hosted producer records distinguish it from the reviewed branch head.
+
+| Hosted check | Result / public job |
+|---|---|
+| Lint, typecheck, Node/Vitest tests | [Passed](https://github.com/WeighInNG/WeighIn/actions/runs/37853815131/job/113573072994) |
+| Bundle freshness | [Passed](https://github.com/WeighInNG/WeighIn/actions/runs/37853815131/job/113573073326) |
+| Core benchmark, native replay and report | [Passed](https://github.com/WeighInNG/WeighIn/actions/runs/37853815131/job/113573207430) |
+| Consumer benchmark and report | [Passed](https://github.com/WeighInNG/WeighIn/actions/runs/37853815150/job/113573073265) |
+| Control / exit 0 | [Passed](https://github.com/WeighInNG/WeighIn/actions/runs/37853815025/job/113573073257) |
+| Intentional regression / exit 0 | [Passed](https://github.com/WeighInNG/WeighIn/actions/runs/37853815025/job/113573073102) |
+| Strict-threshold verification / Action exit 1 | [Passed](https://github.com/WeighInNG/WeighIn/actions/runs/37853815025/job/113573072828) |
+
+Hosted source validation passed **189 Node, 52 Vitest and 15 native tests**,
+build, bundle freshness and packaging dry-run. Dependency installation reported
+zero vulnerabilities; no dedicated blocking `npm audit` step is configured.
+The separately recorded local audit remains the explicit npm audit evidence.
+Run/job/artifact metadata and selected validation log lines are retained in
+[the publication archive](experiments/publication/).
+
+The [new hosted environment](experiments/publication/regression/environment.json)
+used Node 24.21.0, Rust 1.95.0, Stellar CLI 28.1.0, contract SDK 28.0.0,
+JavaScript SDK 16.0.1 and native simulation/host 28.0.1. The pinned image,
+protocol-28 standalone network and `wasm32v1-none` optimized locked build method
+were unchanged. RPC software version was not independently recorded.
+The tested Action bundle SHA256 is
+`88a84534eabc00599094cd212252dfa98c63fded479f1d626d311a8239a83466`;
+helper SHA256 is
+`e7785adc8b991dfd83dc28b12bde717384dc76229cc53c19971db7867db313ea`.
+
+The [new regression diff](experiments/publication/regression/diff.json) paired
+`id:reference-contract` despite runtime IDs changing from
+`CA6RT4HSPLSQERW5D5KZB5JBFCMRZ55X3LGBT3UAOWFWPRG3E2KWD37W` to
+`CCFGC7ZJUFCWTCDIGMSMNPE6QDQ4BDZNVLVAG72DQY3O2QBPX5KWTJ2Z`.
+WASM hashes/sizes equal those in section 1 below. CPU was **266842 → 309171**,
+delta **+42329 (+15.862945%)**; memory **1123942 → 1192553** and write bytes
+**0 → 88**. These equal the recorded local regression values. The hosted control
+again had eight zero resource deltas. Local and hosted native helper hashes differ;
+that is recorded, not treated as cross-machine binary reproducibility.
+
+[Strict-threshold verification](experiments/publication/threshold/verification.json)
+and [raw process result](experiments/publication/threshold/process.json) retain
+actual exit 1, `result: fail` and two CPU-policy violations. Only this expected
+failure step is continued; the mandatory verifier passed and the enclosing job
+was green. [Selected public log lines](experiments/publication/proof-validation-lines.txt)
+retain GitHub's process-exit error. No whole-red-job claim is made.
+
+Hosted artifacts are `flagship-{control,regression,threshold}-37853815025-1`
+([artifact IDs and metadata](experiments/publication/proof-artifacts.json)),
+plus `weighin-artifacts` on each benchmark producer. Their retained copies include
+sources, WASMs, hashes, raw RPC/native captures, reports, outputs and exits.
+The [core comment consumer](https://github.com/WeighInNG/WeighIn/actions/runs/37854252900)
+and [example consumer](https://github.com/WeighInNG/WeighIn/actions/runs/37854180132)
+succeeded. The [posted PR report](https://github.com/WeighInNG/WeighIn/pull/13#issuecomment-6070391630)
+was verified equal to each producer's artifact after its corresponding consumer;
+the final saved body equals the core report
+([equality record](experiments/publication/comment.json)). Trusted comment workflows
+ran default-branch `eaeea48ca77d1ff74c3a4cdee5f158a44fb4819e`, not PR code;
+their own `head_sha` must not be confused with the benchmark producer's revision.
+
+Consumer examples now pin the verified public immutable `bbbe9001bbd375fd6a1ff75be5da2593c86fff20`.
+Historical experiments below remain attributed to their original producers.
+
+## Tested environment — historical experiments
 
 The retained [hosted environment](experiments/hosted-comparison/regression/environment.json)
 records the actual producer checkout, not just a branch name:
@@ -252,8 +319,8 @@ gates, native replay, packaging, clean installation and audit results. The initi
 sidecar funding deadline failure and the first clean-checkout documentation-link
 failure are preserved with their successful retries; neither failure was counted
 as a passing benchmark. The [security review](DEPENDENCY_SECURITY.md) identifies
-the dependency updates and why older published pins require replacement after
-the patched revision receives hosted validation.
+the dependency updates. The publication validation above verifies the patched
+public revision now used by consumer pins.
 
 ## Known boundaries
 

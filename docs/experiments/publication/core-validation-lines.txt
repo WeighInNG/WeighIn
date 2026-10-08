@@ -1,0 +1,11 @@
+Lint, Typecheck, and Test	Run npm ci	2026-10-08T22:29:51.0912227Z found 0 vulnerabilities
+Lint, Typecheck, and Test	Run npm run test	2026-10-08T22:30:02.5831570Z  Test Files  9 passed (9)
+Verify Bundle Freshness	Run npm ci	2026-10-08T22:29:51.4487949Z found 0 vulnerabilities
+Soroban Resource Benchmark	Install Node dependencies	2026-10-08T22:30:25.2393236Z found 0 vulnerabilities
+Soroban Resource Benchmark	Test measurement adapter and native source	2026-10-08T22:31:03.7775880Z # tests 189
+Soroban Resource Benchmark	Test measurement adapter and native source	2026-10-08T22:31:03.7776259Z # pass 189
+Soroban Resource Benchmark	Test measurement adapter and native source	2026-10-08T22:31:03.7776439Z # fail 0
+Soroban Resource Benchmark	Test measurement adapter and native source	2026-10-08T22:31:05.2451211Z  Test Files  9 passed (9)
+Soroban Resource Benchmark	Test measurement adapter and native source	2026-10-08T22:32:24.1694680Z # tests 15
+Soroban Resource Benchmark	Test measurement adapter and native source	2026-10-08T22:32:24.1695253Z # pass 15
+Soroban Resource Benchmark	Test measurement adapter and native source	2026-10-08T22:32:24.1695520Z # fail 0

@@ -6,7 +6,8 @@ const { xdr } = require('@stellar/stellar-sdk');
 const { verifyScenario } = require('./experiments/flagship-analysis.cjs');
 const archives = [
   { directory: 'hosted-comparison', hosted: true, url: 'https://github.com/WeighInNG/WeighIn/actions/runs/37777040210' },
-  { directory: 'public-docs', hosted: false, url: null }
+  { directory: 'public-docs', hosted: false, url: null },
+  { directory: 'publication', hosted: true, url: 'https://github.com/WeighInNG/WeighIn/actions/runs/37853815025' }
 ];
 const hash = data => createHash('sha256').update(data).digest('hex');
 

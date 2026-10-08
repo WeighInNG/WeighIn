@@ -1,0 +1,337 @@
+{
+  "total_count": 3,
+  "jobs": [
+    {
+      "id": 113573072994,
+      "run_id": 37853815131,
+      "workflow_name": "WeighIn CI",
+      "head_branch": "docs/public-evidence-truth-alignment",
+      "run_url": "https://api.github.com/repos/WeighInNG/WeighIn/actions/runs/37853815131",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOTOhICs8AAAAacXuQYg",
+      "head_sha": "bbbe9001bbd375fd6a1ff75be5da2593c86fff20",
+      "url": "https://api.github.com/repos/WeighInNG/WeighIn/actions/jobs/113573072994",
+      "html_url": "https://github.com/WeighInNG/WeighIn/actions/runs/37853815131/job/113573072994",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-10-08T22:29:41Z",
+      "started_at": "2026-10-08T22:29:43Z",
+      "completed_at": "2026-10-08T22:30:05Z",
+      "name": "Lint, Typecheck, and Test",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-08T22:29:44Z",
+          "completed_at": "2026-10-08T22:29:45Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-10-08T22:29:45Z",
+          "completed_at": "2026-10-08T22:29:47Z"
+        },
+        {
+          "name": "Setup Node",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-10-08T22:29:47Z",
+          "completed_at": "2026-10-08T22:29:48Z"
+        },
+        {
+          "name": "Run npm ci",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-10-08T22:29:48Z",
+          "completed_at": "2026-10-08T22:29:51Z"
+        },
+        {
+          "name": "Run npm run lint",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-10-08T22:29:51Z",
+          "completed_at": "2026-10-08T22:29:51Z"
+        },
+        {
+          "name": "Run npm run typecheck",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-10-08T22:29:51Z",
+          "completed_at": "2026-10-08T22:29:53Z"
+        },
+        {
+          "name": "Run npm run test",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-10-08T22:29:53Z",
+          "completed_at": "2026-10-08T22:30:02Z"
+        },
+        {
+          "name": "Post Setup Node",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13,
+          "started_at": "2026-10-08T22:30:02Z",
+          "completed_at": "2026-10-08T22:30:03Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14,
+          "started_at": "2026-10-08T22:30:03Z",
+          "completed_at": "2026-10-08T22:30:03Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15,
+          "started_at": "2026-10-08T22:30:03Z",
+          "completed_at": "2026-10-08T22:30:03Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/WeighInNG/WeighIn/check-runs/113573072994",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000000101,
+      "runner_name": "GitHub Actions 1000000101",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    },
+    {
+      "id": 113573073326,
+      "run_id": 37853815131,
+      "workflow_name": "WeighIn CI",
+      "head_branch": "docs/public-evidence-truth-alignment",
+      "run_url": "https://api.github.com/repos/WeighInNG/WeighIn/actions/runs/37853815131",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOTOhICs8AAAAacXuRrg",
+      "head_sha": "bbbe9001bbd375fd6a1ff75be5da2593c86fff20",
+      "url": "https://api.github.com/repos/WeighInNG/WeighIn/actions/jobs/113573073326",
+      "html_url": "https://github.com/WeighInNG/WeighIn/actions/runs/37853815131/job/113573073326",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-10-08T22:29:41Z",
+      "started_at": "2026-10-08T22:29:43Z",
+      "completed_at": "2026-10-08T22:29:56Z",
+      "name": "Verify Bundle Freshness",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-08T22:29:44Z",
+          "completed_at": "2026-10-08T22:29:45Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-10-08T22:29:45Z",
+          "completed_at": "2026-10-08T22:29:46Z"
+        },
+        {
+          "name": "Setup Node",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-10-08T22:29:46Z",
+          "completed_at": "2026-10-08T22:29:47Z"
+        },
+        {
+          "name": "Run npm ci",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-10-08T22:29:47Z",
+          "completed_at": "2026-10-08T22:29:51Z"
+        },
+        {
+          "name": "Run npm run bundle",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-10-08T22:29:51Z",
+          "completed_at": "2026-10-08T22:29:54Z"
+        },
+        {
+          "name": "Verify no uncommitted changes",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-10-08T22:29:54Z",
+          "completed_at": "2026-10-08T22:29:54Z"
+        },
+        {
+          "name": "Post Setup Node",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11,
+          "started_at": "2026-10-08T22:29:54Z",
+          "completed_at": "2026-10-08T22:29:55Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12,
+          "started_at": "2026-10-08T22:29:55Z",
+          "completed_at": "2026-10-08T22:29:55Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13,
+          "started_at": "2026-10-08T22:29:55Z",
+          "completed_at": "2026-10-08T22:29:55Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/WeighInNG/WeighIn/check-runs/113573073326",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000000104,
+      "runner_name": "GitHub Actions 1000000104",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    },
+    {
+      "id": 113573207430,
+      "run_id": 37853815131,
+      "workflow_name": "WeighIn CI",
+      "head_branch": "docs/public-evidence-truth-alignment",
+      "run_url": "https://api.github.com/repos/WeighInNG/WeighIn/actions/runs/37853815131",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOTOhICs8AAAAacX2dhg",
+      "head_sha": "bbbe9001bbd375fd6a1ff75be5da2593c86fff20",
+      "url": "https://api.github.com/repos/WeighInNG/WeighIn/actions/jobs/113573207430",
+      "html_url": "https://github.com/WeighInNG/WeighIn/actions/runs/37853815131/job/113573207430",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-10-08T22:30:05Z",
+      "started_at": "2026-10-08T22:30:07Z",
+      "completed_at": "2026-10-08T22:33:46Z",
+      "name": "Soroban Resource Benchmark",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-08T22:30:08Z",
+          "completed_at": "2026-10-08T22:30:08Z"
+        },
+        {
+          "name": "Checkout PR head",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-10-08T22:30:08Z",
+          "completed_at": "2026-10-08T22:30:10Z"
+        },
+        {
+          "name": "Install Rust toolchain",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-10-08T22:30:10Z",
+          "completed_at": "2026-10-08T22:30:19Z"
+        },
+        {
+          "name": "Install Node dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-10-08T22:30:19Z",
+          "completed_at": "2026-10-08T22:30:25Z"
+        },
+        {
+          "name": "Install pinned Stellar CLI",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-10-08T22:30:25Z",
+          "completed_at": "2026-10-08T22:30:26Z"
+        },
+        {
+          "name": "Verify reference contract build",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-10-08T22:30:26Z",
+          "completed_at": "2026-10-08T22:30:55Z"
+        },
+        {
+          "name": "Test measurement adapter and native source",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-10-08T22:30:55Z",
+          "completed_at": "2026-10-08T22:32:27Z"
+        },
+        {
+          "name": "Start local Stellar network",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8,
+          "started_at": "2026-10-08T22:32:27Z",
+          "completed_at": "2026-10-08T22:33:07Z"
+        },
+        {
+          "name": "Run WeighIn",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9,
+          "started_at": "2026-10-08T22:33:07Z",
+          "completed_at": "2026-10-08T22:33:43Z"
+        },
+        {
+          "name": "Upload Report Artifact",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10,
+          "started_at": "2026-10-08T22:33:43Z",
+          "completed_at": "2026-10-08T22:33:44Z"
+        },
+        {
+          "name": "Post Checkout PR head",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 20,
+          "started_at": "2026-10-08T22:33:44Z",
+          "completed_at": "2026-10-08T22:33:45Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 21,
+          "started_at": "2026-10-08T22:33:45Z",
+          "completed_at": "2026-10-08T22:33:45Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/WeighInNG/WeighIn/check-runs/113573207430",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000000106,
+      "runner_name": "GitHub Actions 1000000106",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    }
+  ]
+}

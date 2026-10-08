@@ -49,7 +49,7 @@ its arguments and return value:
 
 The WASM hash and runtime contract address changed. The logical benchmark still
 paired. Report-only execution passed; `strict_zero_tolerance` on CPU produced
-violations and Action exit 1. The [hosted proof](https://github.com/WeighInNG/WeighIn/actions/runs/37777040210)
+violations and Action exit 1. The [hosted proof](https://github.com/WeighInNG/WeighIn/actions/runs/37853815025)
 verified that expected failure. Its enclosing verification job is intentionally
 green. [Exact source, hashes, reports and raw responses](docs/EVIDENCE.md) are retained.
 
@@ -63,7 +63,7 @@ green. [Exact source, hashes, reports and raw responses](docs/EVIDENCE.md) are r
 3. Copy the [benchmark workflow](.github/workflows/weighin.yml) into your
    repository and adapt its fixture/config paths. It includes tool and sidecar
    provisioning. Pin the Action to a reviewed commit; the excerpt below uses
-   the verified public main revision.
+   the hosted-verified public immutable revision.
 
 For a contract whose Cargo package is `contract-test`, `weighin-fixtures.json`:
 
@@ -95,16 +95,14 @@ cpu_instructions = "strict_zero_tolerance"
 memory_bytes = "allow_10_percent_increase"
 ```
 
-The published pin below predates the dependency patches in this checkout.
-[Dependency security review](docs/DEPENDENCY_SECURITY.md) identifies those fixes.
-After publication and hosted validation, consumers should replace this pin with
-the reviewed patched revision. The existing pin establishes valid public Action
-syntax; new local validation is recorded separately.
+The pin below passed hosted control, regression, threshold and core CI checks.
+See [publication evidence](docs/EVIDENCE.md#published-revision-validation) and
+[dependency security review](docs/DEPENDENCY_SECURITY.md).
 
 After checkout, tool installation and network readiness, the Action step is:
 
 ```yaml
-- uses: WeighInNG/WeighIn@eaeea48ca77d1ff74c3a4cdee5f158a44fb4819e
+- uses: WeighInNG/WeighIn@bbbe9001bbd375fd6a1ff75be5da2593c86fff20
   with:
     fixtures-path: weighin-fixtures.json
     config-path: weighin.toml

@@ -30,8 +30,8 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Post Comment
-        # Published example pin; replace after the dependency patches receive hosted validation.
-        uses: WeighInNG/WeighIn/comment@eaeea48ca77d1ff74c3a4cdee5f158a44fb4819e
+        # Immutable public revision verified by PR #13 hosted control/regression/threshold and core CI.
+        uses: WeighInNG/WeighIn/comment@bbbe9001bbd375fd6a1ff75be5da2593c86fff20
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           report-path: weighin-report.md

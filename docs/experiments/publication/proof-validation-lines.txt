@@ -1,0 +1,7 @@
+Flagship threshold	Install dependencies and validate source	2026-10-08T22:30:00.9341754Z found 0 vulnerabilities
+Flagship threshold	Install dependencies and validate source	2026-10-08T22:30:11.4131135Z  Test Files  9 passed (9)
+Flagship threshold	Execute real bundled Action on isolated revisions	2026-10-08T22:33:28.2956028Z ##[error]Process completed with exit code 1.
+Flagship regression	Install dependencies and validate source	2026-10-08T22:30:00.7342011Z found 0 vulnerabilities
+Flagship regression	Install dependencies and validate source	2026-10-08T22:30:10.9009650Z  Test Files  9 passed (9)
+Flagship control	Install dependencies and validate source	2026-10-08T22:30:00.7359376Z found 0 vulnerabilities
+Flagship control	Install dependencies and validate source	2026-10-08T22:30:11.1467824Z  Test Files  9 passed (9)

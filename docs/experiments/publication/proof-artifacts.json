@@ -1,0 +1,65 @@
+{
+  "total_count": 3,
+  "artifacts": [
+    {
+      "id": 11583720297,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU4MzcyMDI5Nw==",
+      "name": "flagship-control-37853815025-1",
+      "size_in_bytes": 49267,
+      "url": "https://api.github.com/repos/WeighInNG/WeighIn/actions/artifacts/11583720297",
+      "archive_download_url": "https://api.github.com/repos/WeighInNG/WeighIn/actions/artifacts/11583720297/zip",
+      "expired": false,
+      "digest": "sha256:12aed49180e6992e2cf72ac248f8bd2e32843c4c1e2025adfdd67225e1b569fd",
+      "created_at": "2026-10-08T22:33:22Z",
+      "updated_at": "2026-10-08T22:33:22Z",
+      "expires_at": "2026-11-07T22:33:22Z",
+      "workflow_run": {
+        "id": 37853815025,
+        "repository_id": 1290291210,
+        "head_repository_id": 1290291210,
+        "head_branch": "docs/public-evidence-truth-alignment",
+        "head_sha": "bbbe9001bbd375fd6a1ff75be5da2593c86fff20"
+      }
+    },
+    {
+      "id": 11582978453,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU4Mjk3ODQ1Mw==",
+      "name": "flagship-regression-37853815025-1",
+      "size_in_bytes": 57267,
+      "url": "https://api.github.com/repos/WeighInNG/WeighIn/actions/artifacts/11582978453",
+      "archive_download_url": "https://api.github.com/repos/WeighInNG/WeighIn/actions/artifacts/11582978453/zip",
+      "expired": false,
+      "digest": "sha256:24f0220ca84f45c096f585a8c4aae4248d07d06ffe6a2d4784f2fb23029b2dea",
+      "created_at": "2026-10-08T22:33:42Z",
+      "updated_at": "2026-10-08T22:33:42Z",
+      "expires_at": "2026-11-07T22:33:42Z",
+      "workflow_run": {
+        "id": 37853815025,
+        "repository_id": 1290291210,
+        "head_repository_id": 1290291210,
+        "head_branch": "docs/public-evidence-truth-alignment",
+        "head_sha": "bbbe9001bbd375fd6a1ff75be5da2593c86fff20"
+      }
+    },
+    {
+      "id": 11582623606,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU4MjYyMzYwNg==",
+      "name": "flagship-threshold-37853815025-1",
+      "size_in_bytes": 58385,
+      "url": "https://api.github.com/repos/WeighInNG/WeighIn/actions/artifacts/11582623606",
+      "archive_download_url": "https://api.github.com/repos/WeighInNG/WeighIn/actions/artifacts/11582623606/zip",
+      "expired": false,
+      "digest": "sha256:6dc9897d216ff388df67b47b0e7b866213206cbcd31ec75c21ba2103254e2a28",
+      "created_at": "2026-10-08T22:33:29Z",
+      "updated_at": "2026-10-08T22:33:29Z",
+      "expires_at": "2026-11-07T22:33:28Z",
+      "workflow_run": {
+        "id": 37853815025,
+        "repository_id": 1290291210,
+        "head_repository_id": 1290291210,
+        "head_branch": "docs/public-evidence-truth-alignment",
+        "head_sha": "bbbe9001bbd375fd6a1ff75be5da2593c86fff20"
+      }
+    }
+  ]
+}
