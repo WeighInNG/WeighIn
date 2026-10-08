@@ -30,8 +30,15 @@ inputs:
 
   github-token:
     description: >
-      GitHub token used to post the benchmark diff comment on the pull request.
-      Pass secrets.GITHUB_TOKEN. If omitted, the PR comment step is skipped.
+      Optional token for posting a benchmark comment directly. Omit it when
+      using the separate fork-safe comment workflow.
+    required: false
+    default: ''
+
+  metadata-path:
+    description: >
+      Optional path where the action should write a JSON file containing the PR
+      number and HEAD SHA (e.g. pr-metadata.json). Used for split workflows.
     required: false
     default: ''
 
@@ -51,6 +58,21 @@ inputs:
       The action does not install toolchains itself.
     required: false
     default: ''
+
+  report-path:
+    description: "Optional path where the generated Markdown benchmark report should be written"
+    required: false
+    default: ''
+
+  build-command:
+    description: "Optional custom command used to build the Soroban contract WASM"
+    required: false
+    default: ""
+
+  skip-build:
+    description: "Skip compilation and use the precompiled WASM referenced by the fixtures"
+    required: false
+    default: "false"
 
 outputs:
   result:

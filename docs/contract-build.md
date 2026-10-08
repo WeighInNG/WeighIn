@@ -41,7 +41,11 @@ contract-build commands for both revisions. Omitted input preserves Rustup's
 normal per-revision resolution. The native simulation helper retains its own
 explicit Rust 1.95.0 toolchain. Tool installation remains the caller's duty; both
 repository workflows include the verified Stellar CLI installation and target.
-No custom build-command feature existed; this stage does not introduce one.
+The default path uses the Stellar CLI. An explicitly supplied `build-command`
+remains an escape hatch for projects with a different build process; WeighIn runs
+it in each revision's own worktree. `skip-build: true` uses the fixture paths as
+prebuilt artifacts. These overrides bypass the default builder's CLI/version,
+optimization and fresh-output checks, so their caller owns those guarantees.
 
 ## Reference commands
 

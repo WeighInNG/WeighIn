@@ -9,10 +9,15 @@
   "scripts": {
     "prepack": "npm run build && npm run bundle",
     "build": "tsc",
-    "bundle": "tsc --noEmit && esbuild src/action.ts --bundle --platform=node --target=node20 --outfile=bundled/index.js --format=cjs",
-    "test": "npm run build && node --test tests/*.test.cjs",
+    "bundle": "tsc --noEmit && esbuild src/action.ts --bundle --platform=node --target=node20 --outfile=bundled/index.js --format=cjs && esbuild src/comment-action.ts --bundle --platform=node --target=node20 --outfile=bundled/comment-action.js --format=cjs",
+    "test": "npm run build && node --test tests/*.test.cjs && npm run test:vitest",
+    "test:vitest": "vitest run test/*.test.ts",
+    "test:watch": "vitest test/*.test.ts",
+    "test:native": "npm run build && npm run build:helper && node --test tests/native/*.test.cjs",
     "build:helper": "cargo +1.95.0 build --release --locked --manifest-path native/simulation/Cargo.toml --target-dir native/simulation/target --target x86_64-unknown-linux-gnu",
-    "test:native": "npm run build && npm run build:helper && node --test tests/native/*.test.cjs"
+    "typecheck": "tsc --noEmit",
+    "lint": "prettier --check src test",
+    "format": "prettier --write src test"
   },
   "dependencies": {
     "@actions/core": "2.0.0",
@@ -25,7 +30,10 @@
   "devDependencies": {
     "@types/node": "20.19.43",
     "esbuild": "0.25.6",
-    "typescript": "5.9.3"
+    "prettier": "^3.9.6",
+    "typescript": "5.9.3",
+    "vite": "^5.4.14",
+    "vitest": "^2.1.9"
   },
   "files": [
     "dist",
@@ -34,11 +42,13 @@
     "native/simulation/Cargo.lock",
     "native/simulation/src",
     "action.yml",
+    "comment",
     "docs/native-measurement.md",
     "docs/contract-build.md",
     "docs/metric-provenance.md",
     "docs/snapshot-recovery.md",
     "docs/fixture-migration.md",
-    "docs/network-readiness.md"
+    "docs/network-readiness.md",
+    "docs/flagship-ci.md"
   ]
 }

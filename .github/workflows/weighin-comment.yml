@@ -1,0 +1,37 @@
+##
+## weighin-comment.yml — Example workflow for securely posting the WeighIn comment.
+##
+## This is the second half of the two-workflow setup. It runs securely in the
+## base repository with write permissions to post the comment from the first workflow.
+##
+
+name: WeighIn Comment
+on:
+  workflow_run:
+    workflows: ["WeighIn Benchmark"]
+    types:
+      - completed
+
+jobs:
+  post-comment:
+    name: Post PR Comment
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success'
+    permissions:
+      pull-requests: write
+      actions: read
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: weighin-artifacts
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Post Comment
+        uses: WeighInNG/WeighIn/comment@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          report-path: weighin-report.md
+          metadata-path: pr-metadata.json

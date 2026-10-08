@@ -7,12 +7,47 @@ on:
     branches: [main]
 
 jobs:
+  lint-and-test:
+    name: Lint, Typecheck, and Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run test
+
+  verify-build:
+    name: Verify Bundle Freshness
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run bundle
+      - name: Verify no uncommitted changes
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "Error: Uncommitted changes detected after build. Please run 'npm run bundle' locally and commit the results."
+            git status
+            git diff
+            exit 1
+          fi
+
   benchmark:
     name: Soroban Resource Benchmark
+    needs: [lint-and-test, verify-build]
     runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write   # needed to post/update the PR comment
-      contents: read
+    # Default token permissions are fine (read-only)
 
     steps:
       - name: Checkout PR head
@@ -22,7 +57,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@master
+        uses: dtolnay/rust-toolchain@d1031067263f94b142dd6c0ce24c5eb9d02d52a0
         with:
           # Pin to the same channel declared in rust-toolchain.toml
           toolchain: "1.95.0"
@@ -61,5 +96,14 @@ jobs:
           fixtures-path: weighin-fixtures.json
           config-path: weighin.toml
           rpc-url: http://localhost:8000/rpc
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          # base-ref is inferred from the pull_request event automatically
+          report-path: weighin-report.md
+          metadata-path: pr-metadata.json
+
+      - name: Upload Report Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: weighin-artifacts
+          path: |
+            weighin-report.md
+            pr-metadata.json

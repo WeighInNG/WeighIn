@@ -1,11 +1,19 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import * as crypto from 'crypto';
-import { parseFixtures } from './identity';
-import { ensureAccountReady } from './account';
-import { measureInvocation, resolveSimulationHelper, ComputeProvenance, SimulationOutput, ResourceLimits } from './simulation';
+import * as fs from "fs";
+import * as path from "path";
+import * as crypto from "crypto";
+import { parseFixtures } from "./identity";
+import { ensureAccountReady } from "./account";
+import { validateLargeInt } from "./config";
+import {
+  measureInvocation,
+  resolveSimulationHelper,
+  ComputeProvenance,
+  SimulationOutput,
+  ResourceLimits,
+} from "./simulation";
 import {
   xdr,
+  nativeToScVal,
   hash,
   StrKey,
   Address,
@@ -13,14 +21,15 @@ import {
   Operation,
   Keypair,
   rpc,
-} from '@stellar/stellar-sdk';
+  scvSortedMap,
+} from "@stellar/stellar-sdk";
 
-const DEFAULT_RPC_URL = 'http://localhost:8000/rpc';
-const NETWORK_PASSPHRASE = 'Standalone Network ; February 2017';
+const DEFAULT_RPC_URL = "http://localhost:8000/rpc";
+const NETWORK_PASSPHRASE = "Standalone Network ; February 2017";
 
 /** Schema 4 adds audited consumption and per-metric limit provenance. */
 export interface MetricValue {
-  availability?: 'measured' | 'unavailable';
+  availability?: "measured" | "unavailable";
   consumed: number | null;
   limit: number | null;
   reason?: string;
@@ -91,34 +100,94 @@ export interface FixturesSpec {
  * IO byte adjustment is exactly identity in this helper's default configuration.
  * Footprint sizes are distinct access keys, not counts of host read/write calls.
  */
-export function metricsFromSimulation(output: SimulationOutput, limits: ResourceLimits): Metrics {
-  const measured = (consumed: number, limit: number, source: string, limit_source: string): MetricValue =>
-    ({ availability: 'measured', consumed, limit, source, limit_source });
-  const unavailable = (reason: string): MetricValue => ({ availability: 'unavailable', consumed: null, limit: null, reason });
-  const io = 'ConfigSettingContractLedgerCostV0';
-  const eventBytes = output.contract_events_xdr.reduce((sum, event) => sum + xdr.ContractEvent.fromXDR(event, 'base64').toXDR().length, 0)
-    + xdr.ScVal.fromXDR(output.retval_xdr, 'base64').toXDR().length;
+export function metricsFromSimulation(
+  output: SimulationOutput,
+  limits: ResourceLimits,
+): Metrics {
+  const measured = (
+    consumed: number,
+    limit: number,
+    source: string,
+    limit_source: string,
+  ): MetricValue => ({
+    availability: "measured",
+    consumed,
+    limit,
+    source,
+    limit_source,
+  });
+  const unavailable = (reason: string): MetricValue => ({
+    availability: "unavailable",
+    consumed: null,
+    limit: null,
+    reason,
+  });
+  const io = "ConfigSettingContractLedgerCostV0";
+  const eventBytes =
+    output.contract_events_xdr.reduce(
+      (sum, event) =>
+        sum + xdr.ContractEvent.fromXDR(event, "base64").toXDR().length,
+      0,
+    ) + xdr.ScVal.fromXDR(output.retval_xdr, "base64").toXDR().length;
   return {
-    cpu_instructions: measured(output.cpu_instructions_consumed, limits.cpu_instructions,
-      'soroban-simulation.simulated_instructions', 'ConfigSettingContractComputeV0.txMaxInstructions'),
-    memory_bytes: measured(output.memory_bytes_consumed, limits.memory_bytes,
-      'soroban-simulation.simulated_memory', 'ConfigSettingContractComputeV0.txMemoryLimit'),
-    ledger_read_entries: measured(output.read_only_keys.length + output.read_write_keys.length, limits.footprint_entries,
-      'SorobanResources.footprint.readOnly.length + readWrite.length', 'ConfigSettingContractLedgerCostExtV0.txMaxFootprintEntries'),
-    ledger_read_bytes: measured(output.disk_read_bytes, limits.disk_read_bytes,
-      'SorobanResources.diskReadBytes (identity adjustment)', `${io}.txMaxDiskReadBytes`),
-    ledger_write_entries: measured(output.read_write_keys.length, limits.write_entries,
-      'SorobanResources.footprint.readWrite.length', `${io}.txMaxWriteLedgerEntries`),
-    ledger_write_bytes: measured(output.write_bytes, limits.write_bytes,
-      'SorobanResources.writeBytes (identity adjustment)', `${io}.txMaxWriteBytes`),
-    historical_data_read_bytes: unavailable('Protocol 28 exposes historical-data fees, not a historical read consumption resource'),
-    contract_data_hard_limit: unavailable('No verified instance-only post-invocation size and corresponding limit mapping'),
-    tx_size_bytes: unavailable('Simulation estimates a maximum envelope; no signed benchmark transaction is submitted'),
-    events_count: { availability: 'measured', consumed: output.contract_events_xdr.length, limit: null,
-      source: 'successful non-diagnostic ContractEvents.length', limit_reason: 'Protocol 28 has no independent event-count cap' },
-    event_data_bytes: measured(eventBytes, limits.events_and_return_bytes,
-      'sum(successful non-diagnostic ContractEvent XDR bytes) + return ScVal XDR bytes',
-      'ConfigSettingContractEventsV0.txMaxContractEventsSizeBytes'),
+    cpu_instructions: measured(
+      output.cpu_instructions_consumed,
+      limits.cpu_instructions,
+      "soroban-simulation.simulated_instructions",
+      "ConfigSettingContractComputeV0.txMaxInstructions",
+    ),
+    memory_bytes: measured(
+      output.memory_bytes_consumed,
+      limits.memory_bytes,
+      "soroban-simulation.simulated_memory",
+      "ConfigSettingContractComputeV0.txMemoryLimit",
+    ),
+    ledger_read_entries: measured(
+      output.read_only_keys.length + output.read_write_keys.length,
+      limits.footprint_entries,
+      "SorobanResources.footprint.readOnly.length + readWrite.length",
+      "ConfigSettingContractLedgerCostExtV0.txMaxFootprintEntries",
+    ),
+    ledger_read_bytes: measured(
+      output.disk_read_bytes,
+      limits.disk_read_bytes,
+      "SorobanResources.diskReadBytes (identity adjustment)",
+      `${io}.txMaxDiskReadBytes`,
+    ),
+    ledger_write_entries: measured(
+      output.read_write_keys.length,
+      limits.write_entries,
+      "SorobanResources.footprint.readWrite.length",
+      `${io}.txMaxWriteLedgerEntries`,
+    ),
+    ledger_write_bytes: measured(
+      output.write_bytes,
+      limits.write_bytes,
+      "SorobanResources.writeBytes (identity adjustment)",
+      `${io}.txMaxWriteBytes`,
+    ),
+    historical_data_read_bytes: unavailable(
+      "Protocol 28 exposes historical-data fees, not a historical read consumption resource",
+    ),
+    contract_data_hard_limit: unavailable(
+      "No verified instance-only post-invocation size and corresponding limit mapping",
+    ),
+    tx_size_bytes: unavailable(
+      "Simulation estimates a maximum envelope; no signed benchmark transaction is submitted",
+    ),
+    events_count: {
+      availability: "measured",
+      consumed: output.contract_events_xdr.length,
+      limit: null,
+      source: "successful non-diagnostic ContractEvents.length",
+      limit_reason: "Protocol 28 has no independent event-count cap",
+    },
+    event_data_bytes: measured(
+      eventBytes,
+      limits.events_and_return_bytes,
+      "sum(successful non-diagnostic ContractEvent XDR bytes) + return ScVal XDR bytes",
+      "ConfigSettingContractEventsV0.txMaxContractEventsSizeBytes",
+    ),
   };
 }
 
@@ -127,20 +196,72 @@ export function metricsFromSimulation(output: SimulationOutput, limits: Resource
 // ---------------------------------------------------------------------------
 
 // Convert native type/value to ScVal
-function toScVal(arg: InvocationArg): xdr.ScVal {
+export function toScVal(arg: InvocationArg): xdr.ScVal {
   const type = arg.type.toLowerCase();
   const val = arg.value;
   switch (type) {
-    case 'symbol':
+    case "symbol":
       return xdr.ScVal.scvSymbol(val);
-    case 'string':
+    case "string":
       return xdr.ScVal.scvString(val);
-    case 'u32':
+    case "u32":
       return xdr.ScVal.scvU32(val);
-    case 'i32':
+    case "i32":
       return xdr.ScVal.scvI32(val);
-    case 'bool':
+    case "bool":
       return xdr.ScVal.scvBool(val);
+    case "u64":
+    case "i64":
+    case "u128":
+    case "i128": {
+      const err = validateLargeInt(type, val);
+      if (err) throw new Error(err);
+      return nativeToScVal(BigInt(val), { type });
+    }
+    case "address": {
+      if (typeof val !== "string")
+        throw new Error("Invalid value for address: must be string");
+      try {
+        return Address.fromString(val).toScVal();
+      } catch (error: any) {
+        throw new Error(`Invalid value for address: ${error.message}`);
+      }
+    }
+    case "bytes": {
+      if (typeof val !== "string")
+        throw new Error("Invalid value for bytes: must be valid hex");
+      if (!/^[0-9a-fA-F]*$/.test(val))
+        throw new Error("Invalid value for bytes: must be valid hex");
+      if (val.length % 2 !== 0)
+        throw new Error(
+          "Invalid value for bytes: hex string must have even length",
+        );
+      return xdr.ScVal.scvBytes(Buffer.from(val, "hex"));
+    }
+    case "vec": {
+      if (!Array.isArray(val))
+        throw new Error("Invalid value for vec: must be array");
+      return xdr.ScVal.scvVec(
+        val.map((item, index) => {
+          if (!item || typeof item.type !== "string" || !("value" in item))
+            throw new Error(`Invalid vector element at index ${index}`);
+          return toScVal(item as InvocationArg);
+        }),
+      );
+    }
+    case "map": {
+      if (!Array.isArray(val))
+        throw new Error("Invalid value for map: must be array");
+      const entries = val.map((entry, index) => {
+        if (!entry?.key || !entry?.value)
+          throw new Error(`Invalid map entry at index ${index}`);
+        return new xdr.ScMapEntry({
+          key: toScVal(entry.key),
+          val: toScVal(entry.value),
+        });
+      });
+      return scvSortedMap(entries);
+    }
     default:
       throw new Error(`Unsupported argument type: ${arg.type}`);
   }
@@ -153,7 +274,7 @@ function calculateContractId(deployerAddress: string, salt: Buffer): string {
     new xdr.ContractIdPreimageFromAddress({
       address: addressSc,
       salt: salt,
-    })
+    }),
   );
 
   const networkId = hash(Buffer.from(NETWORK_PASSPHRASE));
@@ -161,7 +282,7 @@ function calculateContractId(deployerAddress: string, salt: Buffer): string {
     new xdr.HashIdPreimageContractId({
       networkId: networkId,
       contractIdPreimage: preimage,
-    })
+    }),
   );
 
   const contractIdBytes = hash(hashIdPreimage.toXDR());
@@ -177,11 +298,11 @@ function calculateContractId(deployerAddress: string, salt: Buffer): string {
  */
 async function getOrInitAccount(
   keyFile: string,
-  rpcUrl: string
+  rpcUrl: string,
 ): Promise<Keypair> {
   let keypair: Keypair;
   if (fs.existsSync(keyFile)) {
-    const secret = fs.readFileSync(keyFile, 'utf8').trim();
+    const secret = fs.readFileSync(keyFile, "utf8").trim();
     keypair = Keypair.fromSecret(secret);
   } else {
     keypair = Keypair.random();
@@ -196,11 +317,11 @@ async function getOrInitAccount(
 // Poll transaction completion
 async function waitForTransaction(
   server: rpc.Server,
-  txHash: string
+  txHash: string,
 ): Promise<rpc.Api.GetTransactionResponse> {
   for (let i = 0; i < 30; i++) {
     const tx = await server.getTransaction(txHash);
-    if (tx.status !== 'NOT_FOUND') {
+    if (tx.status !== "NOT_FOUND") {
       return tx;
     }
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -211,7 +332,7 @@ async function waitForTransaction(
 // Check if contract is already deployed
 async function isContractDeployed(
   server: rpc.Server,
-  contractId: string
+  contractId: string,
 ): Promise<boolean> {
   try {
     const contractScAddress = Address.fromString(contractId).toScAddress();
@@ -220,7 +341,7 @@ async function isContractDeployed(
         contract: contractScAddress,
         key: xdr.ScVal.scvLedgerKeyContractInstance(),
         durability: xdr.ContractDataDurability.persistent(),
-      })
+      }),
     );
     const res = await server.getLedgerEntries(ledgerKey);
     return !!(res.entries && res.entries.length > 0);
@@ -260,15 +381,15 @@ export async function runMeasurement(
   fixturesPathOrOptions: string | RunMeasurementOptions,
   gitCommit?: string,
   sdkVersion?: string,
-  rpcUrl?: string
+  rpcUrl?: string,
 ): Promise<ContractBenchmark[]> {
   // Support both the old positional signature and the new options object
   let opts: RunMeasurementOptions;
-  if (typeof fixturesPathOrOptions === 'string') {
+  if (typeof fixturesPathOrOptions === "string") {
     opts = {
       fixturesPath: fixturesPathOrOptions,
-      gitCommit: gitCommit ?? 'unknown',
-      sdkVersion: sdkVersion ?? 'unknown',
+      gitCommit: gitCommit ?? "unknown",
+      sdkVersion: sdkVersion ?? "unknown",
       rpcUrl,
     };
   } else {
@@ -277,12 +398,13 @@ export async function runMeasurement(
 
   const effectiveRpcUrl = opts.rpcUrl ?? DEFAULT_RPC_URL;
   const fixturesDir = path.dirname(path.resolve(opts.fixturesPath));
-  const keyFile = opts.keyFile ?? path.join(fixturesDir, '.weighin-temp-key');
+  const keyFile = opts.keyFile ?? path.join(fixturesDir, ".weighin-temp-key");
 
-  const rawFixtures = fs.readFileSync(opts.fixturesPath, 'utf8');
+  const rawFixtures = fs.readFileSync(opts.fixturesPath, "utf8");
   const fixturesSpec = parseFixtures(
     rawFixtures,
-    opts.fixtureId ?? path.relative(process.cwd(), path.resolve(opts.fixturesPath))
+    opts.fixtureId ??
+      path.relative(process.cwd(), path.resolve(opts.fixturesPath)),
   );
 
   const server = new rpc.Server(effectiveRpcUrl, { allowHttp: true });
@@ -294,28 +416,30 @@ export async function runMeasurement(
   for (const contractSpec of fixturesSpec.contracts) {
     let wasmPath = path.resolve(fixturesDir, contractSpec.wasm_path);
     if (!fs.existsSync(wasmPath)) {
-      let altPath = '';
-      if (wasmPath.includes('wasm32-unknown-unknown')) {
-        altPath = wasmPath.replace('wasm32-unknown-unknown', 'wasm32v1-none');
-      } else if (wasmPath.includes('wasm32v1-none')) {
-        altPath = wasmPath.replace('wasm32v1-none', 'wasm32-unknown-unknown');
+      let altPath = "";
+      if (wasmPath.includes("wasm32-unknown-unknown")) {
+        altPath = wasmPath.replace("wasm32-unknown-unknown", "wasm32v1-none");
+      } else if (wasmPath.includes("wasm32v1-none")) {
+        altPath = wasmPath.replace("wasm32v1-none", "wasm32-unknown-unknown");
       }
       if (altPath && fs.existsSync(altPath)) {
         wasmPath = altPath;
       } else {
-        throw new Error(`WASM not found: ${wasmPath}\nBuild the contract before running measurements.`);
+        throw new Error(
+          `WASM not found: ${wasmPath}\nBuild the contract before running measurements.`,
+        );
       }
     }
 
     const wasmBytes = fs.readFileSync(wasmPath);
-    const wasmHash = crypto.createHash('sha256').update(wasmBytes).digest();
-    const wasmSha256 = wasmHash.toString('hex');
+    const wasmHash = crypto.createHash("sha256").update(wasmBytes).digest();
+    const wasmSha256 = wasmHash.toString("hex");
 
     console.log(`WASM: ${wasmPath}`);
     console.log(`WASM SHA256: ${wasmSha256}`);
 
     // Deterministic salt based on WASM hash — same WASM always gets same contract ID
-    const salt = crypto.createHash('sha256').update(wasmHash).digest();
+    const salt = crypto.createHash("sha256").update(wasmHash).digest();
     const contractId = calculateContractId(deployer.publicKey(), salt);
 
     console.log(`Contract ID: ${contractId}`);
@@ -327,7 +451,7 @@ export async function runMeasurement(
 
       // 1. Upload WASM
       const uploadTx = new TransactionBuilder(account, {
-        fee: '1000000',
+        fee: "1000000",
         networkPassphrase: NETWORK_PASSPHRASE,
       })
         .addOperation(Operation.uploadContractWasm({ wasm: wasmBytes }))
@@ -354,7 +478,7 @@ export async function runMeasurement(
 
       // 2. Create contract instance
       const createTx = new TransactionBuilder(account, {
-        fee: '1000000',
+        fee: "1000000",
         networkPassphrase: NETWORK_PASSPHRASE,
       })
         .addOperation(
@@ -362,7 +486,7 @@ export async function runMeasurement(
             wasmHash,
             address: deployerAddress,
             salt,
-          })
+          }),
         )
         .setTimeout(30)
         .build();
@@ -388,7 +512,7 @@ export async function runMeasurement(
       const argsSc = invokeSpec.args.map(toScVal);
 
       const invokeTx = new TransactionBuilder(account, {
-        fee: '1000000',
+        fee: "1000000",
         networkPassphrase: NETWORK_PASSPHRASE,
       })
         .addOperation(
@@ -396,21 +520,29 @@ export async function runMeasurement(
             contract: contractId,
             function: invokeSpec.function_name,
             args: argsSc,
-          })
+          }),
         )
         .setTimeout(30)
         .build();
 
       const simRes = await server.simulateTransaction(invokeTx);
       if (rpc.Api.isSimulationError(simRes)) {
-        throw new Error(`Simulation failed for ${invokeSpec.function_name}: ${simRes.error}`);
+        throw new Error(
+          `Simulation failed for ${invokeSpec.function_name}: ${simRes.error}`,
+        );
       }
 
       if (!rpc.Api.isSimulationSuccess(simRes)) {
-        throw new Error(`Simulation did not return transaction data for ${invokeSpec.function_name}`);
+        throw new Error(
+          `Simulation did not return transaction data for ${invokeSpec.function_name}`,
+        );
       }
       const helperPath = await resolveSimulationHelper(opts.helperPath);
-      const { output, provenance, limits } = await measureInvocation(effectiveRpcUrl, invokeTx, helperPath);
+      const { output, provenance, limits } = await measureInvocation(
+        effectiveRpcUrl,
+        invokeTx,
+        helperPath,
+      );
       const metrics = metricsFromSimulation(output, limits);
 
       benchmarks.push({

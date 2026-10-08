@@ -1083,7 +1083,7 @@ Codex must not automatically progress through multiple major stages without appr
 
 ## Stage 5D — Public internal flagship CI preparation
 
-Status: PREPARED AND PROVEN LOCALLY; PUSHED; HOSTED EXECUTION BLOCKED ON PR CONFLICT — 2026-10-08
+Status: LOCALLY PROVEN; PUSHED; PR CONFLICT RESOLUTION IN PROGRESS; HOSTED CI PENDING — 2026-10-08
 
 Existing CI has no retained control/intentional-regression/threshold-failure proof.
 Added a separate read-only-permissions workflow with three isolated modern
@@ -1101,12 +1101,12 @@ selected historical two-metric schema-3 evidence; corrected to schema 4, all nin
 pass. Sandbox child-process restrictions produced an initial no-assertion failure;
 authorized execution ran actual assertions. No fabricated live measurements.
 
-Root validation: npm ci PASS; npm test 154/154 PASS; native 15/15 PASS;
+Root validation before conflict resolution: npm ci PASS; npm test 154/154 PASS; native 15/15 PASS;
 build/bundle/package dry-run and native format PASS. Existing audit findings
 remain 1 moderate/4 high. YAML parsing, all workflow bash blocks and producer
 JavaScript syntax pass. Node 24.21.0 provisioned temporarily to match Action runtime;
 runtime-specific/live validation follows. Public workflow execution remains
-unproven until explicit publication approval and an actual hosted run.
+unproven until the refreshed PR branch completes an actual hosted run.
 
 Final local proof: docs/experiments/flagship-ci/completed, producer commit
 398d32d5b808f2b1e4efb3fefa0726354e873e25, exact source/observer/workflow hashes
@@ -1141,9 +1141,15 @@ Implementation and final evidence/self-check alignment are committed as
 398d32d5b808f2b1e4efb3fefa0726354e873e25 and
 fbfd2096390484341a26e510f3e59fe97e782f92. The latter is pushed and verified at
 the current repository location. README, production source/schema/fixtures/
-policy and core application workflow unchanged. Preserved scratch/local context
-files untracked. No push, issue creation, external changes or appeal submission.
-Next: resolve PR #1's current main conflict, then rerun hosted CI and retain public
+policy and core application workflow were unchanged for Stage 5D. Preserved scratch/local context
+files untracked. No issue creation or appeal submission.
+PR #1 is being reconciled against main at bcf9f042f27400a9139af820855deb541e785cc9.
+Merged additions retain the Stage 5D Action behavior, CI gates, report artifacts, and
+fork-safe comment workflow; stale build and RPC expectations were replaced. Local npm
+tests (157 Node + 52 Vitest), lint, typecheck, build, bundle, package dry-run, and
+native helper tests (15) pass. The configured /tmp native build first hit disk quota;
+rerunning from the workspace filesystem passed. Hosted CI is still pending.
+Next: push the resolved PR #1 branch, inspect hosted checks/artifacts, and retain public
 run/artifact links. External project proof, final truth alignment, issue triage,
 red-team review and appeal preparation remain afterward. Do not claim campaign
 complete or Drips approval.
