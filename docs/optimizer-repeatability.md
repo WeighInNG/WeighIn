@@ -106,3 +106,11 @@ Vitest tests with healthy TMPDIR. Build, bundle, tracked bundle equality, verifi
 syntax and retained evidence checks passed. Dependency files/native source were
 unchanged; npm ci and the native unit suite were not rerun in this investigation.
 Both failure and successful rerun logs are retained.
+
+## Implemented follow-up
+
+[Stage 6C](build-storage-safeguard.md) adds the default-build storage safeguard
+and verifies five actual Action controls plus regression/threshold reruns locally.
+The investigation above remains the evidence for the failure mode; the follow-up
+documents exactly which storage failures are detected and the residual limitation.
+Publication/hosted external validation remains pending.

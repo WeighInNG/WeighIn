@@ -96,7 +96,7 @@ Flagship comparison identity statement now supported:
 
 # Current blocker
 
-## External strict-zero rollout needs a temporary-storage safeguard
+## Local external proof is verified; published safeguard and external CI remain pending
 
 The internal hosted proof is green at c32c0791f8991c54f2795d4f3b0c891063982e31.
 PR #1 is open and CLEAN; its control, regression, threshold, benchmark and source
@@ -117,13 +117,17 @@ measurements per artifact repeat all eight measured values exactly, with the
 same two-instruction CPU difference and verified raw RPC/native parity.
 Concurrency and path-spelling candidates did not resolve the difference.
 
-Highest-priority unresolved dependency: protect the default build from failing
-optimizer temporary storage. Proposed next stage: a narrow shared BASE/HEAD
-storage policy with actual write/flush/read preflight and visible failures,
-behavior tests, five end-to-end controls, and regression/threshold reruns.
-This requires stage approval; no production build change was made in Stage 6B.
-Then publish the fixture baseline through the existing fork, obtain its maintainer
-merge, and publish the dependent workflow/control and temporary regression PR.
+Stage 6C implements pre/post write/fsync/read checks and directs optimizer temp
+files into verified owned storage. Actual system-temp write failure is rejected.
+Five full Action controls on real Soroban Forge repeat identical WASM/all eight
+measured resources; regression remains +114084 CPU and strict policy exits1.
+Checks cannot reserve capacity or exclude a transient optimizer-only failure.
+
+Highest-priority unresolved dependency: publish/review the tested WeighIn
+safeguard and evidence, obtain hosted validation, then deliver the external
+fixture baseline through the existing fork. After maintainer merge, publish the
+dependent workflow pinned to the reviewed safeguard and the regression proof.
+No push/PR for this stage was authorized or made. Publication requires approval.
 See docs/external-soroban-forge.md and Stage 6 below. No appeal-readiness or
 Drips-approval claim is supported yet.
 
@@ -1063,7 +1067,7 @@ stage approval required before implementing the safeguard.
 
 ## Stage 6C — Default-build temporary-storage safeguard
 
-Status: IMPLEMENTED AND UNIT VALIDATED; LIVE PROOF PENDING — 2026-10-08
+Status: IMPLEMENTED AND LOCALLY VERIFIED — 2026-10-08
 
 User approved the focused storage safeguard and five end-to-end controls plus
 regression/threshold reruns. Default builder supplies owned verified storage to
@@ -1083,7 +1087,29 @@ PASS against the verified cached helper; native source/lock unchanged. Actual
 system-temp storage failure is rejected visibly before optimization. Initial
 proof assertion expected Node's message to contain quota, but Node24 reports
 UNKNOWN for errno122; corrected diagnostic assertion verifies actual rejection.
-Fresh live proof pending.
+Implementation commit2185c603312df25b87b80f825f8495befe10894e; executed bundle
+104be8ef72ebc176986f577a4479d040be7684f4e1a9f5a4e0928eeee32591a0.
+
+Five actual bundled-Action controls against isolated public Forge source07d7935
+produce identical BASE/HEAD WASM103874c7 and CPU565371 in all runs; eight
+measured metrics repeat without deltas. Report-only regression CPU565371->679455
+(+114084), changed WASM/runtime IDs still paired, exit0. Strict CPU policy reports
+one violation and genuine Action/harness exit1. All scenarios verify source builds,
+Git/worktrees, deployed WASM, same returned XDR, raw RPC/native transaction parity,
+and matched protocol/compute/resource settings. The full config hash changes with
+the live network rolling state-size window; decoded config checks verify this is
+the only changed setting, retained explicitly. No identical-full-snapshot claim.
+No fake measurements. Cargo caches reused; no five-cold-build or portable claim.
+
+Retained seven full scenario proofs, reports, source/config/WASM/raw IO, process
+exits, checksums and validation logs. A separate verifier rechecks all seven.
+Owned protocol28 sidecar stopped, one Docker startup seed redacted, private
+experiment histories/deployer keys removed. Evidence docs updated for the followup.
+
+Next dependency: approval to publish/review the local safeguard and evidence,
+then hosted validation and the external baseline/workflow delivery sequence.
+Do not call the campaign complete or Drips-approved. README/CONTRIBUTING stale
+claims and stateful fixtures remain separate stages.
 The external proof harness now records the actual engine Git SHA rather than
 hardcoding the earlier c32 commit. No external branch changes/push/PR authorized.
 

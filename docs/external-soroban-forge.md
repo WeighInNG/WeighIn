@@ -108,9 +108,12 @@ repeats the smaller artifact. Five fresh live measurements per artifact reproduc
 the exact values above and verify deployed code plus RPC/native parity.
 See [optimizer investigation](optimizer-repeatability.md) for evidence and limits.
 
-Before strict-zero publication, implement and verify a narrow default-build
-storage safeguard. No production build change or threshold relaxation is included
-in this investigation, and no portable/cold-build determinism guarantee is claimed.
+The [default-build safeguard](build-storage-safeguard.md) is now implemented
+and verified locally with five full Action controls plus regression/threshold
+reruns. Publish/review that engine revision and obtain hosted validation before
+pinning the external workflow to it. No threshold was relaxed; storage probes do
+not exclude transient optimizer-only failure or establish portable/cold-build
+determinism.
 
 ## Proposed public integration
 

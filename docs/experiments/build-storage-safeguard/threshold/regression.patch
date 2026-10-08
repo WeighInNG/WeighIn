@@ -1,0 +1,18 @@
+diff --git a/crates/escrow/src/lib.rs b/crates/escrow/src/lib.rs
+index d52a28c..153a87a 100644
+--- a/crates/escrow/src/lib.rs
++++ b/crates/escrow/src/lib.rs
+@@ -1521,6 +1521,13 @@ impl Escrow {
+         cursor: u32,
+         limit: u32,
+     ) -> ParticipantEscrowsPage {
++        // Isolated experiment: redundant bounded reads preserve the returned page.
++        for _ in 0..8 {
++            let _ = env
++                .storage()
++                .persistent()
++                .has(&DataKey::ParticipantIndex(participant.clone()));
++        }
+         let ids = env
+             .storage()
+             .persistent()

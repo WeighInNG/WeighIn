@@ -1,0 +1,122 @@
+{
+  "status": "VERIFIED",
+  "five_real_action_controls": true,
+  "changed_wasm_compared": true,
+  "actual_threshold_exit": 1,
+  "raw_rpc_native_parity": true,
+  "matched_compute_and_resource_settings": true,
+  "dynamic_configuration_changes": [
+    {
+      "label": "control-1",
+      "side": "head",
+      "setting": "configSettingLiveSorobanStateSizeWindow"
+    },
+    {
+      "label": "control-4",
+      "side": "base",
+      "setting": "configSettingLiveSorobanStateSizeWindow"
+    },
+    {
+      "label": "control-4",
+      "side": "head",
+      "setting": "configSettingLiveSorobanStateSizeWindow"
+    },
+    {
+      "label": "control-5",
+      "side": "base",
+      "setting": "configSettingLiveSorobanStateSizeWindow"
+    },
+    {
+      "label": "control-5",
+      "side": "head",
+      "setting": "configSettingLiveSorobanStateSizeWindow"
+    },
+    {
+      "label": "regression",
+      "side": "base",
+      "setting": "configSettingLiveSorobanStateSizeWindow"
+    },
+    {
+      "label": "regression",
+      "side": "head",
+      "setting": "configSettingLiveSorobanStateSizeWindow"
+    },
+    {
+      "label": "threshold",
+      "side": "base",
+      "setting": "configSettingLiveSorobanStateSizeWindow"
+    },
+    {
+      "label": "threshold",
+      "side": "head",
+      "setting": "configSettingLiveSorobanStateSizeWindow"
+    }
+  ],
+  "cargo_cache_reused": true,
+  "cold_builds_proven": false,
+  "rows": [
+    {
+      "label": "control-1",
+      "cpu": {
+        "base": 565371,
+        "head": 565371,
+        "delta": 0
+      },
+      "action_exit": 0
+    },
+    {
+      "label": "control-2",
+      "cpu": {
+        "base": 565371,
+        "head": 565371,
+        "delta": 0
+      },
+      "action_exit": 0
+    },
+    {
+      "label": "control-3",
+      "cpu": {
+        "base": 565371,
+        "head": 565371,
+        "delta": 0
+      },
+      "action_exit": 0
+    },
+    {
+      "label": "control-4",
+      "cpu": {
+        "base": 565371,
+        "head": 565371,
+        "delta": 0
+      },
+      "action_exit": 0
+    },
+    {
+      "label": "control-5",
+      "cpu": {
+        "base": 565371,
+        "head": 565371,
+        "delta": 0
+      },
+      "action_exit": 0
+    },
+    {
+      "label": "regression",
+      "cpu": {
+        "base": 565371,
+        "head": 679455,
+        "delta": 114084
+      },
+      "action_exit": 0
+    },
+    {
+      "label": "threshold",
+      "cpu": {
+        "base": 565371,
+        "head": 679455,
+        "delta": 114084
+      },
+      "action_exit": 1
+    }
+  ]
+}

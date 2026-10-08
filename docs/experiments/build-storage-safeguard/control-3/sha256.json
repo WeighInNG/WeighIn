@@ -1,0 +1,20 @@
+{
+  "Cargo.lock": "12614f42c117d317cd536852fc8985cdb728c5364a7456fe72b84d1d8ba7711d",
+  "Cargo.toml": "d35328b440d3e434b1d00182de818828277a5165e3d5ee63d64603bef08219fa",
+  "base-contract.rs": "f999b0d5da36a1a76226cfdd50f080d31913df0722cba13ab6c184db89f290a4",
+  "base.wasm": "103874c717632bb9b51d3ff6effc9869433fcbdf8e3c719c927eb7b6aa14f398",
+  "diff.json": "4cc8e7cf059454e2c9cdd3ecf741ac287662fb82b1b8eeb783c29f895fb91b68",
+  "head-contract.rs": "f999b0d5da36a1a76226cfdd50f080d31913df0722cba13ab6c184db89f290a4",
+  "head.wasm": "103874c717632bb9b51d3ff6effc9869433fcbdf8e3c719c927eb7b6aa14f398",
+  "native.json": "003181c53d2f8bfe9ab3c890de72e195dfc5afa78ac83630bf24b2420bfaa1e6",
+  "outputs.txt": "b51380ca869e672608bbf5cf08dc9fb130d6d4e6696eb232d2e18ca91cb72afc",
+  "process.json": "2da8d5ce72987402a4f49388a46aee1de5b081881038e74ded44d91816e2e2a8",
+  "regression.patch": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "rpc.json": "00d01e6e8c43b394da4857e14371518b90b99e9ef31e88c592d207e94635da6a",
+  "rust-toolchain.toml": "b6cc27de041db423925bf06f457991544fe50ae4682fc7c6a8bbf050e278daae",
+  "source-checks.json": "deb745caae769cc3c9f4e3978aecc2c129ff7ae88a84d903bc91e2206c4d528c",
+  "summary.md": "5afda6a742659c9bb4608395c09a569c4369c3af2c80584d31daa07f56d3f083",
+  "verification.json": "d4a8709ea39aff37c156a55cdb4e68cda578fe22e065ccedf716f81d4886e799",
+  "weighin-fixtures.json": "1023ce522f45b017cecb4c69fdd63e3823ac5c56d79be2dde11680cc98b25890",
+  "weighin.toml": "af52cda3fca7d9343b2052aac5762ab97652c27fb677ecb7f29ac71903e8e057"
+}

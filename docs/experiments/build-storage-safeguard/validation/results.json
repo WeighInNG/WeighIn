@@ -1,0 +1,19 @@
+{
+  "npm_ci": "PASS: 11 existing vulnerabilities (5 moderate, 4 high, 2 critical)",
+  "lint": "PASS",
+  "typecheck": "PASS",
+  "npm_test": "PASS: 162 Node +52 Vitest",
+  "build": "PASS",
+  "bundle": "PASS",
+  "package_dry_run": "PASS",
+  "native_assertions": "PASS: 15 using source-matching cached helper; native source/lock unchanged",
+  "actual_storage_failure": "PASS: rejected before optimization",
+  "initial_diagnostic_assertion": "FAIL: expected quota text; Node24 reports UNKNOWN for errno122. Corrected assertion passes; product rejected storage in both attempts.",
+  "bundled_action_sha256": "104be8ef72ebc176986f577a4479d040be7684f4e1a9f5a4e0928eeee32591a0",
+  "implementation_sha": "2185c603312df25b87b80f825f8495befe10894e",
+  "cold_cargo_builds": false,
+  "push": false,
+  "aggregate_config_check": "Initial full-config equality check failed; decoded entries prove only configSettingLiveSorobanStateSizeWindow changed. Compute and resource settings identical; variation recorded explicitly.",
+  "live_proofs": "PASS: five controls, report-only regression, strict policy Action exit1",
+  "retained_evidence_verifier": "PASS: seven real scenarios with raw RPC/native parity and deployed code checks"
+}

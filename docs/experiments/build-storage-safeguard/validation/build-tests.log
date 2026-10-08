@@ -1,0 +1,34 @@
+Built hello-contract: /home/mxr/Documents/localRepo/Weighin/.stage6c-work/weighin-build-test-XkkbwR/target/wasm32v1-none/release/hello_contract.wasm; SHA256 ed329ca3ea51d9310bbae0e2b594595dda73ff5b72ace36d1eda4a6391696473; stellar 28.1.0; rustc 1.95.0
+Built first: /home/mxr/Documents/localRepo/Weighin/.stage6c-work/weighin-build-test-WqAC0U/artifacts/first.wasm; SHA256 ed329ca3ea51d9310bbae0e2b594595dda73ff5b72ace36d1eda4a6391696473; stellar 28.1.0; rustc 1.95.0
+Built second: /home/mxr/Documents/localRepo/Weighin/.stage6c-work/weighin-build-test-WqAC0U/artifacts/second.wasm; SHA256 ed329ca3ea51d9310bbae0e2b594595dda73ff5b72ace36d1eda4a6391696473; stellar 28.1.0; rustc 1.95.0
+Built first: /home/mxr/Documents/localRepo/Weighin/.stage6c-work/weighin-build-test-WqAC0U/other/first.wasm; SHA256 ed329ca3ea51d9310bbae0e2b594595dda73ff5b72ace36d1eda4a6391696473; stellar 28.1.0; rustc 1.95.0
+Built hello-contract: /home/mxr/Documents/localRepo/Weighin/.stage6c-work/weighin-build-test-WTvU5i/target/wasm32v1-none/release/hello_contract.wasm; SHA256 ed329ca3ea51d9310bbae0e2b594595dda73ff5b72ace36d1eda4a6391696473; stellar 28.1.0; rustc 1.95.0
+Built hello-contract: /home/mxr/Documents/localRepo/Weighin/.stage6c-work/weighin-build-test-WTvU5i/target/wasm32-unknown-unknown/release/hello_contract.wasm; SHA256 ed329ca3ea51d9310bbae0e2b594595dda73ff5b72ace36d1eda4a6391696473; stellar 28.1.0; rustc 1.95.0
+Built hello-contract: /home/mxr/Documents/localRepo/Weighin/.stage6c-work/weighin-build-test-1gfP6k/target/wasm32v1-none/release/hello_contract.wasm; SHA256 ed329ca3ea51d9310bbae0e2b594595dda73ff5b72ace36d1eda4a6391696473; stellar 28.1.0; rustc 1.95.0
+Built hello-contract: /home/mxr/Documents/localRepo/Weighin/.stage6c-work/weighin-build-test-1gfP6k/target/wasm32v1-none/release/hello_contract.wasm; SHA256 ed329ca3ea51d9310bbae0e2b594595dda73ff5b72ace36d1eda4a6391696473; stellar 28.1.0; rustc 1.95.0
+✔ modern optimized build replaces stale configured WASM with fresh selected-package output (65.228418ms)
+✔ multiple workspace contracts select independent packages; repeated package aliases build once (61.623872ms)
+✔ temporary migration alias receives the same fresh WASM from one modern build (31.911331ms)
+✔ ambiguous Cargo packages are rejected before building (6.19385ms)
+✔ unknown artifact basename is rejected before building any package (5.143726ms)
+✔ build fails explicitly for missing CLI (5.375538ms)
+✔ build fails explicitly for obsolete Rust (5.046778ms)
+✔ build fails explicitly for obsolete CLI (5.257383ms)
+✔ build fails explicitly for failed build (21.680304ms)
+✔ build fails explicitly for missing output despite stale destination (26.347573ms)
+✔ build fails explicitly for invalid WASM output (30.894953ms)
+✔ build fails explicitly for optimization skipped (17.212812ms)
+✔ every declared contract must have a manifest, even when another one is valid (6.129853ms)
+✔ both revisions use verified isolated CLI temporary storage without changing caller environment (64.349776ms)
+✔ storage flush fails before optimization (11.919923ms)
+✔ storage contents are truncated before optimization (15.595374ms)
+✔ storage flush fails after successful CLI exit (23.632954ms)
+✔ missing caller temporary-storage directory fails visibly before optimization (5.525527ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 706.401042
