@@ -96,11 +96,14 @@ Flagship comparison identity statement now supported:
 
 # Current blocker
 
-## Local external proof is verified; published safeguard and external CI remain pending
+## Safeguard published and core CI green; comment workflow repair and external CI remain
 
-The internal hosted proof is green at c32c0791f8991c54f2795d4f3b0c891063982e31.
-PR #1 is open and CLEAN; its control, regression, threshold, benchmark and source
-checks passed. Earlier conflict records below are historical, not current blockers.
+PR #1 now publishes cc4e5a080f4fe47d3af6b1908bb082e30844f96a on its existing
+head branch test/no-op-baseline. All seven core checks passed: lint/typecheck/test,
+bundle freshness, both benchmark jobs, and flagship control/regression/threshold.
+Earlier c32/conflict records below are historical. Main has not been merged.
+One separate default-branch comment workflow passes; the other fails after checkout
+deletes its downloaded report. This also occurred before the safeguard push.
 
 Stage 6 now proves the real Soroban Forge escrow query locally: control CPU
 565371 -> 565371 (all eight measured deltas zero), intentional regression
@@ -123,11 +126,15 @@ Five full Action controls on real Soroban Forge repeat identical WASM/all eight
 measured resources; regression remains +114084 CPU and strict policy exits1.
 Checks cannot reserve capacity or exclude a transient optimizer-only failure.
 
-Highest-priority unresolved dependency: publish/review the tested WeighIn
-safeguard and evidence, obtain hosted validation, then deliver the external
-fixture baseline through the existing fork. After maintainer merge, publish the
-dependent workflow pinned to the reviewed safeguard and the regression proof.
-No push/PR for this stage was authorized or made. Publication requires approval.
+Highest-priority unresolved dependency: repair the own-repository comment
+workflow's artifact/checkout order, retaining the report through posting. Proposed
+next stage is a narrow workflow change with behavior-level ordering validation;
+requires separate stage approval. The existing workflow_run uses main, so hosted
+activation also requires reviewed merge/default-branch delivery authorization.
+Then deliver the external fixture baseline through the existing fork and obtain
+maintainer merge before its dependent workflow/regression proof. External push/PR,
+merge and Drips submission are not authorized. The current user approved only
+publication of the tested WeighIn work; that publication and core CI are complete.
 See docs/external-soroban-forge.md and Stage 6 below. No appeal-readiness or
 Drips-approval claim is supported yet.
 
@@ -1112,6 +1119,39 @@ Do not call the campaign complete or Drips-approved. README/CONTRIBUTING stale
 claims and stateful fixtures remain separate stages.
 The external proof harness now records the actual engine Git SHA rather than
 hardcoding the earlier c32 commit. No external branch changes/push/PR authorized.
+
+---
+
+## Stage 6D — Publish safeguard and verify hosted core CI
+
+Status: PUBLISHED AND CORE CHECKS VERIFIED — 2026-10-08
+
+User approved publishing the tested WeighIn work. Verified live PR1 exact head:
+WeighInNG/WeighIn:test/no-op-baseline, c32c079 before push. Active mxrtins04 account
+has push/admin access; an inactive Merge-ng credential is invalid, but the active
+account is valid. Existing tested commits fast-forwarded the exact PR branch to
+cc4e5a080f4fe47d3af6b1908bb082e30844f96a. No force push, new PR, merge or external
+repository push. Both retained local proof verifiers passed again before push.
+
+All seven PR checks PASS at cc4e5a0:
+- WeighIn CI: https://github.com/WeighInNG/WeighIn/actions/runs/37771151293
+- Flagship comparison proof (control/regression/threshold):
+  https://github.com/WeighInNG/WeighIn/actions/runs/37771151245
+- Example resource benchmark:
+  https://github.com/WeighInNG/WeighIn/actions/runs/37771151242
+
+Separate comment delivery: run37771545173 PASS, run37771643083 FAIL, both execute
+main bcf9f042 rather than PR HEAD. Failed job downloads artifacts, then checkout
+with its default clean behavior removes weighin-report.md; comment action errors
+Report file not found. Prior run37753622388 had the same failure. This does not
+invalidate generated benchmark artifacts/core checks, but full workflow health
+is not green and the duplicate own-repository delivery path needs repair.
+
+Live PR/run metadata and focused failed-job log retained under
+`docs/experiments/published-storage-safeguard`. This progress/evidence follow-up
+is a local tracking commit after publication; remote tested source remains cc4e5a0.
+Next proposed stage: minimal comment-workflow report-preservation repair before
+external hosted delivery. Separate stage approval; no automatic stage expansion.
 
 ---
 
