@@ -13,3 +13,8 @@ weighin-results.json
 # Misc
 *.tar.bz2
 *.tar.gz
+
+# Local agent instructions and operational records
+.codex/
+AGENTS.override.md
+WEIGHIN_DRIPS_APPEAL_CONTEXT.md
