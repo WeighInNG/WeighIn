@@ -4,19 +4,22 @@ const fs = require('node:fs'), path = require('node:path');
 const { createHash } = require('node:crypto');
 const { xdr } = require('@stellar/stellar-sdk');
 const { verifyScenario } = require('./experiments/flagship-analysis.cjs');
-const archive = path.resolve(__dirname, '../docs/experiments/hosted-comparison');
+const archives = [
+  { directory: 'hosted-comparison', hosted: true, url: 'https://github.com/WeighInNG/WeighIn/actions/runs/37777040210' },
+  { directory: 'public-docs', hosted: false, url: null }
+];
 const hash = data => createHash('sha256').update(data).digest('hex');
 
-for (const scenario of ['control', 'regression', 'threshold']) {
-  test(`retained hosted ${scenario} has intact sources, real exits and logical changed-WASM pairing`, () => {
-    const directory = path.join(archive, scenario);
+for (const source of archives) for (const scenario of ['control', 'regression', 'threshold']) {
+  test(`retained ${source.directory} ${scenario} has intact sources, real exits and logical changed-WASM pairing`, () => {
+    const directory = path.resolve(__dirname, '../docs/experiments', source.directory, scenario);
     const read = name => JSON.parse(fs.readFileSync(path.join(directory, name)));
     for (const [file, expected] of Object.entries(read('sha256.json'))) {
       assert.equal(hash(fs.readFileSync(path.join(directory, file))), expected, file);
     }
     const proof = read('verification.json'), diff = read('diff.json');
-    assert.equal(proof.github_hosted_execution, true);
-    assert.equal(read('environment.json').github_run_url, 'https://github.com/WeighInNG/WeighIn/actions/runs/37777040210');
+    assert.equal(proof.github_hosted_execution, source.hosted);
+    assert.equal(read('environment.json').github_run_url, source.url);
     verifyScenario({ scenario, diff, status: proof.action_exit, result: proof.result,
       summary: fs.readFileSync(path.join(directory, 'summary.md'), 'utf8'),
       buildHashes: proof.build_hashes, baseSha: proof.base_sha, headSha: proof.head_sha,

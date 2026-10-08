@@ -1,0 +1,48 @@
+{
+  "checkout_sha": "7f990b5e52923dc390548957bd94153f8b797969",
+  "tracked_status": "",
+  "runs": [
+    {
+      "command": "npm test",
+      "exit": 0,
+      "expected_exit": 0,
+      "seconds": 10.698,
+      "log": "clean-test.log"
+    },
+    {
+      "command": "npm run bundle",
+      "exit": 0,
+      "expected_exit": 0,
+      "seconds": 3.119,
+      "log": "clean-bundle.log"
+    },
+    {
+      "command": "git diff --exit-code -- bundled/index.js bundled/comment-action.js",
+      "exit": 0,
+      "expected_exit": 0,
+      "seconds": 0.014,
+      "log": "clean-bundle-freshness.log"
+    },
+    {
+      "command": "node tests/experiments/verify-flagship-ci.cjs control /home/mxr/Documents/localRepo/Weighin/.stage6-delivery/docs/experiments/public-docs/control",
+      "exit": 0,
+      "expected_exit": 0,
+      "seconds": 52.599,
+      "log": "control.log"
+    },
+    {
+      "command": "node tests/experiments/verify-flagship-ci.cjs regression /home/mxr/Documents/localRepo/Weighin/.stage6-delivery/docs/experiments/public-docs/regression",
+      "exit": 0,
+      "expected_exit": 0,
+      "seconds": 12.992,
+      "log": "regression.log"
+    },
+    {
+      "command": "node tests/experiments/verify-flagship-ci.cjs threshold /home/mxr/Documents/localRepo/Weighin/.stage6-delivery/docs/experiments/public-docs/threshold",
+      "exit": 1,
+      "expected_exit": 1,
+      "seconds": 11.446,
+      "log": "threshold.log"
+    }
+  ]
+}

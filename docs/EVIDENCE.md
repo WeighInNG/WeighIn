@@ -233,6 +233,28 @@ share a Cargo cache; this is not another five-cold-build experiment. Use healthy
 owned `TMPDIR` storage. [Repeatability](repeatability.md) gives the separate
 five-build/five-sample experiment.
 
+## Updated dependency and reviewer-path validation
+
+A clean local checkout of `7f990b5` independently repeated control, regression
+and threshold on Node 24.13.1/npm 11.8.0 after the targeted dependency patches.
+This is **local validation**, not another hosted run. The helper was genuinely
+built from the pinned source, then reused; contract Cargo artifacts were cached.
+[Environment](experiments/public-docs/regression/environment.json),
+[clean-checkout commands/exits](experiments/public-docs/clean-and-live.json),
+[control](experiments/public-docs/control/verification.json),
+[regression](experiments/public-docs/regression/verification.json) and
+[threshold](experiments/public-docs/threshold/verification.json) retain their own
+source/bundle/helper hashes and raw captures. Control deltas were zero; changed
+WASM/address still paired with +42,329 CPU and +88 write bytes; strict CPU exited 1.
+
+[Validation](experiments/public-docs/validation.json) records all required quality
+gates, native replay, packaging, clean installation and audit results. The initial
+sidecar funding deadline failure and the first clean-checkout documentation-link
+failure are preserved with their successful retries; neither failure was counted
+as a passing benchmark. The [security review](DEPENDENCY_SECURITY.md) identifies
+the dependency updates and why older published pins require replacement after
+the patched revision receives hosted validation.
+
 ## Known boundaries
 
 See [Known limitations](KNOWN_LIMITATIONS.md). Local external-contract evidence
