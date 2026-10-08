@@ -96,7 +96,7 @@ Flagship comparison identity statement now supported:
 
 # Current blocker
 
-## External strict-zero rollout is held on optimizer variation
+## External strict-zero rollout needs a temporary-storage safeguard
 
 The internal hosted proof is green at c32c0791f8991c54f2795d4f3b0c891063982e31.
 PR #1 is open and CLEAN; its control, regression, threshold, benchmark and source
@@ -109,13 +109,20 @@ exit 1. Changed WASM/runtime addresses pair with the same logical benchmark;
 return XDR and raw RPC/native parity are verified. External publication remains
 unproven and has not been authorized. Three unavailable metrics remain explicit.
 
-A focused follow-up found byte-identical unoptimized input but two optimized
-outputs with a real two-instruction CPU difference. This is an optimizer-stage
-reproducibility limitation; the exact environmental cause is not established.
-Do not silently loosen policy or claim general external build determinism.
-Highest-priority unresolved dependency: explain or explicitly bound this optimizer
-variation before publishing the prepared strict-zero external workflow. Then
-publish the fixture baseline through the existing fork, obtain its maintainer
+Stage 6B isolates the optimizer difference to temporary storage. Changing only
+TMPDIR reproduces the two hashes five times per mode. System /tmp writes fail
+with EDQUOT and leave zero-byte convergence files; healthy workspace writes pass.
+Five full builds per storage mode reproduce the same artifacts. Five fresh live
+measurements per artifact repeat all eight measured values exactly, with the
+same two-instruction CPU difference and verified raw RPC/native parity.
+Concurrency and path-spelling candidates did not resolve the difference.
+
+Highest-priority unresolved dependency: protect the default build from failing
+optimizer temporary storage. Proposed next stage: a narrow shared BASE/HEAD
+storage policy with actual write/flush/read preflight and visible failures,
+behavior tests, five end-to-end controls, and regression/threshold reruns.
+This requires stage approval; no production build change was made in Stage 6B.
+Then publish the fixture baseline through the existing fork, obtain its maintainer
 merge, and publish the dependent workflow/control and temporary regression PR.
 See docs/external-soroban-forge.md and Stage 6 below. No appeal-readiness or
 Drips-approval claim is supported yet.
@@ -1012,6 +1019,45 @@ repeat candidate modes at least five times and check actual resource effects.
 Establish a deterministic supported configuration or explicitly model/document
 residual variation before strict-zero publication. Public baseline/workflow/
 regression PR evidence then remains required. Stage 7 onward remains unstarted.
+
+---
+
+## Stage 6B — Optimizer storage investigation
+
+Status: APPROVED INVESTIGATION COMPLETE — 2026-10-08
+
+Identical raw input, official CLI28.1.0, unchanged external source and engine.
+80 optimizer/full-build invocations: concurrency, input/output path variants,
+full build variants, and changing only TMPDIR. Five constrained-system-temp runs
+produce f6edc17c...; five healthy-workspace-temp runs produce 103874c7....
+Five full builds per storage mode corroborate the effect; default and single
+worker healthy builds agree. Cargo caches reused; no cold-build claim.
+
+Bounded writes of 40912/45889/65536 bytes to system /tmp fail with EDQUOT and
+leave zero-byte files; workspace writes complete. wasm-opt0.116.1 determines
+convergence using temporary serialized module length. Early termination from
+zero-length temp files is supported by source/probes, but syscall tracing was
+unavailable (strace absent). The observed environmental dependency is isolated;
+portable determinism and storage-failure robustness remain unproven.
+
+Fresh protocol28 standalone: five live runs per distinct artifact, CPU565373
+versus565371; seven other measured resources identical, all within-mode deltas
+zero. Every deployed WASM/native CPU/raw RPC transaction and return parity
+verified. All ten return XDR values identical; unavailable metrics remain null.
+Owned sidecar stopped; its one startup seed redacted; private runtime key removed.
+Evidence, verifier, checksum inventory and explanation are retained in
+`docs/optimizer-repeatability.md` and `docs/experiments/optimizer-repeatability`.
+No production source/bundle/schema/native changes, no policy relaxation, no
+external delivery branch changes, no push/PR. External publication remains pending.
+
+Validation: lint/typecheck PASS; default npm test FAIL (38 Node failures from
+/tmp storage errors); rerun with healthy TMPDIR PASS (157 Node +52 Vitest).
+Build/bundle, tracked bundle equality, verifier syntax and evidence checks PASS.
+Dependency files and native source unchanged; npm ci/native suite not rerun.
+
+Next proposed dependency: temporary-storage safeguard for the default build,
+then five controls plus deliberate regression/threshold validation. Separate
+stage approval required before implementing the safeguard.
 
 ---
 

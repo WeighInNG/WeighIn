@@ -1,0 +1,33 @@
+ℹ️  CARGO_BUILD_RUSTFLAGS=--remap-path-prefix=/home/mxr/.cargo/registry/src= SOROBAN_SDK_BUILD_SYSTEM_SUPPORTS_SPEC_SHAKING_V2=1 STELLAR_CLI_VERSION=28.1.0 cargo rustc --locked --manifest-path=Cargo.toml --crate-type=cdylib --target=wasm32v1-none --release
+    Finished `release` profile [optimized] target(s) in 0.54s
+ℹ️  Build Summary:
+    Wasm File: ../../../relative-output/soroban_forge_escrow.wasm (40904 bytes optimized (original size was 45889 bytes))
+    Wasm Hash: 103874c717632bb9b51d3ff6effc9869433fcbdf8e3c719c927eb7b6aa14f398
+    Wasm Size: 40904 bytes optimized (original size was 45889 bytes)
+    Exported Functions: 24 found
+      • cancel
+      • cancel_basket
+      • create_basket
+      • create_escrow
+      • deposit
+      • deposit_basket
+      • dispute
+      • dispute_basket
+      • escrows_for_participant
+      • get_basket
+      • get_escrow
+      • get_status
+      • refund
+      • refund_basket
+      • refund_expired
+      • release
+      • release_basket
+      • release_partial
+      • release_partial_basket
+      • resolve
+      • resolve_basket
+      • resolve_split
+      • touch_ttl
+      • ttl_info
+✅ Build Complete
+

@@ -101,12 +101,16 @@ to the optimization stage; the exact environmental cause remains unresolved.
 No general optimizer determinism, portable WASM hash, or external five-run
 repeatability guarantee is claimed.
 
-Before publishing a strict-zero consumer policy, investigate the pinned optimizer
-with identical input bytes, including concurrency and temporary/output context.
-Repeat each candidate configuration at least five times and measure distinct
-output artifacts. Either establish a deterministic supported configuration or
-explicitly model/document the residual variation with an appropriate consumer
-policy. Do not silently loosen the policy to make this evidence pass.
+The approved follow-up now isolates the environmental dependency to temporary
+storage: changing only TMPDIR reproduces both hashes five times; system /tmp
+writes fail with EDQUOT and leave zero-byte files. Healthy workspace storage
+repeats the smaller artifact. Five fresh live measurements per artifact reproduce
+the exact values above and verify deployed code plus RPC/native parity.
+See [optimizer investigation](optimizer-repeatability.md) for evidence and limits.
+
+Before strict-zero publication, implement and verify a narrow default-build
+storage safeguard. No production build change or threshold relaxation is included
+in this investigation, and no portable/cold-build determinism guarantee is claimed.
 
 ## Proposed public integration
 

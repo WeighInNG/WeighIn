@@ -1,0 +1,15 @@
+{
+  "lint": "PASS",
+  "typecheck": "PASS",
+  "npm_test_system_temp": "FAIL: 38 of 157 Node tests failed with temporary-storage errors; Vitest not reached",
+  "npm_test_healthy_temp": "PASS: 157 Node tests and 52 Vitest tests",
+  "build": "PASS",
+  "bundle": "PASS",
+  "tracked_bundle_equality": "PASS",
+  "node_syntax": "PASS",
+  "retained_evidence_verifier": "PASS",
+  "native_test_suite": "NOT RERUN: native source unchanged; ten fresh native/RPC measurements verified",
+  "npm_ci": "NOT RERUN: dependency files unchanged; previous Stage 6 npm ci passed",
+  "production_source_changes": false,
+  "push": false
+}
