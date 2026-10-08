@@ -96,7 +96,7 @@ Flagship comparison identity statement now supported:
 
 # Current blocker
 
-## Public flagship CI and clean delivery remain unproven
+## Public flagship CI and external-project proof remain unproven
 
 Stage 4 proved five clean reference builds and five live samples per seven cases
 on the pinned Linux x64/protocol-28 environment. Artifacts and all eight measured
@@ -115,13 +115,13 @@ compares successfully; bridge retirement and strict regression failure are prove
 in isolated fixture history. The bridge must stay until BASE contains the stable
 ID; it has not been publicly merged or retired in the working fixture.
 
-Highest-priority next action: prepare public flagship CI evidence on the internal
+Current approved Stage 5D: prepare public flagship CI evidence on the internal
 reference contract. Stage 5C now proves clean source gates, real tarball install,
 default installed native provisioning/CLI execution and fixed historical
 comparison/threshold scenarios. Prepare reproducible public control/regression
 workflows and retained reports, then request explicit push/publication approval
-for the concrete reviewed change set. Next-stage implementation needs separate
-approval. Local commits after coherent changes remain authorized; pushing and
+for the concrete reviewed change set. Preparation was explicitly approved;
+publication still requires explicit authorization. Local commits after coherent changes remain authorized; pushing and
 publication remain unauthorized. Latest remote BASE was not refreshed; the locally cached main
 has identical benchmark inputs to the tested historical revision. Public CI and
 external-project proof remain unproven. Three metrics
@@ -214,11 +214,11 @@ Remaining limitations:
 - Baseline absence/errors and malformed policy configuration were Stage 1C risks;
   the following approved stage repaired them.
 
-# Current approved work — Stage 5C completed locally; next approval pending
+# Current approved work — Stage 5D public flagship CI preparation
 
 Stages 4, 4B and the historical fixture migration (Stage 5A) were approved and
-completed locally on 2026-10-08. Details and limitations are below. No next stage, public push
-or external-project change is authorized.
+completed locally on 2026-10-08. Details and limitations are below. Stage 5D
+preparation is now approved; public push and external-project changes are not authorized.
 
 The user approved and completed Stage 5B on 2026-10-08: bounded network/Friendbot
 startup readiness proved on fresh pinned networks.
@@ -228,6 +228,7 @@ build, and even a manual build never creates the advertised dist/index.js.
 Fixing existing package delivery and the fixed historical experiment baseline;
 no new benchmark features or push/publication authorized. Local commits after
 each coherent change remain authorized; pushing is not authorized.
+The user approved Stage 5D workflow/harness preparation and local proof.
 
 ---
 
@@ -1072,3 +1073,30 @@ At the start of every session:
 9. Then stop and ask whether to proceed.
 
 Codex must not automatically progress through multiple major stages without approval.Es
+
+## Stage 5D — Public internal flagship CI preparation
+
+Status: IMPLEMENTED; LOCAL LIVE VALIDATION IN PROGRESS — 2026-10-08
+
+Existing CI has no retained control/intentional-regression/threshold-failure proof.
+Added a separate read-only-permissions workflow with three isolated modern
+reference scenarios. Production engine, fixtures, contract and policy unchanged.
+Real bundled Action child exits are preserved; only the expected threshold step
+uses continue-on-error, followed by a required verified-policy/outcome check.
+Missing comparison or infrastructure errors cannot establish expected failure.
+Artifacts contain sources, WASMs, raw RPC/native IO, diffs/reports, exits and hashes;
+private deployer directories are excluded. No GitHub comment token is passed.
+
+Nine new behavior tests use saved schema-4 live results and real policy/report
+functions; they reject wrong exits, unmatched identities, unchanged WASM/address,
+unavailable CPU, control noise and invalid reports. Initial tests accidentally
+selected historical two-metric schema-3 evidence; corrected to schema 4, all nine
+pass. Sandbox child-process restrictions produced an initial no-assertion failure;
+authorized execution ran actual assertions. No fabricated live measurements.
+
+Root validation: npm ci PASS; npm test 154/154 PASS; native 15/15 PASS;
+build/bundle/package dry-run and native format PASS. Existing audit findings
+remain 1 moderate/4 high. YAML parsing, all workflow bash blocks and producer
+JavaScript syntax pass. Node 24.21.0 provisioned temporarily to match Action runtime;
+runtime-specific/live validation follows. Public workflow execution remains
+unproven until explicit publication approval and an actual hosted run.
