@@ -1,0 +1,6 @@
+result<<ghadelimiter_e8565b5b-588e-40fe-9b86-a9aef6ee478a
+fail
+ghadelimiter_e8565b5b-588e-40fe-9b86-a9aef6ee478a
+diff-json<<ghadelimiter_0c9c7c14-2abf-4330-8ad1-a3f144598806
+{}
+ghadelimiter_0c9c7c14-2abf-4330-8ad1-a3f144598806

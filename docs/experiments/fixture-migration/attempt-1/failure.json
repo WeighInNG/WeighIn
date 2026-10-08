@@ -1,0 +1,4 @@
+{
+  "message": "fatal: update_ref failed for ref 'refs/heads/migration-bridge': trying to write ref 'refs/heads/migration-bridge' with nonexistent object 37ad81ad9b6ac9720ae0831b5310f57ad645b3ec\n\n\n128 !== 0\n",
+  "stack": "AssertionError [ERR_ASSERTION]: fatal: update_ref failed for ref 'refs/heads/migration-bridge': trying to write ref 'refs/heads/migration-bridge' with nonexistent object 37ad81ad9b6ac9720ae0831b5310f57ad645b3ec\n\n\n128 !== 0\n\n    at main (/home/mxr/Documents/localRepo/Weighin/tests/experiments/verify-fixture-migration.cjs:79:129)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"
+}

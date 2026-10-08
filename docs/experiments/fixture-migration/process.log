@@ -1,0 +1,4 @@
+unbridged: expected exit 1, actual 1; matched contracts 0
+bridge: expected exit 0, actual 0; matched contracts 1
+retirement: expected exit 0, actual 0; matched contracts 1
+regression: expected exit 1, actual 1; matched contracts 1

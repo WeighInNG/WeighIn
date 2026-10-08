@@ -1,0 +1,34 @@
+{
+  "historical_sha": "59db63a7b895dcc5ca763e3c668990fec40850fb",
+  "cached_main_sha": "cd0fb0f5bb037d75b2b56419b19bb6a00cc6d4ab",
+  "remote_not_refreshed": true,
+  "benchmark_input_files": {
+    "contract/Cargo.toml": {
+      "historical_sha256": "e157a6111874f09dc100f31501f76e40d1f8aeafcd80c847da0e43f352e3d8ae",
+      "cached_main_sha256": "e157a6111874f09dc100f31501f76e40d1f8aeafcd80c847da0e43f352e3d8ae",
+      "equal": true
+    },
+    "contract/Cargo.lock": {
+      "historical_sha256": "4e6086479924f4b187e27a1ba30c3a91c7d1e3089a820c248f637b505397d999",
+      "cached_main_sha256": "4e6086479924f4b187e27a1ba30c3a91c7d1e3089a820c248f637b505397d999",
+      "equal": true
+    },
+    "contract/src/lib.rs": {
+      "historical_sha256": "efba908eb2253ae66deaac98f69dd9b550a6e402e7d39d78ac76770cd04a1a48",
+      "cached_main_sha256": "efba908eb2253ae66deaac98f69dd9b550a6e402e7d39d78ac76770cd04a1a48",
+      "equal": true
+    },
+    "rust-toolchain.toml": {
+      "historical_sha256": "88a5619b90d948c7274059df8e2c4f04a5dbfb87fee898e8d312b51f08e469ec",
+      "cached_main_sha256": "88a5619b90d948c7274059df8e2c4f04a5dbfb87fee898e8d312b51f08e469ec",
+      "equal": true
+    },
+    "weighin-fixtures.json": {
+      "historical_sha256": "529aba0e8fe1b0f0aa771f68c05f239b2fa3431cde4571bcc6f11496b3a320dd",
+      "cached_main_sha256": "529aba0e8fe1b0f0aa771f68c05f239b2fa3431cde4571bcc6f11496b3a320dd",
+      "equal": true
+    }
+  },
+  "policy_difference_is_comment_only": true,
+  "public_ci_proven": false
+}

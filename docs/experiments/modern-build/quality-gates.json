@@ -1,0 +1,21 @@
+{
+  "npm_ci": "PASS",
+  "npm_test": {
+    "status": "PASS",
+    "tests": 81
+  },
+  "npm_run_test_native": {
+    "status": "PASS",
+    "tests": 7
+  },
+  "npm_run_build": "PASS",
+  "npm_run_bundle": "PASS",
+  "npm_pack_dry_run": "PASS",
+  "git_diff_check": "PASS",
+  "lint_typecheck_scripts": "Absent; build/bundle check TypeScript",
+  "npm_audit": {
+    "moderate": 1,
+    "high": 4
+  },
+  "prior_live_harness": "PASS; first run failed Stellar PATH lookup; verified CLI PATH rerun passed"
+}

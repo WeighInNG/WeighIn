@@ -1,0 +1,4 @@
+{
+  "message": "HostError: Error(Storage, ExistingValue)\n\nEvent log (newest first):\n   0: [Diagnostic Event] topics:[error, Error(Storage, ExistingValue)], data:[\"contract already exists\", Bytes(d8b2b14c60fecb65fb2aa81cbea79d0835cafc0e0d851f8611257c1e5b41e1c2)]\n",
+  "stack": "Error: HostError: Error(Storage, ExistingValue)\n\nEvent log (newest first):\n   0: [Diagnostic Event] topics:[error, Error(Storage, ExistingValue)], data:[\"contract already exists\", Bytes(d8b2b14c60fecb65fb2aa81cbea79d0835cafc0e0d851f8611257c1e5b41e1c2)]\n\n    at RpcServer.prepareTransaction (/home/mxr/Documents/localRepo/Weighin/node_modules/@stellar/stellar-sdk/lib/cjs/rpc/server.js:935:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async main (/home/mxr/Documents/localRepo/Weighin/tests/experiments/verify-repeatability.cjs:108:18)"
+}

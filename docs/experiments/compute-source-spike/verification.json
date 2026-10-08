@@ -1,0 +1,25 @@
+{
+  "status": "COMPUTE_SOURCE_FEASIBLE",
+  "rpc_xdr_parity": true,
+  "repeatability_runs_per_revision": 5,
+  "leeway_independent_consumption": true,
+  "cpu": {
+    "base": 270219,
+    "head": 314046,
+    "delta": 43827,
+    "pct": 16.219066756963795
+  },
+  "memory": {
+    "base": 1125761,
+    "head": 1193705,
+    "delta": 67944
+  },
+  "logical_identity_stable": true,
+  "wasm_and_runtime_address_changed": true,
+  "threshold_evaluator_violations": 1,
+  "negative_cases": 8,
+  "production_measurement_integrated": false,
+  "existing_diff_integration": false,
+  "existing_diff_adapter_error": "Cannot read properties of undefined (reading 'consumed')",
+  "ci_failure_proven": false
+}

@@ -1,0 +1,11 @@
+Error: ENOENT: no such file or directory, open '/home/mxr/Documents/localRepo/Weighin/docs/experiments/fixture-migration/unbridged/native.json'
+    at Object.openSync (node:fs:560:18)
+    at Object.readFileSync (node:fs:444:35)
+    at action (/home/mxr/Documents/localRepo/Weighin/tests/experiments/verify-fixture-migration.cjs:46:30)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async main (/home/mxr/Documents/localRepo/Weighin/tests/experiments/verify-fixture-migration.cjs:79:19) {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/home/mxr/Documents/localRepo/Weighin/docs/experiments/fixture-migration/unbridged/native.json'
+}

@@ -1,0 +1,60 @@
+{
+  "pinned_sources": [
+    {
+      "crate": "soroban-env-host-28.0.1",
+      "file": "src/e2e_invoke.rs",
+      "upstream_commit": "7a7629cfef0328881497d60089f9b8acf202a495",
+      "sha256": "3ae8d07e58e898ec8144c5127bc3435427d45591fd72c04ca6fe747f66ea0de4"
+    },
+    {
+      "crate": "soroban-env-host-28.0.1",
+      "file": "src/fees.rs",
+      "upstream_commit": "7a7629cfef0328881497d60089f9b8acf202a495",
+      "sha256": "08017d0c144556974f05c7511887c91bdf4f9650772bd1b7bb630667fb3be46b"
+    },
+    {
+      "crate": "soroban-simulation-28.0.1",
+      "file": "src/simulation.rs",
+      "upstream_commit": "7a7629cfef0328881497d60089f9b8acf202a495",
+      "sha256": "7278d70854bd6bed517560045aa282014568533401e5965b8d71813c5f3f40b7"
+    },
+    {
+      "crate": "soroban-simulation-28.0.1",
+      "file": "src/resources.rs",
+      "upstream_commit": "7a7629cfef0328881497d60089f9b8acf202a495",
+      "sha256": "35702ace20e4c6712bb4680ab0b6f651749e8cb56367629e2e3daae07718ba03"
+    },
+    {
+      "crate": "soroban-simulation-28.0.1",
+      "file": "src/network_config.rs",
+      "upstream_commit": "7a7629cfef0328881497d60089f9b8acf202a495",
+      "sha256": "4f94adec79e4ec265a9b3760de3e2e5e39ce08ccf4ed380406f51e6b31ac1bec"
+    },
+    {
+      "crate": "stellar-xdr-28.0.0",
+      "file": "src/generated/config_setting_contract_compute_v0.rs",
+      "upstream_commit": "d0f1330e43c3a2c0c616da30698b24140d4eea72",
+      "sha256": "2c4b018e0021d3092d6c0041f2c0c0edf943f2f18a027d79edcf88ff5c01593b"
+    },
+    {
+      "crate": "stellar-xdr-28.0.0",
+      "file": "src/generated/config_setting_contract_ledger_cost_v0.rs",
+      "upstream_commit": "d0f1330e43c3a2c0c616da30698b24140d4eea72",
+      "sha256": "eb5da6659b214615f425f430aeb4f9275f0c1d0f1bcd0d931a32226c94dbbc25"
+    },
+    {
+      "crate": "stellar-xdr-28.0.0",
+      "file": "src/generated/config_setting_contract_ledger_cost_ext_v0.rs",
+      "upstream_commit": "d0f1330e43c3a2c0c616da30698b24140d4eea72",
+      "sha256": "48d433ddda8efcc15f3a3cc671b9c6d7f636eef2529c132d2abe1145587731b2"
+    },
+    {
+      "crate": "stellar-xdr-28.0.0",
+      "file": "src/generated/config_setting_contract_events_v0.rs",
+      "upstream_commit": "d0f1330e43c3a2c0c616da30698b24140d4eea72",
+      "sha256": "6d438c39d4dc83f6370b12f0e86d67d2605c1c056306b5e353c6b77fb7cafde7"
+    }
+  ],
+  "helper_io_adjustment": "read_bytes and write_bytes no_adjustment; instruction leeway only changes instructions",
+  "historical_fee_semantics": "encoded transaction history, not historical read consumption"
+}

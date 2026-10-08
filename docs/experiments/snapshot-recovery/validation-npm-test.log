@@ -1,0 +1,718 @@
+
+> weighin@1.0.0 test
+> npm run build && node --test tests/*.test.cjs
+
+
+> weighin@1.0.0 build
+> tsc
+
+TAP version 13
+# Subtest: identical logical contract, fixture, function, and case pair successfully
+ok 1 - identical logical contract, fixture, function, and case pair successfully
+  ---
+  duration_ms: 18.25622
+  type: 'test'
+  ...
+# Subtest: changed WASM hash and runtime address still pair as the configured benchmark
+ok 2 - changed WASM hash and runtime address still pair as the configured benchmark
+  ---
+  duration_ms: 4.99549
+  type: 'test'
+  ...
+# Subtest: different logical contracts do not pair, even at the same runtime address
+ok 3 - different logical contracts do not pair, even at the same runtime address
+  ---
+  duration_ms: 1.435948
+  type: 'test'
+  ...
+# Subtest: different functions do not pair within the same logical contract
+ok 4 - different functions do not pair within the same logical contract
+  ---
+  duration_ms: 2.002798
+  type: 'test'
+  ...
+# Subtest: multiple cases of one function compare independently even when reordered
+ok 5 - multiple cases of one function compare independently even when reordered
+  ---
+  duration_ms: 3.452446
+  type: 'test'
+  ...
+# Subtest: removed case is reported even if its function still has other cases
+ok 6 - removed case is reported even if its function still has other cases
+  ---
+  duration_ms: 1.231258
+  type: 'test'
+  ...
+# Subtest: new case is reported even if its function already exists
+ok 7 - new case is reported even if its function already exists
+  ---
+  duration_ms: 1.193789
+  type: 'test'
+  ...
+# Subtest: matched benchmark with higher CPU produces regression delta and percentage
+ok 8 - matched benchmark with higher CPU produces regression delta and percentage
+  ---
+  duration_ms: 6.67553
+  type: 'test'
+  ...
+# Subtest: matched benchmark with lower CPU produces improvement delta and percentage
+ok 9 - matched benchmark with lower CPU produces improvement delta and percentage
+  ---
+  duration_ms: 2.806533
+  type: 'test'
+  ...
+# Subtest: multiple contracts remain independent even with the same WASM and address
+ok 10 - multiple contracts remain independent even with the same WASM and address
+  ---
+  duration_ms: 2.340206
+  type: 'test'
+  ...
+# Subtest: identical contract/case names in different fixture files do not pair
+ok 11 - identical contract/case names in different fixture files do not pair
+  ---
+  duration_ms: 1.166567
+  type: 'test'
+  ...
+# Subtest: existing fixture format derives stable identities from the full path and arguments
+ok 12 - existing fixture format derives stable identities from the full path and arguments
+  ---
+  duration_ms: 1.381787
+  type: 'test'
+  ...
+# Subtest: same WASM basename in different directories does not match
+ok 13 - same WASM basename in different directories does not match
+  ---
+  duration_ms: 0.896657
+  type: 'test'
+  ...
+# Subtest: explicit fixture and contract IDs preserve comparison across path changes
+ok 14 - explicit fixture and contract IDs preserve comparison across path changes
+  ---
+  duration_ms: 0.920777
+  type: 'test'
+  ...
+# Subtest: unconfigured cases use arguments, not invocation position
+ok 15 - unconfigured cases use arguments, not invocation position
+  ---
+  duration_ms: 1.486456
+  type: 'test'
+  ...
+# Subtest: argument object key order and type capitalization do not alter default case identity
+ok 16 - argument object key order and type capitalization do not alter default case identity
+  ---
+  duration_ms: 0.716267
+  type: 'test'
+  ...
+# Subtest: duplicate logical contracts or cases are rejected instead of overwritten
+ok 17 - duplicate logical contracts or cases are rejected instead of overwritten
+  ---
+  duration_ms: 2.603886
+  type: 'test'
+  ...
+# Subtest: blank explicit IDs and absolute fallback WASM paths are rejected
+ok 18 - blank explicit IDs and absolute fallback WASM paths are rejected
+  ---
+  duration_ms: 2.016734
+  type: 'test'
+  ...
+# Subtest: legacy measurements pair by runtime address only, and never guess a mixed-schema match
+ok 19 - legacy measurements pair by runtime address only, and never guess a mixed-schema match
+  ---
+  duration_ms: 1.532211
+  type: 'test'
+  ...
+# Subtest: partial version 2 identities fail rather than falling back to runtime address
+ok 20 - partial version 2 identities fail rather than falling back to runtime address
+  ---
+  duration_ms: 1.254996
+  type: 'test'
+  ...
+# Subtest: strict threshold sees a changed-WASM regression and identifies its logical case
+ok 21 - strict threshold sees a changed-WASM regression and identifies its logical case
+  ---
+  duration_ms: 1.883649
+  type: 'test'
+  ...
+# Subtest: reports show logical identity, both runtime addresses, independent cases, and additions/removals
+ok 22 - reports show logical identity, both runtime addresses, independent cases, and additions/removals
+  ---
+  duration_ms: 57.473735
+  type: 'test'
+  ...
+# Built hello-contract: /tmp/weighin-build-test-EWaPnU/target/wasm32v1-none/release/hello_contract.wasm; SHA256 ed329ca3ea51d9310bbae0e2b594595dda73ff5b72ace36d1eda4a6391696473; stellar 28.1.0; rustc 1.95.0
+# Built first: /tmp/weighin-build-test-lgqP8A/artifacts/first.wasm; SHA256 ed329ca3ea51d9310bbae0e2b594595dda73ff5b72ace36d1eda4a6391696473; stellar 28.1.0; rustc 1.95.0
+# Built second: /tmp/weighin-build-test-lgqP8A/artifacts/second.wasm; SHA256 ed329ca3ea51d9310bbae0e2b594595dda73ff5b72ace36d1eda4a6391696473; stellar 28.1.0; rustc 1.95.0
+# Built first: /tmp/weighin-build-test-lgqP8A/other/first.wasm; SHA256 ed329ca3ea51d9310bbae0e2b594595dda73ff5b72ace36d1eda4a6391696473; stellar 28.1.0; rustc 1.95.0
+# Subtest: modern optimized build replaces stale configured WASM with fresh selected-package output
+ok 23 - modern optimized build replaces stale configured WASM with fresh selected-package output
+  ---
+  duration_ms: 26.852205
+  type: 'test'
+  ...
+# Subtest: multiple workspace contracts select independent packages; repeated package aliases build once
+ok 24 - multiple workspace contracts select independent packages; repeated package aliases build once
+  ---
+  duration_ms: 14.405676
+  type: 'test'
+  ...
+# Subtest: ambiguous Cargo packages are rejected before building
+ok 25 - ambiguous Cargo packages are rejected before building
+  ---
+  duration_ms: 8.312743
+  type: 'test'
+  ...
+# Subtest: unknown artifact basename is rejected before building any package
+ok 26 - unknown artifact basename is rejected before building any package
+  ---
+  duration_ms: 4.780792
+  type: 'test'
+  ...
+# Subtest: build fails explicitly for missing CLI
+ok 27 - build fails explicitly for missing CLI
+  ---
+  duration_ms: 6.101953
+  type: 'test'
+  ...
+# Subtest: build fails explicitly for obsolete Rust
+ok 28 - build fails explicitly for obsolete Rust
+  ---
+  duration_ms: 4.895293
+  type: 'test'
+  ...
+# Subtest: build fails explicitly for obsolete CLI
+ok 29 - build fails explicitly for obsolete CLI
+  ---
+  duration_ms: 6.01899
+  type: 'test'
+  ...
+# Subtest: build fails explicitly for failed build
+ok 30 - build fails explicitly for failed build
+  ---
+  duration_ms: 4.570874
+  type: 'test'
+  ...
+# Subtest: build fails explicitly for missing output despite stale destination
+ok 31 - build fails explicitly for missing output despite stale destination
+  ---
+  duration_ms: 5.026352
+  type: 'test'
+  ...
+# Subtest: build fails explicitly for invalid WASM output
+ok 32 - build fails explicitly for invalid WASM output
+  ---
+  duration_ms: 11.423281
+  type: 'test'
+  ...
+# Subtest: build fails explicitly for optimization skipped
+ok 33 - build fails explicitly for optimization skipped
+  ---
+  duration_ms: 8.061495
+  type: 'test'
+  ...
+# Subtest: every declared contract must have a manifest, even when another one is valid
+ok 34 - every declared contract must have a manifest, even when another one is valid
+  ---
+  duration_ms: 8.63509
+  type: 'test'
+  ...
+# Subtest: configuration rejects unsupported rules and typos even without regressions
+ok 35 - configuration rejects unsupported rules and typos even without regressions
+  ---
+  duration_ms: 17.19466
+  type: 'test'
+  ...
+# Subtest: valid percentage policies handle exact caps and scientific numeric notation
+ok 36 - valid percentage policies handle exact caps and scientific numeric notation
+  ---
+  duration_ms: 6.974592
+  type: 'test'
+  ...
+# Subtest: policy referring to an unpaired function cannot silently pass
+ok 37 - policy referring to an unpaired function cannot silently pass
+  ---
+  duration_ms: 2.837724
+  type: 'test'
+  ...
+# Subtest: empty fixture suites and contracts are rejected; zero argument invocations remain valid
+ok 38 - empty fixture suites and contracts are rejected; zero argument invocations remain valid
+  ---
+  duration_ms: 3.067966
+  type: 'test'
+  ...
+# Subtest: Action exits 1 and reports failure for checkout
+ok 39 - Action exits 1 and reports failure for checkout
+  ---
+  duration_ms: 463.440517
+  type: 'test'
+  ...
+# Subtest: Action exits 1 and reports failure for worktree
+ok 40 - Action exits 1 and reports failure for worktree
+  ---
+  duration_ms: 321.500056
+  type: 'test'
+  ...
+# Subtest: Action exits 1 and reports failure for build
+ok 41 - Action exits 1 and reports failure for build
+  ---
+  duration_ms: 281.140995
+  type: 'test'
+  ...
+# Subtest: Action exits 1 and reports failure for measurement
+ok 42 - Action exits 1 and reports failure for measurement
+  ---
+  duration_ms: 297.989961
+  type: 'test'
+  ...
+# Subtest: Action exits 1 and reports failure for missing-fixtures
+ok 43 - Action exits 1 and reports failure for missing-fixtures
+  ---
+  duration_ms: 246.921464
+  type: 'test'
+  ...
+# Subtest: Action exits 1 and reports failure for schema
+ok 44 - Action exits 1 and reports failure for schema
+  ---
+  duration_ms: 265.2626
+  type: 'test'
+  ...
+# Subtest: Action exits 1 and reports failure for provenance
+ok 45 - Action exits 1 and reports failure for provenance
+  ---
+  duration_ms: 251.115237
+  type: 'test'
+  ...
+# Subtest: Action exits 1 and reports failure for empty
+ok 46 - Action exits 1 and reports failure for empty
+  ---
+  duration_ms: 276.400965
+  type: 'test'
+  ...
+# Subtest: Action exits 1 and reports failure for unmatched
+ok 47 - Action exits 1 and reports failure for unmatched
+  ---
+  duration_ms: 249.670691
+  type: 'test'
+  ...
+# Subtest: Action exits 1 and reports failure for head-measurement
+ok 48 - Action exits 1 and reports failure for head-measurement
+  ---
+  duration_ms: 267.106234
+  type: 'test'
+  ...
+# Subtest: Action exits 1 and reports failure for head-fixtures
+ok 49 - Action exits 1 and reports failure for head-fixtures
+  ---
+  duration_ms: 249.149117
+  type: 'test'
+  ...
+# Subtest: Action exits 1 and reports failure for malformed-fixtures
+ok 50 - Action exits 1 and reports failure for malformed-fixtures
+  ---
+  duration_ms: 256.646938
+  type: 'test'
+  ...
+# Subtest: Action exits 1 and reports failure for empty-fixtures
+ok 51 - Action exits 1 and reports failure for empty-fixtures
+  ---
+  duration_ms: 243.92436
+  type: 'test'
+  ...
+# Subtest: Action fails malformed policy: not valid toml = 
+ok 52 - Action fails malformed policy: not valid toml = 
+  ---
+  duration_ms: 216.41892
+  type: 'test'
+  ...
+# Subtest: Action fails malformed policy: [thresholds.functions.hello]\\ncpu_instructions="typo"
+ok 53 - Action fails malformed policy: [thresholds.functions.hello]\\ncpu_instructions="typo"
+  ---
+  duration_ms: 231.34401
+  type: 'test'
+  ...
+# Subtest: Action fails malformed policy: [thresholds.global]\\nfail_on_any_regression="false"
+ok 54 - Action fails malformed policy: [thresholds.global]\\nfail_on_any_regression="false"
+  ---
+  duration_ms: 277.910619
+  type: 'test'
+  ...
+# Subtest: Action unchanged control and optional absent policy still pass; regression fails
+ok 55 - Action unchanged control and optional absent policy still pass; regression fails
+  ---
+  duration_ms: 855.265651
+  type: 'test'
+  ...
+# Subtest: schema 3 pairs changed WASM/address and compares genuine measured CPU while retaining unavailable metrics
+ok 56 - schema 3 pairs changed WASM/address and compares genuine measured CPU while retaining unavailable metrics
+  ---
+  duration_ms: 21.477832
+  type: 'test'
+  ...
+# Subtest: unchanged measured CPU passes its policy despite unrelated unavailable metrics
+ok 57 - unchanged measured CPU passes its policy despite unrelated unavailable metrics
+  ---
+  duration_ms: 4.355059
+  type: 'test'
+  ...
+# Subtest: unavailable consumption is not confused with measured zero or improvement
+ok 58 - unavailable consumption is not confused with measured zero or improvement
+  ---
+  duration_ms: 4.518984
+  type: 'test'
+  ...
+# Subtest: per-function, global caps and all-metric policies require availability; ignore explicitly opts out
+ok 59 - per-function, global caps and all-metric policies require availability; ignore explicitly opts out
+  ---
+  duration_ms: 5.499681
+  type: 'test'
+  ...
+# Subtest: zero measured consumption is comparable and available
+ok 60 - zero measured consumption is comparable and available
+  ---
+  duration_ms: 3.119286
+  type: 'test'
+  ...
+# Subtest: negative/nonfinite/missing consumption and false unavailable zero records are rejected
+ok 61 - negative/nonfinite/missing consumption and false unavailable zero records are rejected
+  ---
+  duration_ms: 2.872035
+  type: 'test'
+  ...
+# Subtest: reports retain human identity, measured values, unavailable reasons and snapshot provenance
+ok 62 - reports retain human identity, measured values, unavailable reasons and snapshot provenance
+  ---
+  duration_ms: 61.406707
+  type: 'test'
+  ...
+# Subtest: different protocol/config/helper/network/auth/seed provenance refuses comparison
+ok 63 - different protocol/config/helper/network/auth/seed provenance refuses comparison
+  ---
+  duration_ms: 3.027257
+  type: 'test'
+  ...
+# Subtest: schema 3 requires provenance and never silently compares legacy source semantics
+ok 64 - schema 3 requires provenance and never silently compares legacy source semantics
+  ---
+  duration_ms: 1.630803
+  type: 'test'
+  ...
+# Subtest: fee-only configuration/metadata changes remain visible without invalidating unchanged compute calibration
+ok 65 - fee-only configuration/metadata changes remain visible without invalidating unchanged compute calibration
+  ---
+  duration_ms: 1.643351
+  type: 'test'
+  ...
+# Subtest: all six real cases map the native output and immutable captured caps to production metrics
+ok 66 - all six real cases map the native output and immutable captured caps to production metrics
+  ---
+  duration_ms: 64.32882
+  type: 'test'
+  ...
+# Subtest: promoted consumption agrees directly with parity-accepted raw RPC fields and event XDR
+ok 67 - promoted consumption agrees directly with parity-accepted raw RPC fields and event XDR
+  ---
+  duration_ms: 13.957451
+  type: 'test'
+  ...
+# Subtest: repeated reads and queried absence count distinct footprint keys; live Soroban disk bytes are measured zero
+ok 68 - repeated reads and queried absence count distinct footprint keys; live Soroban disk bytes are measured zero
+  ---
+  duration_ms: 1.304872
+  type: 'test'
+  ...
+# Subtest: no-op write charges a postimage; deletion retains RW footprint but has zero postimage bytes
+ok 69 - no-op write charges a postimage; deletion retains RW footprint but has zero postimage bytes
+  ---
+  duration_ms: 1.180557
+  type: 'test'
+  ...
+# Subtest: diagnostic events are excluded and return bytes contribute with no emitted contract event
+ok 70 - diagnostic events are excluded and return bytes contribute with no emitted contract event
+  ---
+  duration_ms: 0.80833
+  type: 'test'
+  ...
+# Subtest: schema 4 control compares all eight measured fields and explicitly retains three unavailable metrics
+ok 71 - schema 4 control compares all eight measured fields and explicitly retains three unavailable metrics
+  ---
+  duration_ms: 10.061599
+  type: 'test'
+  ...
+# Subtest: measured event count without independent network cap can fail a configured regression policy
+ok 72 - measured event count without independent network cap can fail a configured regression policy
+  ---
+  duration_ms: 10.081808
+  type: 'test'
+  ...
+# Subtest: resource cap/source/availability changes refuse schema 4 comparison
+ok 73 - resource cap/source/availability changes refuse schema 4 comparison
+  ---
+  duration_ms: 10.115988
+  type: 'test'
+  ...
+# Subtest: missing cap provenance/resource hash and schema 3 migration fail explicitly, including unmatched records
+ok 74 - missing cap provenance/resource hash and schema 3 migration fail explicitly, including unmatched records
+  ---
+  duration_ms: 8.478665
+  type: 'test'
+  ...
+# Subtest: schema 4 report distinguishes footprint, disk bytes, events plus return, no cap and unavailable metrics
+ok 75 - schema 4 report distinguishes footprint, disk bytes, events plus return, no cap and unavailable metrics
+  ---
+  duration_ms: 59.90666
+  type: 'test'
+  ...
+# Subtest: five unchanged measured samples produce stable min/max/range and keep unsupported values null
+ok 76 - five unchanged measured samples produce stable min/max/range and keep unsupported values null
+  ---
+  duration_ms: 61.666628
+  type: 'test'
+  ...
+# Subtest: a CPU increase is preserved as variance and a regression, rather than averaged away
+ok 77 - a CPU increase is preserved as variance and a regression, rather than averaged away
+  ---
+  duration_ms: 40.169498
+  type: 'test'
+  ...
+# Subtest: a decrease still marks repeatability variation even when no metric regresses
+ok 78 - a decrease still marks repeatability variation even when no metric regresses
+  ---
+  duration_ms: 22.757672
+  type: 'test'
+  ...
+# Subtest: different WASM with stable consumption is separately identified as artifact variation
+ok 79 - different WASM with stable consumption is separately identified as artifact variation
+  ---
+  duration_ms: 17.543459
+  type: 'test'
+  ...
+# Subtest: four samples, duplicate run numbers, changed source and nonempty target cannot prove five clean runs
+ok 80 - four samples, duplicate run numbers, changed source and nonempty target cannot prove five clean runs
+  ---
+  duration_ms: 21.385802
+  type: 'test'
+  ...
+# Subtest: measurement/build hash disagreement and changed benchmark cases fail instead of disappearing from the series
+ok 81 - measurement/build hash disagreement and changed benchmark cases fail instead of disappearing from the series
+  ---
+  duration_ms: 17.642461
+  type: 'test'
+  ...
+# Subtest: different compute calibration fails and full-config metadata drift is recorded independently of metric stability
+ok 82 - different compute calibration fails and full-config metadata drift is recorded independently of metric stability
+  ---
+  duration_ms: 28.410866
+  type: 'test'
+  ...
+# Subtest: saved live evidence contains five separate empty-target builds of the exact saved source
+ok 83 - saved live evidence contains five separate empty-target builds of the exact saved source
+  ---
+  duration_ms: 65.699888
+  type: 'test'
+  ...
+# Subtest: all 35 saved measurements link to real native inputs and matching raw RPC simulation values
+ok 84 - all 35 saved measurements link to real native inputs and matching raw RPC simulation values
+  ---
+  duration_ms: 62.347006
+  type: 'test'
+  ...
+# Subtest: versioned transport accepts captured metered values and separate budget
+ok 85 - versioned transport accepts captured metered values and separate budget
+  ---
+  duration_ms: 30.985897
+  type: 'test'
+  ...
+# Subtest: transport rejects missing/negative/nonfinite/string meters and unknown schema/version
+ok 86 - transport rejects missing/negative/nonfinite/string meters and unknown schema/version
+  ---
+  duration_ms: 12.568379
+  type: 'test'
+  ...
+# Subtest: transport rejects malformed JSON and resource fields inconsistent with XDR
+ok 87 - transport rejects malformed JSON and resource fields inconsistent with XDR
+  ---
+  duration_ms: 5.414393
+  type: 'test'
+  ...
+# Subtest: helper exit failures do not produce successful or zero benchmark values
+ok 88 - helper exit failures do not produce successful or zero benchmark values
+  ---
+  duration_ms: 2.592782
+  type: 'test'
+  ...
+# Subtest: helper diagnostic events cannot be accepted as charged contract events
+ok 89 - helper diagnostic events cannot be accepted as charged contract events
+  ---
+  duration_ms: 6.083583
+  type: 'test'
+  ...
+# Subtest: missing helper is an explicit provisioning failure
+ok 90 - missing helper is an explicit provisioning failure
+  ---
+  duration_ms: 1.072141
+  type: 'test'
+  ...
+# WASM: /tmp/weighin-simulation-test-Rir5JY/contract.wasm
+# WASM SHA256: 3b6130d18e134ad31a9b5ffcedefb4b74b1debcaef9454986106ffe956afe7cc
+# Contract ID: CA67OFPLVE32D7V5XQNM6B32RQ3C4W6CKTQSUAVL4AUE4LHXUB5MAUSA
+# Already deployed at CA67OFPLVE32D7V5XQNM6B32RQ3C4W6CKTQSUAVL4AUE4LHXUB5MAUSA
+# Simulating hello...
+# WASM: /tmp/weighin-simulation-test-VpGPCz/contract.wasm
+# WASM SHA256: 3b6130d18e134ad31a9b5ffcedefb4b74b1debcaef9454986106ffe956afe7cc
+# Contract ID: CDNXKU2IVY5ECOGSJT7RLWRUDC2G6RVXDPD4JB5VIWGQUIE4AGCTRWV3
+# Already deployed at CDNXKU2IVY5ECOGSJT7RLWRUDC2G6RVXDPD4JB5VIWGQUIE4AGCTRWV3
+# Simulating hello...
+# WASM: /tmp/weighin-simulation-test-86PAUi/contract.wasm
+# WASM SHA256: 3b6130d18e134ad31a9b5ffcedefb4b74b1debcaef9454986106ffe956afe7cc
+# Contract ID: CDQE45KXRXVCT2JQMHFVNPHK7FTXQUWV54PDL5QKWX7MIRYPBELQTC3P
+# Already deployed at CDQE45KXRXVCT2JQMHFVNPHK7FTXQUWV54PDL5QKWX7MIRYPBELQTC3P
+# Simulating hello...
+# WASM: /tmp/weighin-simulation-test-m5jhH1/contract.wasm
+# WASM SHA256: 3b6130d18e134ad31a9b5ffcedefb4b74b1debcaef9454986106ffe956afe7cc
+# Contract ID: CAY47Y3BTY4RJV2MU6XCC4MNI5ETWAAPPCUPYRLHZSLLJQLCZIQCQTHD
+# Already deployed at CAY47Y3BTY4RJV2MU6XCC4MNI5ETWAAPPCUPYRLHZSLLJQLCZIQCQTHD
+# Simulating hello...
+# WASM: /tmp/weighin-simulation-test-0rE9Jh/contract.wasm
+# WASM SHA256: 3b6130d18e134ad31a9b5ffcedefb4b74b1debcaef9454986106ffe956afe7cc
+# Contract ID: CCPXKAZ3A3CCVCZPT3UGKZK2H53KFKOBRGPOP4HAMYVQXURUV3PPYP6X
+# Already deployed at CCPXKAZ3A3CCVCZPT3UGKZK2H53KFKOBRGPOP4HAMYVQXURUV3PPYP6X
+# Simulating hello...
+# WASM: /tmp/weighin-simulation-test-k0Baa9/contract.wasm
+# WASM SHA256: 3b6130d18e134ad31a9b5ffcedefb4b74b1debcaef9454986106ffe956afe7cc
+# Contract ID: CCHLJ3I7QZ75AJGJTK6BX5WWQTMPRJCKSNJD7X2AJD3O2NAY5TBNATK6
+# Already deployed at CCHLJ3I7QZ75AJGJTK6BX5WWQTMPRJCKSNJD7X2AJD3O2NAY5TBNATK6
+# Simulating hello...
+# Subtest: the live unchanged control has identical transaction resource fields
+ok 91 - the live unchanged control has identical transaction resource fields
+  ---
+  duration_ms: 3.527626
+  type: 'test'
+  ...
+# Subtest: the same live invocation has a different instruction budget when leeway changes
+ok 92 - the same live invocation has a different instruction budget when leeway changes
+  ---
+  duration_ms: 5.253967
+  type: 'test'
+  ...
+# Subtest: base: captured successful RPC response survives SDK parsing without compute consumption
+ok 93 - base: captured successful RPC response survives SDK parsing without compute consumption
+  ---
+  duration_ms: 1.565573
+  type: 'test'
+  ...
+# Subtest: head: captured successful RPC response survives SDK parsing without compute consumption
+ok 94 - head: captured successful RPC response survives SDK parsing without compute consumption
+  ---
+  duration_ms: 1.634685
+  type: 'test'
+  ...
+# Subtest: captured raw and SDK parsed IO resource values agree exactly
+ok 95 - captured raw and SDK parsed IO resource values agree exactly
+  ---
+  duration_ms: 1.551574
+  type: 'test'
+  ...
+# Subtest: base: missing native helper fails explicitly and produces no benchmark
+ok 96 - base: missing native helper fails explicitly and produces no benchmark
+  ---
+  duration_ms: 99.00442
+  type: 'test'
+  ...
+# Subtest: head: missing native helper fails explicitly and produces no benchmark
+ok 97 - head: missing native helper fails explicitly and produces no benchmark
+  ---
+  duration_ms: 8.277232
+  type: 'test'
+  ...
+# Subtest: a larger transaction instruction budget cannot masquerade as measured CPU
+ok 98 - a larger transaction instruction budget cannot masquerade as measured CPU
+  ---
+  duration_ms: 8.839033
+  type: 'test'
+  ...
+# Subtest: legacy cost values are not trusted as an unverified consumption source
+ok 99 - legacy cost values are not trusted as an unverified consumption source
+  ---
+  duration_ms: 11.227634
+  type: 'test'
+  ...
+# Subtest: simulation errors retain their original failure reason
+ok 100 - simulation errors retain their original failure reason
+  ---
+  duration_ms: 12.239596
+  type: 'test'
+  ...
+# Subtest: a response without transaction data fails before attempting metric extraction
+ok 101 - a response without transaction data fails before attempting metric extraction
+  ---
+  duration_ms: 6.609348
+  type: 'test'
+  ...
+# Subtest: observed ledger-read failure recovers by re-simulating and returning only the new snapshot
+ok 102 - observed ledger-read failure recovers by re-simulating and returning only the new snapshot
+  ---
+  duration_ms: 42.533635
+  type: 'test'
+  ...
+# Subtest: three transient read failures recover on the fourth complete capture with bounded delays
+ok 103 - three transient read failures recover on the fourth complete capture with bounded delays
+  ---
+  duration_ms: 13.764194
+  type: 'test'
+  ...
+# Subtest: persistent observed errors exhaust retries and return no successful or zero-valued measurement
+ok 104 - persistent observed errors exhaust retries and return no successful or zero-valued measurement
+  ---
+  duration_ms: 6.920898
+  type: 'test'
+  ...
+# Subtest: a failure after a successful first batch discards its rows before the next full capture
+ok 105 - a failure after a successful first batch discards its rows before the next full capture
+  ---
+  duration_ms: 255.377378
+  type: 'test'
+  ...
+# Subtest: unrelated RPC codes/messages and HTTP 404 fail immediately without recovery
+ok 106 - unrelated RPC codes/messages and HTTP 404 fail immediately without recovery
+  ---
+  duration_ms: 4.696453
+  type: 'test'
+  ...
+# Subtest: the same error from simulation or ledger-header RPC is not treated as a snapshot-read failure
+ok 107 - the same error from simulation or ledger-header RPC is not treated as a snapshot-read failure
+  ---
+  duration_ms: 3.689031
+  type: 'test'
+  ...
+# Subtest: malformed ledger rows, header disagreement and native parity disagreement still fail closed
+ok 108 - malformed ledger rows, header disagreement and native parity disagreement still fail closed
+  ---
+  duration_ms: 10.854906
+  type: 'test'
+  ...
+# Subtest: ledger drift still recaptures, and transient failures do not bypass the fresh-ledger guard
+ok 109 - ledger drift still recaptures, and transient failures do not bypass the fresh-ledger guard
+  ---
+  duration_ms: 9.520082
+  type: 'test'
+  ...
+# Subtest: transient errors cannot extend the existing 30-capture budget
+ok 110 - transient errors cannot extend the existing 30-capture budget
+  ---
+  duration_ms: 29.108747
+  type: 'test'
+  ...
+# Subtest: recovery does not permit a subsequent native/RPC parity disagreement
+ok 111 - recovery does not permit a subsequent native/RPC parity disagreement
+  ---
+  duration_ms: 7.182353
+  type: 'test'
+  ...
+1..111
+# tests 111
+# suites 0
+# pass 111
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 5538.470195

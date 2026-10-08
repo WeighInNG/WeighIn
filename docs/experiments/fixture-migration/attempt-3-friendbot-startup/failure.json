@@ -1,0 +1,4 @@
+{
+  "message": "ENOENT: no such file or directory, open '/home/mxr/Documents/localRepo/Weighin/docs/experiments/fixture-migration/unbridged/native.json'",
+  "stack": "Error: ENOENT: no such file or directory, open '/home/mxr/Documents/localRepo/Weighin/docs/experiments/fixture-migration/unbridged/native.json'\n    at Object.openSync (node:fs:560:18)\n    at Object.readFileSync (node:fs:444:35)\n    at action (/home/mxr/Documents/localRepo/Weighin/tests/experiments/verify-fixture-migration.cjs:46:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async main (/home/mxr/Documents/localRepo/Weighin/tests/experiments/verify-fixture-migration.cjs:79:19)"
+}

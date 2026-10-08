@@ -1,0 +1,138 @@
+[
+  {
+    "schema_version": 3,
+    "fixture_id": "id:integration-suite",
+    "logical_id": "id:greeting",
+    "contract_id": "CBV7SZ2R4RAPRAFOC3CGKGQYMWFJE2YVA4BFMWBATCGO5HXTXJI36GFB",
+    "git_commit": "base",
+    "soroban_sdk_version": "25.3.1",
+    "timestamp": 1791409193,
+    "benchmarks": [
+      {
+        "function_name": "hello",
+        "case_id": "id:world",
+        "metrics": {
+          "cpu_instructions": {
+            "availability": "measured",
+            "consumed": 270219,
+            "limit": 400000000,
+            "source": "soroban-simulation.simulated_instructions"
+          },
+          "memory_bytes": {
+            "availability": "measured",
+            "consumed": 1125761,
+            "limit": 41943040,
+            "source": "soroban-simulation.simulated_memory"
+          },
+          "ledger_read_entries": {
+            "availability": "unavailable",
+            "consumed": null,
+            "limit": null,
+            "reason": "Consumption/limit semantics are not yet verified for this metric"
+          },
+          "ledger_read_bytes": {
+            "availability": "unavailable",
+            "consumed": null,
+            "limit": null,
+            "reason": "Consumption/limit semantics are not yet verified for this metric"
+          },
+          "ledger_write_entries": {
+            "availability": "unavailable",
+            "consumed": null,
+            "limit": null,
+            "reason": "Consumption/limit semantics are not yet verified for this metric"
+          },
+          "ledger_write_bytes": {
+            "availability": "unavailable",
+            "consumed": null,
+            "limit": null,
+            "reason": "Consumption/limit semantics are not yet verified for this metric"
+          },
+          "historical_data_read_bytes": {
+            "availability": "unavailable",
+            "consumed": null,
+            "limit": null,
+            "reason": "No verified transaction-level historical read consumption source"
+          },
+          "contract_data_hard_limit": {
+            "availability": "unavailable",
+            "consumed": null,
+            "limit": null,
+            "reason": "No verified instance-size measurement from the immutable invocation snapshot"
+          },
+          "tx_size_bytes": {
+            "availability": "unavailable",
+            "consumed": null,
+            "limit": null,
+            "reason": "Simulation does not submit a signed benchmark transaction"
+          },
+          "events_count": {
+            "availability": "unavailable",
+            "consumed": null,
+            "limit": null,
+            "reason": "Consumption/limit semantics are not yet verified for this metric"
+          },
+          "event_data_bytes": {
+            "availability": "unavailable",
+            "consumed": null,
+            "limit": null,
+            "reason": "Consumption/limit semantics are not yet verified for this metric"
+          }
+        },
+        "provenance": {
+          "source": "soroban-simulation",
+          "source_version": "28.0.1",
+          "protocol": 28,
+          "helper_sha256": "1e7ef88e974bd09d5b683a3e94c101dea1b9524304c7124699ae0e8d279d964c",
+          "network_id": "baefd734b8d3e48472cff83912375fedbc7573701912fe308af730180f97d74a",
+          "ledger": 61,
+          "header_sha256": "5568618567bf2ccbfbb26fe4c94323dc943667a697bd7b1484d49735b3d047ce",
+          "snapshot_sha256": "76c3049e8740f873d9fdf147200ad40641fbad4798ff12b807c65a5f318ec349",
+          "config_sha256": "89ec202f9644c9c3f5626d92532ee651a9a6f185bb2f009aca1b743e80d0fac2",
+          "compute_config_sha256": "5e0aaa432815c17b201e2eeb5591a85e2355d758dc9a3989e58d7319096cf6b5",
+          "input_sha256": "095b7c67c5b4828c1dfae743e27505bd884e5d43f298e00b1e55084680cd9397",
+          "seed": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "auth_mode": "recording(true,true)",
+          "host_features": [
+            "recording_mode",
+            "testutils"
+          ]
+        },
+        "wasm_sha256": "949a7203657f6e37d8171facef42797af7f53d1158f070a7d04fcb91479329b2"
+      }
+    ]
+  }
+]

@@ -1,0 +1,9 @@
+{
+  "command": "npm --version",
+  "status": 0,
+  "spawn_error_code": "EPERM",
+  "spawn_error_message": "spawnSync npm EPERM",
+  "stdout": "",
+  "stderr": "",
+  "note": "Read-only diagnostic after a packaging subprocess produced no output inside the sandbox; elevated package verification passed."
+}

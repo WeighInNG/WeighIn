@@ -1,0 +1,100 @@
+{
+  "status": "LIVE_METRIC_PROVENANCE_PASS",
+  "real_build_rpc_deployment_native": true,
+  "observers_only_no_substituted_io": true,
+  "source_sdk": "28.0.0",
+  "measurement_schema": 4,
+  "wasm_sha256": "a677bd71ba1902b894bf7d178fa4d6ce310e0558afcfe44d97b5c611bef9291d",
+  "raw_rpc_verified": [
+    "ledger_read_entries",
+    "ledger_read_bytes",
+    "ledger_write_entries",
+    "ledger_write_bytes",
+    "events_count",
+    "event_data_bytes"
+  ],
+  "cpu_memory_direct_rpc_consumption_available": false,
+  "limits_source": "same-ledger captured config entries",
+  "cases": {
+    "read-missing-repeat": {
+      "cpu_instructions": 420956,
+      "memory_bytes": 1207550,
+      "ledger_read_entries": 4,
+      "ledger_read_bytes": 0,
+      "ledger_write_entries": 0,
+      "ledger_write_bytes": 0,
+      "historical_data_read_bytes": null,
+      "contract_data_hard_limit": null,
+      "tx_size_bytes": null,
+      "events_count": 0,
+      "event_data_bytes": 20
+    },
+    "noop-write": {
+      "cpu_instructions": 400277,
+      "memory_bytes": 1207158,
+      "ledger_read_entries": 3,
+      "ledger_read_bytes": 0,
+      "ledger_write_entries": 1,
+      "ledger_write_bytes": 80,
+      "historical_data_read_bytes": null,
+      "contract_data_hard_limit": null,
+      "tx_size_bytes": null,
+      "events_count": 0,
+      "event_data_bytes": 20
+    },
+    "delete": {
+      "cpu_instructions": 385991,
+      "memory_bytes": 1205909,
+      "ledger_read_entries": 3,
+      "ledger_read_bytes": 0,
+      "ledger_write_entries": 1,
+      "ledger_write_bytes": 0,
+      "historical_data_read_bytes": null,
+      "contract_data_hard_limit": null,
+      "tx_size_bytes": null,
+      "events_count": 0,
+      "event_data_bytes": 20
+    },
+    "event": {
+      "cpu_instructions": 375269,
+      "memory_bytes": 1205751,
+      "ledger_read_entries": 2,
+      "ledger_read_bytes": 0,
+      "ledger_write_entries": 0,
+      "ledger_write_bytes": 0,
+      "historical_data_read_bytes": null,
+      "contract_data_hard_limit": null,
+      "tx_size_bytes": null,
+      "events_count": 1,
+      "event_data_bytes": 96
+    },
+    "classic-read": {
+      "cpu_instructions": 454136,
+      "memory_bytes": 1215233,
+      "ledger_read_entries": 4,
+      "ledger_read_bytes": 144,
+      "ledger_write_entries": 0,
+      "ledger_write_bytes": 0,
+      "historical_data_read_bytes": null,
+      "contract_data_hard_limit": null,
+      "tx_size_bytes": null,
+      "events_count": 0,
+      "event_data_bytes": 20
+    },
+    "large-return": {
+      "cpu_instructions": 611669,
+      "memory_bytes": 1240926,
+      "ledger_read_entries": 2,
+      "ledger_read_bytes": 0,
+      "ledger_write_entries": 0,
+      "ledger_write_bytes": 0,
+      "historical_data_read_bytes": null,
+      "contract_data_hard_limit": null,
+      "tx_size_bytes": null,
+      "events_count": 0,
+      "event_data_bytes": 652
+    }
+  },
+  "state_mutations_are_simulated_only": true,
+  "public_github_ci_proven": false
+}

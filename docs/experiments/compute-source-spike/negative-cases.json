@@ -1,0 +1,40 @@
+[
+  {
+    "name": "malformed output",
+    "result": "rejected by experiment transport validator"
+  },
+  {
+    "name": "missing measured output field",
+    "result": "rejected by experiment transport validator"
+  },
+  {
+    "name": "malformed input",
+    "status": 1,
+    "error": "key must be a string at line 1 column 2"
+  },
+  {
+    "name": "missing config",
+    "status": 1,
+    "error": "UNCAPTURED_KEY:AAAACAAAAAE=\nincomplete/invalid network configuration: HostError: Error(Storage, MissingValue)\nDebugInfo not available"
+  },
+  {
+    "name": "uncaptured contract state",
+    "status": 1,
+    "error": "UNCAPTURED_KEY:AAAABgAAAAFt8CEYVzSBrfVwzhXinFVBFIBZMG62Yh/GNjcCNogXOgAAABQAAAAB\nUNCAPTURED_KEY:AAAABgAAAAFt8CEYVzSBrfVwzhXinFVBFIBZMG62Yh/GNjcCNogXOgAAABQAAAAB\nhost invocation failed: HostError: Error(Storage, MissingValue)\nDebugInfo not available"
+  },
+  {
+    "name": "protocol mismatch",
+    "status": 1,
+    "error": "unsupported protocol 27: helper supports 28"
+  },
+  {
+    "name": "failed invocation",
+    "status": 1,
+    "error": "host invocation failed: HostError: Error(WasmVm, MissingValue)\n\nEvent log (newest first):\n   0: [Diagnostic Event] contract:CBW7AIIYK42IDLPVODHBLYU4KVARJACZGBXLMYQ7YY3DOARWRALTU456, topics:[error, Error(WasmVm, MissingValue)], data:[\"trying to invoke non-existent contract function\", missing]\n   1: [Diagnostic Event] topics:[fn_call, CBW7AIIYK42IDLPVODHBLYU4KVARJACZGBXLMYQ7YY3DOARWRALTU456, missing], data:world"
+  },
+  {
+    "name": "malformed seed",
+    "status": 1,
+    "error": "PRNG seed must be exactly 32 bytes"
+  }
+]

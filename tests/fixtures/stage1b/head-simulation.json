@@ -1,0 +1,118 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "id": 7,
+    "method": "simulateTransaction",
+    "params": {
+      "transaction": "AAAAAgAAAADk2salTPvgU7I5gqWo+kjLoD1oYGzeWLKXcXsN5tXHAwAPQkAAAAA0AAAABQAAAAEAAAAAAAAAAAAAAABqxqkYAAAAAAAAAAEAAAAAAAAAGAAAAAAAAAAB7qyvC4bSkIut1DcrD0fF41HprXAA6oLHXuLjjLcyl0IAAAAFaGVsbG8AAAAAAAABAAAADwAAAAV3b3JsZAAAAAAAAAAAAAAAAAAAAA=="
+    }
+  },
+  "raw": {
+    "jsonrpc": "2.0",
+    "id": 7,
+    "result": {
+      "transactionData": "AAAAAAAAAAIAAAAGAAAAAe6srwuG0pCLrdQ3Kw9HxeNR6a1wAOqCx17i44y3MpdCAAAAFAAAAAEAAAAHF/vqbxq7mLP4AJnas3te94NU3s+OI/N+Xv7MaWJ8gIIAAAABAAAABgAAAAHurK8LhtKQi63UNysPR8XjUemtcADqgsde4uOMtzKXQgAAAA8AAAAFYmVuY2gAAAAAAAABAAWODgAAAAAAAABYAAAAAAAAbzg=",
+      "events": [
+        "AAAAAQAAAAAAAAAAAAAAAgAAAAAAAAADAAAADwAAAAdmbl9jYWxsAAAAAA0AAAAg7qyvC4bSkIut1DcrD0fF41HprXAA6oLHXuLjjLcyl0IAAAAPAAAABWhlbGxvAAAAAAAADwAAAAV3b3JsZAAAAA==",
+        "AAAAAQAAAAAAAAAB7qyvC4bSkIut1DcrD0fF41HprXAA6oLHXuLjjLcyl0IAAAACAAAAAAAAAAIAAAAPAAAACWZuX3JldHVybgAAAAAAAA8AAAAFaGVsbG8AAAAAAAAQAAAAAQAAAAIAAAAPAAAABUhlbGxvAAAAAAAADwAAAAV3b3JsZAAAAA=="
+      ],
+      "minResourceFee": "28472",
+      "results": [
+        {
+          "auth": [],
+          "xdr": "AAAAEAAAAAEAAAACAAAADwAAAAVIZWxsbwAAAAAAAA8AAAAFd29ybGQAAAA="
+        }
+      ],
+      "stateChanges": [
+        {
+          "type": "created",
+          "key": "AAAABgAAAAHurK8LhtKQi63UNysPR8XjUemtcADqgsde4uOMtzKXQgAAAA8AAAAFYmVuY2gAAAAAAAAB",
+          "before": null,
+          "after": "AAAAAAAAAAYAAAAAAAAAAe6srwuG0pCLrdQ3Kw9HxeNR6a1wAOqCx17i44y3MpdCAAAADwAAAAViZW5jaAAAAAAAAAEAAAAPAAAABXdvcmxkAAAAAAAAAA=="
+        }
+      ],
+      "latestLedger": 1099
+    }
+  },
+  "parsed": {
+    "keys": [
+      "_parsed",
+      "id",
+      "latestLedger",
+      "events",
+      "transactionData",
+      "minResourceFee",
+      "result",
+      "stateChanges"
+    ],
+    "latestLedger": 1099,
+    "transactionData": "AAAAAAAAAAIAAAAGAAAAAe6srwuG0pCLrdQ3Kw9HxeNR6a1wAOqCx17i44y3MpdCAAAAFAAAAAEAAAAHF/vqbxq7mLP4AJnas3te94NU3s+OI/N+Xv7MaWJ8gIIAAAABAAAABgAAAAHurK8LhtKQi63UNysPR8XjUemtcADqgsde4uOMtzKXQgAAAA8AAAAFYmVuY2gAAAAAAAABAAWODgAAAAAAAABYAAAAAAAAbzg=",
+    "resources": {
+      "instruction_budget": 364046,
+      "disk_read_bytes": 0,
+      "write_bytes": 88,
+      "read_only_entries": 2,
+      "read_write_entries": 1
+    },
+    "events": [
+      {
+        "success": true,
+        "type": "diagnostic",
+        "topics": [
+          "fn_call",
+          {
+            "type": "Buffer",
+            "data": [
+              238,
+              172,
+              175,
+              11,
+              134,
+              210,
+              144,
+              139,
+              173,
+              212,
+              55,
+              43,
+              15,
+              71,
+              197,
+              227,
+              81,
+              233,
+              173,
+              112,
+              0,
+              234,
+              130,
+              199,
+              94,
+              226,
+              227,
+              140,
+              183,
+              50,
+              151,
+              66
+            ]
+          },
+          "hello"
+        ],
+        "data": "world"
+      },
+      {
+        "success": true,
+        "type": "diagnostic",
+        "topics": [
+          "fn_return",
+          "hello"
+        ],
+        "data": [
+          "Hello",
+          "world"
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "status": 1,
+  "stdout": "Base ref:   main\nRPC URL:    http://localhost:18000/rpc\nFixtures:   fixtures.json\nKey file:   /tmp/weighin-integrated-3Yr0he/action-invalid-policy/weighin-deployer.key\nChecking RPC health at http://localhost:18000/rpc ...\nRPC healthy — network: Standalone Network ; February 2017\n::error::[%0A  {%0A    \"code\": \"custom\",%0A    \"message\": \"Unsupported threshold rule\",%0A    \"path\": [%0A      \"thresholds\",%0A      \"functions\",%0A      \"hello\",%0A      \"cpu_instructions\"%0A    ]%0A  }%0A]\n",
+  "stderr": ""
+}

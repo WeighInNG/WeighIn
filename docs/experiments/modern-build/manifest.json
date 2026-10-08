@@ -1,0 +1,53 @@
+{
+  "date": "2026-10-07",
+  "repository_sha": "59db63a7b895dcc5ca763e3c668990fec40850fb",
+  "branch": "test/no-op-baseline",
+  "working_tree": "dirty; prior approved stages plus uncommitted Stage 2",
+  "source_sha256": {
+    "src/build.ts": "29e6c5bb0ef14fbe5d2621022fc2cc15a3626fc66095aae8dc5c1f69566690b9",
+    "src/action.ts": "27cd329325c7e5afa5d18b91b50b8ca1121767028399223e5fac0c191d6f4921",
+    "action.yml": "b68193380096c8c4f492e2a4a8ce3acb3600ddfc74594e9f6c75eeea666975bf",
+    "contract/Cargo.toml": "bd5c50e30a1cb6b87a287513204f8497b1747b21e58268449f0739a1455c33fa",
+    "contract/Cargo.lock": "af261b30de67d5f534ef58392be43f80d802200c26dc35da25e6f71278329912",
+    "rust-toolchain.toml": "dc3976c0370b970f99e4ad6d48364f9a5dc22c748c7a3187f12e1f15be99abd2",
+    "weighin-fixtures.json": "5651b7a8f78214765ff659ee33a2dc73e696b828f99e4b20a86dd726e48b811c",
+    ".github/workflows/ci.yml": "dd6f55b762a32be48f851ed39b5b780a337333d48453f313b096712d47b19b28",
+    ".github/workflows/weighin.yml": "06d293ff63448984ba808346d16eacf50201590796c8c881bffbf62228cdb026",
+    "bundled/index.js": "097a997981e9c91a5e32198c5f4eefd6f6d8b4744712bc4c4c4c28fcc9f6f249",
+    "tests/contract-build.test.cjs": "56099d23a6f9ff17402a6899435597104012c9095a6d0a2f2a8ef30efd7240d7",
+    "tests/experiments/verify-build-path.cjs": "185a6ead83db5445848182f0a25031c554bd7c348945f44af94bacfb4534f85b",
+    "native/simulation/target/x86_64-unknown-linux-gnu/release/weighin-simulation": "1e7ef88e974bd09d5b683a3e94c101dea1b9524304c7124699ae0e8d279d964c"
+  },
+  "node": "v22.23.2",
+  "npm": "10.9.8",
+  "protocol": 28,
+  "image": "stellar/quickstart@sha256:4c8bad1ef7341205b898f83d9489321da80c7bd74183100fc8e2a39a5938c7d5",
+  "stellar_release": {
+    "url": "https://github.com/stellar/stellar-cli/releases/download/v28.1.0/stellar-cli-28.1.0-x86_64-unknown-linux-gnu.tar.gz",
+    "official_archive_digest": "sha256:c1680deee94301d33ada7a17f98411e642a4248c727afbd2e43050d345746462",
+    "verified_archive_sha256": "c1680deee94301d33ada7a17f98411e642a4248c727afbd2e43050d345746462"
+  },
+  "scope": "Local temporary Git origin/history only; real checkout/build/RPC/native meters/Action; no stubs or GitHub comments. Shared Cargo cache; no clean-build five-run/public CI claim. Private keys excluded.",
+  "artifact_sha256": {
+    "contract-Cargo.lock": "af261b30de67d5f534ef58392be43f80d802200c26dc35da25e6f71278329912",
+    "contract-Cargo.toml": "bd5c50e30a1cb6b87a287513204f8497b1747b21e58268449f0739a1455c33fa",
+    "contract-src-lib.rs": "efba908eb2253ae66deaac98f69dd9b550a6e402e7d39d78ac76770cd04a1a48",
+    "control-diff.json": "5023964a6efd433bdb1110c32e78b0d4f257ecb3fade94100e9d7d1284e5566c",
+    "control-outputs.txt": "ca710ecb1bb8c8feb7a5bf38829169657b18cb9d50b44643a08ccf8152144fb4",
+    "control-process.json": "79b16d0bfbb49872b5f9109923dcd6abe1d92e37363aaa1a2f6080cfca760a5e",
+    "control-summary.md": "f93988c348c93bf0514fce8b9bb171c4b8a0d710b8c632ab929f08547b747e72",
+    "control.wasm": "718ba18378a2d94ec7bf0c75b3813c7d0bb5b65beb2fb4c445b3a4726ecd5668",
+    "head-contract.rs": "8f379b0e186d40fc6377005e0a2fe0bd59d31043f6a8fc1887ee4ddef27c4917",
+    "legacy-harness-verification.json": "bd3b9035eebbdaabd2c8ed8d43a9263941395d56937b09ead59e14fef8219754",
+    "quality-gates.json": "4bc5ae54f45a463ca730e503901af2ec42f6c370580231995ff7d91578af2330",
+    "reference-build.log": "efe61a05d59a430d0be5d2e1d362574f503ca80296bd12122bc81ac3a9e72b07",
+    "regression-diff.json": "6b3e9ecbf992aa606315ee81bdc27d1d9e2133621b29dac4e12b4a2852af0c18",
+    "regression-outputs.txt": "80d2cc87318ec623d782afef60fb2c720a91471cb2b424adf725af95b34d7705",
+    "regression-process.json": "716f9f3cc9bf588b6dab1063aac526650147f5b4fa66bbe5821ac8f7d3fad308",
+    "regression-summary.md": "542803978d146b9c8663e20d550e439bdd5ec07f175ca588795657ca15b5b1e0",
+    "regression.wasm": "5878fa37dfcec8eaebc72111dfdbfa92447cb735bd88d23dcaf0e8edf9f7f3e8",
+    "rust-toolchain.toml": "dc3976c0370b970f99e4ad6d48364f9a5dc22c748c7a3187f12e1f15be99abd2",
+    "verification.json": "7c4c2dd57f3fde5b4f8756945c802ff993a725e38e0b4d177ccecfce307110a7",
+    "weighin-fixtures.json": "5651b7a8f78214765ff659ee33a2dc73e696b828f99e4b20a86dd726e48b811c"
+  }
+}

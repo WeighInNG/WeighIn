@@ -1,0 +1,11 @@
+{
+  "historical_wasm_sha256": "2a8c407a19d5a98d2371237783ab095c5b82ffee81633c9b7714aaad06701fd0",
+  "historical_wasm_extracted_from": "bridge/native.json: historical ContractCode LedgerEntryData",
+  "historical_hash_matches_build_log": true,
+  "modern_control_sha256": "718ba18378a2d94ec7bf0c75b3813c7d0bb5b65beb2fb4c445b3a4726ecd5668",
+  "regression_sha256": "5878fa37dfcec8eaebc72111dfdbfa92447cb735bd88d23dcaf0e8edf9f7f3e8",
+  "bridge_cargo_target_commands": 2,
+  "validated_bundle_sha256": "9e6ce6cab969424a4aac7596318bf9384ba65673552fdd89e488e4f9d8650f19",
+  "helper_sha256": "1e7ef88e974bd09d5b683a3e94c101dea1b9524304c7124699ae0e8d279d964c",
+  "analysis_note": "Native inputs encode LedgerEntryData; an initial LedgerEntry decode failed and produced no artifact analysis."
+}

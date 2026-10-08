@@ -1,0 +1,24 @@
+{
+  "contract_events_xdr": [],
+  "cpu_instructions_consumed": 314046,
+  "cpu_limit": 400000000,
+  "disk_read_bytes": 0,
+  "instruction_budget": 5314046,
+  "memory_bytes_consumed": 1193705,
+  "memory_limit": 41943040,
+  "modified_entries": 1,
+  "protocol": 28,
+  "read_only_keys": [
+    "AAAABgAAAAHurK8LhtKQi63UNysPR8XjUemtcADqgsde4uOMtzKXQgAAABQAAAAB",
+    "AAAABxf76m8au5iz+ACZ2rN7XveDVN7PjiPzfl7+zGlifICC"
+  ],
+  "read_write_keys": [
+    "AAAABgAAAAHurK8LhtKQi63UNysPR8XjUemtcADqgsde4uOMtzKXQgAAAA8AAAAFYmVuY2gAAAAAAAAB"
+  ],
+  "retval_xdr": "AAAAEAAAAAEAAAACAAAADwAAAAVIZWxsbwAAAAAAAA8AAAAFd29ybGQAAAA=",
+  "schema_version": 1,
+  "source": "soroban-simulation",
+  "source_version": "28.0.1",
+  "transaction_data_xdr": "AAAAAAAAAAIAAAAGAAAAAe6srwuG0pCLrdQ3Kw9HxeNR6a1wAOqCx17i44y3MpdCAAAAFAAAAAEAAAAHF/vqbxq7mLP4AJnas3te94NU3s+OI/N+Xv7MaWJ8gIIAAAABAAAABgAAAAHurK8LhtKQi63UNysPR8XjUemtcADqgsde4uOMtzKXQgAAAA8AAAAFYmVuY2gAAAAAAAABAFEV/gAAAAAAAABYAAAAAAAAfME=",
+  "write_bytes": 88
+}

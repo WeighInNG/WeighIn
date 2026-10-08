@@ -1,0 +1,14 @@
+[
+  {
+    "contract_id": "CC6GHNGK2TR2VL6NT6LHAAW452DYSMISPUMNLAWJETQVVFKUU2RYLWFG",
+    "function_name": "hello",
+    "metric": "cpu_instructions",
+    "delta": 43827,
+    "pct": 16.219066756963795,
+    "rule": "strict_zero_tolerance",
+    "message": "cpu_instructions increased by 43827 (strict zero tolerance)",
+    "fixture_id": "id:integration-suite",
+    "logical_id": "id:greeting",
+    "case_id": "id:world"
+  }
+]

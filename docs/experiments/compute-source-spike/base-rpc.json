@@ -1,0 +1,29 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "simulateTransaction",
+    "params": {
+      "transaction": "AAAAAgAAAADk2salTPvgU7I5gqWo+kjLoD1oYGzeWLKXcXsN5tXHAwAPQkAAAABrAAAAAwAAAAEAAAAAAAAAAAAAAABqxq3cAAAAAAAAAAEAAAAAAAAAGAAAAAAAAAABbfAhGFc0ga31cM4V4pxVQRSAWTButmIfxjY3AjaIFzoAAAAFaGVsbG8AAAAAAAABAAAADwAAAAV3b3JsZAAAAAAAAAAAAAAAAAAAAA=="
+    }
+  },
+  "raw": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+      "transactionData": "AAAAAAAAAAIAAAAGAAAAAW3wIRhXNIGt9XDOFeKcVUEUgFkwbrZiH8Y2NwI2iBc6AAAAFAAAAAEAAAAHlJpyA2V/bjfYFx+s70J5evf1PRFY8HCn0E/LkUeTKbIAAAAAAATi2wAAAAAAAAAAAAAAAAAAMio=",
+      "events": [
+        "AAAAAQAAAAAAAAAAAAAAAgAAAAAAAAADAAAADwAAAAdmbl9jYWxsAAAAAA0AAAAgbfAhGFc0ga31cM4V4pxVQRSAWTButmIfxjY3AjaIFzoAAAAPAAAABWhlbGxvAAAAAAAADwAAAAV3b3JsZAAAAA==",
+        "AAAAAQAAAAAAAAABbfAhGFc0ga31cM4V4pxVQRSAWTButmIfxjY3AjaIFzoAAAACAAAAAAAAAAIAAAAPAAAACWZuX3JldHVybgAAAAAAAA8AAAAFaGVsbG8AAAAAAAAQAAAAAQAAAAIAAAAPAAAABUhlbGxvAAAAAAAADwAAAAV3b3JsZAAAAA=="
+      ],
+      "minResourceFee": "12842",
+      "results": [
+        {
+          "auth": [],
+          "xdr": "AAAAEAAAAAEAAAACAAAADwAAAAVIZWxsbwAAAAAAAA8AAAAFd29ybGQAAAA="
+        }
+      ],
+      "latestLedger": 229
+    }
+  }
+}

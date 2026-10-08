@@ -1,0 +1,50 @@
+{
+  "status": "BLOCKED",
+  "assertions": "PASS: live responses captured, unchanged IO/budget control, changed WASM/address, increased IO, leeway affects budget, explicit unsupported compute error",
+  "measured_cpu_memory_comparison": false,
+  "threshold_proof": false,
+  "runs": [
+    {
+      "label": "base",
+      "wasm_sha256": "949a7203657f6e37d8171facef42797af7f53d1158f070a7d04fcb91479329b2",
+      "contract_id": "CBW7AIIYK42IDLPVODHBLYU4KVARJACZGBXLMYQ7YY3DOARWRALTU456",
+      "error": "CPU and memory consumption unavailable for hello (simulation ledger 1099): the supported Stellar RPC/SDK simulateTransaction response does not expose metered compute consumption. transactionData instructions are a resource budget; ledger read/write bytes are not runtime memory. No benchmark result was produced.",
+      "resources": {
+        "instruction_budget": 320219,
+        "disk_read_bytes": 0,
+        "write_bytes": 0,
+        "read_only_entries": 2,
+        "read_write_entries": 0
+      },
+      "increased_leeway_instruction_budget": 5270219
+    },
+    {
+      "label": "control",
+      "wasm_sha256": "949a7203657f6e37d8171facef42797af7f53d1158f070a7d04fcb91479329b2",
+      "contract_id": "CBW7AIIYK42IDLPVODHBLYU4KVARJACZGBXLMYQ7YY3DOARWRALTU456",
+      "error": "CPU and memory consumption unavailable for hello (simulation ledger 1099): the supported Stellar RPC/SDK simulateTransaction response does not expose metered compute consumption. transactionData instructions are a resource budget; ledger read/write bytes are not runtime memory. No benchmark result was produced.",
+      "resources": {
+        "instruction_budget": 320219,
+        "disk_read_bytes": 0,
+        "write_bytes": 0,
+        "read_only_entries": 2,
+        "read_write_entries": 0
+      },
+      "increased_leeway_instruction_budget": 5270219
+    },
+    {
+      "label": "head",
+      "wasm_sha256": "17fbea6f1abb98b3f80099dab37b5ef78354decf8e23f37e5efecc69627c8082",
+      "contract_id": "CDXKZLYLQ3JJBC5N2Q3SWD2HYXRVD2NNOAAOVAWHL3ROHDFXGKLUF3RK",
+      "error": "CPU and memory consumption unavailable for hello (simulation ledger 1099): the supported Stellar RPC/SDK simulateTransaction response does not expose metered compute consumption. transactionData instructions are a resource budget; ledger read/write bytes are not runtime memory. No benchmark result was produced.",
+      "resources": {
+        "instruction_budget": 364046,
+        "disk_read_bytes": 0,
+        "write_bytes": 88,
+        "read_only_entries": 2,
+        "read_write_entries": 1
+      },
+      "increased_leeway_instruction_budget": 5314046
+    }
+  ]
+}

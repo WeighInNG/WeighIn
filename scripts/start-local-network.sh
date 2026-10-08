@@ -3,7 +3,7 @@
 set -euo pipefail
 
 CONTAINER_NAME="stellar-quickstart"
-IMAGE_TAG="latest"
+IMAGE="stellar/quickstart@sha256:4c8bad1ef7341205b898f83d9489321da80c7bd74183100fc8e2a39a5938c7d5"
 PORT=8000
 RPC_URL="http://localhost:${PORT}/rpc"
 MAX_RETRIES=60
@@ -20,11 +20,11 @@ if [ "$(docker ps -a -q -f name=^/${CONTAINER_NAME}$)" ]; then
     docker rm -f "${CONTAINER_NAME}" || true
 fi
 
-echo "Starting stellar/quickstart:${IMAGE_TAG} in local standalone mode..."
+echo "Starting ${IMAGE} in local standalone mode..."
 docker run --rm -d \
   --name "${CONTAINER_NAME}" \
   -p "${PORT}:8000" \
-  stellar/quickstart:${IMAGE_TAG} --local
+  ${IMAGE} --local
 
 echo "Waiting for Soroban RPC to become healthy at ${RPC_URL}..."
 for ((i=1; i<=MAX_RETRIES; i++)); do

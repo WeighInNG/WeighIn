@@ -1,0 +1,115 @@
+[
+  {
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "getHealth"
+    },
+    "raw": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "error": {
+        "code": -32603,
+        "message": "[-32603] data stores are not initialized: DB is empty"
+      }
+    }
+  },
+  {
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "getHealth"
+    },
+    "raw": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "error": {
+        "code": -32603,
+        "message": "[-32603] data stores are not initialized: DB is empty"
+      }
+    }
+  },
+  {
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "getHealth"
+    },
+    "raw": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "error": {
+        "code": -32603,
+        "message": "[-32603] data stores are not initialized: DB is empty"
+      }
+    }
+  },
+  {
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "getHealth"
+    },
+    "raw": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "error": {
+        "code": -32603,
+        "message": "[-32603] data stores are not initialized: DB is empty"
+      }
+    }
+  },
+  {
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "getHealth"
+    },
+    "raw": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "status": "healthy",
+        "latestLedger": 9,
+        "latestLedgerCloseTime": "1791434809",
+        "oldestLedger": 7,
+        "oldestLedgerCloseTime": "1791434807",
+        "ledgerRetentionWindow": 120960
+      }
+    }
+  },
+  {
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "getNetwork"
+    },
+    "raw": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "friendbotUrl": "http://localhost:8000/friendbot",
+        "passphrase": "Standalone Network ; February 2017",
+        "protocolVersion": 28
+      }
+    }
+  },
+  {
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "getVersionInfo"
+    },
+    "raw": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "version": "29.0.0",
+        "commitHash": "8a40169717723697e430c1e51c21ef0bf244ecda",
+        "buildTimestamp": "2026-10-06T01:24:26",
+        "captiveCoreVersion": "v29.0.0",
+        "protocolVersion": 28
+      }
+    }
+  }
+]

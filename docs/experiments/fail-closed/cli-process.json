@@ -1,0 +1,5 @@
+{
+  "status": 0,
+  "stdout": "Starting Weighin Benchmarking...\nFixtures: fixtures.json\nOutput:   /tmp/weighin-integrated-3Yr0he/cli-results.json\nRPC URL:  http://localhost:18000/rpc\nCommit:   unknown_commit\nSDK:      25.3.1\nFunding deployer account: GBADGBBXEEFEKBRP57HUWIFNRXVV3VLRUBB55HSKPGE6QPJ4MILUHNBQ via friendbot...\nWASM: /tmp/weighin-integrated-3Yr0he/head/contract/contract.wasm\nWASM SHA256: 17fbea6f1abb98b3f80099dab37b5ef78354decf8e23f37e5efecc69627c8082\nContract ID: CCUFAFJKUEGIU2Y7HWTSOAKCSJNBISZXHF5B3KC7PMUQQL65TA5BJIDL\nInstalling WASM...\nWASM installed. Deploying contract instance...\nDeployed at CCUFAFJKUEGIU2Y7HWTSOAKCSJNBISZXHF5B3KC7PMUQQL65TA5BJIDL\nSimulating hello...\nBuilding protocol-28 simulation helper (Rust 1.95.0, locked dependencies)...\nDone. Results written to /tmp/weighin-integrated-3Yr0he/cli-results.json\n",
+  "stderr": "fatal: not a git repository (or any parent up to mount point /)\nStopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set).\n"
+}

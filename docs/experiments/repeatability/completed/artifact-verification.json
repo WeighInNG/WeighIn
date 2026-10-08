@@ -1,0 +1,6 @@
+{
+  "private_seed_scan_pass": true,
+  "helper_binary_unchanged_after_validation": true,
+  "helper_sha256": "1e7ef88e974bd09d5b683a3e94c101dea1b9524304c7124699ae0e8d279d964c",
+  "producer_snapshots_match_current_files": true
+}

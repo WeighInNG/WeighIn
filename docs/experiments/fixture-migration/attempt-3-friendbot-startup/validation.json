@@ -1,0 +1,42 @@
+[
+  {
+    "command": "npm ci",
+    "exit_code": 0,
+    "log": "validation-npm-ci.log"
+  },
+  {
+    "command": "npm test",
+    "exit_code": 0,
+    "log": "validation-npm-test.log"
+  },
+  {
+    "command": "npm run test:native",
+    "exit_code": 0,
+    "log": "validation-native-tests.log"
+  },
+  {
+    "command": "npm run build",
+    "exit_code": 0,
+    "log": "validation-build.log"
+  },
+  {
+    "command": "npm run bundle",
+    "exit_code": 0,
+    "log": "validation-bundle.log"
+  },
+  {
+    "command": "npm pack --dry-run --json",
+    "exit_code": 0,
+    "log": "validation-pack.log"
+  },
+  {
+    "command": "cargo +1.95.0 fmt --check --manifest-path native/simulation/Cargo.toml",
+    "exit_code": 0,
+    "log": "validation-rust-format.log"
+  },
+  {
+    "command": "git diff --check",
+    "exit_code": 0,
+    "log": "validation-diff-check.log"
+  }
+]

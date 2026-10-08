@@ -1,0 +1,2 @@
+[thresholds.functions.hello]
+ledger_write_bytes="strict_zero_tolerance"

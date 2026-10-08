@@ -1,0 +1,30 @@
+{
+  "attempts": {
+    "attempt-1-startup": {
+      "completed_runs": 0,
+      "failure": "The expression evaluated to a falsy value:\n\n  assert.ok((await fetch(`${endpoint.replace(/\\/rpc$/,'')}/friendbot?addr=${deployer.publicKey()}`)).ok)\n",
+      "definitive_five_run_series": false
+    },
+    "attempt-2-empty-rustflags": {
+      "completed_runs": 2,
+      "failure": null,
+      "definitive_five_run_series": false
+    },
+    "attempt-3-existing-sac": {
+      "completed_runs": 0,
+      "failure": "HostError: Error(Storage, ExistingValue)\n\nEvent log (newest first):\n   0: [Diagnostic Event] topics:[error, Error(Storage, ExistingValue)], data:[\"contract already exists\", Bytes(d8b2b14c60fecb65fb2aa81cbea79d0835cafc0e0d851f8611257c1e5b41e1c2)]\n",
+      "definitive_five_run_series": false
+    },
+    "attempt-4-captive-core": {
+      "completed_runs": 0,
+      "failure": "RPC getLedgerEntries failed: {\"code\":-32603,\"message\":\"could not query captive core: http request failed with non-200 status code (404)\"}",
+      "definitive_five_run_series": false
+    },
+    "completed": {
+      "completed_runs": 5,
+      "failure": null,
+      "definitive_five_run_series": true
+    }
+  },
+  "root_files_are_duplicates_of_first_attempt": true
+}

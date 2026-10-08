@@ -1,0 +1,9 @@
+{
+  "files_scanned": 515,
+  "roots": [
+    "docs",
+    "tests"
+  ],
+  "valid_stellar_private_seeds_found": 0,
+  "scope": "Valid StrKey private seeds; not a general secret audit"
+}
