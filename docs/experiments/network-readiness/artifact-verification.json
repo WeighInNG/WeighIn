@@ -1,0 +1,13 @@
+{
+  "current_bundle_matches_live": true,
+  "bundle_sha256": "0f4221e6b870a17dcdea185ebada958583d4d04eba7e33e52239534897d0539f",
+  "current_helper_matches_live": true,
+  "helper_sha256": "1e7ef88e974bd09d5b683a3e94c101dea1b9524304c7124699ae0e8d279d964c",
+  "private_seed_scan_files": 174,
+  "valid_stellar_private_seeds_found": 0,
+  "seed_scan_scope": "network-readiness evidence; not a general secret audit",
+  "node": "v22.23.2",
+  "producer_git_sha": "c5a38fd9ea879b50739219079871b9efed8d1486",
+  "producer_working_source_uncommitted_during_capture": true,
+  "stellar_cli_binary_sha256": "fd19fdafe58f8004d296a1829362e2c780a25303da04f73f4efd3dcb22e1209f"
+}

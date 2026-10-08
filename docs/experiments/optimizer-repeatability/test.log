@@ -1,0 +1,1575 @@
+
+> weighin@1.0.0 test
+> npm run build && node --test tests/*.test.cjs && npm run test:vitest
+
+
+> weighin@1.0.0 build
+> tsc
+
+✔ absolute limits report values above the cap and pass at the cap (18.193476ms)
+✔ an absolute limit fails closed when its metric is unavailable (3.082368ms)
+✔ per-function absolute limits require a matched function (7.258327ms)
+Deployer account confirmed in RPC: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 502 
+✔ existing account is confirmed without calling Friendbot (196.332886ms)
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Deployer account confirmed in RPC: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+✔ temporary Friendbot 502 recovers with the same address and confirmed inclusion (100.450181ms)
+Deployer account confirmed in RPC: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 503 
+✔ accepted funding is not repeated while RPC inclusion is delayed (65.312498ms)
+Account readiness retry: HTTP 429 
+Account readiness retry: HTTP 429 
+Account readiness retry: HTTP 429 
+Account readiness retry: HTTP 429 
+Account readiness retry: HTTP 429 
+Account readiness retry: HTTP 429 
+Deployer account confirmed in RPC: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+✔ ambiguous temporary funding response checks account before attempting another funding (13.092237ms)
+Account readiness retry: HTTP 429 
+Account readiness retry: HTTP 429 
+Account readiness retry: HTTP 429 
+Account readiness retry: HTTP 429 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 429 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 429 
+Account readiness retry: HTTP 429 
+Account readiness retry: HTTP 429 
+Account readiness retry: HTTP 429 
+Account readiness retry: HTTP 429 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 429 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 429 
+Account readiness retry: HTTP 429 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 429 
+Account readiness retry: HTTP 429 
+Account readiness retry: HTTP 429 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 429 
+Account readiness retry: HTTP 429 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 429 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 429 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 429 
+Account readiness retry: HTTP 429 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 429 
+Account readiness retry: HTTP 429 
+Account readiness retry: HTTP 429 
+Account readiness retry: HTTP 429 
+Account readiness retry: HTTP 429 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 429 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 429 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 429 
+Account readiness retry: HTTP 429 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 429 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 429 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 429 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 429 
+Account readiness retry: HTTP 429 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 429 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 429 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 429 
+Account readiness retry: HTTP 429 
+Account readiness retry: HTTP 429 
+Account readiness retry: HTTP 429 
+Account readiness retry: HTTP 429 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 429 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 429 
+Account readiness retry: HTTP 429 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 429 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 429 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 429 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 429 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 429 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 429 
+Account readiness retry: HTTP 429 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 429 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 500 
+✔ persistent HTTP 429 exhausts the deadline and never succeeds (151.840924ms)
+Account readiness retry: HTTP 500 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 500 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 500 
+Account readiness retry: HTTP 500 
+Account readiness retry: HTTP 500 
+Account readiness retry: HTTP 500 
+Account readiness retry: HTTP 500 
+Account readiness retry: HTTP 500 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 500 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 500 
+Account readiness retry: HTTP 500 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 500 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 500 
+Account readiness retry: HTTP 500 
+Account readiness retry: HTTP 500 
+Account readiness retry: HTTP 500 
+Account readiness retry: HTTP 500 
+Account readiness retry: HTTP 500 
+Account readiness retry: HTTP 500 
+Account readiness retry: HTTP 500 
+Account readiness retry: HTTP 500 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 500 
+Account readiness retry: HTTP 500 
+Account readiness retry: HTTP 500 
+Account readiness retry: HTTP 500 
+Account readiness retry: HTTP 500 
+Account readiness retry: HTTP 500 
+Account readiness retry: HTTP 500 
+Account readiness retry: HTTP 500 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 500 
+Account readiness retry: HTTP 500 
+Account readiness retry: HTTP 500 
+Account readiness retry: HTTP 500 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 500 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 500 
+Account readiness retry: HTTP 500 
+Account readiness retry: HTTP 500 
+Account readiness retry: HTTP 500 
+Account readiness retry: HTTP 500 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 500 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 500 
+Account readiness retry: HTTP 500 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 500 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 500 
+Account readiness retry: HTTP 500 
+Account readiness retry: HTTP 500 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 500 
+Account readiness retry: HTTP 500 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 500 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 500 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 500 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 500 
+Account readiness retry: HTTP 500 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 500 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 500 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 500 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 500 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 500 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 500 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 502 
+✔ persistent HTTP 500 exhausts the deadline and never succeeds (131.514181ms)
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 502 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 502 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 502 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 502 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 502 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 502 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 502 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 502 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 502 
+Account readiness retry: HTTP 502 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 502 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 502 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 502 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 502 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 502 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 502 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 502 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 502 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 502 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 502 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 502 
+Account readiness retry: HTTP 502 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 502 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 502 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 502 
+Account readiness retry: HTTP 502 
+Account readiness retry: HTTP 502 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 502 
+Account readiness retry: HTTP 502 
+Account readiness retry: HTTP 502 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 502 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 502 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 502 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 502 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 502 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 502 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 502 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 502 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 502 
+Account readiness retry: HTTP 502 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 502 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 502 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 502 
+Account readiness retry: HTTP 502 
+Account readiness retry: HTTP 502 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 502 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 502 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 502 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 502 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 502 
+Account readiness retry: HTTP 502 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 502 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 502 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 502 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 502 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 502 
+Account readiness retry: HTTP 502 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 502 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 502 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 503 
+✔ persistent HTTP 502 exhausts the deadline and never succeeds (161.959936ms)
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 503 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 503 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 503 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 503 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 503 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 503 
+Account readiness retry: HTTP 503 
+Account readiness retry: HTTP 503 
+Account readiness retry: HTTP 503 
+Account readiness retry: HTTP 503 
+Account readiness retry: HTTP 503 
+Account readiness retry: HTTP 503 
+Account readiness retry: HTTP 503 
+Account readiness retry: HTTP 503 
+Account readiness retry: HTTP 503 
+Account readiness retry: HTTP 503 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 503 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 503 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 503 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 503 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 503 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 503 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 503 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 503 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 503 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 503 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 503 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 503 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 503 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 503 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 503 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 503 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 503 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 503 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 503 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 503 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 503 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 503 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 503 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 503 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 503 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 503 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 503 
+Account readiness retry: HTTP 503 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 503 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 503 
+Account readiness retry: HTTP 503 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 503 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 503 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 503 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 503 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 503 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 503 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 503 
+Account readiness retry: HTTP 503 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 503 
+Account readiness retry: HTTP 503 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 503 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 503 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 504 
+✔ persistent HTTP 503 exhausts the deadline and never succeeds (181.923359ms)
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 504 
+Account readiness retry: HTTP 504 
+Account readiness retry: HTTP 504 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 504 
+Account readiness retry: HTTP 504 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 504 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 504 
+Account readiness retry: HTTP 504 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 504 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 504 
+Account readiness retry: HTTP 504 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 504 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 504 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 504 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 504 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 504 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 504 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 504 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 504 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 504 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 504 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 504 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 504 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 504 
+Account readiness retry: HTTP 504 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 504 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 504 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 504 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 504 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 504 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 504 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 504 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 504 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 504 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 504 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 504 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 504 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 504 
+Account readiness retry: HTTP 504 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 504 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 504 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 504 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 504 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 504 
+Account readiness retry: HTTP 504 
+Account readiness retry: HTTP 504 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 504 
+Account readiness retry: HTTP 504 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 504 
+Account readiness retry: HTTP 504 
+Account readiness retry: HTTP 504 
+Account readiness retry: HTTP 504 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 504 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 504 
+Account readiness retry: HTTP 504 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 504 
+Account readiness retry: HTTP 504 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 504 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: HTTP 504 
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+✔ persistent HTTP 504 exhausts the deadline and never succeeds (129.472391ms)
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+Account readiness retry: transport failure: timed out
+✔ successful funding without RPC inclusion exhausts the deadline (50.114965ms)
+✔ permanent funding HTTP 400 fails immediately (6.915503ms)
+✔ permanent funding HTTP 401 fails immediately (5.417178ms)
+✔ permanent funding HTTP 403 fails immediately (6.392829ms)
+✔ permanent funding HTTP 404 fails immediately (4.46722ms)
+Deployer account confirmed in RPC: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Account readiness retry: transport failure: fetch failed
+Funding deployer account: GAVIBEBOANBJOTJVJ6HMXYFZTRZ7LNTWXGIQ4SNPBMGJZ5ED7OPIN6KV via friendbot...
+✔ transport timeout can recover; persistent transport failure exhausts the deadline (84.755262ms)
+✔ RPC error is not interpreted as account absence and does not trigger funding (2.371762ms)
+✔ malformed or unrelated account rows are rejected before measurement (4.73872ms)
+✔ permanent HTTP error with a stalled body fails from headers without retrying (7.32766ms)
+✔ identical logical contract, fixture, function, and case pair successfully (33.33296ms)
+✔ changed WASM hash and runtime address still pair as the configured benchmark (3.815552ms)
+✔ different logical contracts do not pair, even at the same runtime address (3.637055ms)
+✔ different functions do not pair within the same logical contract (3.818145ms)
+✔ multiple cases of one function compare independently even when reordered (6.166452ms)
+✔ removed case is reported even if its function still has other cases (3.654163ms)
+✔ new case is reported even if its function already exists (2.636622ms)
+✔ matched benchmark with higher CPU produces regression delta and percentage (2.09557ms)
+✔ matched benchmark with lower CPU produces improvement delta and percentage (3.746497ms)
+✔ multiple contracts remain independent even with the same WASM and address (4.077174ms)
+✔ identical contract/case names in different fixture files do not pair (3.913003ms)
+✔ existing fixture format derives stable identities from the full path and arguments (3.846379ms)
+✔ same WASM basename in different directories does not match (1.778413ms)
+✔ explicit fixture and contract IDs preserve comparison across path changes (2.220066ms)
+✔ unconfigured cases use arguments, not invocation position (3.497792ms)
+✔ argument object key order and type capitalization do not alter default case identity (1.808361ms)
+✔ duplicate logical contracts or cases are rejected instead of overwritten (12.330079ms)
+✔ blank explicit IDs and absolute fallback WASM paths are rejected (4.321849ms)
+✔ legacy measurements pair by runtime address only, and never guess a mixed-schema match (3.305845ms)
+✔ partial version 2 identities fail rather than falling back to runtime address (3.12103ms)
+✔ strict threshold sees a changed-WASM regression and identifies its logical case (4.781181ms)
+✔ reports show logical identity, both runtime addresses, independent cases, and additions/removals (126.137206ms)
+✖ modern optimized build replaces stale configured WASM with fresh selected-package output (10.439025ms)
+✖ multiple workspace contracts select independent packages; repeated package aliases build once (1.376674ms)
+✖ temporary migration alias receives the same fresh WASM from one modern build (1.272112ms)
+✖ ambiguous Cargo packages are rejected before building (1.890765ms)
+✖ unknown artifact basename is rejected before building any package (1.891097ms)
+✖ build fails explicitly for missing CLI (1.537438ms)
+✖ build fails explicitly for obsolete Rust (1.615288ms)
+✖ build fails explicitly for obsolete CLI (1.733761ms)
+✖ build fails explicitly for failed build (3.562893ms)
+✖ build fails explicitly for missing output despite stale destination (3.387746ms)
+✖ build fails explicitly for invalid WASM output (2.231485ms)
+✖ build fails explicitly for optimization skipped (1.78321ms)
+✖ every declared contract must have a manifest, even when another one is valid (1.77693ms)
+✔ configuration rejects unsupported rules and typos even without regressions (39.38735ms)
+✔ valid percentage policies handle exact caps and scientific numeric notation (13.259158ms)
+✔ policy referring to an unpaired function cannot silently pass (4.681312ms)
+✔ empty fixture suites and contracts are rejected; zero argument invocations remain valid (5.687093ms)
+✖ Action exits 1 and reports failure for funding-exhausted (6.134743ms)
+✖ Action exits 1 and reports failure for rpc-unhealthy (1.416753ms)
+✖ Action exits 1 and reports failure for checkout (2.287945ms)
+✖ Action exits 1 and reports failure for worktree (1.868335ms)
+✖ Action exits 1 and reports failure for build (3.576344ms)
+✖ Action exits 1 and reports failure for measurement (3.695701ms)
+✖ Action exits 1 and reports failure for missing-fixtures (3.368967ms)
+✖ Action exits 1 and reports failure for schema (1.808368ms)
+✖ Action exits 1 and reports failure for provenance (2.658715ms)
+✖ Action exits 1 and reports failure for empty (1.622107ms)
+✖ Action exits 1 and reports failure for unmatched (1.426837ms)
+✖ Action exits 1 and reports failure for head-measurement (1.421502ms)
+✖ Action exits 1 and reports failure for head-fixtures (1.394204ms)
+✖ Action exits 1 and reports failure for malformed-fixtures (4.555069ms)
+✖ Action exits 1 and reports failure for empty-fixtures (1.654275ms)
+✖ Action fails malformed policy: not valid toml =  (1.661083ms)
+✖ Action fails malformed policy: [thresholds.functions.hello]
+cpu_instructions="typo" (1.891182ms)
+✖ Action fails malformed policy: [thresholds.global]
+fail_on_any_regression="false" (1.581714ms)
+✖ Action unchanged control and optional absent policy still pass; regression fails (2.455555ms)
+✔ direct historical path to stable ID has no match and must not guess by filename (29.342288ms)
+✔ first migration retains the exact historical contract/function/case and adds a distinct stable identity (14.35009ms)
+✔ strict policy still evaluates the matched historical benchmark during migration (13.497036ms)
+✔ second migration can remove the bridge only when BASE already contains the stable ID (7.19863ms)
+✔ a changed WASM/address regression remains comparable after bridge retirement (10.237221ms)
+✔ bridge reports show the matched historical benchmark and the new stable identity explicitly (146.547153ms)
+✔ unrelated contracts at the same basename do not gain a migration match (5.270871ms)
+✔ saved live control evidence satisfies the scenario contract (201.547861ms)
+✔ saved live regression evidence satisfies the scenario contract (4.086401ms)
+✔ saved live threshold evidence satisfies the scenario contract (7.273002ms)
+✔ an infrastructure exit 1 with no comparison cannot prove policy failure (10.165779ms)
+✔ wrong exit code or output result cannot prove threshold failure (13.263209ms)
+✔ unmatched, renamed or missing configured benchmarks cannot be silently accepted (26.869718ms)
+✔ unchanged WASM or runtime identity cannot prove a changed-WASM regression (9.139313ms)
+✔ a control resource change or unavailable CPU is rejected (21.989956ms)
+✔ a threshold report must actually describe the CPU policy violation (3.975925ms)
+✔ schema 3 pairs changed WASM/address and compares genuine measured CPU while retaining unavailable metrics (33.913213ms)
+✔ unchanged measured CPU passes its policy despite unrelated unavailable metrics (8.011128ms)
+✔ unavailable consumption is not confused with measured zero or improvement (4.478232ms)
+✔ per-function, global caps and all-metric policies require availability; ignore explicitly opts out (8.209469ms)
+✔ zero measured consumption is comparable and available (2.121589ms)
+✔ negative/nonfinite/missing consumption and false unavailable zero records are rejected (5.965507ms)
+✔ reports retain human identity, measured values, unavailable reasons and snapshot provenance (117.296403ms)
+✔ different protocol/config/helper/network/auth/seed provenance refuses comparison (7.879589ms)
+✔ schema 3 requires provenance and never silently compares legacy source semantics (3.967853ms)
+✔ fee-only configuration/metadata changes remain visible without invalidating unchanged compute calibration (5.058553ms)
+✔ all six real cases map the native output and immutable captured caps to production metrics (126.440635ms)
+✔ promoted consumption agrees directly with parity-accepted raw RPC fields and event XDR (45.251701ms)
+✔ repeated reads and queried absence count distinct footprint keys; live Soroban disk bytes are measured zero (2.300218ms)
+✔ no-op write charges a postimage; deletion retains RW footprint but has zero postimage bytes (1.172899ms)
+✔ diagnostic events are excluded and return bytes contribute with no emitted contract event (2.615249ms)
+✔ schema 4 control compares all eight measured fields and explicitly retains three unavailable metrics (22.510043ms)
+✔ measured event count without independent network cap can fail a configured regression policy (14.020924ms)
+✔ resource cap/source/availability changes refuse schema 4 comparison (18.895934ms)
+✔ missing cap provenance/resource hash and schema 3 migration fail explicitly, including unmatched records (15.141891ms)
+✔ schema 4 report distinguishes footprint, disk bytes, events plus return, no cap and unavailable metrics (127.95248ms)
+✔ startup fails closed for unhealthy RPC (1303.93435ms)
+✔ startup fails closed for metadata-only RPC (843.766785ms)
+✔ healthy RPC with persistent Friendbot failure does not report network readiness (807.47446ms)
+✔ startup reports readiness only after healthy RPC and account inclusion (636.424417ms)
+✔ package main loads the existing measurement API (927.459811ms)
+✔ declared CLI entry runs and fails clearly without producing results for missing fixtures (931.683657ms)
+✔ five unchanged measured samples produce stable min/max/range and keep unsupported values null (87.545561ms)
+✔ a CPU increase is preserved as variance and a regression, rather than averaged away (65.765738ms)
+✔ a decrease still marks repeatability variation even when no metric regresses (46.355502ms)
+✔ different WASM with stable consumption is separately identified as artifact variation (26.887176ms)
+✔ four samples, duplicate run numbers, changed source and nonempty target cannot prove five clean runs (35.499384ms)
+✔ measurement/build hash disagreement and changed benchmark cases fail instead of disappearing from the series (28.896986ms)
+✔ different compute calibration fails and full-config metadata drift is recorded independently of metric stability (73.205683ms)
+✔ saved live evidence contains five separate empty-target builds of the exact saved source (144.399882ms)
+✔ all 35 saved measurements link to real native inputs and matching raw RPC simulation values (169.51997ms)
+✔ versioned transport accepts captured metered values and separate budget (43.053474ms)
+✔ transport rejects missing/negative/nonfinite/string meters and unknown schema/version (20.255674ms)
+✔ transport rejects malformed JSON and resource fields inconsistent with XDR (8.686409ms)
+✔ helper exit failures do not produce successful or zero benchmark values (4.939911ms)
+✔ helper diagnostic events cannot be accepted as charged contract events (22.891595ms)
+✔ missing helper is an explicit provisioning failure (2.441301ms)
+✔ the live unchanged control has identical transaction resource fields (7.519708ms)
+✔ the same live invocation has a different instruction budget when leeway changes (12.417342ms)
+✔ base: captured successful RPC response survives SDK parsing without compute consumption (3.26497ms)
+✔ head: captured successful RPC response survives SDK parsing without compute consumption (4.486554ms)
+✔ captured raw and SDK parsed IO resource values agree exactly (2.931433ms)
+✖ base: missing native helper fails explicitly and produces no benchmark (202.801686ms)
+✖ head: missing native helper fails explicitly and produces no benchmark (11.950586ms)
+✖ a larger transaction instruction budget cannot masquerade as measured CPU (7.842631ms)
+✖ legacy cost values are not trusted as an unverified consumption source (7.037361ms)
+✖ simulation errors retain their original failure reason (5.94651ms)
+✖ a response without transaction data fails before attempting metric extraction (7.351702ms)
+✔ observed ledger-read failure recovers by re-simulating and returning only the new snapshot (81.620573ms)
+✔ three transient read failures recover on the fourth complete capture with bounded delays (54.267914ms)
+✔ persistent observed errors exhaust retries and return no successful or zero-valued measurement (37.416405ms)
+✔ a failure after a successful first batch discards its rows before the next full capture (452.917557ms)
+✔ unrelated RPC codes/messages and HTTP 404 fail immediately without recovery (7.450427ms)
+✔ the same error from simulation or ledger-header RPC is not treated as a snapshot-read failure (6.908081ms)
+✔ malformed ledger rows, header disagreement and native parity disagreement still fail closed (17.548371ms)
+✔ ledger drift still recaptures, and transient failures do not bypass the fresh-ledger guard (14.006955ms)
+✔ transient errors cannot extend the existing 30-capture budget (40.275542ms)
+✔ recovery does not permit a subsequent native/RPC parity disagreement (15.826366ms)
+ℹ tests 157
+ℹ suites 0
+ℹ pass 119
+ℹ fail 38
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4634.374936
+
+✖ failing tests:
+
+test at tests/contract-build.test.cjs:50:1
+✖ modern optimized build replaces stale configured WASM with fresh selected-package output (10.439025ms)
+  Error: Unknown system error -122: Unknown system error -122, write
+      at Object.writeFileSync (node:fs:2412:20)
+      at /home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/contract-build.test.cjs:17:51
+      at Array.map (<anonymous>)
+      at scenario (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/contract-build.test.cjs:15:26)
+      at TestContext.<anonymous> (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/contract-build.test.cjs:50:110)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.start (node:internal/test_runner/test:1000:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:358:17) {
+    errno: -122,
+    code: 'Unknown system error -122',
+    syscall: 'write'
+  }
+
+test at tests/contract-build.test.cjs:59:1
+✖ multiple workspace contracts select independent packages; repeated package aliases build once (1.376674ms)
+  Error: Unknown system error -122: Unknown system error -122, write
+      at Object.writeFileSync (node:fs:2412:20)
+      at /home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/contract-build.test.cjs:17:51
+      at Array.map (<anonymous>)
+      at scenario (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/contract-build.test.cjs:15:26)
+      at TestContext.<anonymous> (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/contract-build.test.cjs:59:115)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12) {
+    errno: -122,
+    code: 'Unknown system error -122',
+    syscall: 'write'
+  }
+
+test at tests/contract-build.test.cjs:64:1
+✖ temporary migration alias receives the same fresh WASM from one modern build (1.272112ms)
+  Error: Unknown system error -122: Unknown system error -122, write
+      at Object.writeFileSync (node:fs:2412:20)
+      at /home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/contract-build.test.cjs:17:51
+      at Array.map (<anonymous>)
+      at scenario (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/contract-build.test.cjs:15:26)
+      at TestContext.<anonymous> (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/contract-build.test.cjs:64:98)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12) {
+    errno: -122,
+    code: 'Unknown system error -122',
+    syscall: 'write'
+  }
+
+test at tests/contract-build.test.cjs:75:1
+✖ ambiguous Cargo packages are rejected before building (1.890765ms)
+  Error: Unknown system error -122: Unknown system error -122, write
+      at Object.writeFileSync (node:fs:2412:20)
+      at /home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/contract-build.test.cjs:17:51
+      at Array.map (<anonymous>)
+      at scenario (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/contract-build.test.cjs:15:26)
+      at TestContext.<anonymous> (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/contract-build.test.cjs:75:75)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12) {
+    errno: -122,
+    code: 'Unknown system error -122',
+    syscall: 'write'
+  }
+
+test at tests/contract-build.test.cjs:79:1
+✖ unknown artifact basename is rejected before building any package (1.891097ms)
+  Error: Unknown system error -122: Unknown system error -122, write
+      at Object.writeFileSync (node:fs:2412:20)
+      at /home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/contract-build.test.cjs:17:51
+      at Array.map (<anonymous>)
+      at scenario (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/contract-build.test.cjs:15:26)
+      at TestContext.<anonymous> (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/contract-build.test.cjs:79:87)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12) {
+    errno: -122,
+    code: 'Unknown system error -122',
+    syscall: 'write'
+  }
+
+test at tests/contract-build.test.cjs:90:4
+✖ build fails explicitly for missing CLI (1.537438ms)
+  Error: Unknown system error -122: Unknown system error -122, write
+      at Object.writeFileSync (node:fs:2412:20)
+      at /home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/contract-build.test.cjs:17:51
+      at Array.map (<anonymous>)
+      at scenario (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/contract-build.test.cjs:15:26)
+      at TestContext.<anonymous> (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/contract-build.test.cjs:90:60)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12) {
+    errno: -122,
+    code: 'Unknown system error -122',
+    syscall: 'write'
+  }
+
+test at tests/contract-build.test.cjs:90:4
+✖ build fails explicitly for obsolete Rust (1.615288ms)
+  Error: Unknown system error -122: Unknown system error -122, write
+      at Object.writeFileSync (node:fs:2412:20)
+      at /home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/contract-build.test.cjs:17:51
+      at Array.map (<anonymous>)
+      at scenario (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/contract-build.test.cjs:15:26)
+      at TestContext.<anonymous> (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/contract-build.test.cjs:90:60)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12) {
+    errno: -122,
+    code: 'Unknown system error -122',
+    syscall: 'write'
+  }
+
+test at tests/contract-build.test.cjs:90:4
+✖ build fails explicitly for obsolete CLI (1.733761ms)
+  Error: Unknown system error -122: Unknown system error -122, write
+      at Object.writeFileSync (node:fs:2412:20)
+      at /home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/contract-build.test.cjs:17:51
+      at Array.map (<anonymous>)
+      at scenario (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/contract-build.test.cjs:15:26)
+      at TestContext.<anonymous> (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/contract-build.test.cjs:90:60)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12) {
+    errno: -122,
+    code: 'Unknown system error -122',
+    syscall: 'write'
+  }
+
+test at tests/contract-build.test.cjs:90:4
+✖ build fails explicitly for failed build (3.562893ms)
+  Error: Unknown system error -122: Unknown system error -122, write
+      at Object.writeFileSync (node:fs:2412:20)
+      at /home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/contract-build.test.cjs:17:51
+      at Array.map (<anonymous>)
+      at scenario (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/contract-build.test.cjs:15:26)
+      at TestContext.<anonymous> (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/contract-build.test.cjs:90:60)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12) {
+    errno: -122,
+    code: 'Unknown system error -122',
+    syscall: 'write'
+  }
+
+test at tests/contract-build.test.cjs:90:4
+✖ build fails explicitly for missing output despite stale destination (3.387746ms)
+  Error: Unknown system error -122: Unknown system error -122, write
+      at Object.writeFileSync (node:fs:2412:20)
+      at /home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/contract-build.test.cjs:17:51
+      at Array.map (<anonymous>)
+      at scenario (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/contract-build.test.cjs:15:26)
+      at TestContext.<anonymous> (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/contract-build.test.cjs:90:60)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12) {
+    errno: -122,
+    code: 'Unknown system error -122',
+    syscall: 'write'
+  }
+
+test at tests/contract-build.test.cjs:90:4
+✖ build fails explicitly for invalid WASM output (2.231485ms)
+  Error: Unknown system error -122: Unknown system error -122, write
+      at Object.writeFileSync (node:fs:2412:20)
+      at /home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/contract-build.test.cjs:17:51
+      at Array.map (<anonymous>)
+      at scenario (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/contract-build.test.cjs:15:26)
+      at TestContext.<anonymous> (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/contract-build.test.cjs:90:60)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12) {
+    errno: -122,
+    code: 'Unknown system error -122',
+    syscall: 'write'
+  }
+
+test at tests/contract-build.test.cjs:90:4
+✖ build fails explicitly for optimization skipped (1.78321ms)
+  Error: Unknown system error -122: Unknown system error -122, write
+      at Object.writeFileSync (node:fs:2412:20)
+      at /home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/contract-build.test.cjs:17:51
+      at Array.map (<anonymous>)
+      at scenario (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/contract-build.test.cjs:15:26)
+      at TestContext.<anonymous> (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/contract-build.test.cjs:90:60)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12) {
+    errno: -122,
+    code: 'Unknown system error -122',
+    syscall: 'write'
+  }
+
+test at tests/contract-build.test.cjs:93:1
+✖ every declared contract must have a manifest, even when another one is valid (1.77693ms)
+  Error: Unknown system error -122: Unknown system error -122, write
+      at Object.writeFileSync (node:fs:2412:20)
+      at /home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/contract-build.test.cjs:17:51
+      at Array.map (<anonymous>)
+      at scenario (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/contract-build.test.cjs:15:26)
+      at TestContext.<anonymous> (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/contract-build.test.cjs:93:98)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12) {
+    errno: -122,
+    code: 'Unknown system error -122',
+    syscall: 'write'
+  }
+
+test at tests/fail-closed.test.cjs:78:4
+✖ Action exits 1 and reports failure for funding-exhausted (6.134743ms)
+  Error: Unknown system error -122: Unknown system error -122, write
+      at Object.writeFileSync (node:fs:2412:20)
+      at action (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/fail-closed.test.cjs:51:10)
+      at TestContext.<anonymous> (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/fail-closed.test.cjs:79:18)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    errno: -122,
+    code: 'Unknown system error -122',
+    syscall: 'write'
+  }
+
+test at tests/fail-closed.test.cjs:78:4
+✖ Action exits 1 and reports failure for rpc-unhealthy (1.416753ms)
+  Error: Unknown system error -122: Unknown system error -122, write
+      at Object.writeFileSync (node:fs:2412:20)
+      at action (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/fail-closed.test.cjs:51:10)
+      at TestContext.<anonymous> (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/fail-closed.test.cjs:79:18)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    errno: -122,
+    code: 'Unknown system error -122',
+    syscall: 'write'
+  }
+
+test at tests/fail-closed.test.cjs:78:4
+✖ Action exits 1 and reports failure for checkout (2.287945ms)
+  Error: Unknown system error -122: Unknown system error -122, write
+      at Object.writeFileSync (node:fs:2412:20)
+      at action (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/fail-closed.test.cjs:51:10)
+      at TestContext.<anonymous> (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/fail-closed.test.cjs:79:18)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    errno: -122,
+    code: 'Unknown system error -122',
+    syscall: 'write'
+  }
+
+test at tests/fail-closed.test.cjs:78:4
+✖ Action exits 1 and reports failure for worktree (1.868335ms)
+  Error: Unknown system error -122: Unknown system error -122, write
+      at Object.writeFileSync (node:fs:2412:20)
+      at action (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/fail-closed.test.cjs:51:10)
+      at TestContext.<anonymous> (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/fail-closed.test.cjs:79:18)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    errno: -122,
+    code: 'Unknown system error -122',
+    syscall: 'write'
+  }
+
+test at tests/fail-closed.test.cjs:78:4
+✖ Action exits 1 and reports failure for build (3.576344ms)
+  Error: Unknown system error -122: Unknown system error -122, write
+      at Object.writeFileSync (node:fs:2412:20)
+      at action (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/fail-closed.test.cjs:51:10)
+      at TestContext.<anonymous> (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/fail-closed.test.cjs:79:18)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    errno: -122,
+    code: 'Unknown system error -122',
+    syscall: 'write'
+  }
+
+test at tests/fail-closed.test.cjs:78:4
+✖ Action exits 1 and reports failure for measurement (3.695701ms)
+  Error: Unknown system error -122: Unknown system error -122, write
+      at Object.writeFileSync (node:fs:2412:20)
+      at action (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/fail-closed.test.cjs:51:10)
+      at TestContext.<anonymous> (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/fail-closed.test.cjs:79:18)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    errno: -122,
+    code: 'Unknown system error -122',
+    syscall: 'write'
+  }
+
+test at tests/fail-closed.test.cjs:78:4
+✖ Action exits 1 and reports failure for missing-fixtures (3.368967ms)
+  Error: Unknown system error -122: Unknown system error -122, write
+      at Object.writeFileSync (node:fs:2412:20)
+      at action (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/fail-closed.test.cjs:51:10)
+      at TestContext.<anonymous> (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/fail-closed.test.cjs:79:18)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    errno: -122,
+    code: 'Unknown system error -122',
+    syscall: 'write'
+  }
+
+test at tests/fail-closed.test.cjs:78:4
+✖ Action exits 1 and reports failure for schema (1.808368ms)
+  Error: Unknown system error -122: Unknown system error -122, write
+      at Object.writeFileSync (node:fs:2412:20)
+      at action (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/fail-closed.test.cjs:51:10)
+      at TestContext.<anonymous> (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/fail-closed.test.cjs:79:18)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    errno: -122,
+    code: 'Unknown system error -122',
+    syscall: 'write'
+  }
+
+test at tests/fail-closed.test.cjs:78:4
+✖ Action exits 1 and reports failure for provenance (2.658715ms)
+  Error: Unknown system error -122: Unknown system error -122, write
+      at Object.writeFileSync (node:fs:2412:20)
+      at action (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/fail-closed.test.cjs:51:10)
+      at TestContext.<anonymous> (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/fail-closed.test.cjs:79:18)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    errno: -122,
+    code: 'Unknown system error -122',
+    syscall: 'write'
+  }
+
+test at tests/fail-closed.test.cjs:78:4
+✖ Action exits 1 and reports failure for empty (1.622107ms)
+  Error: Unknown system error -122: Unknown system error -122, write
+      at Object.writeFileSync (node:fs:2412:20)
+      at action (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/fail-closed.test.cjs:51:10)
+      at TestContext.<anonymous> (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/fail-closed.test.cjs:79:18)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    errno: -122,
+    code: 'Unknown system error -122',
+    syscall: 'write'
+  }
+
+test at tests/fail-closed.test.cjs:78:4
+✖ Action exits 1 and reports failure for unmatched (1.426837ms)
+  Error: Unknown system error -122: Unknown system error -122, write
+      at Object.writeFileSync (node:fs:2412:20)
+      at action (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/fail-closed.test.cjs:51:10)
+      at TestContext.<anonymous> (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/fail-closed.test.cjs:79:18)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    errno: -122,
+    code: 'Unknown system error -122',
+    syscall: 'write'
+  }
+
+test at tests/fail-closed.test.cjs:78:4
+✖ Action exits 1 and reports failure for head-measurement (1.421502ms)
+  Error: Unknown system error -122: Unknown system error -122, write
+      at Object.writeFileSync (node:fs:2412:20)
+      at action (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/fail-closed.test.cjs:51:10)
+      at TestContext.<anonymous> (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/fail-closed.test.cjs:79:18)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    errno: -122,
+    code: 'Unknown system error -122',
+    syscall: 'write'
+  }
+
+test at tests/fail-closed.test.cjs:78:4
+✖ Action exits 1 and reports failure for head-fixtures (1.394204ms)
+  Error: Unknown system error -122: Unknown system error -122, write
+      at Object.writeFileSync (node:fs:2412:20)
+      at action (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/fail-closed.test.cjs:51:10)
+      at TestContext.<anonymous> (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/fail-closed.test.cjs:79:18)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    errno: -122,
+    code: 'Unknown system error -122',
+    syscall: 'write'
+  }
+
+test at tests/fail-closed.test.cjs:78:4
+✖ Action exits 1 and reports failure for malformed-fixtures (4.555069ms)
+  Error: Unknown system error -122: Unknown system error -122, write
+      at Object.writeFileSync (node:fs:2412:20)
+      at action (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/fail-closed.test.cjs:51:10)
+      at TestContext.<anonymous> (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/fail-closed.test.cjs:79:18)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    errno: -122,
+    code: 'Unknown system error -122',
+    syscall: 'write'
+  }
+
+test at tests/fail-closed.test.cjs:78:4
+✖ Action exits 1 and reports failure for empty-fixtures (1.654275ms)
+  Error: Unknown system error -122: Unknown system error -122, write
+      at Object.writeFileSync (node:fs:2412:20)
+      at action (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/fail-closed.test.cjs:51:10)
+      at TestContext.<anonymous> (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/fail-closed.test.cjs:79:18)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    errno: -122,
+    code: 'Unknown system error -122',
+    syscall: 'write'
+  }
+
+test at tests/fail-closed.test.cjs:85:3
+✖ Action fails malformed policy: not valid toml =  (1.661083ms)
+  Error: Unknown system error -122: Unknown system error -122, write
+      at Object.writeFileSync (node:fs:2412:20)
+      at action (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/fail-closed.test.cjs:51:10)
+      at TestContext.<anonymous> (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/fail-closed.test.cjs:86:20)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    errno: -122,
+    code: 'Unknown system error -122',
+    syscall: 'write'
+  }
+
+test at tests/fail-closed.test.cjs:85:3
+✖ Action fails malformed policy: [thresholds.functions.hello]
+cpu_instructions="typo" (1.891182ms)
+  Error: Unknown system error -122: Unknown system error -122, write
+      at Object.writeFileSync (node:fs:2412:20)
+      at action (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/fail-closed.test.cjs:51:10)
+      at TestContext.<anonymous> (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/fail-closed.test.cjs:86:20)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    errno: -122,
+    code: 'Unknown system error -122',
+    syscall: 'write'
+  }
+
+test at tests/fail-closed.test.cjs:85:3
+✖ Action fails malformed policy: [thresholds.global]
+fail_on_any_regression="false" (1.581714ms)
+  Error: Unknown system error -122: Unknown system error -122, write
+      at Object.writeFileSync (node:fs:2412:20)
+      at action (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/fail-closed.test.cjs:51:10)
+      at TestContext.<anonymous> (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/fail-closed.test.cjs:86:20)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    errno: -122,
+    code: 'Unknown system error -122',
+    syscall: 'write'
+  }
+
+test at tests/fail-closed.test.cjs:90:1
+✖ Action unchanged control and optional absent policy still pass; regression fails (2.455555ms)
+  Error: Unknown system error -122: Unknown system error -122, write
+      at Object.writeFileSync (node:fs:2412:20)
+      at action (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/fail-closed.test.cjs:51:10)
+      at TestContext.<anonymous> (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/fail-closed.test.cjs:91:16)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1103:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+      at Test.postRun (node:internal/test_runner/test:1232:19)
+      at Test.run (node:internal/test_runner/test:1160:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    errno: -122,
+    code: 'Unknown system error -122',
+    syscall: 'write'
+  }
+
+test at tests/simulation-compatibility.test.cjs:81:3
+✖ base: missing native helper fails explicitly and produces no benchmark (202.801686ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /Simulation helper missing or not executable/. Input:
+  
+  'Error: UNKNOWN: unknown error, write'
+  
+      at async TestContext.<anonymous> (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/simulation-compatibility.test.cjs:86:5)
+      at async Test.run (node:internal/test_runner/test:1110:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: Error: UNKNOWN: unknown error, write
+        at Object.writeSync (node:fs:915:3)
+        at Object.writeFileSync (node:fs:2432:26)
+        at replay (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/simulation-compatibility.test.cjs:61:6)
+        at TestContext.<anonymous> (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/simulation-compatibility.test.cjs:86:26)
+        at Test.runInAsyncScope (node:async_hooks:214:14)
+        at Test.run (node:internal/test_runner/test:1103:25)
+        at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+        at Test.postRun (node:internal/test_runner/test:1232:19)
+        at Test.run (node:internal/test_runner/test:1160:12)
+        at async Test.processPendingSubtests (node:internal/test_runner/test:785:7),
+    expected: /Simulation helper missing or not executable/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/simulation-compatibility.test.cjs:81:3
+✖ head: missing native helper fails explicitly and produces no benchmark (11.950586ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /Simulation helper missing or not executable/. Input:
+  
+  'Error: UNKNOWN: unknown error, write'
+  
+      at async TestContext.<anonymous> (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/simulation-compatibility.test.cjs:86:5)
+      at async Test.run (node:internal/test_runner/test:1110:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: Error: UNKNOWN: unknown error, write
+        at Object.writeSync (node:fs:915:3)
+        at Object.writeFileSync (node:fs:2432:26)
+        at replay (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/simulation-compatibility.test.cjs:61:6)
+        at TestContext.<anonymous> (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/simulation-compatibility.test.cjs:86:26)
+        at Test.runInAsyncScope (node:async_hooks:214:14)
+        at Test.run (node:internal/test_runner/test:1103:25)
+        at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+        at Test.postRun (node:internal/test_runner/test:1232:19)
+        at Test.run (node:internal/test_runner/test:1160:12)
+        at async Test.processPendingSubtests (node:internal/test_runner/test:785:7),
+    expected: /Simulation helper missing or not executable/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/simulation-compatibility.test.cjs:91:1
+✖ a larger transaction instruction budget cannot masquerade as measured CPU (7.842631ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /Simulation helper missing or not executable/. Input:
+  
+  'Error: UNKNOWN: unknown error, write'
+  
+      at async TestContext.<anonymous> (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/simulation-compatibility.test.cjs:94:3)
+      at async Test.run (node:internal/test_runner/test:1110:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: Error: UNKNOWN: unknown error, write
+        at Object.writeSync (node:fs:915:3)
+        at Object.writeFileSync (node:fs:2432:26)
+        at replay (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/simulation-compatibility.test.cjs:61:6)
+        at TestContext.<anonymous> (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/simulation-compatibility.test.cjs:94:24)
+        at Test.runInAsyncScope (node:async_hooks:214:14)
+        at Test.run (node:internal/test_runner/test:1103:25)
+        at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+        at Test.postRun (node:internal/test_runner/test:1232:19)
+        at Test.run (node:internal/test_runner/test:1160:12)
+        at async Test.processPendingSubtests (node:internal/test_runner/test:785:7),
+    expected: /Simulation helper missing or not executable/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/simulation-compatibility.test.cjs:97:1
+✖ legacy cost values are not trusted as an unverified consumption source (7.037361ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /Simulation helper missing or not executable/. Input:
+  
+  'Error: UNKNOWN: unknown error, write'
+  
+      at async TestContext.<anonymous> (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/simulation-compatibility.test.cjs:100:3)
+      at async Test.run (node:internal/test_runner/test:1110:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: Error: UNKNOWN: unknown error, write
+        at Object.writeSync (node:fs:915:3)
+        at Object.writeFileSync (node:fs:2432:26)
+        at replay (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/simulation-compatibility.test.cjs:61:6)
+        at TestContext.<anonymous> (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/simulation-compatibility.test.cjs:100:24)
+        at Test.runInAsyncScope (node:async_hooks:214:14)
+        at Test.run (node:internal/test_runner/test:1103:25)
+        at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+        at Test.postRun (node:internal/test_runner/test:1232:19)
+        at Test.run (node:internal/test_runner/test:1160:12)
+        at async Test.processPendingSubtests (node:internal/test_runner/test:785:7),
+    expected: /Simulation helper missing or not executable/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/simulation-compatibility.test.cjs:103:1
+✖ simulation errors retain their original failure reason (5.94651ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /Simulation failed for hello: HostError\(Budget, LimitExceeded\)/. Input:
+  
+  'Error: UNKNOWN: unknown error, write'
+  
+      at async TestContext.<anonymous> (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/simulation-compatibility.test.cjs:104:3)
+      at async Test.run (node:internal/test_runner/test:1110:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: Error: UNKNOWN: unknown error, write
+        at Object.writeSync (node:fs:915:3)
+        at Object.writeFileSync (node:fs:2432:26)
+        at replay (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/simulation-compatibility.test.cjs:61:6)
+        at TestContext.<anonymous> (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/simulation-compatibility.test.cjs:104:24)
+        at Test.runInAsyncScope (node:async_hooks:214:14)
+        at Test.run (node:internal/test_runner/test:1103:25)
+        at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+        at Test.postRun (node:internal/test_runner/test:1232:19)
+        at Test.run (node:internal/test_runner/test:1160:12)
+        at async Test.processPendingSubtests (node:internal/test_runner/test:785:7),
+    expected: /Simulation failed for hello: HostError\(Budget, LimitExceeded\)/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/simulation-compatibility.test.cjs:107:1
+✖ a response without transaction data fails before attempting metric extraction (7.351702ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /Simulation did not return transaction data for hello/. Input:
+  
+  'Error: UNKNOWN: unknown error, write'
+  
+      at async TestContext.<anonymous> (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/simulation-compatibility.test.cjs:108:3)
+      at async Test.run (node:internal/test_runner/test:1110:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:785:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: Error: UNKNOWN: unknown error, write
+        at Object.writeSync (node:fs:915:3)
+        at Object.writeFileSync (node:fs:2432:26)
+        at replay (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/simulation-compatibility.test.cjs:61:6)
+        at TestContext.<anonymous> (/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/tests/simulation-compatibility.test.cjs:108:24)
+        at Test.runInAsyncScope (node:async_hooks:214:14)
+        at Test.run (node:internal/test_runner/test:1103:25)
+        at Test.processPendingSubtests (node:internal/test_runner/test:785:18)
+        at Test.postRun (node:internal/test_runner/test:1232:19)
+        at Test.run (node:internal/test_runner/test:1160:12)
+        at async Test.processPendingSubtests (node:internal/test_runner/test:785:7),
+    expected: /Simulation did not return transaction data for hello/,
+    operator: 'rejects',
+    diff: 'simple'
+  }

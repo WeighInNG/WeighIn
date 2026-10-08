@@ -1,0 +1,121 @@
+[
+  {
+    "id": "weighin@1.0.0",
+    "name": "weighin",
+    "version": "1.0.0",
+    "size": 915286,
+    "unpackedSize": 4348792,
+    "shasum": "9235242e0d1e0f257a0f4a86c31c949ce4d8202e",
+    "integrity": "sha512-SKGCrQgkM7ycOWEYmlAYWtrTrnqd0uGVGJActRR8AmIIuQu9a2302ZYYHL+9nan19c1QXmqNThAdESLfBGmy5A==",
+    "filename": "weighin-1.0.0.tgz",
+    "files": [
+      {
+        "path": "README.md",
+        "size": 10,
+        "mode": 420
+      },
+      {
+        "path": "action.yml",
+        "size": 2543,
+        "mode": 420
+      },
+      {
+        "path": "bundled/index.js",
+        "size": 1894218,
+        "mode": 420
+      },
+      {
+        "path": "dist/action.js",
+        "size": 13906,
+        "mode": 420
+      },
+      {
+        "path": "dist/build.js",
+        "size": 6619,
+        "mode": 420
+      },
+      {
+        "path": "dist/bundled/index.js",
+        "size": 2263136,
+        "mode": 420
+      },
+      {
+        "path": "dist/bundled/licenses.txt",
+        "size": 30187,
+        "mode": 420
+      },
+      {
+        "path": "dist/cli.js",
+        "size": 3777,
+        "mode": 420
+      },
+      {
+        "path": "dist/comment.js",
+        "size": 7464,
+        "mode": 420
+      },
+      {
+        "path": "dist/diff.js",
+        "size": 11612,
+        "mode": 420
+      },
+      {
+        "path": "dist/identity.js",
+        "size": 4634,
+        "mode": 420
+      },
+      {
+        "path": "dist/measurement.js",
+        "size": 16275,
+        "mode": 420
+      },
+      {
+        "path": "dist/simulation.js",
+        "size": 16962,
+        "mode": 420
+      },
+      {
+        "path": "dist/threshold.js",
+        "size": 8809,
+        "mode": 420
+      },
+      {
+        "path": "docs/contract-build.md",
+        "size": 4841,
+        "mode": 420
+      },
+      {
+        "path": "docs/metric-provenance.md",
+        "size": 11340,
+        "mode": 420
+      },
+      {
+        "path": "docs/native-measurement.md",
+        "size": 10168,
+        "mode": 420
+      },
+      {
+        "path": "native/simulation/Cargo.lock",
+        "size": 34201,
+        "mode": 420
+      },
+      {
+        "path": "native/simulation/Cargo.toml",
+        "size": 418,
+        "mode": 420
+      },
+      {
+        "path": "native/simulation/src/main.rs",
+        "size": 6390,
+        "mode": 420
+      },
+      {
+        "path": "package.json",
+        "size": 1282,
+        "mode": 420
+      }
+    ],
+    "entryCount": 21,
+    "bundled": []
+  }
+]

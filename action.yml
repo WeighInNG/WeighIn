@@ -1,5 +1,5 @@
 name: 'WeighIn'
-description: 'Measure and diff Soroban contract resource costs on pull requests'
+description: 'Measure and diff Soroban contract resource costs on pull requests (Linux x64, protocol 28)'
 author: 'Ijioma Makwochukwu'
 
 inputs:
@@ -7,7 +7,8 @@ inputs:
     description: >
       Path to the weighin-fixtures.json file in the caller repo, relative to the
       repository root. Declares which WASM files to benchmark and which functions
-      to invoke.
+      to invoke. The Action builds with Stellar CLI 28.1+ (optimization enabled)
+      and Rust 1.84+; callers must provision these tools and wasm32v1-none.
     required: true
     default: 'weighin-fixtures.json'
 
@@ -22,10 +23,17 @@ inputs:
   rpc-url:
     description: >
       Soroban RPC endpoint to use for simulation. Defaults to the
-      stellar/quickstart local network started by the action's pre-step.
+      protocol-28 standalone network provisioned by the caller.
       Override this if you bring your own RPC sidecar.
     required: false
     default: 'http://localhost:8000/rpc'
+
+  github-token:
+    description: >
+      Optional token for posting a benchmark comment directly. Omit it when
+      using the separate fork-safe comment workflow.
+    required: false
+    default: ''
 
   metadata-path:
     description: >
@@ -43,10 +51,11 @@ inputs:
 
   rust-toolchain:
     description: >
-      Rust toolchain channel to use when building WASM. Defaults to the value
-      in rust-toolchain.toml if present, otherwise 'stable'. The action does
-      not install toolchains itself; callers must run actions/rust-toolchain or
-      dtolnay/rust-toolchain before this action.
+      Rustup toolchain override for both contract builds. Passed as
+      RUSTUP_TOOLCHAIN to Cargo, rustc and Stellar CLI. When omitted, Rustup
+      resolves each revision's toolchain normally, including rust-toolchain.toml.
+      This does not change the native simulation helper's pinned toolchain.
+      The action does not install toolchains itself.
     required: false
     default: ''
 
@@ -68,9 +77,10 @@ inputs:
 outputs:
   result:
     description: >
-      'pass' if no thresholds were violated, 'fail' if at least one regression
-      was detected, or 'no-baseline' if the base ref could not be checked out
-      or built (first PR against an empty branch, etc.).
+      'pass' if configured policies passed, 'fail' if a policy was violated
+      or a required comparison, measurement or configuration was invalid.
+      Missing/failed baselines return 'fail' and fail the Action; no-baseline
+      success is no longer emitted.
 
   diff-json:
     description: >

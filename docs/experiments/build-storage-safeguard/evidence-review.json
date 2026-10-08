@@ -1,0 +1,6 @@
+{
+  "valid_signing_seeds_retained": 0,
+  "redacted_docker_startup_seeds": 1,
+  "raw_rpc_native_evidence_unchanged": true,
+  "private_runtime_keys_retained": false
+}

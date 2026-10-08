@@ -1,0 +1,44 @@
+[
+  {
+    "label": "control-1",
+    "scenario": "control",
+    "exit": 0,
+    "expected_exit": 0
+  },
+  {
+    "label": "control-2",
+    "scenario": "control",
+    "exit": 0,
+    "expected_exit": 0
+  },
+  {
+    "label": "control-3",
+    "scenario": "control",
+    "exit": 0,
+    "expected_exit": 0
+  },
+  {
+    "label": "control-4",
+    "scenario": "control",
+    "exit": 0,
+    "expected_exit": 0
+  },
+  {
+    "label": "control-5",
+    "scenario": "control",
+    "exit": 0,
+    "expected_exit": 0
+  },
+  {
+    "label": "regression",
+    "scenario": "regression",
+    "exit": 0,
+    "expected_exit": 0
+  },
+  {
+    "label": "threshold",
+    "scenario": "threshold",
+    "exit": 1,
+    "expected_exit": 1
+  }
+]

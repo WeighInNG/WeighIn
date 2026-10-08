@@ -2,15 +2,19 @@
   "name": "weighin",
   "version": "1.0.0",
   "description": "Resource-Cost Benchmarking & CI Regression Toolkit for Soroban",
-  "main": "dist/index.js",
+  "main": "dist/measurement.js",
   "bin": {
     "weighin": "dist/cli.js"
   },
   "scripts": {
+    "prepack": "npm run build && npm run bundle",
     "build": "tsc",
     "bundle": "tsc --noEmit && esbuild src/action.ts --bundle --platform=node --target=node20 --outfile=bundled/index.js --format=cjs && esbuild src/comment-action.ts --bundle --platform=node --target=node20 --outfile=bundled/comment-action.js --format=cjs",
-    "test": "vitest run",
-    "test:watch": "vitest",
+    "test": "npm run build && node --test tests/*.test.cjs && npm run test:vitest",
+    "test:vitest": "vitest run test/*.test.ts",
+    "test:watch": "vitest test/*.test.ts",
+    "test:native": "npm run build && npm run build:helper && node --test tests/native/*.test.cjs",
+    "build:helper": "cargo +1.95.0 build --release --locked --manifest-path native/simulation/Cargo.toml --target-dir native/simulation/target --target x86_64-unknown-linux-gnu",
     "typecheck": "tsc --noEmit",
     "lint": "prettier --check src test",
     "format": "prettier --write src test"
@@ -29,6 +33,23 @@
     "prettier": "^3.9.6",
     "typescript": "5.9.3",
     "vite": "^5.4.14",
-    "vitest": "^2.1.9"
-  }
+    "vitest": "^2.1.9",
+    "yaml": "2.9.1"
+  },
+  "files": [
+    "dist",
+    "bundled",
+    "native/simulation/Cargo.toml",
+    "native/simulation/Cargo.lock",
+    "native/simulation/src",
+    "action.yml",
+    "comment",
+    "docs/native-measurement.md",
+    "docs/contract-build.md",
+    "docs/metric-provenance.md",
+    "docs/snapshot-recovery.md",
+    "docs/fixture-migration.md",
+    "docs/network-readiness.md",
+    "docs/flagship-ci.md"
+  ]
 }

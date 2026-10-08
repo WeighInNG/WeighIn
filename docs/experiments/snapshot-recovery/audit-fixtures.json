@@ -1,0 +1,119 @@
+{
+  "id": "metric-audit",
+  "contracts": [
+    {
+      "id": "audit",
+      "wasm_path": "audit.wasm",
+      "invocations": [
+        {
+          "id": "read-missing-repeat",
+          "function_name": "bench",
+          "args": [
+            {
+              "type": "I32",
+              "value": 0
+            },
+            {
+              "type": "String",
+              "value": "CDMLFMKMMD7MWZP3FKUBZPVHTUEDLSX4BYGYKH4GCESXYHS3IHQ4EIG4"
+            },
+            {
+              "type": "String",
+              "value": "GCC6UB2BASJ3PYZDKSNTQ4OSPGQDZKX3XBI5NVKPZNV2TRRJKIVTUF52"
+            }
+          ]
+        },
+        {
+          "id": "noop-write",
+          "function_name": "bench",
+          "args": [
+            {
+              "type": "I32",
+              "value": 1
+            },
+            {
+              "type": "String",
+              "value": "CDMLFMKMMD7MWZP3FKUBZPVHTUEDLSX4BYGYKH4GCESXYHS3IHQ4EIG4"
+            },
+            {
+              "type": "String",
+              "value": "GCC6UB2BASJ3PYZDKSNTQ4OSPGQDZKX3XBI5NVKPZNV2TRRJKIVTUF52"
+            }
+          ]
+        },
+        {
+          "id": "delete",
+          "function_name": "bench",
+          "args": [
+            {
+              "type": "I32",
+              "value": 2
+            },
+            {
+              "type": "String",
+              "value": "CDMLFMKMMD7MWZP3FKUBZPVHTUEDLSX4BYGYKH4GCESXYHS3IHQ4EIG4"
+            },
+            {
+              "type": "String",
+              "value": "GCC6UB2BASJ3PYZDKSNTQ4OSPGQDZKX3XBI5NVKPZNV2TRRJKIVTUF52"
+            }
+          ]
+        },
+        {
+          "id": "event",
+          "function_name": "bench",
+          "args": [
+            {
+              "type": "I32",
+              "value": 3
+            },
+            {
+              "type": "String",
+              "value": "CDMLFMKMMD7MWZP3FKUBZPVHTUEDLSX4BYGYKH4GCESXYHS3IHQ4EIG4"
+            },
+            {
+              "type": "String",
+              "value": "GCC6UB2BASJ3PYZDKSNTQ4OSPGQDZKX3XBI5NVKPZNV2TRRJKIVTUF52"
+            }
+          ]
+        },
+        {
+          "id": "classic-read",
+          "function_name": "bench",
+          "args": [
+            {
+              "type": "I32",
+              "value": 4
+            },
+            {
+              "type": "String",
+              "value": "CDMLFMKMMD7MWZP3FKUBZPVHTUEDLSX4BYGYKH4GCESXYHS3IHQ4EIG4"
+            },
+            {
+              "type": "String",
+              "value": "GCC6UB2BASJ3PYZDKSNTQ4OSPGQDZKX3XBI5NVKPZNV2TRRJKIVTUF52"
+            }
+          ]
+        },
+        {
+          "id": "large-return",
+          "function_name": "bench",
+          "args": [
+            {
+              "type": "I32",
+              "value": 5
+            },
+            {
+              "type": "String",
+              "value": "CDMLFMKMMD7MWZP3FKUBZPVHTUEDLSX4BYGYKH4GCESXYHS3IHQ4EIG4"
+            },
+            {
+              "type": "String",
+              "value": "GCC6UB2BASJ3PYZDKSNTQ4OSPGQDZKX3XBI5NVKPZNV2TRRJKIVTUF52"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

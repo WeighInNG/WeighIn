@@ -1,0 +1,30 @@
+{
+  "reference": {
+    "thresholds": {
+      "global": {
+        "fail_on_any_regression": true
+      },
+      "functions": {
+        "hello": {
+          "historical_data_read_bytes": "ignore",
+          "contract_data_hard_limit": "ignore",
+          "tx_size_bytes": "ignore"
+        }
+      }
+    }
+  },
+  "audit": {
+    "thresholds": {
+      "global": {
+        "fail_on_any_regression": true
+      },
+      "functions": {
+        "bench": {
+          "historical_data_read_bytes": "ignore",
+          "contract_data_hard_limit": "ignore",
+          "tx_size_bytes": "ignore"
+        }
+      }
+    }
+  }
+}

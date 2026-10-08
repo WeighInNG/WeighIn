@@ -1,0 +1,100 @@
+upgrades: soroban config: upload config: 4d5f21c8cf98ace093ee703112756baf1f2cd66954e24fdf54d8db12b340dc00 .. PENDING
+stellar-core(rpc): Synced!
+upgrades: soroban config: set config with key: Y00joj6vp/QkE+YBAF2mvY8LqlTCa3Ql6x0fMvWLirc14Ih416Tucp0u/305RCsMD/hef7zRFVTSRlAgTkgKww==
+
+upgrades: soroban config done
+stellar-core(horizon): Synced!
+stellar-core(node): Synced!; Armed with network upgrades: upgradetime=1970-01-01T00:00:00Z, {
+    "configupgradesetkey": {
+        "contractID": "CBRU2I5CH2X2P5BECPTACAC5U26Y6C5KKTBGW5BF5MOR6MXVROFLOY6I",
+        "contentHash": "35e08878d7a4ee729d2eff7d39442b0c0ff85e7fbcd11554d24650204e480ac3"
+    }
+}
+supervisor: 2026-10-08 05:28:56,859 INFO spawned: 'friendbot' with pid 1093
+stellar-core(node): Synced!
+supervisor: 2026-10-08 05:28:58,021 INFO success: friendbot entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+friendbot: started
+supervisor: 2026-10-08 05:28:58,137 INFO reaped unknown pid 288 (exit status 0)
+horizon: ingestion caught up
+supervisor: 2026-10-08 05:28:58,449 INFO reaped unknown pid 297 (exit status 0)
+stellar-rpc: up and ready
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [15-15]: Waiting before starting Ready to run: resolve-snapshot
+supervisor: 2026-10-08 05:28:59,040 INFO reaped unknown pid 302 (exit status 0)
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [15-15]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [23-23]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [23-23]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [31-31]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [31-31]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [39-39]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [39-39]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [47-47]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [47-47]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [55-55]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [55-55]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [63-63]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [71-71]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [71-71]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [79-79]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [79-79]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [87-87]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [87-87]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [95-95]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [95-95]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [103-103]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [111-111]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [111-111]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [119-119]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [119-119]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [127-127]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [127-127]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [135-135]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [135-135]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [143-143]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [143-143]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [151-151]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [151-151]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [159-159]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [159-159]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [167-167]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [175-175]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [175-175]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [183-183]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [183-183]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [191-191]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [191-191]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [199-199]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [199-199]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [207-207]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [215-215]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [215-215]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [223-223]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [223-223]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [231-231]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [231-231]: Waiting: resolve-snapshot

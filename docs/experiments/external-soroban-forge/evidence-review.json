@@ -1,0 +1,16 @@
+{
+  "valid_private_signing_seeds_found": 0,
+  "redactions": [
+    {
+      "file": "network/docker.log",
+      "count": 1
+    },
+    {
+      "file": "provenance-checks/docker.log",
+      "count": 1
+    }
+  ],
+  "runtime_key_directories_excluded": true,
+  "production_sources_unchanged": true,
+  "external_delivery_contract_source_unchanged": true
+}

@@ -1,0 +1,319 @@
+[
+  {
+    "request": {
+      "url": "http://localhost:8000/rpc",
+      "method": "POST",
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "getHealth"
+      }
+    },
+    "error": "fetch failed"
+  },
+  {
+    "request": {
+      "url": "http://localhost:8000/rpc",
+      "method": "POST",
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "getHealth"
+      }
+    },
+    "error": "fetch failed"
+  },
+  {
+    "request": {
+      "url": "http://localhost:8000/rpc",
+      "method": "POST",
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "getHealth"
+      }
+    },
+    "error": "fetch failed"
+  },
+  {
+    "request": {
+      "url": "http://localhost:8000/rpc",
+      "method": "POST",
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "getHealth"
+      }
+    },
+    "error": "fetch failed"
+  },
+  {
+    "request": {
+      "url": "http://localhost:8000/rpc",
+      "method": "POST",
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "getHealth"
+      }
+    },
+    "error": "fetch failed"
+  },
+  {
+    "request": {
+      "url": "http://localhost:8000/rpc",
+      "method": "POST",
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "getHealth"
+      }
+    },
+    "error": "fetch failed"
+  },
+  {
+    "request": {
+      "url": "http://localhost:8000/rpc",
+      "method": "POST",
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "getHealth"
+      }
+    },
+    "error": "fetch failed"
+  },
+  {
+    "request": {
+      "url": "http://localhost:8000/rpc",
+      "method": "POST",
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "getHealth"
+      }
+    },
+    "error": "fetch failed"
+  },
+  {
+    "request": {
+      "url": "http://localhost:8000/rpc",
+      "method": "POST",
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "getHealth"
+      }
+    },
+    "error": "fetch failed"
+  },
+  {
+    "request": {
+      "url": "http://localhost:8000/rpc",
+      "method": "POST",
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "getHealth"
+      }
+    },
+    "error": "fetch failed"
+  },
+  {
+    "request": {
+      "url": "http://localhost:8000/rpc",
+      "method": "POST",
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "getHealth"
+      }
+    },
+    "error": "fetch failed"
+  },
+  {
+    "request": {
+      "url": "http://localhost:8000/rpc",
+      "method": "POST",
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "getHealth"
+      }
+    },
+    "error": "fetch failed"
+  },
+  {
+    "request": {
+      "url": "http://localhost:8000/rpc",
+      "method": "POST",
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "getHealth"
+      }
+    },
+    "error": "Unexpected non-whitespace character after JSON at position 4 (line 1 column 5)"
+  },
+  {
+    "request": {
+      "url": "http://localhost:8000/rpc",
+      "method": "POST",
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "getHealth"
+      }
+    },
+    "error": "Unexpected non-whitespace character after JSON at position 4 (line 1 column 5)"
+  },
+  {
+    "request": {
+      "url": "http://localhost:8000/rpc",
+      "method": "POST",
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "getHealth"
+      }
+    },
+    "error": "Unexpected non-whitespace character after JSON at position 4 (line 1 column 5)"
+  },
+  {
+    "request": {
+      "url": "http://localhost:8000/rpc",
+      "method": "POST",
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "getHealth"
+      }
+    },
+    "error": "Unexpected non-whitespace character after JSON at position 4 (line 1 column 5)"
+  },
+  {
+    "request": {
+      "url": "http://localhost:8000/rpc",
+      "method": "POST",
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "getHealth"
+      }
+    },
+    "status": 200,
+    "body": "{\"jsonrpc\":\"2.0\",\"id\":1,\"error\":{\"code\":-32603,\"message\":\"[-32603] data stores are not initialized: DB is empty\"}}"
+  },
+  {
+    "request": {
+      "url": "http://localhost:8000/rpc",
+      "method": "POST",
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "getHealth"
+      }
+    },
+    "status": 200,
+    "body": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"status\":\"healthy\",\"latestLedger\":12,\"latestLedgerCloseTime\":\"1791443246\",\"oldestLedger\":7,\"oldestLedgerCloseTime\":\"1791443241\",\"ledgerRetentionWindow\":120960}}"
+  },
+  {
+    "request": {
+      "url": "http://localhost:8000/rpc",
+      "method": "POST",
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "getLedgerEntries",
+        "params": {
+          "keys": [
+            "AAAAAAAAAACdK6P+V5clUem3N2G0J5QvJKQ/4cY1NHd56wp/Tk4UMQ=="
+          ]
+        }
+      }
+    },
+    "status": 200,
+    "body": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"entries\":[],\"latestLedger\":12}}"
+  },
+  {
+    "request": {
+      "url": "http://localhost:8000/friendbot?addr=GCOSXI76K6LSKUPJW43WDNBHSQXSJJB74HDDKNDXPHVQU72OJYKDCWSZ",
+      "method": "GET",
+      "body": null
+    },
+    "status": 502,
+    "body": "502 Bad Gateway"
+  },
+  {
+    "request": {
+      "url": "http://localhost:8000/rpc",
+      "method": "POST",
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "getLedgerEntries",
+        "params": {
+          "keys": [
+            "AAAAAAAAAACdK6P+V5clUem3N2G0J5QvJKQ/4cY1NHd56wp/Tk4UMQ=="
+          ]
+        }
+      }
+    },
+    "status": 200,
+    "body": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"entries\":[],\"latestLedger\":14}}"
+  },
+  {
+    "request": {
+      "url": "http://localhost:8000/friendbot?addr=GCOSXI76K6LSKUPJW43WDNBHSQXSJJB74HDDKNDXPHVQU72OJYKDCWSZ",
+      "method": "GET",
+      "body": null
+    },
+    "status": 502,
+    "body": "502 Bad Gateway"
+  },
+  {
+    "request": {
+      "url": "http://localhost:8000/rpc",
+      "method": "POST",
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "getLedgerEntries",
+        "params": {
+          "keys": [
+            "AAAAAAAAAACdK6P+V5clUem3N2G0J5QvJKQ/4cY1NHd56wp/Tk4UMQ=="
+          ]
+        }
+      }
+    },
+    "status": 200,
+    "body": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"entries\":[],\"latestLedger\":16}}"
+  },
+  {
+    "request": {
+      "url": "http://localhost:8000/friendbot?addr=GCOSXI76K6LSKUPJW43WDNBHSQXSJJB74HDDKNDXPHVQU72OJYKDCWSZ",
+      "method": "GET",
+      "body": null
+    },
+    "status": 200,
+    "body": "{\n  \"successful\": true,\n  \"hash\": \"a0a12ff026086f2d37675f042119ec7a0a8e3825505fa860ae0ab655c6cefc03\",\n  \"envelope_xdr\": \"AAAAAgAAAABgj3GtF9gHVtY+e8AlUHRHD0TlZEfhUF0zKzUoISpqTQABhqAAAAAQAAAAAQAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAABAAAAAHN2/eiOTNYcwPspSheGs/HQYfXy8cpXRl+qkyIRuUbWAAAAAAAAAACdK6P+V5clUem3N2G0J5QvJKQ/4cY1NHd56wp/Tk4UMQAAABdIdugAAAAAAAAAAAIhKmpNAAAAQFce4FnvrF6I32vwdSbO7/KCJTp0L/m3sAJy78ZD/biO42+NdJyIFnbJF+XEDkXLAfRtjJV9yasH3snRg63KTgkRuUbWAAAAQFOWRWd7yUa8pt2m8F75J0XgdzfD6ePBxr6tpZ1uVla+MkHLXs7dmO5iUdf8udMVUA0ymll9dQ1UQOkWNh7rYgk=\"\n}"
+  },
+  {
+    "request": {
+      "url": "http://localhost:8000/rpc",
+      "method": "POST",
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "getLedgerEntries",
+        "params": {
+          "keys": [
+            "AAAAAAAAAACdK6P+V5clUem3N2G0J5QvJKQ/4cY1NHd56wp/Tk4UMQ=="
+          ]
+        }
+      }
+    },
+    "status": 200,
+    "body": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"entries\":[{\"key\":\"AAAAAAAAAACdK6P+V5clUem3N2G0J5QvJKQ/4cY1NHd56wp/Tk4UMQ==\",\"xdr\":\"AAAAAAAAAACdK6P+V5clUem3N2G0J5QvJKQ/4cY1NHd56wp/Tk4UMQAAABdIdugAAAAAEgAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAA\",\"lastModifiedLedgerSeq\":18,\"extXdr\":\"AAAAAA==\"}],\"latestLedger\":21}}"
+  }
+]

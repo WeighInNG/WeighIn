@@ -1,0 +1,10 @@
+{
+  "current_bundle_matches_live": true,
+  "bundle_sha256": "d20662550814aa62c57b5cc7ab00548a27fa05b21f25524af3d8bb3412aeed9c",
+  "current_helper_matches_live": true,
+  "helper_sha256": "1e7ef88e974bd09d5b683a3e94c101dea1b9524304c7124699ae0e8d279d964c",
+  "private_seed_scan_files": 89,
+  "valid_stellar_private_seeds_found": 0,
+  "seed_scan_scope": "network-readiness evidence; not a general secret audit",
+  "node": "v22.23.2"
+}

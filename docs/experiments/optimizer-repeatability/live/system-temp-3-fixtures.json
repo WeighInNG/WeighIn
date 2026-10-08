@@ -1,0 +1,29 @@
+{
+  "id": "soroban-forge-proof",
+  "contracts": [
+    {
+      "id": "escrow",
+      "wasm_path": "/home/mxr/Documents/localRepo/Weighin/.stage6b-work/temp-system-temp-3.wasm",
+      "invocations": [
+        {
+          "id": "empty-participant-page",
+          "function_name": "escrows_for_participant",
+          "args": [
+            {
+              "type": "address",
+              "value": "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF"
+            },
+            {
+              "type": "u32",
+              "value": 0
+            },
+            {
+              "type": "u32",
+              "value": 10
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

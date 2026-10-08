@@ -1,0 +1,22 @@
+{
+  "contract_events_xdr": [],
+  "cpu_instructions_consumed": 270219,
+  "cpu_limit": 400000000,
+  "disk_read_bytes": 0,
+  "instruction_budget": 5270219,
+  "memory_bytes_consumed": 1125761,
+  "memory_limit": 41943040,
+  "modified_entries": 0,
+  "protocol": 28,
+  "read_only_keys": [
+    "AAAABgAAAAFt8CEYVzSBrfVwzhXinFVBFIBZMG62Yh/GNjcCNogXOgAAABQAAAAB",
+    "AAAAB5SacgNlf2432BcfrO9CeXr39T0RWPBwp9BPy5FHkymy"
+  ],
+  "read_write_keys": [],
+  "retval_xdr": "AAAAEAAAAAEAAAACAAAADwAAAAVIZWxsbwAAAAAAAA8AAAAFd29ybGQAAAA=",
+  "schema_version": 1,
+  "source": "soroban-simulation",
+  "source_version": "28.0.1",
+  "transaction_data_xdr": "AAAAAAAAAAIAAAAGAAAAAW3wIRhXNIGt9XDOFeKcVUEUgFkwbrZiH8Y2NwI2iBc6AAAAFAAAAAEAAAAHlJpyA2V/bjfYFx+s70J5evf1PRFY8HCn0E/LkUeTKbIAAAAAAFBqywAAAAAAAAAAAAAAAAAAP7M=",
+  "write_bytes": 0
+}

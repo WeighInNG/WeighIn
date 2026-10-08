@@ -1,0 +1,10 @@
+{
+  "status": "PASS",
+  "files_verified": [
+    "docs/fixture-migration.md",
+    "dist/build.js",
+    "dist/identity.js",
+    "bundled/index.js"
+  ],
+  "clean_installation_proven": false
+}

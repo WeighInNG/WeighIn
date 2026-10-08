@@ -1,0 +1,2 @@
+[thresholds.functions.escrows_for_participant]
+cpu_instructions = "strict_zero_tolerance"

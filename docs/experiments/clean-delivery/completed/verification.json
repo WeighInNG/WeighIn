@@ -1,0 +1,19 @@
+{
+  "status": "CLEAN_CHECKOUT_PACKAGE_PASS",
+  "source_sha": "0e8e894b669b89a73be59d25ae8862c61e03689c",
+  "checkout_gates": true,
+  "actual_tarball_install": true,
+  "production_dependencies_only": true,
+  "copied_native_binary": false,
+  "installed_helper_built_from_source": true,
+  "frozen_replay_matches": true,
+  "installed_cli_live": true,
+  "historical_four_scenarios": true,
+  "historical_sha": "59db63a7b895dcc5ca763e3c668990fec40850fb",
+  "tarball_sha256": "7d0cb47d1a347e876cfa923caedc209ce8dc14e0a50cd24d9b40ae83b11e1a0a",
+  "bundle_sha256": "0f4221e6b870a17dcdea185ebada958583d4d04eba7e33e52239534897d0539f",
+  "installed_helper_sha256": "1e7ef88e974bd09d5b683a3e94c101dea1b9524304c7124699ae0e8d279d964c",
+  "registry_cache_reused": true,
+  "clean_machine_claim": false,
+  "public_ci_proven": false
+}

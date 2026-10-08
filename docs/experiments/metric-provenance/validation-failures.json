@@ -1,0 +1,21 @@
+{
+  "operational_failures": [
+    {
+      "action": "initial network startup",
+      "result": "Docker rejected a mistyped digest length; corrected to the pinned digest before any experiment"
+    },
+    {
+      "action": "final Action rerun after session gap",
+      "result": "exit 1 at RPC health check; isolated network had stopped and temporary CLI/cache were removed",
+      "recovery": "restarted the same pinned container and restored checksum-verified Stellar CLI 28.1.0; final rerun recorded separately"
+    }
+  ],
+  "measurement_substitution_used": false,
+  "test_development_failures": [
+    {
+      "gate": "npm run test:native",
+      "result": "14/15 passed; new fee-mutation test referenced non-exported xdr.Hyper",
+      "recovery": "use public xdr.Int64; rerun passed 15/15"
+    }
+  ]
+}

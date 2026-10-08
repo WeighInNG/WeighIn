@@ -1,0 +1,66 @@
+{
+  "status": "VERIFIED",
+  "scenario": "threshold",
+  "action_exit": 1,
+  "result": "fail",
+  "cpu": [
+    {
+      "logical_id": "id:reference-contract",
+      "base": 266842,
+      "head": 309171,
+      "delta": 42329
+    },
+    {
+      "logical_id": "wasm:contract/target/wasm32-unknown-unknown/release/contract_test.wasm",
+      "base": 266842,
+      "head": 309171,
+      "delta": 42329
+    }
+  ],
+  "violations": [
+    {
+      "contract_id": "CCLCSOKR3MIWEQWPXKAVUHVDFQ3BCEQQY6QLJAPHLK32U77TAN5OFFSZ",
+      "function_name": "hello",
+      "metric": "cpu_instructions",
+      "delta": 42329,
+      "pct": 15.862945113587815,
+      "rule": "strict_zero_tolerance",
+      "message": "cpu_instructions increased by 42329 (strict zero tolerance)",
+      "fixture_id": "path:weighin-fixtures.json",
+      "logical_id": "id:reference-contract",
+      "case_id": "args:[{\"type\":\"symbol\",\"value\":\"world\"}]"
+    },
+    {
+      "contract_id": "CCLCSOKR3MIWEQWPXKAVUHVDFQ3BCEQQY6QLJAPHLK32U77TAN5OFFSZ",
+      "function_name": "hello",
+      "metric": "cpu_instructions",
+      "delta": 42329,
+      "pct": 15.862945113587815,
+      "rule": "strict_zero_tolerance",
+      "message": "cpu_instructions increased by 42329 (strict zero tolerance)",
+      "fixture_id": "path:weighin-fixtures.json",
+      "logical_id": "wasm:contract/target/wasm32-unknown-unknown/release/contract_test.wasm",
+      "case_id": "args:[{\"type\":\"symbol\",\"value\":\"world\"}]"
+    }
+  ],
+  "base_sha": "1244937f5533f48555fbc23f6bd54df555dabe9e",
+  "head_sha": "b2a19e7023724a9d0c6927595cd65d7f10cdad6f",
+  "build_hashes": [
+    "5878fa37dfcec8eaebc72111dfdbfa92447cb735bd88d23dcaf0e8edf9f7f3e8",
+    "5878fa37dfcec8eaebc72111dfdbfa92447cb735bd88d23dcaf0e8edf9f7f3e8",
+    "718ba18378a2d94ec7bf0c75b3813c7d0bb5b65beb2fb4c445b3a4726ecd5668",
+    "718ba18378a2d94ec7bf0c75b3813c7d0bb5b65beb2fb4c445b3a4726ecd5668"
+  ],
+  "policy": {
+    "thresholds": {
+      "functions": {
+        "hello": {
+          "cpu_instructions": "strict_zero_tolerance"
+        }
+      }
+    }
+  },
+  "real_git_build_rpc_native_action": true,
+  "io_observers_only": true,
+  "github_hosted_execution": false
+}

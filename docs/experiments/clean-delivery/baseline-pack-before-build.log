@@ -1,0 +1,81 @@
+[
+  {
+    "id": "weighin@1.0.0",
+    "name": "weighin",
+    "version": "1.0.0",
+    "size": 399270,
+    "unpackedSize": 1990110,
+    "shasum": "db06543b95d14d29321d41c92253d14457ad8b8d",
+    "integrity": "sha512-Hr+laYS1iM+tknmcLozePCGbGpCoDVulvSuUOG4C5x6Z8jY4kEOVfQNNJix9iaRAa/MkD0yeYGKnFTnWejqWWA==",
+    "filename": "weighin-1.0.0.tgz",
+    "files": [
+      {
+        "path": "README.md",
+        "size": 10,
+        "mode": 420
+      },
+      {
+        "path": "action.yml",
+        "size": 2543,
+        "mode": 420
+      },
+      {
+        "path": "bundled/index.js",
+        "size": 1899165,
+        "mode": 420
+      },
+      {
+        "path": "docs/contract-build.md",
+        "size": 5081,
+        "mode": 420
+      },
+      {
+        "path": "docs/fixture-migration.md",
+        "size": 7977,
+        "mode": 420
+      },
+      {
+        "path": "docs/metric-provenance.md",
+        "size": 11340,
+        "mode": 420
+      },
+      {
+        "path": "docs/native-measurement.md",
+        "size": 11173,
+        "mode": 420
+      },
+      {
+        "path": "docs/network-readiness.md",
+        "size": 4989,
+        "mode": 420
+      },
+      {
+        "path": "docs/snapshot-recovery.md",
+        "size": 5442,
+        "mode": 420
+      },
+      {
+        "path": "native/simulation/Cargo.lock",
+        "size": 34201,
+        "mode": 420
+      },
+      {
+        "path": "native/simulation/Cargo.toml",
+        "size": 418,
+        "mode": 420
+      },
+      {
+        "path": "native/simulation/src/main.rs",
+        "size": 6390,
+        "mode": 420
+      },
+      {
+        "path": "package.json",
+        "size": 1381,
+        "mode": 420
+      }
+    ],
+    "entryCount": 13,
+    "bundled": []
+  }
+]

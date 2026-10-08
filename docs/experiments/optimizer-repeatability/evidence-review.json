@@ -1,0 +1,5 @@
+{
+  "redacted_standalone_seed_count": 1,
+  "redaction_scope": "Docker startup seed values only; RPC/native and measurement records unchanged",
+  "private_runtime_keys_retained": false
+}

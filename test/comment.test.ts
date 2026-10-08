@@ -7,12 +7,18 @@ function createMockDiff(regression: boolean): DiffResult {
   return {
     contracts: [
       {
+        fixture_id: "path:fixtures.json",
+        logical_id: "id:contract-a",
         contract_id: "contract-a",
+        base_contract_id: "base-contract-a",
+        head_contract_id: "contract-a",
         base_commit: "abc",
         head_commit: "def",
         hasRegression: regression,
         newFunctions: [],
         removedFunctions: [],
+        newBenchmarks: [],
+        removedBenchmarks: [],
         functions: [
           {
             function_name: "test-fn",
@@ -77,8 +83,14 @@ describe("renderComment", () => {
     const diff = createMockDiff(false);
     diff.newContracts.push("new-contract");
     diff.removedContracts.push("old-contract");
-    diff.contracts[0].newFunctions.push("new-fn");
-    diff.contracts[0].removedFunctions.push("old-fn");
+    diff.contracts[0].newBenchmarks.push({
+      function_name: "new-fn",
+      case_id: "args:[]",
+    });
+    diff.contracts[0].removedBenchmarks.push({
+      function_name: "old-fn",
+      case_id: "args:[]",
+    });
 
     const comment = renderComment(diff, [], "main", "abcdef123");
     expect(comment).toContain("new-contract");

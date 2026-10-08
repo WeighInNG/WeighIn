@@ -1,0 +1,20 @@
+[
+  {
+    "scenario": "control",
+    "exit": 0,
+    "expected_exit": 0,
+    "verification_present": true
+  },
+  {
+    "scenario": "regression",
+    "exit": 0,
+    "expected_exit": 0,
+    "verification_present": true
+  },
+  {
+    "scenario": "threshold",
+    "exit": 1,
+    "expected_exit": 1,
+    "verification_present": true
+  }
+]

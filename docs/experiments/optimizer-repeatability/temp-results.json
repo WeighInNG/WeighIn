@@ -1,0 +1,172 @@
+[
+  {
+    "mode": "system-temp",
+    "run": 1,
+    "command": [
+      "/home/mxr/Documents/localRepo/Weighin/.stage6-cli/stellar",
+      "contract",
+      "optimize",
+      "--wasm",
+      "/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/docs/experiments/external-soroban-forge/provenance-checks/original-unoptimized.wasm",
+      "--wasm-out",
+      "/home/mxr/Documents/localRepo/Weighin/.stage6b-work/temp-system-temp-1.wasm"
+    ],
+    "TMPDIR": null,
+    "exit": 0,
+    "sha256": "f6edc17c367984295ce7007e4099d45982d84f5fdbffae899492d0e6c547c953",
+    "bytes": 40912
+  },
+  {
+    "mode": "system-temp",
+    "run": 2,
+    "command": [
+      "/home/mxr/Documents/localRepo/Weighin/.stage6-cli/stellar",
+      "contract",
+      "optimize",
+      "--wasm",
+      "/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/docs/experiments/external-soroban-forge/provenance-checks/original-unoptimized.wasm",
+      "--wasm-out",
+      "/home/mxr/Documents/localRepo/Weighin/.stage6b-work/temp-system-temp-2.wasm"
+    ],
+    "TMPDIR": null,
+    "exit": 0,
+    "sha256": "f6edc17c367984295ce7007e4099d45982d84f5fdbffae899492d0e6c547c953",
+    "bytes": 40912
+  },
+  {
+    "mode": "system-temp",
+    "run": 3,
+    "command": [
+      "/home/mxr/Documents/localRepo/Weighin/.stage6-cli/stellar",
+      "contract",
+      "optimize",
+      "--wasm",
+      "/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/docs/experiments/external-soroban-forge/provenance-checks/original-unoptimized.wasm",
+      "--wasm-out",
+      "/home/mxr/Documents/localRepo/Weighin/.stage6b-work/temp-system-temp-3.wasm"
+    ],
+    "TMPDIR": null,
+    "exit": 0,
+    "sha256": "f6edc17c367984295ce7007e4099d45982d84f5fdbffae899492d0e6c547c953",
+    "bytes": 40912
+  },
+  {
+    "mode": "system-temp",
+    "run": 4,
+    "command": [
+      "/home/mxr/Documents/localRepo/Weighin/.stage6-cli/stellar",
+      "contract",
+      "optimize",
+      "--wasm",
+      "/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/docs/experiments/external-soroban-forge/provenance-checks/original-unoptimized.wasm",
+      "--wasm-out",
+      "/home/mxr/Documents/localRepo/Weighin/.stage6b-work/temp-system-temp-4.wasm"
+    ],
+    "TMPDIR": null,
+    "exit": 0,
+    "sha256": "f6edc17c367984295ce7007e4099d45982d84f5fdbffae899492d0e6c547c953",
+    "bytes": 40912
+  },
+  {
+    "mode": "system-temp",
+    "run": 5,
+    "command": [
+      "/home/mxr/Documents/localRepo/Weighin/.stage6-cli/stellar",
+      "contract",
+      "optimize",
+      "--wasm",
+      "/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/docs/experiments/external-soroban-forge/provenance-checks/original-unoptimized.wasm",
+      "--wasm-out",
+      "/home/mxr/Documents/localRepo/Weighin/.stage6b-work/temp-system-temp-5.wasm"
+    ],
+    "TMPDIR": null,
+    "exit": 0,
+    "sha256": "f6edc17c367984295ce7007e4099d45982d84f5fdbffae899492d0e6c547c953",
+    "bytes": 40912
+  },
+  {
+    "mode": "workspace-temp",
+    "run": 1,
+    "command": [
+      "/home/mxr/Documents/localRepo/Weighin/.stage6-cli/stellar",
+      "contract",
+      "optimize",
+      "--wasm",
+      "/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/docs/experiments/external-soroban-forge/provenance-checks/original-unoptimized.wasm",
+      "--wasm-out",
+      "/home/mxr/Documents/localRepo/Weighin/.stage6b-work/temp-workspace-temp-1.wasm"
+    ],
+    "TMPDIR": "/home/mxr/Documents/localRepo/Weighin/.stage6b-work",
+    "exit": 0,
+    "sha256": "103874c717632bb9b51d3ff6effc9869433fcbdf8e3c719c927eb7b6aa14f398",
+    "bytes": 40904
+  },
+  {
+    "mode": "workspace-temp",
+    "run": 2,
+    "command": [
+      "/home/mxr/Documents/localRepo/Weighin/.stage6-cli/stellar",
+      "contract",
+      "optimize",
+      "--wasm",
+      "/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/docs/experiments/external-soroban-forge/provenance-checks/original-unoptimized.wasm",
+      "--wasm-out",
+      "/home/mxr/Documents/localRepo/Weighin/.stage6b-work/temp-workspace-temp-2.wasm"
+    ],
+    "TMPDIR": "/home/mxr/Documents/localRepo/Weighin/.stage6b-work",
+    "exit": 0,
+    "sha256": "103874c717632bb9b51d3ff6effc9869433fcbdf8e3c719c927eb7b6aa14f398",
+    "bytes": 40904
+  },
+  {
+    "mode": "workspace-temp",
+    "run": 3,
+    "command": [
+      "/home/mxr/Documents/localRepo/Weighin/.stage6-cli/stellar",
+      "contract",
+      "optimize",
+      "--wasm",
+      "/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/docs/experiments/external-soroban-forge/provenance-checks/original-unoptimized.wasm",
+      "--wasm-out",
+      "/home/mxr/Documents/localRepo/Weighin/.stage6b-work/temp-workspace-temp-3.wasm"
+    ],
+    "TMPDIR": "/home/mxr/Documents/localRepo/Weighin/.stage6b-work",
+    "exit": 0,
+    "sha256": "103874c717632bb9b51d3ff6effc9869433fcbdf8e3c719c927eb7b6aa14f398",
+    "bytes": 40904
+  },
+  {
+    "mode": "workspace-temp",
+    "run": 4,
+    "command": [
+      "/home/mxr/Documents/localRepo/Weighin/.stage6-cli/stellar",
+      "contract",
+      "optimize",
+      "--wasm",
+      "/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/docs/experiments/external-soroban-forge/provenance-checks/original-unoptimized.wasm",
+      "--wasm-out",
+      "/home/mxr/Documents/localRepo/Weighin/.stage6b-work/temp-workspace-temp-4.wasm"
+    ],
+    "TMPDIR": "/home/mxr/Documents/localRepo/Weighin/.stage6b-work",
+    "exit": 0,
+    "sha256": "103874c717632bb9b51d3ff6effc9869433fcbdf8e3c719c927eb7b6aa14f398",
+    "bytes": 40904
+  },
+  {
+    "mode": "workspace-temp",
+    "run": 5,
+    "command": [
+      "/home/mxr/Documents/localRepo/Weighin/.stage6-cli/stellar",
+      "contract",
+      "optimize",
+      "--wasm",
+      "/home/mxr/Documents/localRepo/Weighin/.stage6-delivery/docs/experiments/external-soroban-forge/provenance-checks/original-unoptimized.wasm",
+      "--wasm-out",
+      "/home/mxr/Documents/localRepo/Weighin/.stage6b-work/temp-workspace-temp-5.wasm"
+    ],
+    "TMPDIR": "/home/mxr/Documents/localRepo/Weighin/.stage6b-work",
+    "exit": 0,
+    "sha256": "103874c717632bb9b51d3ff6effc9869433fcbdf8e3c719c927eb7b6aa14f398",
+    "bytes": 40904
+  }
+]

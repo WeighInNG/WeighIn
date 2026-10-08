@@ -1,0 +1,44 @@
+[
+  {
+    "directory": "/tmp",
+    "requested_bytes": 45889,
+    "write_return": 45889,
+    "errno": 122,
+    "error": "[Errno 122] Disk quota exceeded",
+    "actual_bytes": 0
+  },
+  {
+    "directory": "/tmp",
+    "requested_bytes": 40912,
+    "write_return": 40912,
+    "errno": 122,
+    "error": "[Errno 122] Disk quota exceeded",
+    "actual_bytes": 0
+  },
+  {
+    "directory": "/tmp",
+    "requested_bytes": 65536,
+    "write_return": 65536,
+    "errno": 122,
+    "error": "[Errno 122] Disk quota exceeded",
+    "actual_bytes": 0
+  },
+  {
+    "directory": "/home/mxr/Documents/localRepo/Weighin/.stage6b-work",
+    "requested_bytes": 45889,
+    "write_return": 45889,
+    "actual_bytes": 45889
+  },
+  {
+    "directory": "/home/mxr/Documents/localRepo/Weighin/.stage6b-work",
+    "requested_bytes": 40912,
+    "write_return": 40912,
+    "actual_bytes": 40912
+  },
+  {
+    "directory": "/home/mxr/Documents/localRepo/Weighin/.stage6b-work",
+    "requested_bytes": 65536,
+    "write_return": 65536,
+    "actual_bytes": 65536
+  }
+]

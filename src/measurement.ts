@@ -1,7 +1,16 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as crypto from "crypto";
+import { parseFixtures } from "./identity";
+import { ensureAccountReady } from "./account";
 import { validateLargeInt } from "./config";
+import {
+  measureInvocation,
+  resolveSimulationHelper,
+  ComputeProvenance,
+  SimulationOutput,
+  ResourceLimits,
+} from "./simulation";
 import {
   xdr,
   nativeToScVal,
@@ -16,10 +25,17 @@ import {
 } from "@stellar/stellar-sdk";
 
 const DEFAULT_RPC_URL = "http://localhost:8000/rpc";
+const NETWORK_PASSPHRASE = "Standalone Network ; February 2017";
 
+/** Schema 4 adds audited consumption and per-metric limit provenance. */
 export interface MetricValue {
-  consumed: number;
-  limit: number;
+  availability?: "measured" | "unavailable";
+  consumed: number | null;
+  limit: number | null;
+  reason?: string;
+  source?: string;
+  limit_source?: string;
+  limit_reason?: string;
 }
 
 export interface Metrics {
@@ -38,11 +54,19 @@ export interface Metrics {
 
 export interface BenchmarkResult {
   function_name: string;
+  /** Stable configured case identity; absent only in legacy results. */
+  case_id?: string;
   metrics: Metrics;
   wasm_sha256: string;
+  provenance?: ComputeProvenance;
 }
 
 export interface ContractBenchmark {
+  /** Versions 2–4 separate logical comparison identity from deployment identity. */
+  schema_version?: 2 | 3 | 4;
+  fixture_id?: string;
+  logical_id?: string;
+  /** Runtime address, never the comparison key for logical results. */
   contract_id: string;
   git_commit: string;
   soroban_sdk_version: string;
@@ -50,27 +74,126 @@ export interface ContractBenchmark {
   benchmarks: BenchmarkResult[];
 }
 
-import {
-  InvocationArg,
-  InvocationSpec,
-  ContractSpec,
-  FixturesSpec,
-  FixturesSpecSchema,
-  formatZodError,
-} from "./config";
+export interface InvocationArg {
+  type: string;
+  value: any;
+}
+
+export interface InvocationSpec {
+  id?: string;
+  function_name: string;
+  args: InvocationArg[];
+}
+
+export interface ContractSpec {
+  id?: string;
+  wasm_path: string;
+  invocations: InvocationSpec[];
+}
+
+export interface FixturesSpec {
+  id?: string;
+  contracts: ContractSpec[];
+}
+
+/** Protocol-28 mapping, audited against the pinned host and RPC-matched helper.
+ * IO byte adjustment is exactly identity in this helper's default configuration.
+ * Footprint sizes are distinct access keys, not counts of host read/write calls.
+ */
+export function metricsFromSimulation(
+  output: SimulationOutput,
+  limits: ResourceLimits,
+): Metrics {
+  const measured = (
+    consumed: number,
+    limit: number,
+    source: string,
+    limit_source: string,
+  ): MetricValue => ({
+    availability: "measured",
+    consumed,
+    limit,
+    source,
+    limit_source,
+  });
+  const unavailable = (reason: string): MetricValue => ({
+    availability: "unavailable",
+    consumed: null,
+    limit: null,
+    reason,
+  });
+  const io = "ConfigSettingContractLedgerCostV0";
+  const eventBytes =
+    output.contract_events_xdr.reduce(
+      (sum, event) =>
+        sum + xdr.ContractEvent.fromXDR(event, "base64").toXDR().length,
+      0,
+    ) + xdr.ScVal.fromXDR(output.retval_xdr, "base64").toXDR().length;
+  return {
+    cpu_instructions: measured(
+      output.cpu_instructions_consumed,
+      limits.cpu_instructions,
+      "soroban-simulation.simulated_instructions",
+      "ConfigSettingContractComputeV0.txMaxInstructions",
+    ),
+    memory_bytes: measured(
+      output.memory_bytes_consumed,
+      limits.memory_bytes,
+      "soroban-simulation.simulated_memory",
+      "ConfigSettingContractComputeV0.txMemoryLimit",
+    ),
+    ledger_read_entries: measured(
+      output.read_only_keys.length + output.read_write_keys.length,
+      limits.footprint_entries,
+      "SorobanResources.footprint.readOnly.length + readWrite.length",
+      "ConfigSettingContractLedgerCostExtV0.txMaxFootprintEntries",
+    ),
+    ledger_read_bytes: measured(
+      output.disk_read_bytes,
+      limits.disk_read_bytes,
+      "SorobanResources.diskReadBytes (identity adjustment)",
+      `${io}.txMaxDiskReadBytes`,
+    ),
+    ledger_write_entries: measured(
+      output.read_write_keys.length,
+      limits.write_entries,
+      "SorobanResources.footprint.readWrite.length",
+      `${io}.txMaxWriteLedgerEntries`,
+    ),
+    ledger_write_bytes: measured(
+      output.write_bytes,
+      limits.write_bytes,
+      "SorobanResources.writeBytes (identity adjustment)",
+      `${io}.txMaxWriteBytes`,
+    ),
+    historical_data_read_bytes: unavailable(
+      "Protocol 28 exposes historical-data fees, not a historical read consumption resource",
+    ),
+    contract_data_hard_limit: unavailable(
+      "No verified instance-only post-invocation size and corresponding limit mapping",
+    ),
+    tx_size_bytes: unavailable(
+      "Simulation estimates a maximum envelope; no signed benchmark transaction is submitted",
+    ),
+    events_count: {
+      availability: "measured",
+      consumed: output.contract_events_xdr.length,
+      limit: null,
+      source: "successful non-diagnostic ContractEvents.length",
+      limit_reason: "Protocol 28 has no independent event-count cap",
+    },
+    event_data_bytes: measured(
+      eventBytes,
+      limits.events_and_return_bytes,
+      "sum(successful non-diagnostic ContractEvent XDR bytes) + return ScVal XDR bytes",
+      "ConfigSettingContractEventsV0.txMaxContractEventsSizeBytes",
+    ),
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
-
-/** Derive the friendbot base URL from the RPC URL.
- *  Strips a trailing /rpc segment and appends /friendbot.
- *  e.g. http://localhost:8000/rpc -> http://localhost:8000/friendbot
- */
-function friendbotUrl(rpcUrl: string, publicKey: string): string {
-  const base = rpcUrl.replace(/\/rpc\/?$/, "");
-  return `${base}/friendbot?addr=${encodeURIComponent(publicKey)}`;
-}
 
 // Convert native type/value to ScVal
 export function toScVal(arg: InvocationArg): xdr.ScVal {
@@ -93,65 +216,51 @@ export function toScVal(arg: InvocationArg): xdr.ScVal {
     case "i128": {
       const err = validateLargeInt(type, val);
       if (err) throw new Error(err);
-      try {
-        return nativeToScVal(BigInt(val), { type });
-      } catch (e: any) {
-        throw new Error(`Invalid value for ${type}: ${e.message}`);
-      }
+      return nativeToScVal(BigInt(val), { type });
     }
     case "address": {
-      if (typeof val !== "string") {
-        throw new Error(`Invalid value for address: must be string`);
-      }
+      if (typeof val !== "string")
+        throw new Error("Invalid value for address: must be string");
       try {
         return Address.fromString(val).toScVal();
-      } catch (e: any) {
-        throw new Error(`Invalid value for address: ${e.message}`);
+      } catch (error: any) {
+        throw new Error(`Invalid value for address: ${error.message}`);
       }
     }
     case "bytes": {
-      if (typeof val !== "string") {
-        throw new Error(`Invalid value for bytes: must be hex string`);
-      }
-      if (!/^[0-9a-fA-F]*$/.test(val)) {
-        throw new Error(`Invalid value for bytes: must be valid hex string`);
-      }
-      if (val.length % 2 !== 0) {
+      if (typeof val !== "string")
+        throw new Error("Invalid value for bytes: must be valid hex");
+      if (!/^[0-9a-fA-F]*$/.test(val))
+        throw new Error("Invalid value for bytes: must be valid hex");
+      if (val.length % 2 !== 0)
         throw new Error(
-          `Invalid value for bytes: hex string must have even length`,
+          "Invalid value for bytes: hex string must have even length",
         );
-      }
       return xdr.ScVal.scvBytes(Buffer.from(val, "hex"));
     }
     case "vec": {
-      if (!Array.isArray(val)) {
-        throw new Error(`Invalid value for vec: must be array`);
-      }
+      if (!Array.isArray(val))
+        throw new Error("Invalid value for vec: must be array");
       return xdr.ScVal.scvVec(
-        val.map((item: any, i) => {
-          if (!item || typeof item.type !== "string" || !("value" in item)) {
-            throw new Error(`Invalid vector element at index ${i}`);
-          }
+        val.map((item, index) => {
+          if (!item || typeof item.type !== "string" || !("value" in item))
+            throw new Error(`Invalid vector element at index ${index}`);
           return toScVal(item as InvocationArg);
         }),
       );
     }
     case "map": {
-      if (!Array.isArray(val)) {
-        throw new Error(
-          `Invalid value for map: must be array of {key, value} objects`,
-        );
-      }
-      const mapEntries = val.map((entry: any, i) => {
-        if (!entry || !entry.key || !entry.value) {
-          throw new Error(`Invalid map entry at index ${i}`);
-        }
+      if (!Array.isArray(val))
+        throw new Error("Invalid value for map: must be array");
+      const entries = val.map((entry, index) => {
+        if (!entry?.key || !entry?.value)
+          throw new Error(`Invalid map entry at index ${index}`);
         return new xdr.ScMapEntry({
-          key: toScVal(entry.key as InvocationArg),
-          val: toScVal(entry.value as InvocationArg),
+          key: toScVal(entry.key),
+          val: toScVal(entry.value),
         });
       });
-      return scvSortedMap(mapEntries);
+      return scvSortedMap(entries);
     }
     default:
       throw new Error(`Unsupported argument type: ${arg.type}`);
@@ -159,11 +268,7 @@ export function toScVal(arg: InvocationArg): xdr.ScVal {
 }
 
 // Deterministically calculate contract ID
-function calculateContractId(
-  deployerAddress: string,
-  salt: Buffer,
-  networkPassphrase: string,
-): string {
+function calculateContractId(deployerAddress: string, salt: Buffer): string {
   const addressSc = Address.fromString(deployerAddress).toScAddress();
   const preimage = xdr.ContractIdPreimage.contractIdPreimageFromAddress(
     new xdr.ContractIdPreimageFromAddress({
@@ -172,7 +277,7 @@ function calculateContractId(
     }),
   );
 
-  const networkId = hash(Buffer.from(networkPassphrase));
+  const networkId = hash(Buffer.from(NETWORK_PASSPHRASE));
   const hashIdPreimage = xdr.HashIdPreimage.envelopeTypeContractId(
     new xdr.HashIdPreimageContractId({
       networkId: networkId,
@@ -192,30 +297,20 @@ function calculateContractId(
  * @param rpcUrl   Used to derive the friendbot URL for initial funding.
  */
 async function getOrInitAccount(
-  server: rpc.Server,
   keyFile: string,
   rpcUrl: string,
 ): Promise<Keypair> {
+  let keypair: Keypair;
   if (fs.existsSync(keyFile)) {
     const secret = fs.readFileSync(keyFile, "utf8").trim();
-    return Keypair.fromSecret(secret);
+    keypair = Keypair.fromSecret(secret);
+  } else {
+    keypair = Keypair.random();
+    fs.writeFileSync(keyFile, keypair.secret(), { mode: 0o600 });
   }
 
-  const keypair = Keypair.random();
-  fs.writeFileSync(keyFile, keypair.secret(), { mode: 0o600 });
+  await ensureAccountReady(rpcUrl, keypair.publicKey());
 
-  console.log(
-    `Funding deployer account: ${keypair.publicKey()} via friendbot...`,
-  );
-  const url = friendbotUrl(rpcUrl, keypair.publicKey());
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error(
-      `Friendbot funding failed (${res.status}): ${res.statusText}`,
-    );
-  }
-  // Wait for ledger inclusion
-  await new Promise((resolve) => setTimeout(resolve, 3000));
   return keypair;
 }
 
@@ -255,62 +350,31 @@ async function isContractDeployed(
   }
 }
 
-// Measure instance size from stateChanges or fallback to getLedgerEntries
-async function getInstanceSize(
-  server: rpc.Server,
-  contractId: string,
-  stateChanges?: rpc.Api.LedgerEntryChange[],
-): Promise<number> {
-  if (stateChanges) {
-    for (const change of stateChanges) {
-      if (change.after) {
-        const val = change.after.data();
-        if (val.switch() === xdr.LedgerEntryType.contractData()) {
-          const contractData = val.contractData();
-          const contractAddressStr = Address.fromScAddress(
-            contractData.contract(),
-          ).toString();
-          if (
-            contractAddressStr === contractId &&
-            contractData.key().switch() ===
-              xdr.ScValType.scvLedgerKeyContractInstance()
-          ) {
-            return change.after.toXDR().length;
-          }
-        }
-      }
-    }
-  }
-
-  try {
-    const contractScAddress = Address.fromString(contractId).toScAddress();
-    const ledgerKey = xdr.LedgerKey.contractData(
-      new xdr.LedgerKeyContractData({
-        contract: contractScAddress,
-        key: xdr.ScVal.scvLedgerKeyContractInstance(),
-        durability: xdr.ContractDataDurability.persistent(),
-      }),
-    );
-    const res = await server.getLedgerEntries(ledgerKey);
-    if (res.entries && res.entries.length > 0) {
-      return res.entries[0].val.toXDR().length;
-    }
-  } catch {}
-
-  return 0;
-}
-
 // ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
 
 export interface RunMeasurementOptions {
+  /** Absolute path to the fixtures JSON file. wasm_path entries are resolved
+   *  relative to this file's directory. */
   fixturesPath: string;
+  /** Stable workspace-relative fixture path, identical in BASE and HEAD.
+   * Defaults to fixturesPath relative to the current working directory.
+   * A configured top-level fixture id takes precedence.
+   */
+  fixtureId?: string;
   gitCommit: string;
   sdkVersion: string;
+  /** Soroban RPC endpoint. Defaults to localhost:8000/rpc. */
   rpcUrl?: string;
+  /**
+   * Absolute path to a file used to persist the deployer keypair between
+   * base and head runs so both use the same funded on-chain account.
+   * Defaults to <fixturesDir>/.weighin-temp-key
+   */
   keyFile?: string;
-  skipBuild?: boolean;
+  /** Executable override; otherwise build the bundled pinned helper on Linux x64. */
+  helperPath?: string;
 }
 
 export async function runMeasurement(
@@ -336,48 +400,35 @@ export async function runMeasurement(
   const fixturesDir = path.dirname(path.resolve(opts.fixturesPath));
   const keyFile = opts.keyFile ?? path.join(fixturesDir, ".weighin-temp-key");
 
-  const server = new rpc.Server(effectiveRpcUrl, { allowHttp: true });
-  let networkPassphrase = "";
-  try {
-    const net = await server.getNetwork();
-    networkPassphrase = net.passphrase;
-  } catch (err: any) {
-    throw new Error(
-      `Failed to fetch network info from RPC ${effectiveRpcUrl}: ${err.message}`,
-    );
-  }
-  const deployer = await getOrInitAccount(server, keyFile, effectiveRpcUrl);
-  const deployerAddress = Address.fromString(deployer.publicKey());
-
   const rawFixtures = fs.readFileSync(opts.fixturesPath, "utf8");
-  let parsed;
-  try {
-    parsed = JSON.parse(rawFixtures);
-  } catch (e: any) {
-    throw new Error(
-      `Failed to parse JSON in ${opts.fixturesPath}: ${e.message}`,
-    );
-  }
-  const result = FixturesSpecSchema.safeParse(parsed);
-  if (!result.success) {
-    throw new Error(formatZodError(result.error, opts.fixturesPath));
-  }
-  const fixturesSpec: FixturesSpec = result.data;
+  const fixturesSpec = parseFixtures(
+    rawFixtures,
+    opts.fixtureId ??
+      path.relative(process.cwd(), path.resolve(opts.fixturesPath)),
+  );
+
+  const server = new rpc.Server(effectiveRpcUrl, { allowHttp: true });
+  const deployer = await getOrInitAccount(keyFile, effectiveRpcUrl);
+  const deployerAddress = Address.fromString(deployer.publicKey());
 
   const results: ContractBenchmark[] = [];
 
   for (const contractSpec of fixturesSpec.contracts) {
-    // Resolve wasm_path relative to the fixtures file's directory
-    const wasmPath = path.resolve(fixturesDir, contractSpec.wasm_path);
+    let wasmPath = path.resolve(fixturesDir, contractSpec.wasm_path);
     if (!fs.existsSync(wasmPath)) {
-      if (opts.skipBuild) {
+      let altPath = "";
+      if (wasmPath.includes("wasm32-unknown-unknown")) {
+        altPath = wasmPath.replace("wasm32-unknown-unknown", "wasm32v1-none");
+      } else if (wasmPath.includes("wasm32v1-none")) {
+        altPath = wasmPath.replace("wasm32v1-none", "wasm32-unknown-unknown");
+      }
+      if (altPath && fs.existsSync(altPath)) {
+        wasmPath = altPath;
+      } else {
         throw new Error(
-          `skip-build is enabled, but the expected precompiled WASM could not be found.\nCheck the WASM path referenced by the fixture configuration.\nExpected at: ${wasmPath}`,
+          `WASM not found: ${wasmPath}\nBuild the contract before running measurements.`,
         );
       }
-      throw new Error(
-        `WASM not found: ${wasmPath}\nBuild the contract before running measurements.`,
-      );
     }
 
     const wasmBytes = fs.readFileSync(wasmPath);
@@ -389,11 +440,7 @@ export async function runMeasurement(
 
     // Deterministic salt based on WASM hash — same WASM always gets same contract ID
     const salt = crypto.createHash("sha256").update(wasmHash).digest();
-    const contractId = calculateContractId(
-      deployer.publicKey(),
-      salt,
-      networkPassphrase,
-    );
+    const contractId = calculateContractId(deployer.publicKey(), salt);
 
     console.log(`Contract ID: ${contractId}`);
     const deployed = await isContractDeployed(server, contractId);
@@ -405,13 +452,20 @@ export async function runMeasurement(
       // 1. Upload WASM
       const uploadTx = new TransactionBuilder(account, {
         fee: "1000000",
-        networkPassphrase,
+        networkPassphrase: NETWORK_PASSPHRASE,
       })
         .addOperation(Operation.uploadContractWasm({ wasm: wasmBytes }))
         .setTimeout(30)
         .build();
 
-      const preparedUpload = await server.prepareTransaction(uploadTx);
+      let preparedUpload;
+      try {
+        preparedUpload = await server.prepareTransaction(uploadTx);
+      } catch (err: any) {
+        console.error("DEBUG: Full prepareTransaction error:", err);
+        console.dir(err, { depth: null });
+        throw err;
+      }
       preparedUpload.sign(deployer);
       const uploadSend = await server.sendTransaction(preparedUpload);
       const uploadRes = await waitForTransaction(server, uploadSend.hash);
@@ -425,7 +479,7 @@ export async function runMeasurement(
       // 2. Create contract instance
       const createTx = new TransactionBuilder(account, {
         fee: "1000000",
-        networkPassphrase,
+        networkPassphrase: NETWORK_PASSPHRASE,
       })
         .addOperation(
           Operation.createCustomContract({
@@ -459,7 +513,7 @@ export async function runMeasurement(
 
       const invokeTx = new TransactionBuilder(account, {
         fee: "1000000",
-        networkPassphrase,
+        networkPassphrase: NETWORK_PASSPHRASE,
       })
         .addOperation(
           Operation.invokeContractFunction({
@@ -478,75 +532,32 @@ export async function runMeasurement(
         );
       }
 
-      const simSuccess = simRes as any;
-
-      const transactionData = simSuccess.transactionData;
-      const parsedData = transactionData.build();
-      const resources = parsedData.resources();
-      const footprint = resources.footprint();
-
-      const readEntries = footprint.readOnly().length;
-      const writeEntries = footprint.readWrite().length;
-      const readBytes = resources.diskReadBytes();
-      const writeBytes = resources.writeBytes();
-
-      const cpuConsumed = Number(simSuccess.cost.cpuInsns);
-      const memConsumed = Number(simSuccess.cost.memBytes);
-
-      const eventsCount = simSuccess.events.length;
-      const eventBytes = simSuccess.events.reduce((acc: number, e: any) => {
-        const event = e.event();
-        if (event.type().name !== "contract") return acc;
-        return acc + event.toXDR().length;
-      }, simSuccess.result?.retval.toXDR().length || 0);
-
-      // Transaction size: prepare to get the fully-assembled envelope
-      const preparedTx = await server.prepareTransaction(invokeTx);
-      const txSizeBytes = Buffer.from(preparedTx.toEnvelope().toXDR()).length;
-
-      // Contract instance size
-      const stateChanges = simSuccess.stateChanges || [];
-      const contractDataHardLimit = await getInstanceSize(
-        server,
-        contractId,
-        stateChanges,
+      if (!rpc.Api.isSimulationSuccess(simRes)) {
+        throw new Error(
+          `Simulation did not return transaction data for ${invokeSpec.function_name}`,
+        );
+      }
+      const helperPath = await resolveSimulationHelper(opts.helperPath);
+      const { output, provenance, limits } = await measureInvocation(
+        effectiveRpcUrl,
+        invokeTx,
+        helperPath,
       );
-
-      // Historical read bytes: no size limit in protocol 25 config (fee-only)
-      const historicalReadBytes = 0;
-
-      // Limits sourced from live network config (protocol 25, standalone).
-      // configSettingContractComputeV0:    txMaxInstructions=100_000_000, txMemoryLimit=41_943_040
-      // configSettingContractLedgerCostV0: txMaxReadLedgerEntries=100, txMaxReadBytes=200_000,
-      //                                    txMaxWriteLedgerEntries=50, txMaxWriteBytes=132_096
-      // configSettingContractBandwidthV0:  txMaxSizeBytes=132_096
-      // configSettingContractEventsV0:     txMaxContractEventsSizeBytes=16_384
-      // configSettingContractDataEntrySizeBytes: 65_536
-      const metrics: Metrics = {
-        cpu_instructions: { consumed: cpuConsumed, limit: 100_000_000 },
-        memory_bytes: { consumed: memConsumed, limit: 41_943_040 },
-        ledger_read_entries: { consumed: readEntries, limit: 100 },
-        ledger_read_bytes: { consumed: readBytes, limit: 200_000 },
-        ledger_write_entries: { consumed: writeEntries, limit: 50 },
-        ledger_write_bytes: { consumed: writeBytes, limit: 132_096 },
-        historical_data_read_bytes: { consumed: historicalReadBytes, limit: 0 },
-        contract_data_hard_limit: {
-          consumed: contractDataHardLimit,
-          limit: 65_536,
-        },
-        tx_size_bytes: { consumed: txSizeBytes, limit: 132_096 },
-        events_count: { consumed: eventsCount, limit: 100 },
-        event_data_bytes: { consumed: eventBytes, limit: 16_384 },
-      };
+      const metrics = metricsFromSimulation(output, limits);
 
       benchmarks.push({
         function_name: invokeSpec.function_name,
+        case_id: invokeSpec.case_id,
         metrics,
+        provenance,
         wasm_sha256: wasmSha256,
       });
     }
 
     results.push({
+      schema_version: 4,
+      fixture_id: fixturesSpec.fixture_id,
+      logical_id: contractSpec.logical_id,
       contract_id: contractId,
       git_commit: opts.gitCommit,
       soroban_sdk_version: opts.sdkVersion,

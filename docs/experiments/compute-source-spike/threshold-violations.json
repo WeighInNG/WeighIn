@@ -1,0 +1,14 @@
+[
+  {
+    "contract_id": "CDXKZLYLQ3JJBC5N2Q3SWD2HYXRVD2NNOAAOVAWHL3ROHDFXGKLUF3RK",
+    "function_name": "hello",
+    "metric": "cpu_instructions",
+    "delta": 43827,
+    "pct": 16.219066756963795,
+    "rule": "strict_zero_tolerance",
+    "message": "cpu_instructions increased by 43827 (strict zero tolerance)",
+    "fixture_id": "path:weighin-fixtures.json",
+    "logical_id": "wasm:contract/target/wasm32-unknown-unknown/release/contract_test.wasm",
+    "case_id": "args:[{\"type\":\"symbol\",\"value\":\"world\"}]"
+  }
+]

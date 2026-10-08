@@ -1,0 +1,42 @@
+{
+  "date": "2026-10-07",
+  "git_sha": "59db63a7b895dcc5ca763e3c668990fec40850fb",
+  "branch": "test/no-op-baseline",
+  "working_tree": "dirty; prior Stage 1A/1B changes present; not a committed production integration",
+  "rustc": "rustc 1.95.0 (59807616e 2026-04-14)\nbinary: rustc\ncommit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860\ncommit-date: 2026-04-14\nhost: x86_64-unknown-linux-gnu\nrelease: 1.95.0\nLLVM version: 22.1.2\n",
+  "cargo": "cargo 1.95.0 (f2d3ce0bd 2026-03-21)",
+  "node": "v22.23.2",
+  "npm": "10.9.8",
+  "contract_sdk": "25.3.1",
+  "contract_build": "Reused prior Stage 1A release WASMs built for wasm32v1-none; no fresh contract build in this spike",
+  "snapshot_ledger": 229,
+  "auth_mode": "RecordingInvocationAuthMode::recording(true, true)",
+  "host_features": [
+    "recording_mode",
+    "testutils"
+  ],
+  "helper_binary_sha256": "f550c817036175d3ef095dceef4d1ce357aa95aeb5593c9cce9c9205c74af986",
+  "artifacts_sha256": {
+    "base-input.json": "8a99b7cb5b4939bfa4852361f31d8dd5d563d10943a07f2d66d2bf7675b7d1e2",
+    "base-leeway-output.json": "c9f7e60c9d986f417be435fe4c6da79dbfbc00e088328afeb9acd88ddb4e2777",
+    "base-output.json": "7f623cc7333bfd28a39b3a9ad38f6789e29c6f6d4c29322a9d1f3301d1154fb3",
+    "base-rpc.json": "f2e866b278d3934938561f10ef4a55a407aaa3334b4e0357dabb05818850073c",
+    "environment.json": "a386d2e42a22ded73faa7d1ab48c845f3f37797a925eb03c77dcc5172e47f4b1",
+    "head-input.json": "ae967bc8fa9038f1b6f6d435d48d97cc35ff64c581d7c44763f0e354fc09a715",
+    "head-leeway-output.json": "69c50fbc4b0eca670b7d04cb28e57e87554ace3f4e3ac7772a4fa6ee7f3d2a59",
+    "head-output.json": "982df206d8e9e98d8f8bca7aeb2fc64603b969384f8450aab4504f9c82bb475b",
+    "head-rpc.json": "e9796bc4ea5f1a4510a6b3fb9b08786c8f539c189e32711d9b6eb2280c68f44e",
+    "helper-Cargo.lock": "2de3bcc71b9ab9e7d0b53aedff4ad44207e99ea2ca5cf39164651005a1dbdf77",
+    "helper-Cargo.toml": "dc8973c649ded72bec496222510a8d6d06471eeb3a60b9a24f29555dabb58121",
+    "helper-source.rs": "ea19b017213206f425213e67930848198991c61c4554bb38b29b2d32a8198aa1",
+    "negative-cases.json": "a9ae9f12c36939666f35e57badcac52a6e9774497038b937966776162ad82dec",
+    "original-verification-harness.cjs": "71183f686bb07fba691941bc2a4f133c38202d5eef2877716061915db65f90d4",
+    "provenance.json": "5cfc480b68cab8ecae3bd5794efd66bfdaa19c0ac2a0df54800078a680f7664e",
+    "repeatability.json": "bdc8933d5e500c415f5f24476fbf3b60b2e2e1decfebdc3d1210da5d5b7ee12e",
+    "replay.py": "f59c91eee7a2073e12c47f91fdb503185ef36da445315bd4692d9ec88f038d2d",
+    "snapshot-raw.json": "cb5c9fb0b614ac65fdacc9848240143027921a3d284f708d7f60bd6016c07bff",
+    "threshold-diff-input.json": "b84b5aafa73758fdd015afc7918f7d42452373ce3e0187a565940fcec33c4102",
+    "threshold-violations.json": "cc78eb06b3754fd94887d4a662673241e4fa9c257f4b384766ff59e48ab02310",
+    "verification.json": "2176ce97200333517f67302b94ea9f2b4d1fda4fe7177bbd4090cf31bb112e88"
+  }
+}

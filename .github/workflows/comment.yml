@@ -15,15 +15,15 @@ jobs:
       actions: read
 
     steps:
+      - name: Checkout Action
+        uses: actions/checkout@v4
+
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
           name: weighin-artifacts
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Checkout Action
-        uses: actions/checkout@v4
 
       - name: Post Comment
         uses: ./comment

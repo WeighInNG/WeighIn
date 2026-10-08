@@ -1,0 +1,4 @@
+{
+  "message": "RPC getLedgerEntries failed: {\"code\":-32603,\"message\":\"could not query captive core: http request failed with non-200 status code (404)\"}",
+  "stack": "Error: RPC getLedgerEntries failed: {\"code\":-32603,\"message\":\"could not query captive core: http request failed with non-200 status code (404)\"}\n    at callRpc (/home/mxr/Documents/localRepo/Weighin/dist/simulation.js:177:15)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async measureInvocation (/home/mxr/Documents/localRepo/Weighin/dist/simulation.js:203:48)\n    at async runMeasurement (/home/mxr/Documents/localRepo/Weighin/dist/measurement.js:302:52)\n    at async main (/home/mxr/Documents/localRepo/Weighin/tests/experiments/verify-repeatability.cjs:132:3)"
+}

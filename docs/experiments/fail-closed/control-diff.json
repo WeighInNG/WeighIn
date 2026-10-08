@@ -1,0 +1,352 @@
+{
+  "contracts": [
+    {
+      "fixture_id": "id:integration-suite",
+      "logical_id": "id:greeting",
+      "contract_id": "CBV7SZ2R4RAPRAFOC3CGKGQYMWFJE2YVA4BFMWBATCGO5HXTXJI36GFB",
+      "base_contract_id": "CBV7SZ2R4RAPRAFOC3CGKGQYMWFJE2YVA4BFMWBATCGO5HXTXJI36GFB",
+      "head_contract_id": "CBV7SZ2R4RAPRAFOC3CGKGQYMWFJE2YVA4BFMWBATCGO5HXTXJI36GFB",
+      "base_commit": "base",
+      "head_commit": "base",
+      "functions": [
+        {
+          "function_name": "hello",
+          "case_id": "id:world",
+          "metrics": [
+            {
+              "key": "cpu_instructions",
+              "base": {
+                "availability": "measured",
+                "consumed": 270219,
+                "limit": 400000000,
+                "source": "soroban-simulation.simulated_instructions"
+              },
+              "head": {
+                "availability": "measured",
+                "consumed": 270219,
+                "limit": 400000000,
+                "source": "soroban-simulation.simulated_instructions"
+              },
+              "availability": "comparable",
+              "delta": 0,
+              "pct": 0,
+              "regression": false
+            },
+            {
+              "key": "memory_bytes",
+              "base": {
+                "availability": "measured",
+                "consumed": 1125761,
+                "limit": 41943040,
+                "source": "soroban-simulation.simulated_memory"
+              },
+              "head": {
+                "availability": "measured",
+                "consumed": 1125761,
+                "limit": 41943040,
+                "source": "soroban-simulation.simulated_memory"
+              },
+              "availability": "comparable",
+              "delta": 0,
+              "pct": 0,
+              "regression": false
+            },
+            {
+              "key": "ledger_read_entries",
+              "base": {
+                "availability": "unavailable",
+                "consumed": null,
+                "limit": null,
+                "reason": "Consumption/limit semantics are not yet verified for this metric"
+              },
+              "head": {
+                "availability": "unavailable",
+                "consumed": null,
+                "limit": null,
+                "reason": "Consumption/limit semantics are not yet verified for this metric"
+              },
+              "availability": "unavailable",
+              "reason": "BASE: Consumption/limit semantics are not yet verified for this metric; HEAD: Consumption/limit semantics are not yet verified for this metric",
+              "delta": null,
+              "pct": null,
+              "regression": false
+            },
+            {
+              "key": "ledger_read_bytes",
+              "base": {
+                "availability": "unavailable",
+                "consumed": null,
+                "limit": null,
+                "reason": "Consumption/limit semantics are not yet verified for this metric"
+              },
+              "head": {
+                "availability": "unavailable",
+                "consumed": null,
+                "limit": null,
+                "reason": "Consumption/limit semantics are not yet verified for this metric"
+              },
+              "availability": "unavailable",
+              "reason": "BASE: Consumption/limit semantics are not yet verified for this metric; HEAD: Consumption/limit semantics are not yet verified for this metric",
+              "delta": null,
+              "pct": null,
+              "regression": false
+            },
+            {
+              "key": "ledger_write_entries",
+              "base": {
+                "availability": "unavailable",
+                "consumed": null,
+                "limit": null,
+                "reason": "Consumption/limit semantics are not yet verified for this metric"
+              },
+              "head": {
+                "availability": "unavailable",
+                "consumed": null,
+                "limit": null,
+                "reason": "Consumption/limit semantics are not yet verified for this metric"
+              },
+              "availability": "unavailable",
+              "reason": "BASE: Consumption/limit semantics are not yet verified for this metric; HEAD: Consumption/limit semantics are not yet verified for this metric",
+              "delta": null,
+              "pct": null,
+              "regression": false
+            },
+            {
+              "key": "ledger_write_bytes",
+              "base": {
+                "availability": "unavailable",
+                "consumed": null,
+                "limit": null,
+                "reason": "Consumption/limit semantics are not yet verified for this metric"
+              },
+              "head": {
+                "availability": "unavailable",
+                "consumed": null,
+                "limit": null,
+                "reason": "Consumption/limit semantics are not yet verified for this metric"
+              },
+              "availability": "unavailable",
+              "reason": "BASE: Consumption/limit semantics are not yet verified for this metric; HEAD: Consumption/limit semantics are not yet verified for this metric",
+              "delta": null,
+              "pct": null,
+              "regression": false
+            },
+            {
+              "key": "historical_data_read_bytes",
+              "base": {
+                "availability": "unavailable",
+                "consumed": null,
+                "limit": null,
+                "reason": "No verified transaction-level historical read consumption source"
+              },
+              "head": {
+                "availability": "unavailable",
+                "consumed": null,
+                "limit": null,
+                "reason": "No verified transaction-level historical read consumption source"
+              },
+              "availability": "unavailable",
+              "reason": "BASE: No verified transaction-level historical read consumption source; HEAD: No verified transaction-level historical read consumption source",
+              "delta": null,
+              "pct": null,
+              "regression": false
+            },
+            {
+              "key": "contract_data_hard_limit",
+              "base": {
+                "availability": "unavailable",
+                "consumed": null,
+                "limit": null,
+                "reason": "No verified instance-size measurement from the immutable invocation snapshot"
+              },
+              "head": {
+                "availability": "unavailable",
+                "consumed": null,
+                "limit": null,
+                "reason": "No verified instance-size measurement from the immutable invocation snapshot"
+              },
+              "availability": "unavailable",
+              "reason": "BASE: No verified instance-size measurement from the immutable invocation snapshot; HEAD: No verified instance-size measurement from the immutable invocation snapshot",
+              "delta": null,
+              "pct": null,
+              "regression": false
+            },
+            {
+              "key": "tx_size_bytes",
+              "base": {
+                "availability": "unavailable",
+                "consumed": null,
+                "limit": null,
+                "reason": "Simulation does not submit a signed benchmark transaction"
+              },
+              "head": {
+                "availability": "unavailable",
+                "consumed": null,
+                "limit": null,
+                "reason": "Simulation does not submit a signed benchmark transaction"
+              },
+              "availability": "unavailable",
+              "reason": "BASE: Simulation does not submit a signed benchmark transaction; HEAD: Simulation does not submit a signed benchmark transaction",
+              "delta": null,
+              "pct": null,
+              "regression": false
+            },
+            {
+              "key": "events_count",
+              "base": {
+                "availability": "unavailable",
+                "consumed": null,
+                "limit": null,
+                "reason": "Consumption/limit semantics are not yet verified for this metric"
+              },
+              "head": {
+                "availability": "unavailable",
+                "consumed": null,
+                "limit": null,
+                "reason": "Consumption/limit semantics are not yet verified for this metric"
+              },
+              "availability": "unavailable",
+              "reason": "BASE: Consumption/limit semantics are not yet verified for this metric; HEAD: Consumption/limit semantics are not yet verified for this metric",
+              "delta": null,
+              "pct": null,
+              "regression": false
+            },
+            {
+              "key": "event_data_bytes",
+              "base": {
+                "availability": "unavailable",
+                "consumed": null,
+                "limit": null,
+                "reason": "Consumption/limit semantics are not yet verified for this metric"
+              },
+              "head": {
+                "availability": "unavailable",
+                "consumed": null,
+                "limit": null,
+                "reason": "Consumption/limit semantics are not yet verified for this metric"
+              },
+              "availability": "unavailable",
+              "reason": "BASE: Consumption/limit semantics are not yet verified for this metric; HEAD: Consumption/limit semantics are not yet verified for this metric",
+              "delta": null,
+              "pct": null,
+              "regression": false
+            }
+          ],
+          "hasRegression": false,
+          "base_provenance": {
+            "source": "soroban-simulation",
+            "source_version": "28.0.1",
+            "protocol": 28,
+            "helper_sha256": "1e7ef88e974bd09d5b683a3e94c101dea1b9524304c7124699ae0e8d279d964c",
+            "network_id": "baefd734b8d3e48472cff83912375fedbc7573701912fe308af730180f97d74a",
+            "ledger": 61,
+            "header_sha256": "5568618567bf2ccbfbb26fe4c94323dc943667a697bd7b1484d49735b3d047ce",
+            "snapshot_sha256": "76c3049e8740f873d9fdf147200ad40641fbad4798ff12b807c65a5f318ec349",
+            "config_sha256": "89ec202f9644c9c3f5626d92532ee651a9a6f185bb2f009aca1b743e80d0fac2",
+            "compute_config_sha256": "5e0aaa432815c17b201e2eeb5591a85e2355d758dc9a3989e58d7319096cf6b5",
+            "input_sha256": "095b7c67c5b4828c1dfae743e27505bd884e5d43f298e00b1e55084680cd9397",
+            "seed": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "auth_mode": "recording(true,true)",
+            "host_features": [
+              "recording_mode",
+              "testutils"
+            ]
+          },
+          "head_provenance": {
+            "source": "soroban-simulation",
+            "source_version": "28.0.1",
+            "protocol": 28,
+            "helper_sha256": "1e7ef88e974bd09d5b683a3e94c101dea1b9524304c7124699ae0e8d279d964c",
+            "network_id": "baefd734b8d3e48472cff83912375fedbc7573701912fe308af730180f97d74a",
+            "ledger": 61,
+            "header_sha256": "5568618567bf2ccbfbb26fe4c94323dc943667a697bd7b1484d49735b3d047ce",
+            "snapshot_sha256": "76c3049e8740f873d9fdf147200ad40641fbad4798ff12b807c65a5f318ec349",
+            "config_sha256": "89ec202f9644c9c3f5626d92532ee651a9a6f185bb2f009aca1b743e80d0fac2",
+            "compute_config_sha256": "5e0aaa432815c17b201e2eeb5591a85e2355d758dc9a3989e58d7319096cf6b5",
+            "input_sha256": "095b7c67c5b4828c1dfae743e27505bd884e5d43f298e00b1e55084680cd9397",
+            "seed": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "auth_mode": "recording(true,true)",
+            "host_features": [
+              "recording_mode",
+              "testutils"
+            ]
+          }
+        }
+      ],
+      "newFunctions": [],
+      "removedFunctions": [],
+      "newBenchmarks": [],
+      "removedBenchmarks": [],
+      "hasRegression": false
+    }
+  ],
+  "hasRegression": false,
+  "newContracts": [],
+  "removedContracts": []
+}

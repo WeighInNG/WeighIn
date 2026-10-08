@@ -1,0 +1,11 @@
+{
+  "historical_wasm_sha256": "2a8c407a19d5a98d2371237783ab095c5b82ffee81633c9b7714aaad06701fd0",
+  "historical_wasm_extracted_from_captured_ledger_entry": true,
+  "bridge_head_build_hashes": [
+    "718ba18378a2d94ec7bf0c75b3813c7d0bb5b65beb2fb4c445b3a4726ecd5668",
+    "718ba18378a2d94ec7bf0c75b3813c7d0bb5b65beb2fb4c445b3a4726ecd5668"
+  ],
+  "historical_build_hash": "2a8c407a19d5a98d2371237783ab095c5b82ffee81633c9b7714aaad06701fd0",
+  "same_fresh_head_wasm_at_both_destinations": true,
+  "modern_target_build_commands": 2
+}

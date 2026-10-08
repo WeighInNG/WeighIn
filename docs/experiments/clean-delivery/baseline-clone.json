@@ -1,0 +1,8 @@
+{
+  "status": 0,
+  "stdout": "",
+  "stderr": "Cloning into '/tmp/weighin-clean-delivery-7A62Nb/baseline'...\ndone.\n",
+  "dist_present": false,
+  "node_modules_present": false,
+  "native_target_present": false
+}

@@ -1,0 +1,23 @@
+✔ real captured id:read-missing-repeat snapshot reproduces metered compute, IO and event XDR independently of instruction leeway (126.579646ms)
+✔ real captured id:noop-write snapshot reproduces metered compute, IO and event XDR independently of instruction leeway (55.858637ms)
+✔ real captured id:delete snapshot reproduces metered compute, IO and event XDR independently of instruction leeway (44.759392ms)
+✔ real captured id:event snapshot reproduces metered compute, IO and event XDR independently of instruction leeway (48.11468ms)
+✔ real captured id:classic-read snapshot reproduces metered compute, IO and event XDR independently of instruction leeway (46.329043ms)
+✔ real captured id:large-return snapshot reproduces metered compute, IO and event XDR independently of instruction leeway (45.281635ms)
+✔ base: real native source reproduces saved consumed compute five times, independently of leeway (185.484902ms)
+✔ head: real native source reproduces saved consumed compute five times, independently of leeway (93.30697ms)
+✔ real helper rejects missing config, uncaptured state, failed calls, protocol mismatch and malformed seed (73.770418ms)
+✔ production snapshot adapter measures real captured invocation and emits provenance (292.260592ms)
+✔ ledger drift retries the entire capture before measuring (133.411927ms)
+✔ protocol mismatch and missing extension metadata fail explicitly (9.992221ms)
+✔ captured-state/local result disagreement is rejected rather than blended with RPC values (29.400298ms)
+✔ resource caps come from captured settings and fee-only changes do not alter their identity (577.215651ms)
+✔ RPC charged-event disagreement fails even when return value and transaction data agree (30.816791ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2422.39747

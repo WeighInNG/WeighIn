@@ -1,0 +1,141 @@
+[
+  {
+    "id": "weighin@1.0.0",
+    "name": "weighin",
+    "version": "1.0.0",
+    "size": 924950,
+    "unpackedSize": 4379033,
+    "shasum": "202bbec7ad5fb0730c172dd392f10a8c1d42f8d6",
+    "integrity": "sha512-0wuIhYcOr8jAfuNOop4XHIKBxCJRdmcvlXb1cNaRQ7ekPCLvKgfvBZsIDSc+QM6wwMYDvu81fsIecKJIw1MISA==",
+    "filename": "weighin-1.0.0.tgz",
+    "files": [
+      {
+        "path": "README.md",
+        "size": 10,
+        "mode": 420
+      },
+      {
+        "path": "action.yml",
+        "size": 2543,
+        "mode": 420
+      },
+      {
+        "path": "bundled/index.js",
+        "size": 1899034,
+        "mode": 420
+      },
+      {
+        "path": "dist/account.js",
+        "size": 4536,
+        "mode": 420
+      },
+      {
+        "path": "dist/action.js",
+        "size": 14582,
+        "mode": 420
+      },
+      {
+        "path": "dist/build.js",
+        "size": 6619,
+        "mode": 420
+      },
+      {
+        "path": "dist/bundled/index.js",
+        "size": 2263136,
+        "mode": 420
+      },
+      {
+        "path": "dist/bundled/licenses.txt",
+        "size": 30187,
+        "mode": 420
+      },
+      {
+        "path": "dist/cli.js",
+        "size": 3777,
+        "mode": 420
+      },
+      {
+        "path": "dist/comment.js",
+        "size": 7464,
+        "mode": 420
+      },
+      {
+        "path": "dist/diff.js",
+        "size": 11612,
+        "mode": 420
+      },
+      {
+        "path": "dist/identity.js",
+        "size": 4634,
+        "mode": 420
+      },
+      {
+        "path": "dist/measurement.js",
+        "size": 15509,
+        "mode": 420
+      },
+      {
+        "path": "dist/simulation.js",
+        "size": 18598,
+        "mode": 420
+      },
+      {
+        "path": "dist/threshold.js",
+        "size": 8809,
+        "mode": 420
+      },
+      {
+        "path": "docs/contract-build.md",
+        "size": 5081,
+        "mode": 420
+      },
+      {
+        "path": "docs/fixture-migration.md",
+        "size": 7977,
+        "mode": 420
+      },
+      {
+        "path": "docs/metric-provenance.md",
+        "size": 11340,
+        "mode": 420
+      },
+      {
+        "path": "docs/native-measurement.md",
+        "size": 11173,
+        "mode": 420
+      },
+      {
+        "path": "docs/network-readiness.md",
+        "size": 4580,
+        "mode": 420
+      },
+      {
+        "path": "docs/snapshot-recovery.md",
+        "size": 5442,
+        "mode": 420
+      },
+      {
+        "path": "native/simulation/Cargo.lock",
+        "size": 34201,
+        "mode": 420
+      },
+      {
+        "path": "native/simulation/Cargo.toml",
+        "size": 418,
+        "mode": 420
+      },
+      {
+        "path": "native/simulation/src/main.rs",
+        "size": 6390,
+        "mode": 420
+      },
+      {
+        "path": "package.json",
+        "size": 1381,
+        "mode": 420
+      }
+    ],
+    "entryCount": 25,
+    "bundled": []
+  }
+]

@@ -1,0 +1,12 @@
+✔ comment workflow preserves downloaded report/metadata and sends their contents through the bundled Action (723.061975ms)
+✔ the historical download-before-checkout order deletes the report and fails before any posting request (528.588466ms)
+✔ missing downloaded metadata fails before any posting request (505.357966ms)
+✔ comment delivery retains trusted checkout and triggering-run artifact selection (1.184755ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2127.429657

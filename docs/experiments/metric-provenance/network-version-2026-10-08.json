@@ -1,0 +1,22 @@
+{
+  "getNetwork": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "result": {
+      "friendbotUrl": "http://localhost:8000/friendbot",
+      "passphrase": "Standalone Network ; February 2017",
+      "protocolVersion": 28
+    }
+  },
+  "getVersionInfo": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "result": {
+      "version": "29.0.0",
+      "commitHash": "8a40169717723697e430c1e51c21ef0bf244ecda",
+      "buildTimestamp": "2026-10-06T01:24:26",
+      "captiveCoreVersion": "v29.0.0",
+      "protocolVersion": 28
+    }
+  }
+}

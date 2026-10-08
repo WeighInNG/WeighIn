@@ -1,0 +1,287 @@
+[
+  {
+    "mode": "no-out-dir",
+    "run": 1,
+    "command": [
+      "/home/mxr/Documents/localRepo/Weighin/.stage6-cli/stellar",
+      "contract",
+      "build",
+      "--manifest-path",
+      "Cargo.toml",
+      "--package",
+      "soroban-forge-escrow",
+      "--locked",
+      "--optimize=true"
+    ],
+    "cwd": "/home/mxr/Documents/localRepo/Weighin/.stage6b-work/project/crates/escrow",
+    "exit": 0,
+    "sha256": "103874c717632bb9b51d3ff6effc9869433fcbdf8e3c719c927eb7b6aa14f398",
+    "bytes": 40904
+  },
+  {
+    "mode": "no-out-dir",
+    "run": 2,
+    "command": [
+      "/home/mxr/Documents/localRepo/Weighin/.stage6-cli/stellar",
+      "contract",
+      "build",
+      "--manifest-path",
+      "Cargo.toml",
+      "--package",
+      "soroban-forge-escrow",
+      "--locked",
+      "--optimize=true"
+    ],
+    "cwd": "/home/mxr/Documents/localRepo/Weighin/.stage6b-work/project/crates/escrow",
+    "exit": 0,
+    "sha256": "103874c717632bb9b51d3ff6effc9869433fcbdf8e3c719c927eb7b6aa14f398",
+    "bytes": 40904
+  },
+  {
+    "mode": "no-out-dir",
+    "run": 3,
+    "command": [
+      "/home/mxr/Documents/localRepo/Weighin/.stage6-cli/stellar",
+      "contract",
+      "build",
+      "--manifest-path",
+      "Cargo.toml",
+      "--package",
+      "soroban-forge-escrow",
+      "--locked",
+      "--optimize=true"
+    ],
+    "cwd": "/home/mxr/Documents/localRepo/Weighin/.stage6b-work/project/crates/escrow",
+    "exit": 0,
+    "sha256": "103874c717632bb9b51d3ff6effc9869433fcbdf8e3c719c927eb7b6aa14f398",
+    "bytes": 40904
+  },
+  {
+    "mode": "no-out-dir",
+    "run": 4,
+    "command": [
+      "/home/mxr/Documents/localRepo/Weighin/.stage6-cli/stellar",
+      "contract",
+      "build",
+      "--manifest-path",
+      "Cargo.toml",
+      "--package",
+      "soroban-forge-escrow",
+      "--locked",
+      "--optimize=true"
+    ],
+    "cwd": "/home/mxr/Documents/localRepo/Weighin/.stage6b-work/project/crates/escrow",
+    "exit": 0,
+    "sha256": "103874c717632bb9b51d3ff6effc9869433fcbdf8e3c719c927eb7b6aa14f398",
+    "bytes": 40904
+  },
+  {
+    "mode": "no-out-dir",
+    "run": 5,
+    "command": [
+      "/home/mxr/Documents/localRepo/Weighin/.stage6-cli/stellar",
+      "contract",
+      "build",
+      "--manifest-path",
+      "Cargo.toml",
+      "--package",
+      "soroban-forge-escrow",
+      "--locked",
+      "--optimize=true"
+    ],
+    "cwd": "/home/mxr/Documents/localRepo/Weighin/.stage6b-work/project/crates/escrow",
+    "exit": 0,
+    "sha256": "103874c717632bb9b51d3ff6effc9869433fcbdf8e3c719c927eb7b6aa14f398",
+    "bytes": 40904
+  },
+  {
+    "mode": "relative-out-dir",
+    "run": 1,
+    "command": [
+      "/home/mxr/Documents/localRepo/Weighin/.stage6-cli/stellar",
+      "contract",
+      "build",
+      "--manifest-path",
+      "Cargo.toml",
+      "--package",
+      "soroban-forge-escrow",
+      "--locked",
+      "--optimize=true",
+      "--out-dir",
+      "../../../relative-output"
+    ],
+    "cwd": "/home/mxr/Documents/localRepo/Weighin/.stage6b-work/project/crates/escrow",
+    "exit": 0,
+    "sha256": "103874c717632bb9b51d3ff6effc9869433fcbdf8e3c719c927eb7b6aa14f398",
+    "bytes": 40904
+  },
+  {
+    "mode": "relative-out-dir",
+    "run": 2,
+    "command": [
+      "/home/mxr/Documents/localRepo/Weighin/.stage6-cli/stellar",
+      "contract",
+      "build",
+      "--manifest-path",
+      "Cargo.toml",
+      "--package",
+      "soroban-forge-escrow",
+      "--locked",
+      "--optimize=true",
+      "--out-dir",
+      "../../../relative-output"
+    ],
+    "cwd": "/home/mxr/Documents/localRepo/Weighin/.stage6b-work/project/crates/escrow",
+    "exit": 0,
+    "sha256": "103874c717632bb9b51d3ff6effc9869433fcbdf8e3c719c927eb7b6aa14f398",
+    "bytes": 40904
+  },
+  {
+    "mode": "relative-out-dir",
+    "run": 3,
+    "command": [
+      "/home/mxr/Documents/localRepo/Weighin/.stage6-cli/stellar",
+      "contract",
+      "build",
+      "--manifest-path",
+      "Cargo.toml",
+      "--package",
+      "soroban-forge-escrow",
+      "--locked",
+      "--optimize=true",
+      "--out-dir",
+      "../../../relative-output"
+    ],
+    "cwd": "/home/mxr/Documents/localRepo/Weighin/.stage6b-work/project/crates/escrow",
+    "exit": 0,
+    "sha256": "103874c717632bb9b51d3ff6effc9869433fcbdf8e3c719c927eb7b6aa14f398",
+    "bytes": 40904
+  },
+  {
+    "mode": "relative-out-dir",
+    "run": 4,
+    "command": [
+      "/home/mxr/Documents/localRepo/Weighin/.stage6-cli/stellar",
+      "contract",
+      "build",
+      "--manifest-path",
+      "Cargo.toml",
+      "--package",
+      "soroban-forge-escrow",
+      "--locked",
+      "--optimize=true",
+      "--out-dir",
+      "../../../relative-output"
+    ],
+    "cwd": "/home/mxr/Documents/localRepo/Weighin/.stage6b-work/project/crates/escrow",
+    "exit": 0,
+    "sha256": "103874c717632bb9b51d3ff6effc9869433fcbdf8e3c719c927eb7b6aa14f398",
+    "bytes": 40904
+  },
+  {
+    "mode": "relative-out-dir",
+    "run": 5,
+    "command": [
+      "/home/mxr/Documents/localRepo/Weighin/.stage6-cli/stellar",
+      "contract",
+      "build",
+      "--manifest-path",
+      "Cargo.toml",
+      "--package",
+      "soroban-forge-escrow",
+      "--locked",
+      "--optimize=true",
+      "--out-dir",
+      "../../../relative-output"
+    ],
+    "cwd": "/home/mxr/Documents/localRepo/Weighin/.stage6b-work/project/crates/escrow",
+    "exit": 0,
+    "sha256": "103874c717632bb9b51d3ff6effc9869433fcbdf8e3c719c927eb7b6aa14f398",
+    "bytes": 40904
+  },
+  {
+    "mode": "relative-optimizer",
+    "run": 1,
+    "command": [
+      "/home/mxr/Documents/localRepo/Weighin/.stage6-cli/stellar",
+      "contract",
+      "optimize",
+      "--wasm",
+      "../.stage6-delivery/docs/experiments/external-soroban-forge/provenance-checks/original-unoptimized.wasm",
+      "--wasm-out",
+      "relative.optimized.wasm"
+    ],
+    "cwd": "/home/mxr/Documents/localRepo/Weighin/.stage6b-work",
+    "exit": 0,
+    "sha256": "103874c717632bb9b51d3ff6effc9869433fcbdf8e3c719c927eb7b6aa14f398",
+    "bytes": 40904
+  },
+  {
+    "mode": "relative-optimizer",
+    "run": 2,
+    "command": [
+      "/home/mxr/Documents/localRepo/Weighin/.stage6-cli/stellar",
+      "contract",
+      "optimize",
+      "--wasm",
+      "../.stage6-delivery/docs/experiments/external-soroban-forge/provenance-checks/original-unoptimized.wasm",
+      "--wasm-out",
+      "relative.optimized.wasm"
+    ],
+    "cwd": "/home/mxr/Documents/localRepo/Weighin/.stage6b-work",
+    "exit": 0,
+    "sha256": "103874c717632bb9b51d3ff6effc9869433fcbdf8e3c719c927eb7b6aa14f398",
+    "bytes": 40904
+  },
+  {
+    "mode": "relative-optimizer",
+    "run": 3,
+    "command": [
+      "/home/mxr/Documents/localRepo/Weighin/.stage6-cli/stellar",
+      "contract",
+      "optimize",
+      "--wasm",
+      "../.stage6-delivery/docs/experiments/external-soroban-forge/provenance-checks/original-unoptimized.wasm",
+      "--wasm-out",
+      "relative.optimized.wasm"
+    ],
+    "cwd": "/home/mxr/Documents/localRepo/Weighin/.stage6b-work",
+    "exit": 0,
+    "sha256": "103874c717632bb9b51d3ff6effc9869433fcbdf8e3c719c927eb7b6aa14f398",
+    "bytes": 40904
+  },
+  {
+    "mode": "relative-optimizer",
+    "run": 4,
+    "command": [
+      "/home/mxr/Documents/localRepo/Weighin/.stage6-cli/stellar",
+      "contract",
+      "optimize",
+      "--wasm",
+      "../.stage6-delivery/docs/experiments/external-soroban-forge/provenance-checks/original-unoptimized.wasm",
+      "--wasm-out",
+      "relative.optimized.wasm"
+    ],
+    "cwd": "/home/mxr/Documents/localRepo/Weighin/.stage6b-work",
+    "exit": 0,
+    "sha256": "103874c717632bb9b51d3ff6effc9869433fcbdf8e3c719c927eb7b6aa14f398",
+    "bytes": 40904
+  },
+  {
+    "mode": "relative-optimizer",
+    "run": 5,
+    "command": [
+      "/home/mxr/Documents/localRepo/Weighin/.stage6-cli/stellar",
+      "contract",
+      "optimize",
+      "--wasm",
+      "../.stage6-delivery/docs/experiments/external-soroban-forge/provenance-checks/original-unoptimized.wasm",
+      "--wasm-out",
+      "relative.optimized.wasm"
+    ],
+    "cwd": "/home/mxr/Documents/localRepo/Weighin/.stage6b-work",
+    "exit": 0,
+    "sha256": "103874c717632bb9b51d3ff6effc9869433fcbdf8e3c719c927eb7b6aa14f398",
+    "bytes": 40904
+  }
+]

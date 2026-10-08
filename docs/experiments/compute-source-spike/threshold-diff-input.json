@@ -1,0 +1,42 @@
+{
+  "contracts": [
+    {
+      "fixture_id": "path:weighin-fixtures.json",
+      "logical_id": "wasm:contract/target/wasm32-unknown-unknown/release/contract_test.wasm",
+      "contract_id": "CDXKZLYLQ3JJBC5N2Q3SWD2HYXRVD2NNOAAOVAWHL3ROHDFXGKLUF3RK",
+      "base_contract_id": "CBW7AIIYK42IDLPVODHBLYU4KVARJACZGBXLMYQ7YY3DOARWRALTU456",
+      "head_contract_id": "CDXKZLYLQ3JJBC5N2Q3SWD2HYXRVD2NNOAAOVAWHL3ROHDFXGKLUF3RK",
+      "functions": [
+        {
+          "function_name": "hello",
+          "case_id": "args:[{\"type\":\"symbol\",\"value\":\"world\"}]",
+          "metrics": [
+            {
+              "key": "cpu_instructions",
+              "base": {
+                "consumed": 270219,
+                "limit": 400000000
+              },
+              "head": {
+                "consumed": 314046,
+                "limit": 400000000
+              },
+              "delta": 43827,
+              "pct": 16.219066756963795,
+              "regression": true
+            }
+          ],
+          "hasRegression": true
+        }
+      ],
+      "hasRegression": true,
+      "newFunctions": [],
+      "removedFunctions": [],
+      "newBenchmarks": [],
+      "removedBenchmarks": []
+    }
+  ],
+  "hasRegression": true,
+  "newContracts": [],
+  "removedContracts": []
+}

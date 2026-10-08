@@ -73,7 +73,9 @@ describe("loadConfig (TOML parsing & Zod Validation)", () => {
       [thresholds.functions.test]
       memory_bytes = "allow_magic"
     `);
-    expect(() => loadConfig("weighin.toml")).toThrow("Invalid rule string");
+    expect(() => loadConfig("weighin.toml")).toThrow(
+      "Unsupported threshold rule",
+    );
   });
 
   it("throws on invalid metric key", () => {
@@ -82,7 +84,9 @@ describe("loadConfig (TOML parsing & Zod Validation)", () => {
       [thresholds.functions.test]
       memory_byte = "ignore"
     `);
-    expect(() => loadConfig("weighin.toml")).toThrow("Invalid enum value");
+    expect(() => loadConfig("weighin.toml")).toThrow(
+      "Unrecognized key(s) in object: 'memory_byte'",
+    );
   });
 
   it("parses valid absolute limits", () => {

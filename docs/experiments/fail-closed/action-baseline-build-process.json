@@ -1,0 +1,5 @@
+{
+  "status": 1,
+  "stdout": "Base ref:   main\nRPC URL:    http://localhost:18000/rpc\nFixtures:   fixtures.json\nKey file:   /tmp/weighin-integrated-3Yr0he/action-baseline-build/weighin-deployer.key\nChecking RPC health at http://localhost:18000/rpc ...\nRPC healthy — network: Standalone Network ; February 2017\n::group::Building + measuring HEAD\nHEAD SHA: temporary-head\ncargo build --release --target wasm32-unknown-unknown in /tmp/weighin-integrated-3Yr0he/base/contract\n[command]/home/mxr/.cargo/bin/cargo build --release --target wasm32-unknown-unknown\n[EXPERIMENT infrastructure stub] cargo build --release --target wasm32-unknown-unknown\nDeliberate experiment infrastructure failure: build\n::endgroup::\n::error::HEAD measurement failed: The process '/home/mxr/.cargo/bin/cargo' failed with exit code 1\n",
+  "stderr": ""
+}

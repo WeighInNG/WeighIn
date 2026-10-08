@@ -1,0 +1,22 @@
+{
+  "status": "SCOPED_REPEATABILITY_PASS",
+  "completed_clean_reference_builds": 5,
+  "live_samples_per_case": 5,
+  "cases_per_sample": 7,
+  "source_snapshot_sha256": "9b8f8aa35dba73f8997e90fcec0626cd281fd8a9636a891c489e22ae3f35d654",
+  "clean_targets_verified_empty": true,
+  "compiled_reference_cache_reused": false,
+  "audit_wasm_reused": true,
+  "reference_wasm_stable": true,
+  "reference_metrics_stable": true,
+  "audit_metrics_stable": true,
+  "supported_metric_policy_violations": 0,
+  "unsupported_metrics_ignored_explicitly": [
+    "historical_data_read_bytes",
+    "contract_data_hard_limit",
+    "tx_size_bytes"
+  ],
+  "real_builds_network_deployment_and_native_simulation": true,
+  "public_ci_proven": false,
+  "cross_machine_determinism_proven": false
+}

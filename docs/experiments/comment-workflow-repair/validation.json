@@ -1,0 +1,19 @@
+{
+  "workflow_change": "Checkout trusted Action before downloading triggering-run artifacts",
+  "new_behavior_tests": 5,
+  "npm_ci": "PASS",
+  "lint": "PASS",
+  "typecheck": "PASS",
+  "npm_test": "PASS: 167 Node +52 Vitest",
+  "build": "PASS",
+  "bundle": "PASS",
+  "package_dry_run": "PASS",
+  "bundles_unchanged": true,
+  "yaml_dev_dependency": "2.9.1 pinned",
+  "native_suite": "NOT RERUN: no native/measurement changes",
+  "first_transport_attempt": "FAIL: global fetch interception did not cover bundled Undici; listing comments with a dummy token returned Bad credentials. No comment was posted.",
+  "final_transport": "Local HTTP server and socket guard prohibit non-local connections; real bundled Action exercised",
+  "live_github_posting_test": false,
+  "default_branch_activation": "Pending reviewed merge; workflow_run executes main",
+  "preexisting_dependency_vulnerabilities": 11
+}

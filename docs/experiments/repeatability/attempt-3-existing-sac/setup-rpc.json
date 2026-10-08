@@ -1,0 +1,103 @@
+[
+  {
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "getHealth"
+    },
+    "raw": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "status": "healthy",
+        "latestLedger": 443,
+        "latestLedgerCloseTime": "1791435243",
+        "oldestLedger": 7,
+        "oldestLedgerCloseTime": "1791434807",
+        "ledgerRetentionWindow": 120960
+      }
+    }
+  },
+  {
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "getNetwork"
+    },
+    "raw": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "friendbotUrl": "http://localhost:8000/friendbot",
+        "passphrase": "Standalone Network ; February 2017",
+        "protocolVersion": 28
+      }
+    }
+  },
+  {
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "getVersionInfo"
+    },
+    "raw": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "version": "29.0.0",
+        "commitHash": "8a40169717723697e430c1e51c21ef0bf244ecda",
+        "buildTimestamp": "2026-10-06T01:24:26",
+        "captiveCoreVersion": "v29.0.0",
+        "protocolVersion": 28
+      }
+    }
+  },
+  {
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "getLedgerEntries",
+      "params": {
+        "keys": [
+          "AAAAAAAAAABWf0cUFe3P3Y+vhoI1u8Sa1iRTDnVwfnLrz3nHTTv5og=="
+        ]
+      }
+    },
+    "raw": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "entries": [
+          {
+            "key": "AAAAAAAAAABWf0cUFe3P3Y+vhoI1u8Sa1iRTDnVwfnLrz3nHTTv5og==",
+            "xdr": "AAAAAAAAAABWf0cUFe3P3Y+vhoI1u8Sa1iRTDnVwfnLrz3nHTTv5ogAAABdIdugAAAABvQAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAA",
+            "lastModifiedLedgerSeq": 445,
+            "extXdr": "AAAAAA=="
+          }
+        ],
+        "latestLedger": 445
+      }
+    }
+  },
+  {
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "simulateTransaction",
+      "params": {
+        "transaction": "AAAAAgAAAABWf0cUFe3P3Y+vhoI1u8Sa1iRTDnVwfnLrz3nHTTv5ogAPQkAAAAG9AAAAAQAAAAEAAAAAAAAAAAAAAABqxyILAAAAAAAAAAEAAAAAAAAAGAAAAAEAAAABAAAAAAAAAAEAAAAAAAAAAAAAAAA="
+      }
+    },
+    "raw": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "error": "HostError: Error(Storage, ExistingValue)\n\nEvent log (newest first):\n   0: [Diagnostic Event] topics:[error, Error(Storage, ExistingValue)], data:[\"contract already exists\", Bytes(d8b2b14c60fecb65fb2aa81cbea79d0835cafc0e0d851f8611257c1e5b41e1c2)]\n",
+        "events": [
+          "AAAAAAAAAAAAAAAAAAAAAgAAAAAAAAACAAAADwAAAAVlcnJvcgAAAAAAAAIAAAADAAAABAAAABAAAAABAAAAAgAAAA4AAAAXY29udHJhY3QgYWxyZWFkeSBleGlzdHMAAAAADQAAACDYsrFMYP7LZfsqqBy+p50INcr8Dg2FH4YRJXweW0Hhwg=="
+        ],
+        "latestLedger": 445
+      }
+    }
+  }
+]

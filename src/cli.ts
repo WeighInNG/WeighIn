@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import * as fs from "fs";
 import { execSync } from "child_process";
 import { runMeasurement } from "./measurement";

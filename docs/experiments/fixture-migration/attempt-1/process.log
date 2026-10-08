@@ -1,0 +1,15 @@
+unbridged: expected exit 1, actual 1; matched contracts 0
+AssertionError [ERR_ASSERTION]: fatal: update_ref failed for ref 'refs/heads/migration-bridge': trying to write ref 'refs/heads/migration-bridge' with nonexistent object 37ad81ad9b6ac9720ae0831b5310f57ad645b3ec
+
+
+128 !== 0
+
+    at main (/home/mxr/Documents/localRepo/Weighin/tests/experiments/verify-fixture-migration.cjs:79:129)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 128,
+  expected: 0,
+  operator: 'strictEqual',
+  diff: 'simple'
+}

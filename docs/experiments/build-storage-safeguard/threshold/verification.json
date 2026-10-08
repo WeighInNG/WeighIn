@@ -1,0 +1,42 @@
+{
+  "status": "VERIFIED",
+  "scenario": "threshold",
+  "source_repository": "https://github.com/Meet-hybrid/soroban-forge",
+  "source_sha": "07d7935234e9c86816116471121998b871b68439",
+  "engine_sha": "2185c603312df25b87b80f825f8495befe10894e",
+  "bundle_sha256": "104be8ef72ebc176986f577a4479d040be7684f4e1a9f5a4e0928eeee32591a0",
+  "helper_sha256": "1e7ef88e974bd09d5b683a3e94c101dea1b9524304c7124699ae0e8d279d964c",
+  "node": "v24.13.1",
+  "base_sha": "e977f584a4b966705377edea33a0b70bf2bc5fb2",
+  "head_sha": "d5d2a269db8f12526026e2b84438fad575a5e238",
+  "build_hashes": [
+    "601c93cd862a67ad46291560d1ab8503d8b29edee9a765dfc792f84800de5898",
+    "103874c717632bb9b51d3ff6effc9869433fcbdf8e3c719c927eb7b6aa14f398"
+  ],
+  "cpu": {
+    "base": 565371,
+    "head": 679455,
+    "delta": 114084
+  },
+  "action_exit": 1,
+  "violations": [
+    {
+      "contract_id": "CBQSGLRJDHCHRWWVAWF2G2WQZC7K6JYU2DYTE5N5LSKLI7RGDTX2YSNZ",
+      "function_name": "escrows_for_participant",
+      "metric": "cpu_instructions",
+      "delta": 114084,
+      "pct": 20.17860838281412,
+      "rule": "strict_zero_tolerance",
+      "message": "cpu_instructions increased by 114084 (strict zero tolerance)",
+      "fixture_id": "id:soroban-forge-proof",
+      "logical_id": "id:escrow",
+      "case_id": "id:empty-participant-page"
+    }
+  ],
+  "same_return_xdr": true,
+  "real_git_build_rpc_native_action": true,
+  "io_observers_only": true,
+  "temporary_git_history_only": true,
+  "github_hosted_execution": false,
+  "shared_cargo_cache": true
+}

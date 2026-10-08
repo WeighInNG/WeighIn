@@ -1,0 +1,10 @@
+{
+  "source_sha": "07d7935234e9c86816116471121998b871b68439",
+  "fork": "mxrtins04/soroban-forge",
+  "baseline_branch": "test/weighin-escrow-baseline",
+  "baseline_sha": "5a9fde1c85778b39dc325399e64d2131229de3ef",
+  "workflow_branch": "test/weighin-escrow-workflow",
+  "workflow_sha": "44fd24f6983ee3d47834eee90c5b17b5b0cefe2c",
+  "published": false,
+  "publication_blocker": "Explain or explicitly bound optimizer-stage variation before strict-zero rollout"
+}

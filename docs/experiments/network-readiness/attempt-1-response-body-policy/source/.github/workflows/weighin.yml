@@ -1,0 +1,91 @@
+##
+## weighin.yml — Example workflow for a repo that uses the WeighIn action.
+##
+## Copy this file into your repo at .github/workflows/weighin.yml and
+## adjust the inputs to match your project layout.
+##
+## Prerequisites in your repo:
+##   - weighin-fixtures.json  (declares which WASMs to benchmark and which
+##                             functions to invoke)
+##   - rust-toolchain.toml    (pins the Rust channel; must match what you
+##                             use to build the contract in production)
+##   - Optionally: weighin.toml  (threshold rules; omit to run report-only)
+##
+
+name: WeighIn Benchmark
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  benchmark:
+    name: Soroban Resource Benchmark
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write   # post/update the benchmark comment on the PR
+      contents: read
+
+    steps:
+      # 1. Check out the PR head with full history so the action can fetch
+      #    the base branch as a worktree without an extra clone.
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # 2. Install the pinned Rust toolchain declared in rust-toolchain.toml.
+      #    The action does not install toolchains; this must come first.
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          # Read from your repo's rust-toolchain.toml, or pin explicitly:
+          toolchain: "1.95.0"
+          targets: wasm32v1-none
+
+      - name: Install pinned Stellar CLI
+        run: |
+          curl -fsSL https://github.com/stellar/stellar-cli/releases/download/v28.1.0/stellar-cli-28.1.0-x86_64-unknown-linux-gnu.tar.gz -o "$RUNNER_TEMP/stellar-cli.tar.gz"
+          echo "c1680deee94301d33ada7a17f98411e642a4248c727afbd2e43050d345746462  $RUNNER_TEMP/stellar-cli.tar.gz" | sha256sum -c -
+          mkdir -p "$RUNNER_TEMP/stellar-cli"
+          tar -xzf "$RUNNER_TEMP/stellar-cli.tar.gz" -C "$RUNNER_TEMP/stellar-cli"
+          echo "$RUNNER_TEMP/stellar-cli" >> "$GITHUB_PATH"
+
+      # 3. Start a local Stellar standalone network.
+      #    stellar/quickstart exposes the Soroban RPC at /rpc on port 8000.
+      #    Up to 60 health polls (2 s request + 2 s pause per poll).
+      #    The polling loop waits for getHealth; Action account initialization
+      #    additionally confirms Friendbot funding through RPC within 120 s.
+      - name: Start local Stellar network
+        run: |
+          docker run --rm -d \
+            --name stellar-quickstart \
+            -p 8000:8000 \
+            stellar/quickstart@sha256:4c8bad1ef7341205b898f83d9489321da80c7bd74183100fc8e2a39a5938c7d5 --local
+
+          echo "Waiting for RPC to become healthy..."
+          for i in $(seq 1 60); do
+            if curl --max-time 2 -sf -X POST -H "Content-Type: application/json" \
+                -d '{"jsonrpc":"2.0","id":1,"method":"getHealth"}' \
+                http://localhost:8000/rpc | grep -q '"status":"healthy"'; then
+              echo "RPC is healthy."
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "ERROR: RPC did not become healthy in time." >&2
+          docker logs stellar-quickstart || true
+          exit 1
+
+      # The Action builds its pinned native helper with Rust 1.95.0 on Linux x64.
+      # 4. Run the WeighIn action.
+      #    Pin to a specific release tag (e.g. @v1.0.0) in production;
+      #    @main here tracks the latest commit for development.
+      - name: Run WeighIn
+        uses: mxrtins04/WeighIn@main
+        with:
+          fixtures-path: weighin-fixtures.json    # path to your fixtures file
+          config-path: weighin.toml               # omit or leave absent to skip threshold enforcement
+          rpc-url: http://localhost:8000/rpc
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          # base-ref: main                        # inferred from PR event; override if needed

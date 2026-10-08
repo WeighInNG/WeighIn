@@ -1,0 +1,56 @@
+{
+  "repository_sha": "59db63a7b895dcc5ca763e3c668990fec40850fb",
+  "branch": "test/no-op-baseline",
+  "initial_git_status": "M .github/workflows/ci.yml\n M .github/workflows/weighin.yml\n M .gitignore\n M action.yml\n M bundled/index.js\n M contract/Cargo.lock\n M contract/Cargo.toml\n M package.json\n M rust-toolchain.toml\n M scripts/start-local-network.sh\n M src/action.ts\n M src/cli.ts\n M src/comment.ts\n M src/diff.ts\n M src/measurement.ts\n M src/threshold.ts\n M weighin-fixtures.json\n?? AGENTS.override.md\n?? WEIGHIN_DRIPS_APPEAL_CONTEXT.md\n?? WEIGHIN_PROGRESS.md\n?? docs/\n?? native/\n?? package-lock.json\n?? scratch_test.js\n?? src/build.ts\n?? src/identity.ts\n?? src/simulation.ts\n?? tests/",
+  "source_files_sha256": {
+    "contract/Cargo.toml": "bd5c50e30a1cb6b87a287513204f8497b1747b21e58268449f0739a1455c33fa",
+    "contract/Cargo.lock": "af261b30de67d5f534ef58392be43f80d802200c26dc35da25e6f71278329912",
+    "contract/src/lib.rs": "efba908eb2253ae66deaac98f69dd9b550a6e402e7d39d78ac76770cd04a1a48",
+    "rust-toolchain.toml": "dc3976c0370b970f99e4ad6d48364f9a5dc22c748c7a3187f12e1f15be99abd2",
+    "weighin-fixtures.json": "5651b7a8f78214765ff659ee33a2dc73e696b828f99e4b20a86dd726e48b811c"
+  },
+  "source_snapshot_sha256": "9b8f8aa35dba73f8997e90fcec0626cd281fd8a9636a891c489e22ae3f35d654",
+  "source_is_uncommitted_worktree_snapshot": true,
+  "node": "v22.23.2",
+  "npm": "10.9.8",
+  "rust": "rustc 1.95.0 (59807616e 2026-04-14)",
+  "stellar": "stellar 28.1.0 (c0f4d0da891bbf214c08b8c5035ae6db80e9a3bd)\nstellar-xdr 28.0.0 (d0f1330e43c3a2c0c616da30698b24140d4eea72)\nxdr (9c9c145953e80990d6ff1ae3a6a973a0ce6d0694)",
+  "sdk": "28.0.0",
+  "js_sdk": "16.0.1",
+  "helper_sha256": "1e7ef88e974bd09d5b683a3e94c101dea1b9524304c7124699ae0e8d279d964c",
+  "helper_source_version": "28.0.1",
+  "network": {
+    "friendbotUrl": "http://localhost:8000/friendbot",
+    "passphrase": "Standalone Network ; February 2017",
+    "protocolVersion": 28
+  },
+  "rpc_version": {
+    "version": "29.0.0",
+    "commitHash": "8a40169717723697e430c1e51c21ef0bf244ecda",
+    "buildTimestamp": "2026-10-06T01:24:26",
+    "captiveCoreVersion": "v29.0.0",
+    "protocolVersion": 28
+  },
+  "explicit_build_environment": {
+    "RUSTUP_TOOLCHAIN": "1.95.0",
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_NET_OFFLINE": "true",
+    "RUSTC_WRAPPER": "",
+    "RUSTC_WORKSPACE_WRAPPER": "",
+    "CARGO_BUILD_RUSTC_WRAPPER": "",
+    "CARGO_BUILD_RUSTC_WORKSPACE_WRAPPER": "",
+    "RUSTFLAGS": "",
+    "CARGO_ENCODED_RUSTFLAGS": "",
+    "CARGO_BUILD_RUSTFLAGS": ""
+  },
+  "downloaded_dependency_sources_cached": true,
+  "compiled_reference_artifacts_reused": false,
+  "native_helper_built_once_and_reused": true,
+  "audit_wasm_prebuilt": true,
+  "audit_wasm_sha256": "a677bd71ba1902b894bf7d178fa4d6ce310e0558afcfe44d97b5c611bef9291d",
+  "actual_network_reset_between_runs": false,
+  "invocation_writes_submitted": false,
+  "io_observers_only_no_substitution": true,
+  "public_ci_proven": false
+}

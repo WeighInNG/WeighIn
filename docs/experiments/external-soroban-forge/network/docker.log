@@ -1,0 +1,393 @@
+# Standalone signing-seed values redacted; RPC/native measurement files are unchanged.
+Starting Stellar Quickstart
+versions:
+  quickstart: 3a367f3f009f3ec4199889e922d28ce70add1753
+  xdr:
+    stellar-xdr 28.0.1 (ced6bd3cc9f5d8d03445bdf0d7e907814822b370)
+    xdr: 9c9c145953e80990d6ff1ae3a6a973a0ce6d0694
+    features: <none>
+  core:
+    v29.0.0
+    ledger protocol version: 29
+    rust version: rustc 1.95.0 (59807616e 2026-04-14)
+    soroban-env-host versions: 
+        host[0]:
+            package version: 21.2.2
+            git version: 7eeddd897cfb0f700f938b0c8d6f0541150d1fcb
+            ledger protocol version: 21
+            pre-release version: 0
+            rs-stellar-xdr:
+                package version: 21.2.0
+                git version: 9bea881f2057e412fdbb98875841626bf77b4b88
+                base XDR git version: 70180d5e8d9caee9e8645ed8a38c36a8cf403cd9
+        host[1]:
+            package version: 22.0.0
+            git version: 1cd8b8dca9aeeca9ce45b129cd923992b32dc258
+            ledger protocol version: 22
+            pre-release version: 0
+            rs-stellar-xdr:
+                package version: 22.0.0
+                git version: 715003372ea6380044b5a4a02907ff73e56ae9e7
+                base XDR git version: 529d5176f24c73eeccfa5eba481d4e89c19b1181
+        host[2]:
+            package version: 23.0.0
+            git version: 688bc34e6cd15c71742139e625268c7f30f55a92
+            ledger protocol version: 23
+            pre-release version: 0
+            rs-stellar-xdr:
+                package version: 23.0.0
+                git version: e83a6337204ecfdb0ac0d44ffb857130c1249b1b
+                base XDR git version: 4b7a2ef7931ab2ca2499be68d849f38190b443ca
+        host[3]:
+            package version: 24.0.0
+            git version: a37eeda815e626f416eff13f2eacb32a8b0c3729
+            ledger protocol version: 24
+            pre-release version: 0
+            rs-stellar-xdr:
+                package version: 24.0.0
+                git version: 07b765d3ab146f7f7ea951af1f9e41e0ece8fb48
+                base XDR git version: 4b7a2ef7931ab2ca2499be68d849f38190b443ca
+        host[4]:
+            package version: 25.0.0
+            git version: 6323c1fc03ecb9f53b7c1e42fd62c1bbd3aebc2c
+            ledger protocol version: 25
+            pre-release version: 0
+            rs-stellar-xdr:
+                package version: 25.0.0
+                git version: dc9f40fcb83c3054341f70b65a2222073369b37b
+                base XDR git version: 0a621ec7811db000a60efae5b35f78dee3aa2533
+        host[5]:
+            package version: 26.0.0
+            git version: b351f88a468d3b9e1d6de53d5b0ca585f6b7dadb
+            ledger protocol version: 26
+            pre-release version: 0
+            rs-stellar-xdr:
+                package version: 26.0.0
+                git version: dd7a165a193126fd37a751d867bee1cb8f3b55a6
+                base XDR git version: cff714a5ebaaaf2dac343b3546c2df73f0b7a36e
+        host[6]:
+            package version: 27.0.0
+            git version: b03d2563f3a08d51095a19bdbb6d90364b8ce04a
+            ledger protocol version: 27
+            pre-release version: 0
+            rs-stellar-xdr:
+                package version: 27.0.0
+                git version: 5262803470be965e42f80023d12fba12808c774a
+                base XDR git version: 68fa1ac55692f68ad2a2ca549d0a283273554439
+        host[7]:
+            package version: 28.0.0
+            git version: ba37ea5f76a10710835992fb90f9ec7a14eca499
+            ledger protocol version: 28
+            pre-release version: 0
+            rs-stellar-xdr:
+                package version: 28.0.0
+                git version: d0f1330e43c3a2c0c616da30698b24140d4eea72
+                base XDR git version: 9c9c145953e80990d6ff1ae3a6a973a0ce6d0694
+        host[8]:
+            package version: 29.0.0
+            git version: a721944b5a4ea830a4bf5c2dbb8dbe8c1e1354c5
+            ledger protocol version: 29
+            pre-release version: 0
+            rs-stellar-xdr:
+                package version: 28.0.0
+                git version: d0f1330e43c3a2c0c616da30698b24140d4eea72
+                base XDR git version: 9c9c145953e80990d6ff1ae3a6a973a0ce6d0694
+  rpc:
+    stellar-rpc 29.0.0 (8a40169717723697e430c1e51c21ef0bf244ecda) HEAD
+    stellar-xdr 9c9c145953e80990d6ff1ae3a6a973a0ce6d0694
+    soroban-env-host-prev 28.0.1
+    soroban-env-host-curr 29.0.0
+  horizon:
+    devel
+    go1.26.8
+  friendbot:
+    4a6a1715d5b81c640dd9f887dd37b26499e95e72 (4a6a1715d5b81c640dd9f887dd37b26499e95e72)
+  lab:
+    main (b4b6465a29f9622eebbe7d46ce0117b552e87d91)
+  galexie:
+    galexie-v29.0.0 (c927ffc38c2964f0d38976b05396fbea440748f1)
+mode: ephemeral
+network: local
+network passphrase: Standalone Network ; February 2017
+network id: baefd734b8d3e48472cff83912375fedbc7573701912fe308af730180f97d74a
+network root secret key: [REDACTED_STANDALONE_SIGNING_SEED]
+network root account id: GBZXN7PIRZGNMHGA7MUUUF4GWPY5AYPV6LY4UV2GL6VJGIQRXFDNMADI
+protocol version default: 28
+protocol version set: 28
+postgres user: stellar
+postgres password: feqU2rGL3oKM81Zj
+finalize-pgpass: ok
+init-postgres: ok
+postgres: up
+create-horizon-db: ok
+stellar-postgres-user: ok
+mkdir-core-log: ok
+chown-core-log: ok
+chown-core: ok
+finalize-core-config-manual-close: ok
+finalize-core-config-database: ok
+init-core-db: ok
+init-core-scp: ok
+mkdir-history-archive: ok
+chown-history-archive: ok
+init-history: ok
+finalize-horizon-captivecore-db: ok
+finalize-horizon-captivecore-config-enable-soroban-diagnostic-events: ok
+chown-horizon: ok
+init-horizon-db: ok
+finalize-stellar-rpc-captivecore-db: ok
+finalize-stellar-rpc-captivecore-config-enable-soroban-diagnostic-events: ok
+init-stellar-rpc: ok
+postgres: down
+supervisor: starting
+horizon: waiting for ingestion to catch up...
+stellar-rpc: waiting for ready state...
+supervisor: 2026-10-08 10:05:08,076 INFO Included extra file "/opt/stellar/supervisor/etc/supervisord.conf.d/friendbot.conf" during parsing
+supervisor: 2026-10-08 10:05:08,076 INFO Included extra file "/opt/stellar/supervisor/etc/supervisord.conf.d/galexie.conf" during parsing
+supervisor: 2026-10-08 10:05:08,076 INFO Included extra file "/opt/stellar/supervisor/etc/supervisord.conf.d/history-archive.conf" during parsing
+supervisor: 2026-10-08 10:05:08,077 INFO Included extra file "/opt/stellar/supervisor/etc/supervisord.conf.d/horizon.conf" during parsing
+supervisor: 2026-10-08 10:05:08,077 INFO Included extra file "/opt/stellar/supervisor/etc/supervisord.conf.d/ledger-meta-store.conf" during parsing
+supervisor: 2026-10-08 10:05:08,077 INFO Included extra file "/opt/stellar/supervisor/etc/supervisord.conf.d/nginx.conf" during parsing
+supervisor: 2026-10-08 10:05:08,077 INFO Included extra file "/opt/stellar/supervisor/etc/supervisord.conf.d/postgresql.conf" during parsing
+supervisor: 2026-10-08 10:05:08,077 INFO Included extra file "/opt/stellar/supervisor/etc/supervisord.conf.d/stellar-core.conf" during parsing
+supervisor: 2026-10-08 10:05:08,078 INFO Included extra file "/opt/stellar/supervisor/etc/supervisord.conf.d/stellar-lab.conf" during parsing
+supervisor: 2026-10-08 10:05:08,078 INFO Included extra file "/opt/stellar/supervisor/etc/supervisord.conf.d/stellar-rpc.conf" during parsing
+supervisor: 2026-10-08 10:05:08,078 INFO Set uid to user 0 succeeded
+supervisor: 2026-10-08 10:05:08,112 INFO RPC interface 'supervisor' initialized
+supervisor: 2026-10-08 10:05:08,113 CRIT Server 'inet_http_server' running without any HTTP authentication checking
+supervisor: 2026-10-08 10:05:08,114 INFO supervisord started with pid 1
+supervisor: 2026-10-08 10:05:09,119 INFO spawned: 'history-archive' with pid 338
+supervisor: 2026-10-08 10:05:09,124 INFO spawned: 'nginx' with pid 339
+supervisor: 2026-10-08 10:05:09,125 INFO reaped unknown pid 285 (exit status 0)
+supervisor: 2026-10-08 10:05:10,537 INFO success: history-archive entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+supervisor: 2026-10-08 10:05:10,537 INFO success: nginx entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+supervisor: 2026-10-08 10:05:10,549 INFO spawned: 'stellar-core' with pid 373
+upgrades: protocolversion=28, basereserve=5000000
+stellar-core(node): Synced!; Armed with network upgrades: upgradetime=1970-01-01T00:00:00Z, protocolversion=28, basereserve=5000000
+supervisor: 2026-10-08 10:05:11,607 INFO success: stellar-core entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+stellar-core: started
+upgrades: protocolversion done
+supervisor: 2026-10-08 10:05:12,398 INFO spawned: 'postgresql' with pid 460
+stellar-core(node): Synced!
+upgrades: soroban config: restore contract: bdd3c5993d521567bdafeb91a2e93603feba72bfcc9b3e40f9aca27c2aae23d7 .. PENDING
+supervisor: 2026-10-08 10:05:13,633 INFO success: postgresql entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+postgresql: started
+upgrades: soroban config: install contract: 5f9144833e1b8586f05bfb32984c06065b5df1930b7f4f234cb0f910497ecd39 .. PENDING
+supervisor: 2026-10-08 10:05:14,386 INFO spawned: 'horizon' with pid 534
+upgrades: soroban config: deploy contract: 2824397f9a395aa56f5e9fe932f114e9802ea8fbb973d6ac7064bca8155e46bd .. PENDING
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [7-7]: Waiting before starting Ready to run: resolve-snapshot
+upgrades: soroban config: upload config: c5c5947f2459927b96da71da471f9413a5ca7befaa33f5b6de99d26fa6c9ef26 .. PENDING
+upgrades: soroban config: set config with key: iokgQ/8mUTuXN1kaUDyKeseGhCCP1pqLZciADf4ndyp+QwV4hFVhyNAny47QGG6oYwPzugi7Degcv0Yhn64AHA==
+Error setting configUpgradeSet
+supervisor: 2026-10-08 10:05:16,183 INFO success: horizon entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+horizon: started
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [7-7]: Waiting: resolve-snapshot
+supervisor: 2026-10-08 10:05:16,927 INFO spawned: 'stellar-rpc' with pid 668
+
+upgrades: soroban config done
+upgrades: soroban config 'testnet' limits
+upgrades: soroban config: restore contract: 1e8cfae0ad028ca51be930aafdecbdc8129f5953cc2d4eff645df45e4d331cad .. PENDING
+stellar-core(node): Synced!; Armed with network upgrades: upgradetime=1970-01-01T00:00:00Z, {
+    "configupgradesetkey": {
+        "contractID": "CCFISICD74TFCO4XG5MRUUB4RJ5MPBUEECH5NGULMXEIADP6E53SUPRL",
+        "contentHash": "7e430578845561c8d027cb8ed0186ea86303f3ba08bb0de81cbf46219fae001c"
+    }
+}
+supervisor: 2026-10-08 10:05:18,203 INFO success: stellar-rpc entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+stellar-rpc: started
+supervisor: 2026-10-08 10:05:18,391 INFO reaped unknown pid 286 (exit status 0)
+upgrades: soroban config: install contract: 117dc071167027fb442e788c85606a272518cc361e19bc35ba2c81bcbc23aa53 .. PENDING
+stellar-core(node): Synced!
+stellar-core(rpc): Joining SCP
+upgrades: soroban config: deploy contract: 184b12ee66bc9c946c23cfda37292ade3d7ffd1624612ffbad69e1877eb9b9eb .. PENDING
+stellar-core(horizon): Joining SCP
+stellar-core(rpc): Synced!
+upgrades: soroban config: upload config: 26727d78aad475019f1e871ad1c186c22b1ef33045788169489ead0f32d135bb .. PENDING
+stellar-core(horizon): Synced!
+upgrades: soroban config: set config with key: 0eYyyk4Y85mMtiKFl1gLRwO6/cTbYYWO8jKPRwiO8ww14Ih416Tucp0u/305RCsMD/hef7zRFVTSRlAgTkgKww==
+
+upgrades: soroban config done
+stellar-rpc: up and ready
+supervisor: 2026-10-08 10:05:22,366 INFO reaped unknown pid 298 (exit status 0)
+supervisor: 2026-10-08 10:05:22,696 INFO spawned: 'friendbot' with pid 1141
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [15-15]: Waiting before starting Ready to run: resolve-snapshot
+supervisor: 2026-10-08 10:05:24,033 INFO success: friendbot entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+friendbot: started
+supervisor: 2026-10-08 10:05:24,162 INFO reaped unknown pid 284 (exit status 0)
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [15-15]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+horizon: ingestion caught up
+supervisor: 2026-10-08 10:05:27,917 INFO reaped unknown pid 294 (exit status 0)
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [23-23]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [31-31]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [31-31]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [39-39]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [39-39]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [47-47]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [47-47]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [55-55]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [55-55]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [63-63]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [63-63]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [71-71]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [71-71]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [79-79]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [87-87]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [87-87]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [95-95]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [95-95]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [103-103]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [111-111]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [111-111]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [119-119]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [119-119]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [127-127]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [127-127]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [135-135]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [135-135]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [143-143]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [143-143]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [151-151]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [151-151]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [159-159]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [159-159]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [167-167]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [167-167]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [175-175]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [175-175]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [183-183]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [183-183]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [191-191]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [191-191]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [199-199]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [199-199]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [207-207]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [207-207]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [215-215]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [215-215]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [223-223]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [223-223]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [231-231]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [231-231]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [239-239]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [239-239]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [247-247]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [247-247]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [255-255]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [255-255]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [263-263]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [263-263]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [271-271]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [271-271]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [279-279]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [279-279]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [287-287]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [287-287]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [295-295]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [295-295]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [303-303]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [303-303]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [311-311]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [311-311]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [319-319]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [327-327]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [327-327]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [335-335]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [335-335]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [343-343]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [343-343]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [351-351]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [359-359]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [359-359]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [367-367]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [367-367]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [375-375]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [375-375]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [383-383]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [391-391]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [391-391]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [399-399]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [399-399]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [407-407]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [407-407]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [415-415]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [423-423]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [423-423]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [431-431]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [431-431]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [439-439]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [439-439]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [447-447]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [447-447]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [455-455]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [455-455]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [463-463]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [463-463]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [471-471]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [471-471]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [479-479]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [479-479]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [487-487]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [487-487]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [495-495]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [495-495]: Waiting: resolve-snapshot
+stellar-core(node): Synced!

@@ -1,0 +1,4 @@
+{
+  "message": "The expression evaluated to a falsy value:\n\n  assert.ok((await fetch(`${endpoint.replace(/\\/rpc$/,'')}/friendbot?addr=${deployer.publicKey()}`)).ok)\n",
+  "stack": "AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:\n\n  assert.ok((await fetch(`${endpoint.replace(/\\/rpc$/,'')}/friendbot?addr=${deployer.publicKey()}`)).ok)\n\n    at main (/home/mxr/Documents/localRepo/Weighin/tests/experiments/verify-repeatability.cjs:90:10)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"
+}

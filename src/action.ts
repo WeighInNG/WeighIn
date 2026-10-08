@@ -6,16 +6,18 @@ import * as path from "path";
 import * as os from "os";
 
 import { runMeasurement, ContractBenchmark } from "./measurement";
-import { diffBenchmarks, DiffResult } from "./diff";
+import { diffBenchmarks, DiffResult, contractLabel } from "./diff";
 import { loadConfig, enforceThresholds, Violation } from "./threshold";
-import { renderComment, COMMENT_MARKER } from "./comment";
+import { renderComment } from "./comment";
+import { buildForRevision } from "./build-selection";
+import { writeReportFile } from "./report";
 
 // ---------------------------------------------------------------------------
 // RPC health check
 // ---------------------------------------------------------------------------
 
 /**
- * Verify that the RPC endpoint is reachable and responding to getNetwork.
+ * Verify that the RPC endpoint is reachable and responding to getHealth and getNetwork.
  * Fails the action with a clear message if not — the caller is responsible
  * for starting the network before invoking this action.
  */
@@ -25,7 +27,7 @@ async function assertRpcHealthy(rpcUrl: string): Promise<void> {
     const res = await fetch(rpcUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "getNetwork" }),
+      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "getHealth" }),
       signal: AbortSignal.timeout(10_000),
     });
     if (!res.ok) {
@@ -35,9 +37,25 @@ async function assertRpcHealthy(rpcUrl: string): Promise<void> {
     if (json.error) {
       throw new Error(`RPC error: ${JSON.stringify(json.error)}`);
     }
-    core.info(
-      `RPC healthy — network: ${json.result?.passphrase ?? "(no passphrase)"}`,
-    );
+    if (json.result?.status !== "healthy")
+      throw new Error("RPC has not reported healthy");
+    const network = await fetch(rpcUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 2, method: "getNetwork" }),
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!network.ok)
+      throw new Error(`HTTP ${network.status} ${network.statusText}`);
+    const metadata = (await network.json()) as any;
+    if (
+      metadata.error ||
+      typeof metadata.result?.passphrase !== "string" ||
+      !metadata.result.passphrase.trim()
+    ) {
+      throw new Error("Invalid RPC network metadata");
+    }
+    core.info(`RPC healthy — network: ${metadata.result.passphrase}`);
   } catch (err: any) {
     core.setFailed(
       `Soroban RPC at ${rpcUrl} is not reachable: ${err.message}\n` +
@@ -98,67 +116,6 @@ function getSdkVersion(repoDir: string): string {
   return "unknown";
 }
 
-/**
- * Build all WASM contracts declared in the fixtures file.
- * wasm_path entries are relative to the fixtures file's directory.
- * Walks up from each wasm_path to find the owning Cargo.toml workspace/crate.
- */
-export async function buildContracts(
-  fixturesPath: string,
-  worktreeRoot: string,
-  buildCommand: string,
-  skipBuild: boolean,
-): Promise<void> {
-  if (skipBuild) {
-    core.info(`skip-build is enabled; assuming WASM is precompiled`);
-    return;
-  }
-
-  if (buildCommand) {
-    core.info(`Executing custom build command: ${buildCommand}`);
-    try {
-      await exec.exec("sh", ["-c", buildCommand], { cwd: worktreeRoot });
-    } catch (err: any) {
-      throw new Error(`Custom build command failed: ${err.message}`);
-    }
-    return;
-  }
-
-  const fixturesDir = path.dirname(path.resolve(fixturesPath));
-  const raw = fs.readFileSync(fixturesPath, "utf8");
-  const fixtures = JSON.parse(raw) as {
-    contracts: Array<{ wasm_path: string }>;
-  };
-
-  const cargoDirs = new Set<string>();
-  for (const contract of fixtures.contracts) {
-    const wasmAbs = path.resolve(fixturesDir, contract.wasm_path);
-    let dir = path.dirname(wasmAbs);
-    while (dir !== path.dirname(dir)) {
-      if (fs.existsSync(path.join(dir, "Cargo.toml"))) {
-        cargoDirs.add(dir);
-        break;
-      }
-      dir = path.dirname(dir);
-    }
-  }
-
-  if (cargoDirs.size === 0) {
-    throw new Error(`No Cargo.toml found for any wasm_path in ${fixturesPath}`);
-  }
-
-  for (const dir of cargoDirs) {
-    core.info(
-      `cargo build --release --target wasm32-unknown-unknown in ${dir}`,
-    );
-    await exec.exec(
-      "cargo",
-      ["build", "--release", "--target", "wasm32-unknown-unknown"],
-      { cwd: dir },
-    );
-  }
-}
-
 // ---------------------------------------------------------------------------
 // Two-directory checkout
 // ---------------------------------------------------------------------------
@@ -174,20 +131,22 @@ async function checkoutRef(
   ref: string,
   label: string,
 ): Promise<{ dir: string; sha: string }> {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), `weighin-${label}-`));
-  core.info(`Checking out ${ref} into ${dir}`);
-
   // Fetch the ref into the existing repo's object store, then use
   // git worktree add to get a clean directory without touching the
   // main workspace.
   await exec.exec("git", ["fetch", "--depth=1", "origin", ref], {
     cwd: repoRoot,
   });
-  await exec.exec(
-    "git",
-    ["worktree", "add", "--detach", dir, `origin/${ref}`],
-    { cwd: repoRoot },
-  );
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), `weighin-${label}-`));
+  core.info(`Checking out ${ref} into ${dir}`);
+  try {
+    await exec.exec("git", ["worktree", "add", "--detach", dir, "FETCH_HEAD"], {
+      cwd: repoRoot,
+    });
+  } catch (error) {
+    await removeWorktree(repoRoot, dir);
+    throw error;
+  }
 
   const sha = await getHeadSha(dir);
   core.info(`${label} SHA: ${sha}`);
@@ -207,9 +166,49 @@ async function removeWorktree(repoRoot: string, dir: string): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// Report file management
+// PR comment management
 // ---------------------------------------------------------------------------
-import { writeReportFile } from "./report";
+
+const COMMENT_MARKER = "<!-- weighin-report -->";
+
+async function upsertPrComment(token: string, body: string): Promise<void> {
+  const octokit = github.getOctokit(token);
+  const { owner, repo } = github.context.repo;
+  const prNumber = github.context.payload.pull_request?.number;
+
+  if (!prNumber) {
+    core.warning("Not in a pull_request context; skipping PR comment.");
+    return;
+  }
+
+  const { data: comments } = await octokit.rest.issues.listComments({
+    owner,
+    repo,
+    issue_number: prNumber,
+  });
+
+  const existing = comments.find((c: { id: number; body?: string | null }) =>
+    c.body?.includes(COMMENT_MARKER),
+  );
+
+  if (existing) {
+    await octokit.rest.issues.updateComment({
+      owner,
+      repo,
+      comment_id: existing.id,
+      body,
+    });
+    core.info(`Updated PR comment #${existing.id}`);
+  } else {
+    await octokit.rest.issues.createComment({
+      owner,
+      repo,
+      issue_number: prNumber,
+      body,
+    });
+    core.info("Created new PR comment");
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Main
@@ -219,19 +218,17 @@ async function run(): Promise<void> {
   const fixturesPathRel = core.getInput("fixtures-path", { required: true });
   const configPathRel = core.getInput("config-path");
   const rpcUrl = core.getInput("rpc-url") || "http://localhost:8000/rpc";
+  const githubToken = core.getInput("github-token");
   const baseRefInput = core.getInput("base-ref");
+  const rustToolchain = core.getInput("rust-toolchain");
   const reportPathInput = core.getInput("report-path");
+  const metadataPathInput = core.getInput("metadata-path");
   const buildCommand = core.getInput("build-command");
   const skipBuild = core.getInput("skip-build") === "true";
 
   // The runner's checkout of the PR head is at GITHUB_WORKSPACE
   const headWorkspace = process.env["GITHUB_WORKSPACE"] ?? process.cwd();
 
-  if (buildCommand && skipBuild) {
-    throw new Error(
-      "build-command and skip-build cannot be used together.\nChoose either a custom build command or precompiled WASM.",
-    );
-  }
   const baseRef =
     baseRefInput || github.context.payload.pull_request?.base?.ref || "main";
 
@@ -248,14 +245,15 @@ async function run(): Promise<void> {
 
   // 2. Resolve paths from the HEAD workspace (fixtures, config live there)
   const headFixturesPath = path.resolve(headWorkspace, fixturesPathRel);
+  const fixtureId = path.relative(headWorkspace, headFixturesPath);
   const configPath = path.resolve(
     headWorkspace,
     configPathRel || "weighin.toml",
   );
+  const config = loadConfig(configPath);
 
   if (!fs.existsSync(headFixturesPath)) {
-    core.setFailed(`fixtures-path not found: ${headFixturesPath}`);
-    return;
+    throw new Error(`fixtures-path not found: ${headFixturesPath}`);
   }
 
   // 3. Measure HEAD (the PR branch — already checked out at headWorkspace)
@@ -265,25 +263,26 @@ async function run(): Promise<void> {
 
   let headResults: ContractBenchmark[];
   try {
-    await buildContracts(
+    await buildForRevision(
       headFixturesPath,
       headWorkspace,
+      rustToolchain,
       buildCommand,
       skipBuild,
     );
     headResults = await runMeasurement({
       fixturesPath: headFixturesPath,
+      fixtureId,
       gitCommit: headSha,
       sdkVersion: getSdkVersion(headWorkspace),
       rpcUrl,
       keyFile: sharedKeyFile,
-      skipBuild,
     });
   } catch (err: any) {
-    core.setFailed(`HEAD measurement failed: ${err.message}`);
-    return;
+    throw new Error(`HEAD measurement failed: ${err.message}`);
+  } finally {
+    core.endGroup();
   }
-  core.endGroup();
 
   // Log WASM hashes from HEAD for the determinism audit trail
   for (const contract of headResults) {
@@ -308,16 +307,22 @@ async function run(): Promise<void> {
     // The fixtures file in the base worktree — same relative path
     const baseFixturesPath = path.resolve(baseDir, fixturesPathRel);
     if (!fs.existsSync(baseFixturesPath)) {
-      core.warning(`fixtures-path not found in base ref; skipping baseline.`);
+      throw new Error("fixtures-path not found in base ref");
     } else {
-      await buildContracts(baseFixturesPath, baseDir, buildCommand, skipBuild);
+      await buildForRevision(
+        baseFixturesPath,
+        baseDir,
+        rustToolchain,
+        buildCommand,
+        skipBuild,
+      );
       baseResults = await runMeasurement({
         fixturesPath: baseFixturesPath,
+        fixtureId,
         gitCommit: baseSha,
         sdkVersion: getSdkVersion(baseDir),
         rpcUrl,
         keyFile: sharedKeyFile,
-        skipBuild,
       });
 
       // Log WASM hashes from base
@@ -330,64 +335,32 @@ async function run(): Promise<void> {
       }
     }
   } catch (err: any) {
-    core.warning(
-      `Base measurement failed (${err.message}); reporting head-only.`,
+    throw new Error(
+      `Required BASE comparison failed: ${err.message}. Policies were not evaluated.`,
     );
   } finally {
     if (baseDir) await removeWorktree(headWorkspace, baseDir);
+    core.endGroup();
   }
-  core.endGroup();
 
-  // 5. No-baseline path (first PR, base build failed, etc.)
-  if (!baseResults) {
-    core.setOutput("result", "no-baseline");
-    core.setOutput("diff-json", "{}");
-    core.info("No baseline; emitting head-only measurements.");
-
-    const body = [
-      "## ⚪ WeighIn Benchmark Report",
-      "",
-      "No baseline available for comparison. Head measurements recorded.",
-      "",
-      "```json",
-      JSON.stringify(headResults, null, 2),
-      "```",
-      "",
-      COMMENT_MARKER,
-    ].join("\n");
-
-    if (reportPathInput) {
-      writeReportFile(reportPathInput, headWorkspace, body);
-    }
-
-    const metadataPathInput = core.getInput("metadata-path");
-    if (metadataPathInput) {
-      const prNumber = github.context.payload.pull_request?.number;
-      if (prNumber) {
-        const metadata = {
-          prNumber,
-          headSha,
-        };
-        const dest = path.resolve(headWorkspace, metadataPathInput);
-        fs.mkdirSync(path.dirname(dest), { recursive: true });
-        fs.writeFileSync(dest, JSON.stringify(metadata, null, 2), "utf8");
-        core.info(`Wrote PR metadata to ${metadataPathInput}`);
-      } else {
-        core.info("Not a pull_request event; skipping metadata generation");
-      }
-    }
-    return;
-  }
+  if (!baseResults)
+    throw new Error(
+      "Required BASE comparison unavailable. Policies were not evaluated.",
+    );
 
   // 6. Diff
   core.startGroup("Computing diff");
   const diff: DiffResult = diffBenchmarks(baseResults, headResults);
+  if (!diff.contracts.some((contract) => contract.functions.length > 0)) {
+    throw new Error(
+      "No matched BASE/HEAD benchmarks; comparison and policies were not evaluated.",
+    );
+  }
   core.info(`Any regression: ${diff.hasRegression}`);
   core.endGroup();
 
   // 7. Threshold enforcement
   core.startGroup("Enforcing thresholds");
-  const config = loadConfig(configPath);
   if (config) {
     core.info("weighin.toml loaded");
   } else {
@@ -396,7 +369,9 @@ async function run(): Promise<void> {
   const violations: Violation[] = enforceThresholds(diff, config);
   core.info(`Violations: ${violations.length}`);
   for (const v of violations) {
-    core.error(`[${v.function_name}] ${v.message}`);
+    core.error(
+      `[${contractLabel(v)} / ${v.function_name} / ${v.case_id}] ${v.message}`,
+    );
   }
   core.endGroup();
 
@@ -405,28 +380,32 @@ async function run(): Promise<void> {
   core.setOutput("result", result);
   core.setOutput("diff-json", JSON.stringify(diff));
 
-  // 9. PR comment
-  const finalBody = renderComment(diff, violations, baseRef, headSha);
-
-  if (reportPathInput) {
-    writeReportFile(reportPathInput, headWorkspace, finalBody);
-  }
-
-  const metadataPathInput = core.getInput("metadata-path");
+  // Report is available in the job summary even without permission to post a PR comment.
+  const body = renderComment(diff, violations, baseRef, headSha);
+  if (process.env.GITHUB_STEP_SUMMARY) await core.summary.addRaw(body).write();
+  if (reportPathInput) writeReportFile(reportPathInput, headWorkspace, body);
   if (metadataPathInput) {
     const prNumber = github.context.payload.pull_request?.number;
     if (prNumber) {
-      const metadata = {
-        prNumber,
-        headSha,
-      };
-      const dest = path.resolve(headWorkspace, metadataPathInput);
-      fs.mkdirSync(path.dirname(dest), { recursive: true });
-      fs.writeFileSync(dest, JSON.stringify(metadata, null, 2), "utf8");
-      core.info(`Wrote PR metadata to ${metadataPathInput}`);
-    } else {
-      core.info("Not a pull_request event; skipping metadata generation");
+      const destination = path.resolve(headWorkspace, metadataPathInput);
+      fs.mkdirSync(path.dirname(destination), { recursive: true });
+      fs.writeFileSync(
+        destination,
+        JSON.stringify({ prNumber, headSha }, null, 2),
+        "utf8",
+      );
     }
+  }
+
+  // 9. PR comment
+  if (githubToken) {
+    core.startGroup("Posting PR comment");
+    try {
+      await upsertPrComment(githubToken, body);
+    } catch (err: any) {
+      core.warning(`Failed to post PR comment: ${err.message}`);
+    }
+    core.endGroup();
   }
 
   // 10. Exit status
@@ -435,4 +414,15 @@ async function run(): Promise<void> {
   }
 }
 
-run().catch((e) => core.setFailed(e.message));
+run().catch(async (error: Error) => {
+  core.setOutput("result", "fail");
+  core.setOutput("diff-json", "{}");
+  core.setFailed(error.message);
+  if (process.env.GITHUB_STEP_SUMMARY) {
+    await core.summary
+      .addRaw(
+        `## WeighIn comparison failed\n\n${error.message}\n\nNo passing comparison or policy result was established.\n`,
+      )
+      .write();
+  }
+});

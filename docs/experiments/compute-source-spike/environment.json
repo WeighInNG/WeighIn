@@ -1,0 +1,39 @@
+{
+  "network": {
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "getNetwork",
+      "params": {}
+    },
+    "raw": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "friendbotUrl": "http://localhost:8000/friendbot",
+        "passphrase": "Standalone Network ; February 2017",
+        "protocolVersion": 28
+      }
+    }
+  },
+  "version": {
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "method": "getVersionInfo",
+      "params": {}
+    },
+    "raw": {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "result": {
+        "version": "29.0.0",
+        "commitHash": "8a40169717723697e430c1e51c21ef0bf244ecda",
+        "buildTimestamp": "2026-10-06T01:24:26",
+        "captiveCoreVersion": "v29.0.0",
+        "protocolVersion": 28
+      }
+    }
+  },
+  "image": "sha256:4c8bad1ef7341205b898f83d9489321da80c7bd74183100fc8e2a39a5938c7d5"
+}

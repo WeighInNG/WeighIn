@@ -1,0 +1,3 @@
+Reading: /home/mxr/Documents/localRepo/Weighin/.stage6-delivery/docs/experiments/external-soroban-forge/provenance-checks/original-unoptimized.wasm (45889 bytes)
+Optimized: /home/mxr/Documents/localRepo/Weighin/.stage6b-work/4-4.wasm (40912 bytes)
+⚠️  `stellar contract optimize` is deprecated and will be removed in future versions of the CLI. Use `stellar contract build --optimize` instead.

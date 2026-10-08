@@ -1,0 +1,123 @@
+[
+  {
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "getHealth"
+    },
+    "raw": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "error": {
+        "code": -32603,
+        "message": "[-32603] data stores are not initialized: DB is empty"
+      }
+    }
+  },
+  {
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "getHealth"
+    },
+    "raw": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "status": "healthy",
+        "latestLedger": 12,
+        "latestLedgerCloseTime": "1791443182",
+        "oldestLedger": 7,
+        "oldestLedgerCloseTime": "1791443177",
+        "ledgerRetentionWindow": 120960
+      }
+    }
+  },
+  {
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "getLedgerEntries",
+      "params": {
+        "keys": [
+          "AAAAAAAAAAB7OpJR5mjiW55XrHzFwekLbfIJVajS6+DI+TqRZZ4C0g=="
+        ]
+      }
+    },
+    "raw": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "entries": [],
+        "latestLedger": 12
+      }
+    }
+  },
+  {
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "getLedgerEntries",
+      "params": {
+        "keys": [
+          "AAAAAAAAAAB7OpJR5mjiW55XrHzFwekLbfIJVajS6+DI+TqRZZ4C0g=="
+        ]
+      }
+    },
+    "raw": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "entries": [],
+        "latestLedger": 14
+      }
+    }
+  },
+  {
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "getLedgerEntries",
+      "params": {
+        "keys": [
+          "AAAAAAAAAAB7OpJR5mjiW55XrHzFwekLbfIJVajS6+DI+TqRZZ4C0g=="
+        ]
+      }
+    },
+    "raw": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "entries": [],
+        "latestLedger": 16
+      }
+    }
+  },
+  {
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "getLedgerEntries",
+      "params": {
+        "keys": [
+          "AAAAAAAAAAB7OpJR5mjiW55XrHzFwekLbfIJVajS6+DI+TqRZZ4C0g=="
+        ]
+      }
+    },
+    "raw": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "entries": [
+          {
+            "key": "AAAAAAAAAAB7OpJR5mjiW55XrHzFwekLbfIJVajS6+DI+TqRZZ4C0g==",
+            "xdr": "AAAAAAAAAAB7OpJR5mjiW55XrHzFwekLbfIJVajS6+DI+TqRZZ4C0gAAABdIdugAAAAAEgAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAA",
+            "lastModifiedLedgerSeq": 18,
+            "extXdr": "AAAAAA=="
+          }
+        ],
+        "latestLedger": 20
+      }
+    }
+  }
+]

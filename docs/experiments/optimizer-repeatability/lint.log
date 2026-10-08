@@ -1,0 +1,6 @@
+
+> weighin@1.0.0 lint
+> prettier --check src test
+
+Checking formatting...
+All matched files use Prettier code style!

@@ -1,0 +1,100 @@
+chown-core: ok
+finalize-core-config-manual-close: ok
+finalize-core-config-database: ok
+init-core-db: ok
+init-core-scp: ok
+mkdir-history-archive: ok
+chown-history-archive: ok
+init-history: ok
+finalize-horizon-captivecore-db: ok
+finalize-horizon-captivecore-config-enable-soroban-diagnostic-events: ok
+chown-horizon: ok
+init-horizon-db: ok
+finalize-stellar-rpc-captivecore-db: ok
+finalize-stellar-rpc-captivecore-config-enable-soroban-diagnostic-events: ok
+init-stellar-rpc: ok
+postgres: down
+supervisor: starting
+horizon: waiting for ingestion to catch up...
+stellar-rpc: waiting for ready state...
+supervisor: 2026-10-08 07:13:59,739 INFO Included extra file "/opt/stellar/supervisor/etc/supervisord.conf.d/friendbot.conf" during parsing
+supervisor: 2026-10-08 07:13:59,739 INFO Included extra file "/opt/stellar/supervisor/etc/supervisord.conf.d/galexie.conf" during parsing
+supervisor: 2026-10-08 07:13:59,739 INFO Included extra file "/opt/stellar/supervisor/etc/supervisord.conf.d/history-archive.conf" during parsing
+supervisor: 2026-10-08 07:13:59,739 INFO Included extra file "/opt/stellar/supervisor/etc/supervisord.conf.d/horizon.conf" during parsing
+supervisor: 2026-10-08 07:13:59,739 INFO Included extra file "/opt/stellar/supervisor/etc/supervisord.conf.d/ledger-meta-store.conf" during parsing
+supervisor: 2026-10-08 07:13:59,739 INFO Included extra file "/opt/stellar/supervisor/etc/supervisord.conf.d/nginx.conf" during parsing
+supervisor: 2026-10-08 07:13:59,740 INFO Included extra file "/opt/stellar/supervisor/etc/supervisord.conf.d/postgresql.conf" during parsing
+supervisor: 2026-10-08 07:13:59,740 INFO Included extra file "/opt/stellar/supervisor/etc/supervisord.conf.d/stellar-core.conf" during parsing
+supervisor: 2026-10-08 07:13:59,740 INFO Included extra file "/opt/stellar/supervisor/etc/supervisord.conf.d/stellar-lab.conf" during parsing
+supervisor: 2026-10-08 07:13:59,740 INFO Included extra file "/opt/stellar/supervisor/etc/supervisord.conf.d/stellar-rpc.conf" during parsing
+supervisor: 2026-10-08 07:13:59,740 INFO Set uid to user 0 succeeded
+supervisor: 2026-10-08 07:13:59,763 INFO RPC interface 'supervisor' initialized
+supervisor: 2026-10-08 07:13:59,763 CRIT Server 'inet_http_server' running without any HTTP authentication checking
+supervisor: 2026-10-08 07:13:59,764 INFO supervisord started with pid 1
+supervisor: 2026-10-08 07:14:00,769 INFO spawned: 'history-archive' with pid 338
+supervisor: 2026-10-08 07:14:00,774 INFO spawned: 'nginx' with pid 339
+supervisor: 2026-10-08 07:14:00,774 INFO reaped unknown pid 285 (exit status 0)
+supervisor: 2026-10-08 07:14:02,164 INFO success: history-archive entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+supervisor: 2026-10-08 07:14:02,164 INFO success: nginx entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+supervisor: 2026-10-08 07:14:02,175 INFO spawned: 'stellar-core' with pid 361
+stellar-core(node): Synced!
+upgrades: protocolversion=28, basereserve=5000000
+supervisor: 2026-10-08 07:14:03,455 INFO success: stellar-core entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+stellar-core: started
+supervisor: 2026-10-08 07:14:04,099 INFO spawned: 'postgresql' with pid 431
+upgrades: protocolversion done
+upgrades: soroban config: restore contract: bdd3c5993d521567bdafeb91a2e93603feba72bfcc9b3e40f9aca27c2aae23d7 .. PENDING
+supervisor: 2026-10-08 07:14:05,482 INFO success: postgresql entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+postgresql: started
+upgrades: soroban config: install contract: 5f9144833e1b8586f05bfb32984c06065b5df1930b7f4f234cb0f910497ecd39 .. PENDING
+supervisor: 2026-10-08 07:14:06,164 INFO spawned: 'horizon' with pid 534
+upgrades: soroban config: deploy contract: cdd232f2969afd136f448d3f9cc03e189dea5abdfe907c68c7840b144e13af73 .. PENDING
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [7-7]: Waiting before starting Ready to run: resolve-snapshot
+upgrades: soroban config: upload config: 2538923dd4dfab0cf916a1a96ecdcdadab68c2fb0a15894b5bfe8ebd9be761ea .. PENDING
+supervisor: 2026-10-08 07:14:07,821 INFO success: horizon entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+horizon: started
+supervisor: 2026-10-08 07:14:08,509 INFO spawned: 'stellar-rpc' with pid 662
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [7-7]: Waiting: resolve-snapshot
+upgrades: soroban config: set config with key: T8aT7EMogVm+i+78pNmZORRJmHArOm1Tszoh+9uSaX9+QwV4hFVhyNAny47QGG6oYwPzugi7Degcv0Yhn64AHA==
+
+upgrades: soroban config done
+upgrades: soroban config 'testnet' limits
+upgrades: soroban config: restore contract: 1e8cfae0ad028ca51be930aafdecbdc8129f5953cc2d4eff645df45e4d331cad .. PENDING
+stellar-core(node): Synced!
+stellar-core(rpc): Joining SCP
+supervisor: 2026-10-08 07:14:09,834 INFO success: stellar-rpc entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+stellar-rpc: started
+supervisor: 2026-10-08 07:14:09,993 INFO reaped unknown pid 286 (exit status 0)
+upgrades: soroban config: install contract: 117dc071167027fb442e788c85606a272518cc361e19bc35ba2c81bcbc23aa53 .. PENDING
+stellar-core(horizon): Joining SCP
+upgrades: soroban config: deploy contract: cb66a438b8ce98e4a2eb703e5097191c098d2111d5a0457beee40992fdfd687f .. PENDING
+stellar-core(rpc): Synced!
+upgrades: soroban config: upload config: a5f9aeafbb4b3aabc499bbb713f42024d80d3a2a938371857ecf0a324394423f .. PENDING
+stellar-core(horizon): Synced!
+upgrades: soroban config: set config with key: pjgwNFi46HrgbaMVgpAz8HSqg71QWKvZhp0B/xj53gQ14Ih416Tucp0u/305RCsMD/hef7zRFVTSRlAgTkgKww==
+
+upgrades: soroban config done
+stellar-core(node): Synced!; Armed with network upgrades: upgradetime=1970-01-01T00:00:00Z, {
+    "configupgradesetkey": {
+        "contractID": "CCTDQMBULC4OQ6XANWRRLAUQGPYHJKUDXVIFRK6ZQ2OQD7YY7HPAJE2Q",
+        "contentHash": "35e08878d7a4ee729d2eff7d39442b0c0ff85e7fbcd11554d24650204e480ac3"
+    }
+}
+supervisor: 2026-10-08 07:14:14,090 INFO spawned: 'friendbot' with pid 1133
+stellar-rpc: up and ready
+supervisor: 2026-10-08 07:14:14,433 INFO reaped unknown pid 299 (exit status 0)
+stellar-core(node): Synced!
+supervisor: 2026-10-08 07:14:15,087 INFO success: friendbot entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+friendbot: started
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [15-15]: Waiting before starting Ready to run: resolve-snapshot
+supervisor: 2026-10-08 07:14:16,035 INFO reaped unknown pid 284 (exit status 0)
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [15-15]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+horizon: ingestion caught up
+supervisor: 2026-10-08 07:14:19,504 INFO reaped unknown pid 294 (exit status 0)
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [23-23]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [23-23]: Waiting: resolve-snapshot
+stellar-core(node): Synced!
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [31-31]: Waiting before starting Ready to run: resolve-snapshot
+stellar-core(node): Synced!; Publishing 1 queued checkpoints [31-31]: Waiting: resolve-snapshot
+stellar-core(node): Synced!

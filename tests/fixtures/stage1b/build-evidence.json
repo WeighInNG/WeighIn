@@ -1,0 +1,21 @@
+{
+  "source_sha": "59db63a7b895dcc5ca763e3c668990fec40850fb",
+  "source_includes_preexisting_working_tree_edits": true,
+  "toolchain": "1.95.0",
+  "soroban_sdk": "25.3.1",
+  "command": "cargo build --release --target wasm32v1-none",
+  "head_change": "env.storage().persistent().set(&symbol_short!(\"bench\"), &to);",
+  "fixtures_identical": true,
+  "base": {
+    "wasm_path": "/tmp/weighin-stage1a-lixw19tq/base/contract/target/wasm32v1-none/release/contract_test.wasm",
+    "wasm_sha256": "949a7203657f6e37d8171facef42797af7f53d1158f070a7d04fcb91479329b2",
+    "wasm_size_bytes": 834,
+    "build_exit_code": 0
+  },
+  "head": {
+    "wasm_path": "/tmp/weighin-stage1a-lixw19tq/head/contract/target/wasm32v1-none/release/contract_test.wasm",
+    "wasm_sha256": "17fbea6f1abb98b3f80099dab37b5ef78354decf8e23f37e5efecc69627c8082",
+    "wasm_size_bytes": 1029,
+    "build_exit_code": 0
+  }
+}

@@ -1,0 +1,234 @@
+import * as fs from 'fs';
+import * as TOML from 'toml';
+import { z } from 'zod';
+import { DiffResult, METRIC_KEYS, MetricDiff, MetricKey } from './diff';
+
+// ---------------------------------------------------------------------------
+// Config schema
+// ---------------------------------------------------------------------------
+
+/**
+ * A rule value is either a named policy string or a numeric percentage cap.
+ *
+ * Named policies:
+ *   "strict_zero_tolerance"     — any increase fails
+ *   "allow_N_percent_increase"  — N% increase allowed (e.g. "allow_10_percent_increase")
+ *   "ignore"                    — never fail on this metric
+ */
+export type RuleValue = string | number;
+
+export interface GlobalThresholds {
+  /** If true, any metric increase (even 1 unit) fails. Default false. */
+  fail_on_any_regression?: boolean;
+  /** Maximum allowed CPU increase as a percentage. */
+  max_allowed_cpu_increase_pct?: number;
+  /** Maximum allowed memory increase as a percentage. */
+  max_allowed_memory_increase_pct?: number;
+}
+
+export interface WeighinConfig {
+  thresholds?: {
+    global?: GlobalThresholds;
+    /** Per-function overrides keyed by function name */
+    functions?: Record<string, Partial<Record<MetricKey, RuleValue>>>;
+  };
+}
+
+const percentage = z.number().finite().nonnegative();
+const ruleSchema = z.union([percentage, z.string().refine(value =>
+  value === 'ignore' || value === 'strict_zero_tolerance' || parseAllowPct(value) !== null,
+  'Unsupported threshold rule')]);
+const metricRules = z.object(Object.fromEntries(METRIC_KEYS.map(key => [key, ruleSchema.optional()]))).strict();
+const configSchema = z.object({
+  thresholds: z.object({
+    global: z.object({
+      fail_on_any_regression: z.boolean().optional(),
+      max_allowed_cpu_increase_pct: percentage.optional(),
+      max_allowed_memory_increase_pct: percentage.optional(),
+    }).strict().optional(),
+    functions: z.record(z.string().min(1), metricRules).optional(),
+  }).strict().optional(),
+}).strict();
+
+/** Validate policies independently of whether a benchmark happened to regress. */
+export function validateConfig(value: unknown): WeighinConfig {
+  return configSchema.parse(value) as WeighinConfig;
+}
+
+// ---------------------------------------------------------------------------
+// Loader
+// ---------------------------------------------------------------------------
+
+/**
+ * Load and parse weighin.toml. Returns null if the file does not exist
+ * (no thresholds enforced). Throws on parse errors.
+ */
+export function loadConfig(configPath: string): WeighinConfig | null {
+  if (!fs.existsSync(configPath)) {
+    return null;
+  }
+  const raw = fs.readFileSync(configPath, 'utf8');
+  return validateConfig(TOML.parse(raw));
+}
+
+// ---------------------------------------------------------------------------
+// Rule evaluation
+// ---------------------------------------------------------------------------
+
+export interface Violation {
+  fixture_id?: string;
+  logical_id?: string;
+  case_id?: string;
+  contract_id: string;
+  function_name: string;
+  metric: MetricKey;
+  delta: number | null;
+  pct: number | null;
+  rule: string;
+  message: string;
+}
+
+function parseAllowPct(rule: string): number | null {
+  // Matches "allow_10_percent_increase", "allow_2.5_percent_increase", etc.
+  const m = rule.match(/^allow_(\d+(?:\.\d+)?)_percent_increase$/);
+  const value = m ? Number(m[1]) : NaN;
+  return Number.isFinite(value) ? value : null;
+}
+
+function evaluateRule(
+  rule: RuleValue,
+  diff: MetricDiff,
+  contractId: string,
+  functionName: string
+): Violation | null {
+  const ruleStr = typeof rule === 'number' ? `allow_${rule}_percent_increase` : rule;
+
+  if (ruleStr === 'ignore') return null;
+  if (diff.availability === 'unavailable') {
+    return { contract_id: contractId, function_name: functionName, metric: diff.key,
+      delta: null, pct: null, rule: ruleStr,
+      message: `${diff.key} unavailable; cannot evaluate configured policy: ${diff.reason}` };
+  }
+  if (!diff.regression) return null;
+
+
+  if (ruleStr === 'strict_zero_tolerance') {
+    return {
+      contract_id: contractId,
+      function_name: functionName,
+      metric: diff.key,
+      delta: diff.delta,
+      pct: diff.pct,
+      rule: ruleStr,
+      message: `${diff.key} increased by ${diff.delta} (strict zero tolerance)`,
+    };
+  }
+
+  const allowedPct = typeof rule === 'number' ? rule : parseAllowPct(ruleStr);
+  if (allowedPct !== null) {
+    if (diff.pct === null || diff.pct > allowedPct) {
+      const pctStr = diff.pct === null ? 'Infinity' : diff.pct.toFixed(2);
+      return {
+        contract_id: contractId,
+        function_name: functionName,
+        metric: diff.key,
+        delta: diff.delta,
+        pct: diff.pct,
+        rule: ruleStr,
+        message: `${diff.key} increased by ${pctStr}% (limit ${allowedPct}%)`,
+      };
+    }
+    return null;
+  }
+
+  throw new Error(`Unsupported threshold rule "${ruleStr}" for ${diff.key}`);
+}
+
+// Map from global threshold fields to metric keys + default rules
+const GLOBAL_RULE_MAP: Array<{
+  field: keyof GlobalThresholds;
+  metric: MetricKey;
+  toRule: (val: number) => RuleValue;
+}> = [
+  {
+    field: 'max_allowed_cpu_increase_pct',
+    metric: 'cpu_instructions',
+    toRule: (v) => v,
+  },
+  {
+    field: 'max_allowed_memory_increase_pct',
+    metric: 'memory_bytes',
+    toRule: (v) => v,
+  },
+];
+
+/**
+ * Enforce all threshold rules against a DiffResult.
+ * Returns the list of violations (empty = pass).
+ */
+export function enforceThresholds(
+  diff: DiffResult,
+  config: WeighinConfig | null
+): Violation[] {
+  if (config !== null) config = validateConfig(config);
+  if (!config?.thresholds) return [];
+
+  const global = config.thresholds.global ?? {};
+  const perFunction = config.thresholds.functions ?? {};
+  const violations: Violation[] = [];
+
+  const comparedNames = new Set(diff.contracts.flatMap(contract => contract.functions.map(fn => fn.function_name)));
+  for (const [name, rules] of Object.entries(perFunction)) {
+    if (Object.values(rules).some(rule => rule !== 'ignore') && !comparedNames.has(name)) {
+      throw new Error(`Cannot evaluate configured policy: function ${name} has no matched BASE/HEAD benchmark`);
+    }
+  }
+  if ((global.fail_on_any_regression || GLOBAL_RULE_MAP.some(({ field }) => global[field] !== undefined)) && comparedNames.size === 0) {
+    throw new Error('Cannot evaluate global policy: no matched BASE/HEAD benchmarks');
+  }
+
+  for (const contract of diff.contracts) {
+    for (const fn of contract.functions) {
+      const identity = { fixture_id: contract.fixture_id, logical_id: contract.logical_id, case_id: fn.case_id };
+      for (const metricDiff of fn.metrics) {
+        // 1. Per-function overrides take priority over global rules
+        const fnOverrides = perFunction[fn.function_name];
+        const fnRule = fnOverrides?.[metricDiff.key];
+        if (fnRule !== undefined) {
+          const v = evaluateRule(fnRule, metricDiff, contract.contract_id, fn.function_name);
+          if (v) violations.push({ ...v, ...identity });
+          continue;
+        }
+
+        // 2. Global fail_on_any_regression
+        if (global.fail_on_any_regression && (metricDiff.regression || metricDiff.availability === 'unavailable')) {
+          violations.push({
+            ...identity,
+            contract_id: contract.contract_id,
+            function_name: fn.function_name,
+            metric: metricDiff.key,
+            delta: metricDiff.delta,
+            pct: metricDiff.pct,
+            rule: 'fail_on_any_regression',
+            message: metricDiff.availability === 'unavailable'
+              ? `${metricDiff.key} unavailable; cannot evaluate fail_on_any_regression: ${metricDiff.reason}`
+              : `${metricDiff.key} increased by ${metricDiff.delta} (fail_on_any_regression)`,
+          });
+          continue;
+        }
+
+        // 3. Named global rules (cpu, memory caps)
+        for (const { field, metric, toRule } of GLOBAL_RULE_MAP) {
+          if (metricDiff.key !== metric) continue;
+          const val = global[field];
+          if (val !== undefined) {
+            const v = evaluateRule(toRule(val as number), metricDiff, contract.contract_id, fn.function_name);
+            if (v) violations.push({ ...v, ...identity });
+          }
+        }
+      }
+    }
+  }
+
+  return violations;
+}

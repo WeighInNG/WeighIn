@@ -1,0 +1,19 @@
+node:internal/process/promises:394
+    triggerUncaughtException(err, true /* fromPromise */);
+    ^
+
+AssertionError [ERR_ASSERTION]: The input did not match the regular expression /Build temporary storage is unusable.*quota.*refusing to accept optimizer output/i. Input:
+
+'Build temporary storage is unusable at /tmp/weighin-build-ZateC8: UNKNOWN: unknown error, write. Provide healthy temporary storage (TMPDIR on Unix); refusing to accept optimizer output.'
+
+    at [stdin]:3:214
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5) {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: 'Build temporary storage is unusable at /tmp/weighin-build-ZateC8: UNKNOWN: unknown error, write. Provide healthy temporary storage (TMPDIR on Unix); refusing to accept optimizer output.',
+  expected: /Build temporary storage is unusable.*quota.*refusing to accept optimizer output/i,
+  operator: 'match',
+  diff: 'simple'
+}
+
+Node.js v24.13.1

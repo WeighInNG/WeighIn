@@ -1,0 +1,63 @@
+{
+  "completed": "2026-10-08",
+  "npm ci": {
+    "result": "PASS",
+    "audit": "existing 1 moderate and 4 high findings"
+  },
+  "npm test": {
+    "result": "PASS",
+    "tests": 92
+  },
+  "npm run test:native": {
+    "result": "PASS",
+    "tests": 15
+  },
+  "npm run build": {
+    "result": "PASS"
+  },
+  "npm run bundle": {
+    "result": "PASS"
+  },
+  "npm pack --dry-run --json": {
+    "result": "PASS",
+    "scope": "file inclusion only; no publication",
+    "required_files": [
+      "dist/cli.js",
+      "dist/measurement.js",
+      "dist/simulation.js",
+      "native/simulation/src/main.rs",
+      "native/simulation/Cargo.lock",
+      "docs/metric-provenance.md"
+    ]
+  },
+  "cargo fmt --check --manifest-path native/simulation/Cargo.toml": {
+    "result": "PASS"
+  },
+  "git diff --check": {
+    "result": "PASS"
+  },
+  "lint/typecheck": {
+    "result": "NO SCRIPTS",
+    "typescript": "checked by build/bundle"
+  },
+  "real_metric_fixture": {
+    "result": "PASS",
+    "raw_rpc_metrics_verified": 6,
+    "fixture_cases": 6
+  },
+  "real_cli": {
+    "result": "PASS",
+    "exit": 0,
+    "schema": 4,
+    "fixture_cases": 6
+  },
+  "real_action": {
+    "result": "PASS",
+    "control_exit": 0,
+    "regression_exit": 1,
+    "policy": "ledger_write_bytes strict_zero_tolerance",
+    "base": 0,
+    "head": 88,
+    "stubs": false
+  }
+}

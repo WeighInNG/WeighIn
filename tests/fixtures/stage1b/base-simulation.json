@@ -1,0 +1,109 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "simulateTransaction",
+    "params": {
+      "transaction": "AAAAAgAAAADk2salTPvgU7I5gqWo+kjLoD1oYGzeWLKXcXsN5tXHAwAPQkAAAAA0AAAABQAAAAEAAAAAAAAAAAAAAABqxqkXAAAAAAAAAAEAAAAAAAAAGAAAAAAAAAABbfAhGFc0ga31cM4V4pxVQRSAWTButmIfxjY3AjaIFzoAAAAFaGVsbG8AAAAAAAABAAAADwAAAAV3b3JsZAAAAAAAAAAAAAAAAAAAAA=="
+    }
+  },
+  "raw": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+      "transactionData": "AAAAAAAAAAIAAAAGAAAAAW3wIRhXNIGt9XDOFeKcVUEUgFkwbrZiH8Y2NwI2iBc6AAAAFAAAAAEAAAAHlJpyA2V/bjfYFx+s70J5evf1PRFY8HCn0E/LkUeTKbIAAAAAAATi2wAAAAAAAAAAAAAAAAAAMio=",
+      "events": [
+        "AAAAAQAAAAAAAAAAAAAAAgAAAAAAAAADAAAADwAAAAdmbl9jYWxsAAAAAA0AAAAgbfAhGFc0ga31cM4V4pxVQRSAWTButmIfxjY3AjaIFzoAAAAPAAAABWhlbGxvAAAAAAAADwAAAAV3b3JsZAAAAA==",
+        "AAAAAQAAAAAAAAABbfAhGFc0ga31cM4V4pxVQRSAWTButmIfxjY3AjaIFzoAAAACAAAAAAAAAAIAAAAPAAAACWZuX3JldHVybgAAAAAAAA8AAAAFaGVsbG8AAAAAAAAQAAAAAQAAAAIAAAAPAAAABUhlbGxvAAAAAAAADwAAAAV3b3JsZAAAAA=="
+      ],
+      "minResourceFee": "12842",
+      "results": [
+        {
+          "auth": [],
+          "xdr": "AAAAEAAAAAEAAAACAAAADwAAAAVIZWxsbwAAAAAAAA8AAAAFd29ybGQAAAA="
+        }
+      ],
+      "latestLedger": 1099
+    }
+  },
+  "parsed": {
+    "keys": [
+      "_parsed",
+      "id",
+      "latestLedger",
+      "events",
+      "transactionData",
+      "minResourceFee",
+      "result"
+    ],
+    "latestLedger": 1099,
+    "transactionData": "AAAAAAAAAAIAAAAGAAAAAW3wIRhXNIGt9XDOFeKcVUEUgFkwbrZiH8Y2NwI2iBc6AAAAFAAAAAEAAAAHlJpyA2V/bjfYFx+s70J5evf1PRFY8HCn0E/LkUeTKbIAAAAAAATi2wAAAAAAAAAAAAAAAAAAMio=",
+    "resources": {
+      "instruction_budget": 320219,
+      "disk_read_bytes": 0,
+      "write_bytes": 0,
+      "read_only_entries": 2,
+      "read_write_entries": 0
+    },
+    "events": [
+      {
+        "success": true,
+        "type": "diagnostic",
+        "topics": [
+          "fn_call",
+          {
+            "type": "Buffer",
+            "data": [
+              109,
+              240,
+              33,
+              24,
+              87,
+              52,
+              129,
+              173,
+              245,
+              112,
+              206,
+              21,
+              226,
+              156,
+              85,
+              65,
+              20,
+              128,
+              89,
+              48,
+              110,
+              182,
+              98,
+              31,
+              198,
+              54,
+              55,
+              2,
+              54,
+              136,
+              23,
+              58
+            ]
+          },
+          "hello"
+        ],
+        "data": "world"
+      },
+      {
+        "success": true,
+        "type": "diagnostic",
+        "topics": [
+          "fn_return",
+          "hello"
+        ],
+        "data": [
+          "Hello",
+          "world"
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "repository_sha": "59db63a7b895dcc5ca763e3c668990fec40850fb",
+  "dirty_worktree_snapshot": true,
+  "node": "v22.23.2",
+  "network": {
+    "friendbotUrl": "http://localhost:8000/friendbot",
+    "passphrase": "Standalone Network ; February 2017",
+    "protocolVersion": 28
+  },
+  "rpc_version": {
+    "version": "29.0.0",
+    "commitHash": "8a40169717723697e430c1e51c21ef0bf244ecda",
+    "buildTimestamp": "2026-10-06T01:24:26",
+    "captiveCoreVersion": "v29.0.0",
+    "protocolVersion": 28
+  },
+  "helper_sha256": "1e7ef88e974bd09d5b683a3e94c101dea1b9524304c7124699ae0e8d279d964c",
+  "simulation_source_sha256": "fb1cbdd697d4875a3be23655b3fc783fd7ef590829f1b569b528536822a34586",
+  "reference_wasm_sha256": "718ba18378a2d94ec7bf0c75b3813c7d0bb5b65beb2fb4c445b3a4726ecd5668",
+  "audit_wasm_sha256": "a677bd71ba1902b894bf7d178fa4d6ce310e0558afcfe44d97b5c611bef9291d",
+  "wasms_reused_no_new_build_claim": true,
+  "sac_preexisting": false,
+  "public_ci_proven": false,
+  "io_observers_only_no_injected_responses": true
+}

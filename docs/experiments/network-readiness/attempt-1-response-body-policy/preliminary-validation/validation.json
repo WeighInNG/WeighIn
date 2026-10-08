@@ -1,0 +1,34 @@
+[
+  {
+    "command": "npm ci",
+    "status": 0
+  },
+  {
+    "command": "npm test",
+    "status": 0
+  },
+  {
+    "command": "npm run test:native",
+    "status": 0
+  },
+  {
+    "command": "npm run build",
+    "status": 0
+  },
+  {
+    "command": "npm run bundle",
+    "status": 0
+  },
+  {
+    "command": "npm pack --dry-run --json",
+    "status": 0
+  },
+  {
+    "command": "bash -n scripts/start-local-network.sh",
+    "status": 0
+  },
+  {
+    "command": "node --check scripts/wait-for-local-network.cjs",
+    "status": 0
+  }
+]

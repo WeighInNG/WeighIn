@@ -1,0 +1,61 @@
+{
+  "status": "INTEGRATED_MEASUREMENT_PROOF_PASS",
+  "control_delta": 0,
+  "cpu_base": 270219,
+  "cpu_head": 314046,
+  "cpu_delta": 43827,
+  "cpu_pct": 16.219066756963795,
+  "threshold_violations": 1,
+  "cli_measurement_exit": 0,
+  "cli_missing_helper_exit": 1,
+  "action_exit_checks": [
+    {
+      "label": "control",
+      "expected_exit": 0,
+      "actual_exit": 0
+    },
+    {
+      "label": "regression",
+      "expected_exit": 1,
+      "actual_exit": 1
+    },
+    {
+      "label": "unavailable",
+      "expected_exit": 1,
+      "actual_exit": 1
+    },
+    {
+      "label": "baseline-checkout",
+      "expected_exit": 1,
+      "actual_exit": 1
+    },
+    {
+      "label": "baseline-worktree",
+      "expected_exit": 1,
+      "actual_exit": 1
+    },
+    {
+      "label": "baseline-build",
+      "expected_exit": 1,
+      "actual_exit": 1
+    },
+    {
+      "label": "baseline-missing-fixtures",
+      "expected_exit": 1,
+      "actual_exit": 1
+    },
+    {
+      "label": "baseline-measurement",
+      "expected_exit": 1,
+      "actual_exit": 1
+    },
+    {
+      "label": "invalid-policy",
+      "expected_exit": 1,
+      "actual_exit": 1
+    }
+  ],
+  "real_network_and_native_measurement": true,
+  "contract_build_and_checkout_stubbed_for_action": true,
+  "public_github_ci_run_proven": false
+}

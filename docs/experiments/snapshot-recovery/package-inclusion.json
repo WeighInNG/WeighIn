@@ -1,0 +1,9 @@
+{
+  "status": "PASS",
+  "files_verified": [
+    "docs/snapshot-recovery.md",
+    "dist/simulation.js",
+    "bundled/index.js"
+  ],
+  "clean_installation_proven": false
+}

@@ -1,0 +1,23 @@
+{
+  "npm_ci": "PASS after sandbox EPERM retry",
+  "npm_test": {
+    "status": "PASS",
+    "tests": 48
+  },
+  "npm_run_test_native": {
+    "status": "PASS",
+    "tests": 7,
+    "target": "x86_64-unknown-linux-gnu"
+  },
+  "npm_run_build": "PASS",
+  "npm_run_bundle": "PASS",
+  "cargo_fmt_check": "PASS",
+  "npm_pack": "PASS local tarball includes CLI/bundle/native source/lock; not published",
+  "nested_cargo_workspace_metadata": "PASS: helper is its own workspace under an enclosing Soroban workspace with WASM default target",
+  "lint_typecheck": "No separate scripts; build/bundle check TypeScript",
+  "existing_dependency_audit": {
+    "moderate": 1,
+    "high": 4
+  },
+  "git_diff_check": "PASS"
+}

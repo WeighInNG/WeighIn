@@ -1,0 +1,14 @@
+{
+  "status": "LIVE_CAPTURE_PASS",
+  "cycles": 5,
+  "measurement_count": 35,
+  "all_supported_metrics_stable": true,
+  "policy_violations": 0,
+  "observed_genuine_transient_read_errors": 0,
+  "retry_warnings": 0,
+  "automatic_recovery_observed_live": false,
+  "controlled_error_tests_are_separate": true,
+  "no_io_substitution": true,
+  "wasms_reused": true,
+  "public_ci_proven": false
+}

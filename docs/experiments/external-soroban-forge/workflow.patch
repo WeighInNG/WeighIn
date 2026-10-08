@@ -1,0 +1,100 @@
+From 44fd24f6983ee3d47834eee90c5b17b5b0cefe2c Mon Sep 17 00:00:00 2001
+From: mxrtins04 <olatunbosunmartins14@gmail.com>
+Date: Thu, 8 Oct 2026 11:14:58 +0100
+Subject: [PATCH] ci(escrow): compare resource usage with pinned WeighIn
+
+---
+ .github/workflows/weighin.yml | 81 +++++++++++++++++++++++++++++++++++
+ 1 file changed, 81 insertions(+)
+ create mode 100644 .github/workflows/weighin.yml
+
+diff --git a/.github/workflows/weighin.yml b/.github/workflows/weighin.yml
+new file mode 100644
+index 0000000..85f6ebe
+--- /dev/null
++++ b/.github/workflows/weighin.yml
+@@ -0,0 +1,81 @@
++name: WeighIn escrow benchmark
++
++on:
++  workflow_dispatch:
++  pull_request:
++    branches: [main]
++
++permissions:
++  contents: read
++
++jobs:
++  benchmark:
++    runs-on: ubuntu-24.04
++    timeout-minutes: 30
++    steps:
++      - uses: actions/checkout@v4
++        with:
++          fetch-depth: 0
++          ref: ${{ github.event.pull_request.head.sha || github.sha }}
++      - uses: actions/setup-node@v4
++        with:
++          node-version: '24'
++      - uses: dtolnay/rust-toolchain@d1031067263f94b142dd6c0ce24c5eb9d02d52a0
++        with:
++          toolchain: '1.95.0'
++          targets: wasm32v1-none
++      - name: Install checksum-verified Stellar CLI
++        run: |
++          curl -fsSL https://github.com/stellar/stellar-cli/releases/download/v28.1.0/stellar-cli-28.1.0-x86_64-unknown-linux-gnu.tar.gz -o "$RUNNER_TEMP/stellar-cli.tar.gz"
++          echo "c1680deee94301d33ada7a17f98411e642a4248c727afbd2e43050d345746462  $RUNNER_TEMP/stellar-cli.tar.gz" | sha256sum -c -
++          mkdir -p "$RUNNER_TEMP/stellar-cli"
++          tar -xzf "$RUNNER_TEMP/stellar-cli.tar.gz" -C "$RUNNER_TEMP/stellar-cli"
++          echo "$RUNNER_TEMP/stellar-cli" >> "$GITHUB_PATH"
++      - name: Start pinned protocol-28 standalone network
++        run: |
++          docker run --rm -d --name weighin-escrow-network -p 8000:8000 stellar/quickstart@sha256:4c8bad1ef7341205b898f83d9489321da80c7bd74183100fc8e2a39a5938c7d5 --local
++          for attempt in $(seq 1 60); do
++            if curl -sf -X POST -H 'Content-Type: application/json' -d '{"jsonrpc":"2.0","id":1,"method":"getHealth"}' http://localhost:8000/rpc | grep -q '"status":"healthy"'; then
++              exit 0
++            fi
++            sleep 2
++          done
++          docker logs weighin-escrow-network
++          exit 1
++      - name: Compare escrow BASE and HEAD
++        id: weighin
++        uses: WeighInNG/WeighIn@c32c0791f8991c54f2795d4f3b0c891063982e31
++        with:
++          fixtures-path: weighin-fixtures.json
++          config-path: weighin.toml
++          base-ref: ${{ github.event.pull_request.base.sha || github.sha }}
++          rust-toolchain: '1.95.0'
++          report-path: weighin-report.md
++      - name: Save machine-readable comparison
++        if: always()
++        env:
++          DIFF_JSON: ${{ steps.weighin.outputs.diff-json }}
++          WEIGHIN_RESULT: ${{ steps.weighin.outputs.result }}
++        run: |
++          node - <<'NODE'
++          const fs = require('node:fs');
++          fs.writeFileSync('weighin-diff.json', process.env.DIFF_JSON || '{}');
++          fs.writeFileSync('weighin-result.json', JSON.stringify({result: process.env.WEIGHIN_RESULT || 'unavailable'}));
++          NODE
++      - name: Retain report and comparison
++        if: always()
++        uses: actions/upload-artifact@v4
++        with:
++          name: weighin-escrow-${{ github.run_id }}-${{ github.run_attempt }}
++          path: |
++            weighin-report.md
++            weighin-diff.json
++            weighin-result.json
++          if-no-files-found: error
++          retention-days: 30
++      - name: Stop owned network
++        if: always()
++        run: |
++          if docker ps -q -f name=^/weighin-escrow-network$ | grep -q .; then
++            docker stop weighin-escrow-network
++          fi
+-- 
+2.55.0
+

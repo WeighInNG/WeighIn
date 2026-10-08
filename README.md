@@ -51,12 +51,28 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: "1.95.0"
-          targets: wasm32-unknown-unknown
+          targets: wasm32v1-none
+
+      - name: Install pinned Stellar CLI
+        run: |
+          curl -fsSL https://github.com/stellar/stellar-cli/releases/download/v28.1.0/stellar-cli-28.1.0-x86_64-unknown-linux-gnu.tar.gz -o "$RUNNER_TEMP/stellar-cli.tar.gz"
+          echo "c1680deee94301d33ada7a17f98411e642a4248c727afbd2e43050d345746462  $RUNNER_TEMP/stellar-cli.tar.gz" | sha256sum -c -
+          mkdir -p "$RUNNER_TEMP/stellar-cli"
+          tar -xzf "$RUNNER_TEMP/stellar-cli.tar.gz" -C "$RUNNER_TEMP/stellar-cli"
+          echo "$RUNNER_TEMP/stellar-cli" >> "$GITHUB_PATH"
 
       - name: Start local Stellar network
         run: |
-          docker run --rm -d -p 8000:8000 stellar/quickstart:latest --local
-          sleep 30 # Wait for network to be healthy
+          docker run --rm -d -p 8000:8000 stellar/quickstart@sha256:4c8bad1ef7341205b898f83d9489321da80c7bd74183100fc8e2a39a5938c7d5 --local
+          # Wait for healthy RPC and account readiness before measuring.
+          for i in $(seq 1 60); do
+            if curl -sf -X POST -H "Content-Type: application/json" \
+                -d '{"jsonrpc":"2.0","id":1,"method":"getHealth"}' \
+                http://localhost:8000/rpc | grep -q '"status":"healthy"'; then
+              break
+            fi
+            sleep 2
+          done
 
       - name: Run WeighIn
         uses: WeighInNG/WeighIn@main
@@ -133,7 +149,7 @@ Defines the contracts and functions to test:
 {
   "contracts": [
     {
-      "wasm_path": "contract/target/wasm32-unknown-unknown/release/my_contract.wasm",
+      "wasm_path": "contract/target/wasm32v1-none/release/my_contract.wasm",
       "invocations": [
         {
           "function_name": "hello",

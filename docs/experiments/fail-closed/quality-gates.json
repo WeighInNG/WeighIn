@@ -1,0 +1,21 @@
+{
+  "npm_ci": "PASS",
+  "npm_test": {
+    "status": "PASS",
+    "tests": 69
+  },
+  "npm_run_test_native": {
+    "status": "PASS",
+    "tests": 7
+  },
+  "npm_run_build": "PASS",
+  "npm_run_bundle": "PASS",
+  "npm_pack_dry_run": "PASS",
+  "git_diff_check": "PASS",
+  "lint_typecheck_scripts": "Absent; TypeScript checked by build/bundle",
+  "initial_failures": "Seed-array validator corrected before final passes; sandbox npm cache EROFS resolved by approved packaging rerun",
+  "npm_audit": {
+    "moderate": 1,
+    "high": 4
+  }
+}
