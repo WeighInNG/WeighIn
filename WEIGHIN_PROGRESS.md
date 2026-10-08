@@ -96,44 +96,29 @@ Flagship comparison identity statement now supported:
 
 # Current blocker
 
-## Public flagship CI and external-project proof remain unproven
+## External strict-zero rollout is held on optimizer variation
 
-Stage 4 proved five clean reference builds and five live samples per seven cases
-on the pinned Linux x64/protocol-28 environment. Artifacts and all eight measured
-metrics were identical. Earlier attempts remain recorded, including a real
-getLedgerEntries error -32603 (captive core HTTP 404) during warm-up; the exact
-request later succeeded three times. Approved Stage 4B now bounds recovery for
-that exact error and preserves all consistency/parity guards. Ten controlled
-tests pass; 35 real live captures pass, with no transient failure occurring in
-that rerun. Naturally triggered automatic recovery was not observed.
+The internal hosted proof is green at c32c0791f8991c54f2795d4f3b0c891063982e31.
+PR #1 is open and CLEAN; its control, regression, threshold, benchmark and source
+checks passed. Earlier conflict records below are historical, not current blockers.
 
-Stage 5A prepared and locally proved an explicit two-step fixture migration. The
-working fixture now has a stable reference-contract ID plus an exact historical
-path declaration as a temporary bridge. Both destinations receive one modern
-build's bytes; no filename guessing or diff/schema change. Actual historical BASE
-compares successfully; bridge retirement and strict regression failure are proved
-in isolated fixture history. The bridge must stay until BASE contains the stable
-ID; it has not been publicly merged or retired in the working fixture.
+Stage 6 now proves the real Soroban Forge escrow query locally: control CPU
+565371 -> 565371 (all eight measured deltas zero), intentional regression
+565371 -> 679455 (+114084), and one strict CPU violation with genuine Action
+exit 1. Changed WASM/runtime addresses pair with the same logical benchmark;
+return XDR and raw RPC/native parity are verified. External publication remains
+unproven and has not been authorized. Three unavailable metrics remain explicit.
 
-Stage 5D prepared and locally proved the internal flagship CI suite.
-Highest-priority unresolved dependency: resolve the existing PR conflict against
-current main, then obtain real hosted execution of the internal proof. The Stage
-5D branch has been pushed to the repository's current `WeighInNG/WeighIn` location
-(the old `mxrtins04/WeighIn` remote announced its move and accepted the push).
-The existing PR #1 points at the pushed SHA but GitHub reports `CONFLICTING` /
-`DIRTY`, with no status checks at this head. Its latest listed CI runs are older
-and failed; they are not validation for this push. Do not claim hosted CI passed.
-Stage 5C proves clean source gates, real tarball install,
-default installed native provisioning/CLI execution and fixed historical
-comparison/threshold scenarios. The concrete control/regression/threshold workflow and retained local evidence
-are ready for review; request explicit push/publication approval before hosting
-the proof. Preparation was explicitly approved; publication still requires
-explicit authorization. Local commits after coherent changes remain authorized; pushing and
-publication remain unauthorized. Latest remote BASE was not refreshed; the locally cached main
-has identical benchmark inputs to the tested historical revision. Public CI and
-external-project proof remain unproven. Three metrics
-remain explicitly unavailable. Do not claim appeal readiness or guaranteed Drips
-approval.
+A focused follow-up found byte-identical unoptimized input but two optimized
+outputs with a real two-instruction CPU difference. This is an optimizer-stage
+reproducibility limitation; the exact environmental cause is not established.
+Do not silently loosen policy or claim general external build determinism.
+Highest-priority unresolved dependency: explain or explicitly bound this optimizer
+variation before publishing the prepared strict-zero external workflow. Then
+publish the fixture baseline through the existing fork, obtain its maintainer
+merge, and publish the dependent workflow/control and temporary regression PR.
+See docs/external-soroban-forge.md and Stage 6 below. No appeal-readiness or
+Drips-approval claim is supported yet.
 
 # Approved native integration — completed 2026-10-07
 
@@ -962,24 +947,71 @@ Preparing a concrete change set does not authorize pushing or publishing it.
 
 ## Stage 6 — External project proof
 
-Status: NOT STARTED
+Status: LOCAL FLAGSHIP PROOF VERIFIED; PUBLIC STRICT-ZERO ROLLOUT HELD — 2026-10-08
 
-Use a real public Soroban project with maintainer permission.
+User confirmed permission to test Soroban Forge and approved proceeding. No
+external push/PR/merge or new campaign stage was authorized. Local commits after
+coherent changes remain authorized. Work is isolated from the older original
+checkout on test/external-soroban-forge-proof, based on the hosted CI-passing
+c32c0791f8991c54f2795d4f3b0c891063982e31.
 
-Possible candidate:
+Source: Meet-hybrid/soroban-forge at
+07d7935234e9c86816116471121998b871b68439, real SDK 28.0.0 Cargo workspace.
+Node24.13.1/Rust1.95.0/CLI28.1.0/wasm32v1-none, pinned Linux x64/protocol28
+standalone network. Existing Cargo caches and verified prebuilt native helper
+reused. Source/lock of the helper match the engine. No cold/five-clean-build claim.
 
-`Meet-hybrid/soroban-forge`
+The existing escrows_for_participant entrypoint benchmarks a fixed participant's
+empty page, without auth or token setup. Explicit fixture/contract/case IDs are
+stable in both revisions. The bounded regression adds eight redundant persistent
+has calls only in local experiment history; fixture output stays identical.
 
-Need public evidence:
+Verified real Git fetch/worktrees, default optimized locked builds, deployment,
+RPC/native measurement and parity, diff/report, and genuine Action status:
+- Control: CPU 565371 -> 565371; all eight comparable metrics delta zero; exit 0.
+- Report-only regression: CPU 565371 -> 679455 (+114084, 20.1786%); memory +5440;
+  changed WASM/runtime IDs still paired; no policy violations; exit 0.
+- Strict CPU rule: same resource regression, one reported violation; exit 1.
+- Three unavailable metrics stay null with reasons. Raw IO, source/config inputs,
+  WASMs, local revisions, reports/diffs, process exits and hashes are retained in
+  docs/experiments/external-soroban-forge. Both owned sidecars were stopped.
 
-- real PR;
-- workflow;
-- base/head commits;
-- report;
-- resource delta;
-- threshold failure.
+New repeatability finding: original and relocated unchanged-source builds produce
+optimized f6edc17c..., whereas all controlled Action BASE builds and a repeated
+control produce 103874c7.... Both raw compiler outputs have identical hash
+20f9c265..., 45889 bytes; optimized code differs by 8 bytes. A fresh live comparison
+reports 565373 versus 565371 CPU (delta -2), same return XDR and seven other measured
+metrics identical. Divergence is isolated to optimization; its exact environmental
+cause remains unresolved. Strict zero tolerance can flag the reverse +2 change.
+Do not hide this or mark general external reproducibility proven.
 
-Do not modify external repositories without explicit permission.
+Prepared separate local external branches in the existing fork's delivery checkout:
+- test/weighin-escrow-baseline / 5a9fde1: fixture, CPU policy, narrow usage doc.
+- test/weighin-escrow-workflow / 44fd24f: read-only workflow pinned to verified
+  WeighIn, toolchain/network, exact HEAD/BASE refs and retained JSON/Markdown.
+The fixture must be merged into BASE before the workflow's first comparison.
+Neither branch includes the artificial source regression. No push/PR was made.
+This one empty-index fixture does not complete broader Forge issues #338/#348;
+stateful settlement and public-network benchmarks remain outside the pilot.
+
+Validation: npm ci PASS (current merged dependency tree reports 11 vulnerabilities:
+5 moderate/4 high/2 critical); lint/typecheck PASS; npm test 157 Node +52 Vitest PASS;
+build/bundle and tracked bundle equality PASS; 15 native assertions PASS using the
+verified prebuilt helper; package dry-run PASS; fixture address and workflow YAML/
+shell syntax PASS. External source fmt/locked metadata and selected WASM builds
+PASS. Full external workspace tests, clippy/security/provenance jobs were not run
+locally for these config/docs-only delivery branches; hosted external CI is pending.
+No WeighIn production source, schema, native source, fixtures, policy or README
+changes. Initial /tmp clone checkout/download hit quota/write failures; isolated
+workspace filesystem succeeded. Exact executed bundle hash is recorded. Evidence review redacts two standalone
+signing seeds from Docker startup logs; raw RPC/native evidence is unchanged.
+Captured logs and email patches preserve their original whitespace.
+
+Next: investigate pinned optimizer concurrency/context with identical raw input,
+repeat candidate modes at least five times and check actual resource effects.
+Establish a deterministic supported configuration or explicitly model/document
+residual variation before strict-zero publication. Public baseline/workflow/
+regression PR evidence then remains required. Stage 7 onward remains unstarted.
 
 ---
 

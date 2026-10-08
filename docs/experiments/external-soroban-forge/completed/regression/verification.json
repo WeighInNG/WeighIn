@@ -1,0 +1,29 @@
+{
+  "status": "VERIFIED",
+  "scenario": "regression",
+  "source_repository": "https://github.com/Meet-hybrid/soroban-forge",
+  "source_sha": "07d7935234e9c86816116471121998b871b68439",
+  "engine_sha": "c32c0791f8991c54f2795d4f3b0c891063982e31",
+  "bundle_sha256": "9edc73cef8dd5c36378f33b56bb790fea9b7d0709b8479f2d451cf0797572e67",
+  "helper_sha256": "1e7ef88e974bd09d5b683a3e94c101dea1b9524304c7124699ae0e8d279d964c",
+  "node": "v24.13.1",
+  "base_sha": "63c93e6cfd94c7bc924a05850571019f6e59352e",
+  "head_sha": "025ed332f0a526d5e59421d63eea8c5bdaf206d3",
+  "build_hashes": [
+    "601c93cd862a67ad46291560d1ab8503d8b29edee9a765dfc792f84800de5898",
+    "103874c717632bb9b51d3ff6effc9869433fcbdf8e3c719c927eb7b6aa14f398"
+  ],
+  "cpu": {
+    "base": 565371,
+    "head": 679455,
+    "delta": 114084
+  },
+  "action_exit": 0,
+  "violations": [],
+  "same_return_xdr": true,
+  "real_git_build_rpc_native_action": true,
+  "io_observers_only": true,
+  "temporary_git_history_only": true,
+  "github_hosted_execution": false,
+  "shared_cargo_cache": true
+}

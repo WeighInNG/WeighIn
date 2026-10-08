@@ -1,0 +1,58 @@
+{
+  "status": "VERIFIED",
+  "same_return_xdr": true,
+  "different_wasm_hashes": true,
+  "measured_resources_identical": false,
+  "metrics": [
+    {
+      "key": "cpu_instructions",
+      "original": 565373,
+      "isolated": 565371,
+      "delta": -2
+    },
+    {
+      "key": "memory_bytes",
+      "original": 1225140,
+      "isolated": 1225140,
+      "delta": 0
+    },
+    {
+      "key": "ledger_read_entries",
+      "original": 3,
+      "isolated": 3,
+      "delta": 0
+    },
+    {
+      "key": "ledger_read_bytes",
+      "original": 0,
+      "isolated": 0,
+      "delta": 0
+    },
+    {
+      "key": "ledger_write_entries",
+      "original": 0,
+      "isolated": 0,
+      "delta": 0
+    },
+    {
+      "key": "ledger_write_bytes",
+      "original": 0,
+      "isolated": 0,
+      "delta": 0
+    },
+    {
+      "key": "events_count",
+      "original": 0,
+      "isolated": 0,
+      "delta": 0
+    },
+    {
+      "key": "event_data_bytes",
+      "original": 84,
+      "isolated": 84,
+      "delta": 0
+    }
+  ],
+  "github_hosted_execution": false,
+  "compute_environment_matched": true
+}

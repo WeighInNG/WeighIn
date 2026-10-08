@@ -1,0 +1,47 @@
+{
+  "engine_sha": "c32c0791f8991c54f2795d4f3b0c891063982e31",
+  "node": "v24.13.1",
+  "npm_ci": "PASS",
+  "npm_ci_audit": {
+    "moderate": 5,
+    "high": 4,
+    "critical": 2
+  },
+  "lint": "PASS",
+  "typecheck": "PASS",
+  "npm_test": {
+    "node": 157,
+    "vitest": 52,
+    "failures": 0
+  },
+  "build": "PASS",
+  "bundle": "PASS",
+  "bundle_matches_verified_commit": true,
+  "native_tests": {
+    "pass": 15,
+    "fail": 0,
+    "prebuilt_helper_reused": true,
+    "helper_source_and_lock_match_engine": true
+  },
+  "package_dry_run": "PASS",
+  "workflow_yaml_and_shell_syntax": "PASS",
+  "fixture_address": "PASS",
+  "external_full_workspace_ci": "NOT_RUN",
+  "local_live_scenarios": {
+    "control": "VERIFIED_EXIT_0",
+    "regression": "VERIFIED_EXIT_0",
+    "threshold": "VERIFIED_EXPECTED_EXIT_1"
+  },
+  "optimizer_variation": {
+    "same_raw_wasm_sha256": "20f9c2653ba0ba912773dbe6869bbf21082c9ac0e41d495ff5d2c138c6a466f1",
+    "cpu_delta_original_to_control": -2,
+    "cause": "optimization-stage divergence; exact environmental mechanism unresolved"
+  },
+  "external_push_or_pr": false,
+  "evidence_review": {
+    "initial_scan": "FAILED_ON_STANDALONE_DOCKER_LOG_SEEDS",
+    "corrected_by_redaction": true,
+    "measurement_io_unchanged": true,
+    "raw_log_and_email_patch_whitespace_preserved": true
+  }
+}

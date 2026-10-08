@@ -1,0 +1,76 @@
+Funding deployer account: GAZMJHK36BGKHL5OHMSWKWVERAUQVZQ2Y6JV5SQVX5IEWSCNDKOMXTJ6 via friendbot...
+Deployer account confirmed in RPC: GAZMJHK36BGKHL5OHMSWKWVERAUQVZQ2Y6JV5SQVX5IEWSCNDKOMXTJ6
+WASM: /home/mxr/Documents/localRepo/Weighin/.stage6-delivery/docs/experiments/external-soroban-forge/provenance-checks/original.wasm
+WASM SHA256: f6edc17c367984295ce7007e4099d45982d84f5fdbffae899492d0e6c547c953
+Contract ID: CAQKZWZOITXHJ3QWKFFPC5QK6BHBLJHIDY26ZHY4CCKX5IUUEAUGUF4S
+Installing WASM...
+WASM installed. Deploying contract instance...
+Deployed at CAQKZWZOITXHJ3QWKFFPC5QK6BHBLJHIDY26ZHY4CCKX5IUUEAUGUF4S
+Simulating escrows_for_participant...
+Deployer account confirmed in RPC: GAZMJHK36BGKHL5OHMSWKWVERAUQVZQ2Y6JV5SQVX5IEWSCNDKOMXTJ6
+WASM: /home/mxr/Documents/localRepo/Weighin/.stage6-delivery/docs/experiments/external-soroban-forge/completed/control/base.wasm
+WASM SHA256: 103874c717632bb9b51d3ff6effc9869433fcbdf8e3c719c927eb7b6aa14f398
+Contract ID: CASQFD74CDDYOVFERPDJV3USQBEFAX373DKATKL36WW226VHGYBMSAK5
+Installing WASM...
+WASM installed. Deploying contract instance...
+Deployed at CASQFD74CDDYOVFERPDJV3USQBEFAX373DKATKL36WW226VHGYBMSAK5
+Simulating escrows_for_participant...
+{
+  "status": "VERIFIED",
+  "same_return_xdr": true,
+  "different_wasm_hashes": true,
+  "measured_resources_identical": false,
+  "metrics": [
+    {
+      "key": "cpu_instructions",
+      "original": 565373,
+      "isolated": 565371,
+      "delta": -2
+    },
+    {
+      "key": "memory_bytes",
+      "original": 1225140,
+      "isolated": 1225140,
+      "delta": 0
+    },
+    {
+      "key": "ledger_read_entries",
+      "original": 3,
+      "isolated": 3,
+      "delta": 0
+    },
+    {
+      "key": "ledger_read_bytes",
+      "original": 0,
+      "isolated": 0,
+      "delta": 0
+    },
+    {
+      "key": "ledger_write_entries",
+      "original": 0,
+      "isolated": 0,
+      "delta": 0
+    },
+    {
+      "key": "ledger_write_bytes",
+      "original": 0,
+      "isolated": 0,
+      "delta": 0
+    },
+    {
+      "key": "events_count",
+      "original": 0,
+      "isolated": 0,
+      "delta": 0
+    },
+    {
+      "key": "event_data_bytes",
+      "original": 84,
+      "isolated": 84,
+      "delta": 0
+    }
+  ],
+  "github_hosted_execution": false,
+  "compute_environment_matched": true
+}
+
