@@ -77,7 +77,9 @@ async function main(){
     await new Promise(resolve=>setTimeout(resolve,1000));
   }
   const clone=await child('git',['clone','--no-hardlinks',root,workspace],temporary);assert.equal(clone.status,0,clone.stderr);
-  const historicalSha=await git('rev-parse','HEAD');await git('branch','migration-historical',historicalSha);
+  // Keep the recorded historical benchmark fixed when the checkout's HEAD advances.
+  const historicalSha=await git('rev-parse','59db63a7b895dcc5ca763e3c668990fec40850fb^{commit}');
+  await git('checkout','--detach',historicalSha);await git('branch','migration-historical',historicalSha);
   await git('config','user.name','WeighIn isolated migration experiment');await git('config','user.email','experiment@example.invalid');
   for(const file of inputFiles){
     const target=path.join(destination,'historical',file);fs.mkdirSync(path.dirname(target),{recursive:true});

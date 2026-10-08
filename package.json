@@ -2,11 +2,12 @@
   "name": "weighin",
   "version": "1.0.0",
   "description": "Resource-Cost Benchmarking & CI Regression Toolkit for Soroban",
-  "main": "dist/index.js",
+  "main": "dist/measurement.js",
   "bin": {
     "weighin": "dist/cli.js"
   },
   "scripts": {
+    "prepack": "npm run build && npm run bundle",
     "build": "tsc",
     "bundle": "tsc --noEmit && esbuild src/action.ts --bundle --platform=node --target=node20 --outfile=bundled/index.js --format=cjs",
     "test": "npm run build && node --test tests/*.test.cjs",

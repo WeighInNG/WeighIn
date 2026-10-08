@@ -57,7 +57,9 @@ unrelated paths. The builder test checks identical fresh copies from one build.
 Controlled meter changes in these tests are not live measurement evidence.
 
 The explicit live harness starts from the actual repository Git revision
-`59db63a7b895dcc5ca763e3c668990fec40850fb`, including SDK 21.7.7/lockfile/source.
+`59db63a7b895dcc5ca763e3c668990fec40850fb`, including SDK 21.7.7/lockfile/source. The harness explicitly checks out that
+fixed historical commit after cloning, so advancing the current branch cannot
+replace the historical benchmark.
 It creates isolated temporary migration revisions, a local bare origin and real
 fetched worktrees. Stellar builds, RPC deployment/capture, native meters, diff,
 reports/policies and bundled Action processes are real. Forwarding observers save
@@ -113,7 +115,8 @@ any measurement. RPC health did not establish friendbot readiness. The experimen
 now records a real disposable-account funding probe before scenarios; the Action
 still funds its own deployer normally. Its negative case explicitly checks for
 identity-mismatch failure rather than accepting any exit 1. Production network
-startup readiness remains a separate CI dependency; no setup error is counted as
+startup readiness was subsequently repaired/proved in
+[network readiness](network-readiness.md); no setup error is counted as
 a successful identity experiment.
 
 ## Reproduce

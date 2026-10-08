@@ -213,14 +213,19 @@ Remaining limitations:
 - Baseline absence/errors and malformed policy configuration were Stage 1C risks;
   the following approved stage repaired them.
 
-# Current approved work — Stage 5B completed locally; next approval pending
+# Current approved work — Stage 5C clean delivery in progress
 
 Stages 4, 4B and the historical fixture migration (Stage 5A) were approved and
 completed locally on 2026-10-08. Details and limitations are below. No next stage, public push
 or external-project change is authorized.
 
 The user approved and completed Stage 5B on 2026-10-08: bounded network/Friendbot
-startup readiness proved on fresh pinned networks. Local commits after
+startup readiness proved on fresh pinned networks.
+The user approved Stage 5C clean-checkout/package verification on 2026-10-08.
+Reproduced baseline package defects: fresh npm pack omits the CLI without a manual
+build, and even a manual build never creates the advertised dist/index.js.
+Fixing existing package delivery and the fixed historical experiment baseline;
+no new benchmark features or push/publication authorized. Local commits after
 each coherent change remain authorized; pushing is not authorized.
 
 ---
