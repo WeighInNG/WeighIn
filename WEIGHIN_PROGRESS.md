@@ -1083,7 +1083,7 @@ Codex must not automatically progress through multiple major stages without appr
 
 ## Stage 5D — Public internal flagship CI preparation
 
-Status: LOCALLY PROVEN; PUSHED; PR CONFLICT RESOLUTION IN PROGRESS; HOSTED CI PENDING — 2026-10-08
+Status: PUBLIC HOSTED PROOF PASSED; PR #1 CONFLICT RESOLVED — 2026-10-08
 
 Existing CI has no retained control/intentional-regression/threshold-failure proof.
 Added a separate read-only-permissions workflow with three isolated modern
@@ -1130,26 +1130,39 @@ SDK28 source builds, RPC/native capture and reports; no response substitution.
   Local live scenarios reuse prior Cargo artifact cache and prebuilt native helper;
   this is not another cold build, package install or five-run repeatability claim.
 
-Additional CI dependency found: the consumer example runs remote WeighIn@main
-inside WeighIn's own PRs, which exercises a published engine instead of proposed
-code. Cached origin/main still contains the old removed-RPC-cost reader; remote
-not refreshed. Example self-check now uses ./ in this repository; copied workflows
-in other repositories keep the existing remote Action. YAML/bash checks pass for
-both workflows; hosted checkout/step/artifact behavior remains unproven.
+Hosted run on resolved PR head 6bfee071cf3b16e624138f67b3e794af092b0545:
+- WeighIn CI: lint/typecheck/test, bundle freshness, native helper, build and
+  benchmark job all passed ([run 37752155821](https://github.com/WeighInNG/WeighIn/actions/runs/37752155821)).
+- WeighIn Benchmark: pinned standalone network, same-repository Action, and
+  report artifact all passed ([run 37752155913](https://github.com/WeighInNG/WeighIn/actions/runs/37752155913)).
+- Flagship comparison proof: control, regression, and threshold jobs all passed
+  ([run 37752155835](https://github.com/WeighInNG/WeighIn/actions/runs/37752155835)). Public artifacts contain source revisions, WASMs, SHA256s,
+  RPC/native evidence, reports, Action outputs and verification records.
+- Hosted control CPU: 266842 -> 266842 (delta 0), Action exit 0.
+- Hosted intentional regression CPU: 266842 -> 309171 (delta +42329), changed
+  WASM hashes and runtime IDs, same logical benchmarks; report-only Action exit 0.
+- Hosted strict-threshold scenario reports the +42329 CPU violations and Action
+  exit 1. The verifier confirms this is the genuine policy failure.
+- PR #1 is CLEAN and MERGEABLE at check time. No merge was performed.
+
+The ordinary benchmark report also shows an added explicit fixture identity that
+has no BASE counterpart, alongside a path-derived benchmark that pairs across
+revisions. The report labels the addition; the live flagship proof independently
+verifies both stable identity forms. This is a fixture difference in the current
+project example, not a comparison failure.
 
 Implementation and final evidence/self-check alignment are committed as
 398d32d5b808f2b1e4efb3fefa0726354e873e25 and
 fbfd2096390484341a26e510f3e59fe97e782f92. The latter is pushed and verified at
-the current repository location. README, production source/schema/fixtures/
-policy and core application workflow were unchanged for Stage 5D. Preserved scratch/local context
-files untracked. No issue creation or appeal submission.
+the current repository location. README and architecture documentation were truth-aligned during conflict
+resolution; production benchmark fixtures and policy were not changed for this
+integration. Preserved scratch/local context files untracked. No issue creation or appeal submission.
 PR #1 is being reconciled against main at bcf9f042f27400a9139af820855deb541e785cc9.
 Merged additions retain the Stage 5D Action behavior, CI gates, report artifacts, and
 fork-safe comment workflow; stale build and RPC expectations were replaced. Local npm
 tests (157 Node + 52 Vitest), lint, typecheck, build, bundle, package dry-run, and
 native helper tests (15) pass. The configured /tmp native build first hit disk quota;
-rerunning from the workspace filesystem passed. Hosted CI is still pending.
-Next: push the resolved PR #1 branch, inspect hosted checks/artifacts, and retain public
-run/artifact links. External project proof, final truth alignment, issue triage,
-red-team review and appeal preparation remain afterward. Do not claim campaign
+rerunning from the workspace filesystem passed. Hosted proof artifacts and checks
+are now verified at the links above. External project proof, final truth alignment,
+issue triage, red-team review and appeal preparation remain afterward. Do not claim campaign
 complete or Drips approval.
