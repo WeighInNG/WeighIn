@@ -96,7 +96,7 @@ Flagship comparison identity statement now supported:
 
 # Current blocker
 
-## PR report delivery proven; main-push comment guard and external CI remain
+## PR-only comment guard proven locally; publication and external CI remain
 
 PR #1 was merged with explicit user approval on 2026-10-08. Reviewed head
 1c844ce9708a9d709ec39aed4309942d66dbd9a3 is included in main merge commit
@@ -104,12 +104,18 @@ cb43433bda828f6d43172944c5825768362a273e. Main CI and the flagship control,
 regression and strict-threshold proof all PASS. The corrected default-branch
 comment workflow now actually updates PR1's benchmark report successfully.
 
-A separate main-push comment run fails because successful push CI uploads a
-report but intentionally produces no PR metadata. The comment workflow currently
-runs for any successful CI event. Highest-priority next dependency: narrowly
-restrict this PR-comment job to triggering pull_request runs, with behavior
-coverage proving push runs skip and PR runs retain report delivery. This repair
-requires separate approval; it has not been implemented.
+Main-push comment run37775873034 failed because successful push CI uploads a
+report but produces no PR metadata. User approved the narrow repair: the own
+comment job now requires both success and a pull_request triggering event.
+Sixteen focused workflow tests PASS; all 230 JavaScript assertions and existing
+install/lint/typecheck/build/bundle/package gates PASS. Production runtime and
+both bundles are unchanged. See Stage 6G for local proof and boundaries.
+
+Highest-priority next dependency: publish the concrete guard repair through a
+new reviewed PR, activate it on main, and prove that push comments skip while PR
+comments still deliver. PR1 is already merged; prior push approval was scoped to
+that PR. New branch/PR publication and merge require explicit authorization.
+No hosted run has exercised the guard yet.
 
 Stage 6C proves five full Action controls on real Soroban Forge with identical
 WASM and all eight measured deltas zero, CPU 565371 -> 565371. The isolated
@@ -1210,6 +1216,46 @@ hosted delivery. Do not silently accept missing metadata in genuine PR runs.
 
 Only hosted merge/verification and local evidence/progress recording were done.
 No external project publication, artificial production regression or appeal.
+
+---
+
+## Stage 6G — Restrict own-repository commenting to PR CI events
+
+Status: IMPLEMENTED AND LOCALLY VERIFIED; HOSTED ACTIVATION PENDING — 2026-10-08
+
+Approved narrow repair: .github/workflows/comment.yml now requires a successful
+workflow_run whose event is pull_request. Checkout/artifact selection, trusted
+code, permissions and comment runtime are unchanged. The separate consumer
+example only has a PR producer trigger and was not modified. Missing metadata
+in eligible PR runs still fails; no fabricated metadata or silent success.
+
+Extended tests/comment-workflow.test.cjs: reads the actual YAML guard and evaluates
+its two equality terms through an explicit supported-syntax model. Push success
+skips the entire job; PR success runs actual Git cleanup/artifact staging and the
+bundled Action through the existing local-only API transport. Historical success-
+only guard reproduces the push missing-metadata failure. Failed/cancelled/timed-
+out/skipped/neutral PR runs, dispatch/target/missing events skip. Fork PR success
+uses the same delivery path. Sixteen focused tests PASS (eleven added).
+
+This is local workflow modeling, not a GitHub expression-engine or hosted skip
+claim. Actual bundled comment behavior executes; artifact staging is controlled.
+No live GitHub comments were sent by tests. Hosted guard activation requires a
+new reviewed publication because PR1 is already merged; no new push/PR/merge
+was performed under the implementation approval.
+
+Node24.13.1/npm11.8.0, owned healthy workspace TMPDIR. npm ci, lint, typecheck,
+npm test (178 Node +52 Vitest), build, bundle and package dry run PASS. Both bundles
+remain byte-identical to baseline. Native tests were not rerun: native, metrics,
+policy, contract/build source and dependencies did not change. Eleven existing
+npm audit findings remain (5 moderate,4 high,2 critical); no unrelated repair.
+Logs, command exits and hashes: docs/experiments/comment-event-guard.
+Original user checkout/untracked files are preserved. README/architecture were
+not changed; their general truth alignment remains a later approved stage.
+
+Next: explicit approval to publish this tested patch as a new WeighIn PR; after
+reviewed activation verify push skipping and PR delivery on GitHub. External
+project publication/evidence alignment remain afterward. No appeal-ready or
+Drips-approval claim.
 
 ---
 
