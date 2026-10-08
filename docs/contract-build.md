@@ -30,6 +30,24 @@ Each package builds into a fresh temporary output directory:
 stellar contract build --manifest-path <manifest> --package <package> --locked --optimize=true --out-dir <temporary-directory>
 ```
 
+Both revisions use the caller's selected temporary-storage root (`TMPDIR` on
+Unix, or the platform's normal temporary directory). Each default build creates
+an owned child directory and supplies it as `TMPDIR`, `TMP`, and `TEMP` to the
+Stellar CLI, so optimizer convergence files use the same verified storage as the
+fresh output. WeighIn performs a write, fsync, close and byte-for-byte read check
+before invoking the build, and repeats it before accepting the output. The probe
+is at least 1 MiB and grows to the output size for the final check. Storage errors,
+truncated probe contents and directory-creation failures stop the build. Owned
+build directories are cleaned on success and failure; caller environment variables
+are unchanged. There is no automatic fallback to another filesystem.
+
+This protects against the persistent quota failure reproduced in the
+[optimizer investigation](optimizer-repeatability.md). The probes do not reserve
+capacity for Cargo or prove that a transient storage failure cannot occur only
+during optimization. Provide sufficient healthy temporary storage for the entire
+run, and use the same environment/toolchain for both revisions. No portable or
+cold-build determinism guarantee is implied.
+
 WeighIn verifies the fresh output's WASM header, then copies it to the configured
 fixture path. An old artifact at that path cannot substitute for absent or failed
 build output. Build result records retain each manifest/package; logs record the

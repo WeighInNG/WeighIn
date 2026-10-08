@@ -52686,6 +52686,29 @@ var path4 = __toESM(require("path"));
 var os = __toESM(require("os"));
 var import_crypto = require("crypto");
 var exec = __toESM(require_exec());
+function verifyBuildStorage(directory, bytes = 1024 * 1024) {
+  const probePath = path4.join(directory, ".weighin-storage-probe");
+  const expected = Buffer.alloc(bytes, 165);
+  let descriptor;
+  try {
+    descriptor = fs4.openSync(probePath, "wx", 384);
+    fs4.writeFileSync(descriptor, expected);
+    fs4.fsyncSync(descriptor);
+    fs4.closeSync(descriptor);
+    descriptor = void 0;
+    if (!fs4.readFileSync(probePath).equals(expected))
+      throw new Error(
+        "temporary-file contents did not survive a write/read round trip"
+      );
+  } catch (error2) {
+    throw new Error(
+      `Build temporary storage is unusable at ${directory}: ${error2.message}. Provide healthy temporary storage (TMPDIR on Unix); refusing to accept optimizer output.`
+    );
+  } finally {
+    if (descriptor !== void 0) fs4.closeSync(descriptor);
+    fs4.rmSync(probePath, { force: true });
+  }
+}
 async function buildContracts(fixturesPath, rustToolchain) {
   const fixtures = parseFixtures(
     fs4.readFileSync(fixturesPath, "utf8"),
@@ -52696,12 +52719,12 @@ async function buildContracts(fixturesPath, rustToolchain) {
     ...process.env,
     ...rustToolchain ? { RUSTUP_TOOLCHAIN: rustToolchain } : {}
   };
-  async function command(tool, args, cwd) {
+  async function command(tool, args, cwd, commandEnv = env) {
     let stdout = "", stderr = "";
     try {
       await exec.exec(tool, args, {
         cwd,
-        env,
+        env: commandEnv,
         silent: true,
         listeners: {
           stdout: (data) => {
@@ -52789,10 +52812,16 @@ async function buildContracts(fixturesPath, rustToolchain) {
   for (const { destination, pkg } of plans) {
     let wasm = artifacts.get(pkg.manifest_path);
     if (!wasm) {
-      const outputDir = fs4.mkdtempSync(
-        path4.join(os.tmpdir(), "weighin-build-")
-      );
+      let outputDir;
       try {
+        outputDir = fs4.mkdtempSync(path4.join(os.tmpdir(), "weighin-build-"));
+      } catch (error2) {
+        throw new Error(
+          `Cannot create build temporary storage: ${error2.message}`
+        );
+      }
+      try {
+        verifyBuildStorage(outputDir);
         await command(
           "stellar",
           [
@@ -52807,11 +52836,13 @@ async function buildContracts(fixturesPath, rustToolchain) {
             "--out-dir",
             outputDir
           ],
-          path4.dirname(pkg.manifest_path)
+          path4.dirname(pkg.manifest_path),
+          { ...env, TMPDIR: outputDir, TMP: outputDir, TEMP: outputDir }
         );
         wasm = fs4.readFileSync(
           path4.join(outputDir, `${pkg.name.replace(/-/g, "_")}.wasm`)
         );
+        verifyBuildStorage(outputDir, Math.max(1024 * 1024, wasm.length));
         if (!wasm.subarray(0, 8).equals(Buffer.from([0, 97, 115, 109, 1, 0, 0, 0])))
           throw new Error("Stellar build did not produce a valid WASM module");
         artifacts.set(pkg.manifest_path, wasm);

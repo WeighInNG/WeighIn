@@ -8,7 +8,18 @@ const { buildContracts } = require('../dist/build');
 
 async function scenario(options, verify) {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'weighin-build-test-'));
-  const original = exec.exec;
+  const original = exec.exec, originalFlush = fs.fsyncSync, originalRead = fs.readFileSync;
+  let buildReturned = false;
+  fs.fsyncSync = descriptor => {
+    if (options.failedStorage && (!options.failAfterBuild || buildReturned))
+      throw Object.assign(new Error('injected temporary-storage quota exceeded'), { code: 'EDQUOT' });
+    return originalFlush(descriptor);
+  };
+  fs.readFileSync = (file, ...args) => {
+    if (options.corruptStorage && path.basename(String(file)) === '.weighin-storage-probe')
+      return Buffer.from('truncated temporary file');
+    return originalRead(file, ...args);
+  };
   const commands = [];
   const wasm = Buffer.from([0, 97, 115, 109, 1, 0, 0, 0, 0, 1, 0]);
   const names = options.names || ['hello-contract'];
@@ -40,11 +51,12 @@ async function scenario(options, verify) {
         const name = args[args.indexOf('--package') + 1].replaceAll('-', '_');
         fs.writeFileSync(path.join(args[args.indexOf('--out-dir') + 1], `${name}.wasm`), options.badWasm ? 'invalid' : wasm);
       }
+      buildReturned = true;
     } else throw new Error('Unexpected command');
     return 0;
   };
   try { await verify({ fixtures, directory, commands, wasm, destinations }); }
-  finally { exec.exec = original; fs.rmSync(directory, { recursive: true, force: true }); }
+  finally { exec.exec = original; fs.fsyncSync = originalFlush; fs.readFileSync = originalRead; fs.rmSync(directory, { recursive: true, force: true }); }
 }
 
 test('modern optimized build replaces stale configured WASM with fresh selected-package output', async () => scenario({}, async ({ fixtures, directory, commands, wasm, destinations }) => {
@@ -95,4 +107,40 @@ test('every declared contract must have a manifest, even when another one is val
   spec.contracts.push({ id: 'missing', wasm_path: path.join(directory, '../no-contract-here/other.wasm'), invocations: [{ function_name: 'hello', args: [] }] });
   fs.writeFileSync(fixtures, JSON.stringify(spec));
   await assert.rejects(buildContracts(fixtures), /No Cargo.toml/);
+}));
+
+
+test('both revisions use verified isolated CLI temporary storage without changing caller environment', async () => scenario({}, async ({ fixtures, commands }) => {
+  const callerEnvironment = { TMPDIR: process.env.TMPDIR, TEMP: process.env.TEMP, TMP: process.env.TMP };
+  await buildContracts(fixtures, '1.95.0');
+  await buildContracts(fixtures, '1.95.0');
+  const builds = commands.filter(c => c.command === 'stellar' && c.args[0] === 'contract');
+  assert.equal(builds.length, 2);
+  assert.notEqual(builds[0].env.TMPDIR, builds[1].env.TMPDIR);
+  for (const build of builds) {
+    const directory = build.args[build.args.indexOf('--out-dir') + 1];
+    assert.equal(build.env.TMPDIR, directory);
+    assert.equal(build.env.TEMP, directory); assert.equal(build.env.TMP, directory);
+    assert.equal(path.dirname(directory), os.tmpdir());
+    assert.equal(fs.existsSync(directory), false, 'Owned build directory must be cleaned');
+  }
+  assert.deepEqual({ TMPDIR: process.env.TMPDIR, TEMP: process.env.TEMP, TMP: process.env.TMP }, callerEnvironment);
+}));
+for (const [label, options, afterBuild] of [
+  ['storage flush fails before optimization', { failedStorage: true }, false],
+  ['storage contents are truncated before optimization', { corruptStorage: true }, false],
+  ['storage flush fails after successful CLI exit', { failedStorage: true, failAfterBuild: true }, true],
+]) test(label, async () => scenario(options, async ({ fixtures, directory, commands, destinations }) => {
+  const before = fs.readdirSync(os.tmpdir()).filter(name => name.startsWith('weighin-build-')).sort();
+  await assert.rejects(buildContracts(fixtures), /Build temporary storage is unusable.*refusing to accept optimizer output/);
+  assert.equal(commands.some(c => c.command === 'stellar' && c.args[0] === 'contract'), afterBuild);
+  assert.equal(fs.readFileSync(path.join(directory, destinations[0]), 'utf8'), 'stale artifact');
+  assert.deepEqual(fs.readdirSync(os.tmpdir()).filter(name => name.startsWith('weighin-build-')).sort(), before);
+}));
+test('missing caller temporary-storage directory fails visibly before optimization', async () => scenario({}, async ({ fixtures, directory, commands }) => {
+  const previous = process.env.TMPDIR;
+  process.env.TMPDIR = path.join(directory, 'missing-temp');
+  try { await assert.rejects(buildContracts(fixtures), /Cannot create build temporary storage/); }
+  finally { if (previous === undefined) delete process.env.TMPDIR; else process.env.TMPDIR = previous; }
+  assert.equal(commands.some(c => c.command === 'stellar' && c.args[0] === 'contract'), false);
 }));

@@ -21,6 +21,31 @@ interface CargoPackage {
   targets: Array<{ crate_types: string[] }>;
 }
 
+/** Detect storage errors that the optimizer's temporary-file writer may hide. */
+function verifyBuildStorage(directory: string, bytes = 1024 * 1024): void {
+  const probePath = path.join(directory, ".weighin-storage-probe");
+  const expected = Buffer.alloc(bytes, 0xa5);
+  let descriptor: number | undefined;
+  try {
+    descriptor = fs.openSync(probePath, "wx", 0o600);
+    fs.writeFileSync(descriptor, expected);
+    fs.fsyncSync(descriptor);
+    fs.closeSync(descriptor);
+    descriptor = undefined;
+    if (!fs.readFileSync(probePath).equals(expected))
+      throw new Error(
+        "temporary-file contents did not survive a write/read round trip",
+      );
+  } catch (error: any) {
+    throw new Error(
+      `Build temporary storage is unusable at ${directory}: ${error.message}. Provide healthy temporary storage (TMPDIR on Unix); refusing to accept optimizer output.`,
+    );
+  } finally {
+    if (descriptor !== undefined) fs.closeSync(descriptor);
+    fs.rmSync(probePath, { force: true });
+  }
+}
+
 /** Build exactly the configured contracts, and measure fresh CLI output rather
  * than a potentially stale artifact already present at the fixture path. */
 export async function buildContracts(
@@ -40,13 +65,14 @@ export async function buildContracts(
     tool: string,
     args: string[],
     cwd: string,
+    commandEnv = env,
   ): Promise<string> {
     let stdout = "",
       stderr = "";
     try {
       await exec.exec(tool, args, {
         cwd,
-        env,
+        env: commandEnv,
         silent: true,
         listeners: {
           stdout: (data) => {
@@ -147,10 +173,16 @@ export async function buildContracts(
   for (const { destination, pkg } of plans) {
     let wasm = artifacts.get(pkg.manifest_path);
     if (!wasm) {
-      const outputDir = fs.mkdtempSync(
-        path.join(os.tmpdir(), "weighin-build-"),
-      );
+      let outputDir: string;
       try {
+        outputDir = fs.mkdtempSync(path.join(os.tmpdir(), "weighin-build-"));
+      } catch (error: any) {
+        throw new Error(
+          `Cannot create build temporary storage: ${error.message}`,
+        );
+      }
+      try {
+        verifyBuildStorage(outputDir);
         await command(
           "stellar",
           [
@@ -166,10 +198,12 @@ export async function buildContracts(
             outputDir,
           ],
           path.dirname(pkg.manifest_path),
+          { ...env, TMPDIR: outputDir, TMP: outputDir, TEMP: outputDir },
         );
         wasm = fs.readFileSync(
           path.join(outputDir, `${pkg.name.replace(/-/g, "_")}.wasm`),
         );
+        verifyBuildStorage(outputDir, Math.max(1024 * 1024, wasm.length));
         if (
           !wasm
             .subarray(0, 8)

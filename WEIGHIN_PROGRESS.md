@@ -1061,6 +1061,34 @@ stage approval required before implementing the safeguard.
 
 ---
 
+## Stage 6C — Default-build temporary-storage safeguard
+
+Status: IMPLEMENTED AND UNIT VALIDATED; LIVE PROOF PENDING — 2026-10-08
+
+User approved the focused storage safeguard and five end-to-end controls plus
+regression/threshold reruns. Default builder supplies owned verified storage to
+Stellar CLI via TMPDIR/TMP/TEMP, uses a >=1MiB write/fsync/close/read check before
+building and before accepting output, and fails visibly on quota/truncation.
+BASE and HEAD follow the same caller-selected temporary-root policy. No fallback,
+policy relaxation, schema/native changes or new Action inputs. Custom/prebuilt
+modes retain their documented caller-owned guarantees. Probe checks do not
+reserve capacity or eliminate transient failures confined to optimization.
+
+Five behavior tests added: two-revision isolation/environment preservation,
+pre-build flush failure, truncated probe contents, post-build flush failure and
+missing temporary root. Fresh-output protection and directory cleanup verified.
+Existing 13 build tests and all five additions PASS. npm ci/lint/typecheck/test/
+build/bundle/package dry-run PASS (162 Node +52 Vitest). 15 native assertions
+PASS against the verified cached helper; native source/lock unchanged. Actual
+system-temp storage failure is rejected visibly before optimization. Initial
+proof assertion expected Node's message to contain quota, but Node24 reports
+UNKNOWN for errno122; corrected diagnostic assertion verifies actual rejection.
+Fresh live proof pending.
+The external proof harness now records the actual engine Git SHA rather than
+hardcoding the earlier c32 commit. No external branch changes/push/PR authorized.
+
+---
+
 ## Stage 7 — Evidence and truth alignment
 
 Status: NOT STARTED

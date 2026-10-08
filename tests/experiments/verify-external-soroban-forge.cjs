@@ -5,7 +5,7 @@ const { createHash } = require('node:crypto'), { xdr } = require('@stellar/stell
 const { enforceThresholds } = require('../../dist/threshold');
 const root = path.resolve(__dirname, '../..');
 const sourceSha = '07d7935234e9c86816116471121998b871b68439';
-const engineSha = 'c32c0791f8991c54f2795d4f3b0c891063982e31';
+const engineSha = require('node:child_process').execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim();
 const scenario = process.argv[2], destination = path.resolve(process.argv[3]);
 const temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'weighin-external-private-'));
 const workspace = path.join(temporary, 'project'), origin = path.join(temporary, 'origin.git');
