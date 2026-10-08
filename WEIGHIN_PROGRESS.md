@@ -751,9 +751,13 @@ corrected decoder verified its build hash. A read-only cached-main comparison hi
 elevated recheck passed. No fabricated metrics or skipped failures.
 
 The user subsequently authorized local commits after each coherent change.
-The accumulated approved foundation and migration are being committed together
-because the migration requires the previously untracked implementation, native
-helper, tests and evidence. Scratch files/local strategy instructions are excluded.
+The accumulated approved foundation and migration were committed locally as
+43de72ab53a8f7b8520b5a2e724aceed44703fc8 on branch test/no-op-baseline.
+They share one commit because the migration requires the previously untracked
+implementation, native helper, tests and evidence. All intended product/evidence
+files are committed. Scratch files/local strategy instructions are excluded;
+AGENTS.override.md, WEIGHIN_DRIPS_APPEAL_CONTEXT.md and scratch_test.js remain
+untracked and preserved. Future coherent changes will receive local commits.
 No push, issues, external changes or public CI proof. Temporary experiment Git
 commits are isolated fixture history, not contributor/public activity.
 Next: production network/Friendbot startup readiness, requiring separate stage
