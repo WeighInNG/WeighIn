@@ -81,7 +81,18 @@ jobs:
       # 4. Run the WeighIn action.
       #    Pin to a specific release tag (e.g. @v1.0.0) in production;
       #    @main here tracks the latest commit for development.
-      - name: Run WeighIn
+      # Self-checks must exercise the proposed engine before it is published.
+      - name: Run checkout WeighIn (this repository)
+        if: github.repository == 'mxrtins04/WeighIn'
+        uses: ./
+        with:
+          fixtures-path: weighin-fixtures.json
+          config-path: weighin.toml
+          rpc-url: http://localhost:8000/rpc
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run WeighIn (consumer example)
+        if: github.repository != 'mxrtins04/WeighIn'
         uses: mxrtins04/WeighIn@main
         with:
           fixtures-path: weighin-fixtures.json    # path to your fixtures file

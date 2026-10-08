@@ -1,0 +1,18 @@
+{
+  "status": "LOCAL_FLAGSHIP_CI_PREPARATION_VERIFIED",
+  "producer_sha": "398d32d5b808f2b1e4efb3fefa0726354e873e25",
+  "public_hosted_ci_proven": false,
+  "node24_assertions": 169,
+  "root_node_assertions": 154,
+  "native_assertions": 15,
+  "owned_container_id": "016ce5d60b789654da96ffae9b8b951fa780d5da63ed68e55276236eff76b214",
+  "owned_container_stop_exit": 0,
+  "scenario_exits": [
+    0,
+    0,
+    1
+  ],
+  "return_xdr_unchanged_in_each_scenario": true,
+  "private_runner_directories_included": false,
+  "shared_compilation_cache": true
+}

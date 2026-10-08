@@ -115,13 +115,14 @@ compares successfully; bridge retirement and strict regression failure are prove
 in isolated fixture history. The bridge must stay until BASE contains the stable
 ID; it has not been publicly merged or retired in the working fixture.
 
-Current approved Stage 5D: prepare public flagship CI evidence on the internal
-reference contract. Stage 5C now proves clean source gates, real tarball install,
+Stage 5D prepared and locally proved the internal flagship CI suite.
+Highest-priority unresolved dependency: explicitly authorized publication and
+real hosted execution on the internal reference contract. Stage 5C now proves clean source gates, real tarball install,
 default installed native provisioning/CLI execution and fixed historical
-comparison/threshold scenarios. Prepare reproducible public control/regression
-workflows and retained reports, then request explicit push/publication approval
-for the concrete reviewed change set. Preparation was explicitly approved;
-publication still requires explicit authorization. Local commits after coherent changes remain authorized; pushing and
+comparison/threshold scenarios. The concrete control/regression/threshold workflow and retained local evidence
+are ready for review; request explicit push/publication approval before hosting
+the proof. Preparation was explicitly approved; publication still requires
+explicit authorization. Local commits after coherent changes remain authorized; pushing and
 publication remain unauthorized. Latest remote BASE was not refreshed; the locally cached main
 has identical benchmark inputs to the tested historical revision. Public CI and
 external-project proof remain unproven. Three metrics
@@ -1076,7 +1077,7 @@ Codex must not automatically progress through multiple major stages without appr
 
 ## Stage 5D — Public internal flagship CI preparation
 
-Status: IMPLEMENTED; LOCAL LIVE VALIDATION IN PROGRESS — 2026-10-08
+Status: PREPARED AND PROVEN LOCALLY; PUBLIC EXECUTION PENDING — 2026-10-08
 
 Existing CI has no retained control/intentional-regression/threshold-failure proof.
 Added a separate read-only-permissions workflow with three isolated modern
@@ -1100,3 +1101,39 @@ remain 1 moderate/4 high. YAML parsing, all workflow bash blocks and producer
 JavaScript syntax pass. Node 24.21.0 provisioned temporarily to match Action runtime;
 runtime-specific/live validation follows. Public workflow execution remains
 unproven until explicit publication approval and an actual hosted run.
+
+Final local proof: docs/experiments/flagship-ci/completed, producer commit
+398d32d5b808f2b1e4efb3fefa0726354e873e25, exact source/observer/workflow hashes
+and bundle/helper hashes retained per scenario. Node 24.21.0 directly executes
+all real bundled Action children. Real Git fetch/worktrees, locked optimized
+SDK28 source builds, RPC/native capture and reports; no response substitution.
+
+- Control: both current identities match; all eight measured deltas zero;
+  CPU 266842 -> 266842; strict CPU policy, exit 0.
+- Report-only intentional write: both identities match; CPU 266842 -> 309171
+  (+42329), write bytes 0 -> 88; zero configured violations, exit 0.
+- Same intentional write with strict CPU policy: both identities match, changed
+  WASM/runtime addresses, +42329 CPU; two CPU violations (temporary duplicate
+  bridge declarations), genuine Action/harness exit 1 with verified marker.
+- BASE and HEAD WASMs recovered from actual artifact/captured ledger state;
+  unchanged control 776 bytes, regression 871 bytes. Raw RPC/native parity checks
+  pass. Eight measured metrics, three explicitly unavailable; no hidden zeros.
+- New fresh pinned network readiness recovered from two real Friendbot 502s;
+  funded account included before scenarios. Owned container stop exit 0.
+- All 169 Node/native assertions also PASS under Node24; root gate logs retained.
+  Local live scenarios reuse prior Cargo artifact cache and prebuilt native helper;
+  this is not another cold build, package install or five-run repeatability claim.
+
+Additional CI dependency found: the consumer example runs remote WeighIn@main
+inside WeighIn's own PRs, which exercises a published engine instead of proposed
+code. Cached origin/main still contains the old removed-RPC-cost reader; remote
+not refreshed. Example self-check now uses ./ in this repository; copied workflows
+in other repositories keep the existing remote Action. YAML/bash checks pass for
+both workflows; hosted checkout/step/artifact behavior remains unproven.
+
+Implementation committed locally as 398d32d; final evidence/self-check alignment
+is a separate coherent local commit. README, production source/schema/fixtures/
+policy and core application workflow unchanged. Preserved scratch/local context
+files untracked. No push, issue creation, external changes or appeal submission.
+Next: explicit publication approval, then actual hosted runs and retained public
+run/artifact links. Do not skip to external integration or claim campaign complete.

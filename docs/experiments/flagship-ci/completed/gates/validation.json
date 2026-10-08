@@ -1,0 +1,52 @@
+[
+  {
+    "command": [
+      "npm",
+      "test"
+    ],
+    "exit": 0
+  },
+  {
+    "command": [
+      "npm",
+      "run",
+      "test:native"
+    ],
+    "exit": 0
+  },
+  {
+    "command": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "exit": 0
+  },
+  {
+    "command": [
+      "npm",
+      "run",
+      "bundle"
+    ],
+    "exit": 0
+  },
+  {
+    "command": [
+      "npm",
+      "pack",
+      "--dry-run",
+      "--json"
+    ],
+    "exit": 0
+  },
+  {
+    "command": [
+      "cargo",
+      "fmt",
+      "--check",
+      "--manifest-path",
+      "native/simulation/Cargo.toml"
+    ],
+    "exit": 0
+  }
+]
