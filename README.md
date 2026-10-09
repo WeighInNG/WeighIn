@@ -191,6 +191,9 @@ from a built checkout. See [native provisioning](docs/native-measurement.md).
 [WeighIn Evidence](docs/EVIDENCE.md) links hosted control/regression/threshold
 proof, raw RPC/native captures, five clean builds and five measurements per case.
 Evidence conclusions are bounded by the recorded environment.
+[Hosted Soroban Forge validation](docs/hosted-soroban-forge.md) additionally proves
+one real escrow query: changed WASM/address pairing, +14,234 CPU and verified
+strict-policy failure in a permitted isolated fork.
 
 ## Known Limitations
 

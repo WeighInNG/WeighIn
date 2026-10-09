@@ -1,0 +1,50 @@
+{
+  "control": {
+    "base": {
+      "wasm_sha256": "10b761dd75460dbc44083b488783660f518c71ac9e43fdf45a72bf07e5748f98",
+      "actual_compiler": "1.95.0",
+      "evidence": "contractmetav0 rsver in retained WASM",
+      "contract_sdk": "28.0.0",
+      "stellar_cli": "28.0.0"
+    },
+    "head": {
+      "wasm_sha256": "10b761dd75460dbc44083b488783660f518c71ac9e43fdf45a72bf07e5748f98",
+      "actual_compiler": "1.95.0",
+      "evidence": "contractmetav0 rsver in retained WASM",
+      "contract_sdk": "28.0.0",
+      "stellar_cli": "28.0.0"
+    }
+  },
+  "regression": {
+    "base": {
+      "wasm_sha256": "10b761dd75460dbc44083b488783660f518c71ac9e43fdf45a72bf07e5748f98",
+      "actual_compiler": "1.95.0",
+      "evidence": "contractmetav0 rsver in retained WASM",
+      "contract_sdk": "28.0.0",
+      "stellar_cli": "28.0.0"
+    },
+    "head": {
+      "wasm_sha256": "ac6869dc7c7d32865bdafb5e2c2948f6929c58749e047ed4c4fa03dd9759e0cc",
+      "actual_compiler": "1.95.0",
+      "evidence": "contractmetav0 rsver in retained WASM",
+      "contract_sdk": "28.0.0",
+      "stellar_cli": "28.0.0"
+    }
+  },
+  "threshold": {
+    "base": {
+      "wasm_sha256": "10b761dd75460dbc44083b488783660f518c71ac9e43fdf45a72bf07e5748f98",
+      "actual_compiler": "1.95.0",
+      "evidence": "contractmetav0 rsver in retained WASM",
+      "contract_sdk": "28.0.0",
+      "stellar_cli": "28.0.0"
+    },
+    "head": {
+      "wasm_sha256": "ac6869dc7c7d32865bdafb5e2c2948f6929c58749e047ed4c4fa03dd9759e0cc",
+      "actual_compiler": "1.95.0",
+      "evidence": "contractmetav0 rsver in retained WASM",
+      "contract_sdk": "28.0.0",
+      "stellar_cli": "28.0.0"
+    }
+  }
+}

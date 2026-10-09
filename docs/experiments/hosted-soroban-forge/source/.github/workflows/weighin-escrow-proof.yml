@@ -1,0 +1,137 @@
+# Maintainer-permitted isolated fork proof; never merge the proof-only regression.
+name: WeighIn escrow proof
+on:
+  push:
+    branches:
+      - proof/weighin-control
+      - proof/weighin-regression
+      - proof/weighin-threshold
+permissions:
+  contents: read
+jobs:
+  proof:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      CARGO_BUILD_JOBS: '2'
+      CARGO_INCREMENTAL: '0'
+    steps:
+      - name: Use healthy runner temporary storage
+        run: echo "TMPDIR=$RUNNER_TEMP" >> "$GITHUB_ENV"
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: WeighInNG/WeighIn
+          ref: bbbe9001bbd375fd6a1ff75be5da2593c86fff20
+          path: .weighin-engine
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: dtolnay/rust-toolchain@d1031067263f94b142dd6c0ce24c5eb9d02d52a0
+        with:
+          toolchain: '1.95.0'
+          targets: wasm32v1-none
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: .weighin-engine/native/simulation -> target
+          key: weighin-bbbe-native-protocol28
+      - name: Build the pinned measurement helper and network prerequisites
+        working-directory: .weighin-engine
+        run: |
+          npm ci
+          npm run build
+          npm run build:helper
+      - name: Install Forge CI's checksum-verified Stellar CLI
+        run: |
+          curl -fsSL https://github.com/stellar/stellar-cli/releases/download/v28.0.0/stellar-cli-28.0.0-x86_64-unknown-linux-gnu.tar.gz -o "$RUNNER_TEMP/stellar-cli.tar.gz"
+          echo "207544486734fccb4df1afc4a7745478f9f1e21688b2f9506f0ef36f60ce3fdc  $RUNNER_TEMP/stellar-cli.tar.gz" | sha256sum -c -
+          mkdir -p "$RUNNER_TEMP/stellar-cli"
+          tar -xzf "$RUNNER_TEMP/stellar-cli.tar.gz" -C "$RUNNER_TEMP/stellar-cli"
+          echo "$RUNNER_TEMP/stellar-cli" >> "$GITHUB_PATH"
+      - name: Resolve the instrumented baseline and require the approved source change
+        id: prepare
+        run: |
+          case "$GITHUB_REF_NAME" in
+            proof/weighin-control) scenario=control; config=weighin.toml ;;
+            proof/weighin-regression) scenario=regression; config=weighin-report-only.toml ;;
+            proof/weighin-threshold) scenario=threshold; config=weighin.toml ;;
+            *) exit 1 ;;
+          esac
+          git fetch origin refs/heads/proof/weighin-baseline
+          proof_instrumented_sha=$(git rev-parse FETCH_HEAD)
+          test "$proof_instrumented_sha" = 261ab6dae6c7aedb32ae94b8475c62dad27a3eb5
+          if [ "$scenario" = control ]; then
+            proof_base_sha=$proof_instrumented_sha
+          else
+            git fetch origin refs/heads/proof/weighin-control
+            proof_base_sha=$(git rev-parse FETCH_HEAD)
+            test "$proof_base_sha" = "$(git rev-parse HEAD^)"
+          fi
+          git merge-base --is-ancestor 07d7935234e9c86816116471121998b871b68439 "$proof_base_sha"
+          git merge-base --is-ancestor "$proof_base_sha" HEAD
+          export PROOF_BASE_SHA="$proof_base_sha" PROOF_INSTRUMENTED_SHA="$proof_instrumented_sha" SCENARIO="$scenario"
+          node scripts/verify-weighin-proof.cjs preflight
+          echo "instrumented_sha=$proof_instrumented_sha" >> "$GITHUB_OUTPUT"
+          echo "base_sha=$proof_base_sha" >> "$GITHUB_OUTPUT"
+          echo "scenario=$scenario" >> "$GITHUB_OUTPUT"
+          echo "config=$config" >> "$GITHUB_OUTPUT"
+          mkdir -p "$RUNNER_TEMP/weighin-evidence"
+          git rev-parse HEAD > "$RUNNER_TEMP/weighin-evidence/head-sha.txt"
+          echo "$proof_base_sha" > "$RUNNER_TEMP/weighin-evidence/base-sha.txt"
+          node --version > "$RUNNER_TEMP/weighin-evidence/tool-versions.txt"
+          npm --version >> "$RUNNER_TEMP/weighin-evidence/tool-versions.txt"
+          rustc --version >> "$RUNNER_TEMP/weighin-evidence/tool-versions.txt"
+          stellar --version >> "$RUNNER_TEMP/weighin-evidence/tool-versions.txt"
+          sha256sum Cargo.lock .weighin-engine/bundled/index.js .weighin-engine/native/simulation/target/x86_64-unknown-linux-gnu/release/weighin-simulation > "$RUNNER_TEMP/weighin-evidence/tool-hashes.txt"
+          git diff "$proof_base_sha" HEAD -- crates/escrow/src/lib.rs > "$RUNNER_TEMP/weighin-evidence/source-change.patch"
+      - name: Start the pinned protocol-28 standalone network
+        working-directory: .weighin-engine
+        run: bash scripts/start-local-network.sh
+      - name: Run the real pinned WeighIn Action
+        id: benchmark
+        continue-on-error: ${{ steps.prepare.outputs.scenario == 'threshold' }}
+        uses: WeighInNG/WeighIn@bbbe9001bbd375fd6a1ff75be5da2593c86fff20
+        env:
+          WEIGHIN_HELPER_PATH: ${{ github.workspace }}/.weighin-engine/native/simulation/target/x86_64-unknown-linux-gnu/release/weighin-simulation
+          WEIGHIN_MIGRATION_EVIDENCE: ${{ runner.temp }}/weighin-evidence
+          NODE_OPTIONS: --require=${{ github.workspace }}/scripts/capture-weighin-process.cjs
+        with:
+          fixtures-path: weighin-fixtures.json
+          config-path: ${{ steps.prepare.outputs.config }}
+          base-ref: ${{ steps.prepare.outputs.base_sha }}
+          rust-toolchain: '1.95.0'
+          build-command: CARGO_TARGET_DIR=target stellar contract build --package soroban-forge-escrow --locked --profile release --optimize=false
+          rpc-url: http://localhost:8000/rpc
+          report-path: weighin-proof/report.md
+      - name: Require real comparison, return parity and the expected policy outcome
+        if: ${{ !cancelled() }}
+        env:
+          SCENARIO: ${{ steps.prepare.outputs.scenario }}
+          PROOF_BASE_SHA: ${{ steps.prepare.outputs.base_sha }}
+          PROOF_INSTRUMENTED_SHA: ${{ steps.prepare.outputs.instrumented_sha }}
+          CONFIG_PATH: ${{ steps.prepare.outputs.config }}
+          ACTION_OUTCOME: ${{ steps.benchmark.outcome }}
+          ACTION_RESULT: ${{ steps.benchmark.outputs.result }}
+          DIFF_JSON: ${{ steps.benchmark.outputs.diff-json }}
+          EVIDENCE_PATH: ${{ runner.temp }}/weighin-evidence
+        run: node scripts/verify-weighin-proof.cjs result
+      - name: Retain actual source, WASMs, reports and raw evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: weighin-escrow-${{ steps.prepare.outputs.scenario }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/weighin-evidence
+            weighin-proof/report.md
+          if-no-files-found: error
+          retention-days: 30
+      - name: Stop owned sidecar
+        if: always()
+        run: |
+          if docker ps -q -f name=^/stellar-quickstart$ | grep -q .; then
+            docker stop stellar-quickstart
+          fi

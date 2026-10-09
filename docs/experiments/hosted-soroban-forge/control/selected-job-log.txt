@@ -1,0 +1,4 @@
+proof	Run dtolnay/rust-toolchain@d1031067263f94b142dd6c0ce24c5eb9d02d52a0	2026-10-09T00:21:02.1717857Z   1.95.0-x86_64-unknown-linux-gnu installed - rustc 1.95.0 (59807616e 2026-04-14)
+proof	Run the real pinned WeighIn Action	2026-10-09T00:23:37.2871423Z   rust-toolchain: 1.95.0
+proof	Run the real pinned WeighIn Action	2026-10-09T00:23:37.2871996Z   build-command: CARGO_TARGET_DIR=target stellar contract build --package soroban-forge-escrow --locked --profile release --optimize=false
+proof	Retain actual source, WASMs, reports and raw evidence	2026-10-09T00:24:49.7771197Z Artifact download URL: https://github.com/WeighInNG/soroban-forge/actions/runs/37864288478/artifacts/11587129440
