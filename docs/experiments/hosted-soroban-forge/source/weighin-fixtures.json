@@ -1,0 +1,16 @@
+{
+  "id": "soroban-forge-escrow-proof",
+  "contracts": [{
+    "id": "escrow",
+    "wasm_path": "target/wasm32v1-none/release/soroban_forge_escrow.wasm",
+    "invocations": [{
+      "id": "empty-participant-page",
+      "function_name": "escrows_for_participant",
+      "args": [
+        {"type": "address", "value": "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF"},
+        {"type": "u32", "value": 0},
+        {"type": "u32", "value": 10}
+      ]
+    }]
+  }]
+}

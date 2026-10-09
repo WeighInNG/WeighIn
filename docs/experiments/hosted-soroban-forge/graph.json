@@ -1,0 +1,39 @@
+{
+  "upstream": "07d7935234e9c86816116471121998b871b68439",
+  "B": "261ab6dae6c7aedb32ae94b8475c62dad27a3eb5",
+  "C_initial_failed": "3e267634d5f0b351d8e1af008650018e79d30419",
+  "C": "78efe5019da2313a478420444440d8843cbbb174",
+  "R": "6dc3c4a7fe99ee43a173c451fdc41dec37f88dff",
+  "parents": {
+    "261ab6dae6c7aedb32ae94b8475c62dad27a3eb5": [
+      "07d7935234e9c86816116471121998b871b68439"
+    ],
+    "3e267634d5f0b351d8e1af008650018e79d30419": [
+      "261ab6dae6c7aedb32ae94b8475c62dad27a3eb5"
+    ],
+    "78efe5019da2313a478420444440d8843cbbb174": [
+      "3e267634d5f0b351d8e1af008650018e79d30419"
+    ],
+    "6dc3c4a7fe99ee43a173c451fdc41dec37f88dff": [
+      "78efe5019da2313a478420444440d8843cbbb174"
+    ]
+  },
+  "baseline_changed_files": [
+    "docs/WEIGHIN_PROOF.md",
+    "scripts/capture-weighin-process.cjs",
+    "scripts/verify-weighin-proof.cjs",
+    "weighin-fixtures.json",
+    "weighin-report-only.toml",
+    "weighin.toml"
+  ],
+  "control_changed_files": [
+    ".github/workflows/weighin-escrow-proof.yml",
+    "docs/WEIGHIN_PROOF.md",
+    "scripts/verify-weighin-proof.cjs"
+  ],
+  "regression_changed_files": [
+    "crates/escrow/src/lib.rs"
+  ],
+  "baseline_protected_changes": [],
+  "control_protected_changes": []
+}

@@ -1,0 +1,4 @@
+GitHub rejected initial commit 3e267634d5f0b351d8e1af008650018e79d30419 before any job/measurement ran.
+Public run: https://github.com/WeighInNG/soroban-forge/actions/runs/37864180813
+Annotation: (Line: 18, Col: 15): Unrecognized named-value: 'runner'. Located at position 1 within expression: runner.temp
+Fixed by moving TMPDIR setup to a step in 78efe5019da2313a478420444440d8843cbbb174, preserving history.

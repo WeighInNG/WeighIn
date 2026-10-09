@@ -1,9 +1,10 @@
 # Soroban Forge external-project proof
 
-Status: **local control, regression, and threshold proof verified**. No external
-branch was pushed, no PR was opened, and no public external-project proof is
-claimed. Publication of the proposed strict-zero workflow is held on the
-optimizer variation described below.
+Status: **historical local optimized proof**. The records below retain their
+original engine, eight-read regression and results. Publication holds and proposed
+personal-fork branches describe that earlier experiment, not current status.
+The separately completed [hosted WeighInNG fork proof](hosted-soroban-forge.md)
+uses the immutable patched engine, Forge's unoptimized CLI28.0 build and one read.
 
 ## Source and environment
 
@@ -115,7 +116,7 @@ pinning the external workflow to it. No threshold was relaxed; storage probes do
 not exclude transient optimizer-only failure or establish portable/cold-build
 determinism.
 
-## Proposed public integration
+## Historical proposed public integration
 
 The existing fork is `mxrtins04/soroban-forge`. Two local delivery branches are
 prepared from the fixed upstream source:

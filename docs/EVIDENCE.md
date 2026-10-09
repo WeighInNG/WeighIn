@@ -75,6 +75,59 @@ their own `head_sha` must not be confused with the benchmark producer's revision
 Consumer examples now pin the verified public immutable `bbbe9001bbd375fd6a1ff75be5da2593c86fff20`.
 Historical experiments below remain attributed to their original producers.
 
+## External Project Validation — Soroban Forge
+
+The permitted public [WeighInNG fork](https://github.com/WeighInNG/soroban-forge)
+validated the real escrow `escrows_for_participant(participant, 0, 10)` view from
+upstream `07d7935234e9c86816116471121998b871b68439`, with immutable WeighIn
+`bbbe9001bbd375fd6a1ff75be5da2593c86fff20`.
+The fresh-deployment empty view needs no auth/token/prior state. Permission to test
+is not official adoption or endorsement, and this is not full escrow coverage.
+
+Configuration-only B `261ab6dae6c7aedb32ae94b8475c62dad27a3eb5` preserves upstream
+contract sources/locks/toolchain. Corrected harness C is
+`78efe5019da2313a478420444440d8843cbbb174`; proof-only R is
+`6dc3c4a7fe99ee43a173c451fdc41dec37f88dff`, adding exactly one redundant persistent
+existence check without changing the interface/empty return. Control compares
+B → C; regression and strict policy both compare C → the exact same R.
+
+| Hosted proof | Actual result |
+|---|---|
+| [Control](https://github.com/WeighInNG/soroban-forge/actions/runs/37864288478/job/113607202958) | CPU 569098 → 569098; eight zero deltas; identical WASMs/return; Action exit 0 / `pass` |
+| [Regression](https://github.com/WeighInNG/soroban-forge/actions/runs/37864749630/job/113608690883) | CPU 569098 → 583332, +14234 (+2.501151%); memory +680; changed WASMs/runtime IDs still pair; exit 0 / `pass` |
+| [Strict CPU](https://github.com/WeighInNG/soroban-forge/actions/runs/37865108512/job/113609862970) | Same regression, one CPU violation; actual Action exit 1 / `fail`; expected-negative verifier job green |
+
+**WeighIn returned the expected policy failure; the enclosing verifier job
+remained green because it was asserting that the failure occurred.** Actual exits
+are recorded by a pure forwarding process observer, alongside original Action
+outcomes and independently checked native/RPC/return parity. Missing reports or
+infrastructure errors cannot satisfy the proof.
+
+BASE/C WASM is 45,889 bytes, SHA256
+`10b761dd75460dbc44083b488783660f518c71ac9e43fdf45a72bf07e5748f98`;
+R is 45,908 bytes, SHA256
+`ac6869dc7c7d32865bdafb5e2c2948f6929c58749e047ed4c4fa03dd9759e0cc`.
+The exact fixture/contract/function/case tuple remains matched, with no additions
+or removals, and every return is `{ids: [], total: 0, next_cursor: null}`.
+
+Forge's supported unoptimized CLI 28.0 build is preserved via `build-command`:
+`stellar contract build --package soroban-forge-escrow --locked --profile release --optimize=false`.
+The target is wasm32v1-none; actual compiled WASM metadata records Rust 1.95.0 and
+SDK 28.0.0. The separate root `stable` version probe records 1.99.0; it is not
+misrepresented as the compiler used by the Action. Node 24.21.0, official native
+simulation 28.0.1 and protocol 28 standalone were used. Three unavailable metrics
+stay null; no new product feature was needed.
+
+[Full external proof](hosted-soroban-forge.md) provides exact source commits,
+workflow/job/artifact links, runtime IDs, metric table, scope, failure history,
+permission boundaries and reproduction. [Durable archive](experiments/hosted-soroban-forge/)
+retains sanitized raw captures, sources, WASMs, reports, real exits and metadata
+with [checksums](experiments/hosted-soroban-forge/sha256.json), independently checked
+by `tests/hosted-external-evidence.test.cjs`. This establishes this one successful
+external query path, not funded settlement, populated pagination, deposit/release
+or universal compatibility. The older local optimized proof remains separately
+attributed and unchanged.
+
 ## Tested environment — historical experiments
 
 The retained [hosted environment](experiments/hosted-comparison/regression/environment.json)
@@ -324,5 +377,6 @@ public revision now used by consumer pins.
 
 ## Known boundaries
 
-See [Known limitations](KNOWN_LIMITATIONS.md). Local external-contract evidence
-is documented separately; no hosted external-repository result is claimed here.
+See [Known limitations](KNOWN_LIMITATIONS.md). [Hosted external validation](hosted-soroban-forge.md)
+covers one empty escrow view in the permitted WeighInNG fork; full stateful Forge
+coverage and upstream adoption are not claimed.
