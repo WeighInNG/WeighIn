@@ -51,6 +51,50 @@ node dist/cli.js weighin-fixtures.json --rpc-url http://localhost:8000/rpc --out
 The CLI writes measurement JSON and exits 1 on measurement failure. It remains a
 measurement command; threshold comparison is performed by the Action.
 
+## CLI arguments
+
+```text
+weighin [<fixtures.json> [<output.json>]] [--rpc-url <url>] [--output <path>] [--stdout]
+```
+
+`weighin` is the package binary; from a built checkout run `node dist/cli.js`.
+
+- Without arguments it reads `weighin-fixtures.json`, writes
+  `weighin-results.json` and uses `http://localhost:8000/rpc`.
+- The first positional argument is the fixtures file. A second positional
+  argument is the legacy output path; `--output` is preferred.
+- `--rpc-url` and `--output` take exactly one value, the next argument, and may
+  appear before, between or after the positional arguments with the same result.
+- JSON stdout mode is selected by `--stdout` (alias `--json-stdout`) or by `-`
+  as the output path, either `--output -` or a second positional `-`. The result
+  document goes to standard output and progress lines go to standard error. A
+  lone `-` is always a positional argument, never an option.
+- `--` ends options: every later argument is positional, so
+  `weighin -- -fixtures.json` reads a file whose name begins with a dash.
+
+Ambiguous or invalid forms are rejected rather than guessed:
+
+- an unknown option, which is any other argument beginning with `-` before
+  `--`, other than a lone `-`, including the unsupported `--option=value` form;
+- an option without a value, or followed by an argument beginning with `--`
+  (that argument is never taken as the value) or by an empty argument;
+- the same option given twice, where `--stdout` and `--json-stdout` count as
+  the same option;
+- more than two positional arguments;
+- an output path given both as the second positional argument and with
+  `--output`;
+- an empty positional path.
+
+Invalid usage exits 2 and prints the problem plus the usage line to standard
+error. It stops before probing Git, reading fixtures, contacting RPC or
+provisioning the native helper, and writes no result file.
+
+Once the arguments are well formed, JSON stdout mode together with an output
+file path, such as `--stdout --output results.json`, is refused by the JSON
+stdout mode's own check: it prints `Ambiguous output configuration: cannot
+specify both JSON stdout mode and an output file path` to standard error and
+exits 1, also before any of those side effects.
+
 ## Source and immutable state
 
 CPU comes directly from `simulated_instructions`; memory from `simulated_memory`.
