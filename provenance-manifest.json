@@ -61,7 +61,7 @@
     },
     {
       "path": "src/cli.ts",
-      "sha256": "2ba43e870d8bf2f223782910ef75db0fc4b9b7637a5e6dd94a119011095be982"
+      "sha256": "45ca5800df6bc84e27d820df4e6ec19c550c839fe75d4b31d5ee2c5880f91ac2"
     },
     {
       "path": "src/comment-action.ts",
