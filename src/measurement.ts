@@ -289,6 +289,13 @@ function calculateContractId(deployerAddress: string, salt: Buffer): string {
   return StrKey.encodeContract(contractIdBytes);
 }
 
+function parseDeploymentSalt(value: string): Buffer {
+  if (!/^[0-9a-fA-F]{64}$/.test(value)) {
+    throw new Error("deploymentSalt must be exactly 32 bytes of hexadecimal");
+  }
+  return Buffer.from(value, "hex");
+}
+
 /**
  * Load or generate a deployer keypair.
  *
@@ -375,6 +382,10 @@ export interface RunMeasurementOptions {
   keyFile?: string;
   /** Executable override; otherwise build the bundled pinned helper on Linux x64. */
   helperPath?: string;
+  /** Optional 32-byte hex salt for controlled deployment experiments. */
+  deploymentSalt?: string;
+  /** Skip upload only when the exact WASM was uploaded during setup. */
+  skipWasmUpload?: boolean;
 }
 
 export async function runMeasurement(
@@ -439,7 +450,9 @@ export async function runMeasurement(
     console.log(`WASM SHA256: ${wasmSha256}`);
 
     // Deterministic salt based on WASM hash — same WASM always gets same contract ID
-    const salt = crypto.createHash("sha256").update(wasmHash).digest();
+    const salt = opts.deploymentSalt
+      ? parseDeploymentSalt(opts.deploymentSalt)
+      : crypto.createHash("sha256").update(wasmHash).digest();
     const contractId = calculateContractId(deployer.publicKey(), salt);
 
     console.log(`Contract ID: ${contractId}`);
@@ -449,28 +462,31 @@ export async function runMeasurement(
       console.log(`Installing WASM...`);
       let account = await server.getAccount(deployer.publicKey());
 
-      // 1. Upload WASM
-      const uploadTx = new TransactionBuilder(account, {
-        fee: "1000000",
-        networkPassphrase: NETWORK_PASSPHRASE,
-      })
-        .addOperation(Operation.uploadContractWasm({ wasm: wasmBytes }))
-        .setTimeout(30)
-        .build();
+      // 1. Upload WASM unless a controlled experiment performed this setup
+      // transaction separately for the exact same artifact.
+      if (!opts.skipWasmUpload) {
+        const uploadTx = new TransactionBuilder(account, {
+          fee: "1000000",
+          networkPassphrase: NETWORK_PASSPHRASE,
+        })
+          .addOperation(Operation.uploadContractWasm({ wasm: wasmBytes }))
+          .setTimeout(30)
+          .build();
 
-      let preparedUpload;
-      try {
-        preparedUpload = await server.prepareTransaction(uploadTx);
-      } catch (err: any) {
-        console.error("DEBUG: Full prepareTransaction error:", err);
-        console.dir(err, { depth: null });
-        throw err;
-      }
-      preparedUpload.sign(deployer);
-      const uploadSend = await server.sendTransaction(preparedUpload);
-      const uploadRes = await waitForTransaction(server, uploadSend.hash);
-      if (uploadRes.status !== rpc.Api.GetTransactionStatus.SUCCESS) {
-        throw new Error(`WASM upload failed: ${JSON.stringify(uploadRes)}`);
+        let preparedUpload;
+        try {
+          preparedUpload = await server.prepareTransaction(uploadTx);
+        } catch (err: any) {
+          console.error("DEBUG: Full prepareTransaction error:", err);
+          console.dir(err, { depth: null });
+          throw err;
+        }
+        preparedUpload.sign(deployer);
+        const uploadSend = await server.sendTransaction(preparedUpload);
+        const uploadRes = await waitForTransaction(server, uploadSend.hash);
+        if (uploadRes.status !== rpc.Api.GetTransactionStatus.SUCCESS) {
+          throw new Error(`WASM upload failed: ${JSON.stringify(uploadRes)}`);
+        }
       }
 
       console.log(`WASM installed. Deploying contract instance...`);
