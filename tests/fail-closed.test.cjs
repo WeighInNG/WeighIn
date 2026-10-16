@@ -197,6 +197,9 @@ function action(mode, config = policy, tmpRoot = null) {
 for (const [mode, message] of [
   ["funding-exhausted", /Account readiness failed within 120s/],
   ["rpc-unhealthy", /RPC has not reported healthy/],
+  ["rpc-wrong-version", /Invalid JSON-RPC envelope for getHealth/],
+  ["rpc-wrong-id", /Invalid JSON-RPC envelope for getNetwork/],
+  ["rpc-conflicting-envelope", /Invalid JSON-RPC envelope for getHealth/],
   ["checkout", /unit checkout failure/],
   ["worktree", /unit worktree failure/],
   ["build", /unit base build failure/],

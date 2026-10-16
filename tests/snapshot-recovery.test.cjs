@@ -54,7 +54,11 @@ function scenario(t,options={}){
       result={ledgers:[{sequence:baseLedger+state.simulations-1,headerXdr:history.toXDR('base64')}]};
     }
     const error=options.error?.(request.method,state);
-    return {ok:!options.httpFailure,status:options.httpFailure?404:200,json:async()=>error?{error}:{result}};
+    const defaultEnvelope=error
+      ?{jsonrpc:'2.0',id:request.id,error}
+      :{jsonrpc:'2.0',id:request.id,result};
+    const body=options.envelope?options.envelope(request,defaultEnvelope,state):defaultEnvelope;
+    return {ok:!options.httpFailure,status:options.httpFailure?404:200,json:async()=>body};
   });
   t.mock.method(cp,'execFile',(file,args,childOptions,callback)=>{
     assert.equal(file,__filename);
@@ -67,6 +71,33 @@ function scenario(t,options={}){
   });
   return {state,run:()=>measureInvocation('http://controlled.invalid/rpc',transaction,__filename),baseLedger};
 }
+
+test('malformed JSON-RPC envelopes (wrong version, missing/wrong id, conflicting result/error, malformed error) fail immediately without retry or helper invocation',async t=>{
+  for(const mutate of [
+    (req,env)=>({id:req.id,result:env.result}),
+    (req,env)=>({...env,jsonrpc:'1.0'}),
+    (_req,env)=>({jsonrpc:'2.0',result:env.result}),
+    (req,env)=>({...env,id:req.id+999}),
+    (req,env)=>({...env,id:String(req.id)}),
+    (req,env)=>({...env,id:null}),
+    (req,env)=>({...env,error:transient}),
+    (req)=>({jsonrpc:'2.0',id:req.id}),
+    (req)=>({jsonrpc:'2.0',id:req.id,error:'string-error'}),
+    (req)=>({jsonrpc:'2.0',id:req.id,error:{code:'-32603',message:transient.message}}),
+    ()=>null,
+    ()=>[],
+  ]){
+    const {state,run}=scenario(t,{
+      envelope:(req,env)=>req.method==='getLedgerEntries'?mutate(req,env):env,
+    });
+    await assert.rejects(run(),/Invalid JSON-RPC envelope for getLedgerEntries/);
+    assert.equal(state.simulations,1);
+    assert.equal(state.reads,1);
+    assert.equal(state.delays.length,0);
+    assert.equal(state.helpers.length,0);
+    t.mock.restoreAll();
+  }
+});
 
 test('observed ledger-read failure recovers by re-simulating and returning only the new snapshot',async t=>{
   const {state,run,baseLedger}=scenario(t,{error:(method,s)=>method==='getLedgerEntries'&&s.reads===1?transient:null});

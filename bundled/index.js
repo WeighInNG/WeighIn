@@ -52067,6 +52067,69 @@ function redactEndpointSecrets(message, rawUrl) {
   }
   return result;
 }
+function validateJsonRpcEnvelope(rawBody, expectedId, method, rpcUrl) {
+  const endpoint2 = sanitizeEndpoint(rpcUrl);
+  const fail = (reason) => {
+    throw new Error(
+      `Invalid JSON-RPC envelope for ${method} at ${endpoint2}: ${redactEndpointSecrets(reason, rpcUrl)}`
+    );
+  };
+  if (typeof rawBody !== "object" || rawBody === null || Array.isArray(rawBody)) {
+    return fail("response body must be a JSON object");
+  }
+  const record = rawBody;
+  for (const key of Object.keys(record)) {
+    if (key !== "jsonrpc" && key !== "id" && key !== "result" && key !== "error") {
+      return fail(`unexpected top-level field "${key}"`);
+    }
+  }
+  if (record.jsonrpc !== "2.0") {
+    return fail(
+      `expected jsonrpc "2.0", got ${JSON.stringify(record.jsonrpc)}`
+    );
+  }
+  if (!Object.prototype.hasOwnProperty.call(record, "id") || record.id !== expectedId) {
+    return fail(
+      `response id ${JSON.stringify(record.id)} does not match request id ${JSON.stringify(expectedId)}`
+    );
+  }
+  const hasResult = Object.prototype.hasOwnProperty.call(record, "result") && record.result !== void 0;
+  const hasError = Object.prototype.hasOwnProperty.call(record, "error") && record.error !== void 0;
+  if (hasResult && hasError) {
+    return fail("response must not contain both result and error");
+  }
+  if (!hasResult && !hasError) {
+    return fail("response must contain either result or error");
+  }
+  if (hasError) {
+    const errObj = record.error;
+    if (typeof errObj !== "object" || errObj === null || Array.isArray(errObj)) {
+      return fail("error field must be a JSON object");
+    }
+    const errRecord = errObj;
+    if (typeof errRecord.code !== "number" || !Number.isInteger(errRecord.code) || typeof errRecord.message !== "string") {
+      return fail(
+        "error object must contain an integer code and string message"
+      );
+    }
+    return {
+      ok: false,
+      error: errRecord
+    };
+  }
+  return { ok: true, result: record.result };
+}
+function parseJsonRpcResponse(rawText, expectedId, method, rpcUrl) {
+  let decoded;
+  try {
+    decoded = JSON.parse(rawText);
+  } catch (error2) {
+    throw new Error(
+      `Invalid JSON-RPC envelope for ${method} at ${sanitizeEndpoint(rpcUrl)}: malformed JSON (${redactEndpointSecrets(String(error2?.message ?? error2), rpcUrl)})`
+    );
+  }
+  return validateJsonRpcEnvelope(decoded, expectedId, method, rpcUrl);
+}
 
 // src/account.ts
 var DEADLINE_MS = 12e4;
@@ -52126,23 +52189,30 @@ async function ensureAccountReady(rpcUrl, publicKey) {
   }
   while (Date.now() < deadline) {
     try {
+      const requestId = 1;
       const response = await request3(rpcUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           jsonrpc: "2.0",
-          id: 1,
+          id: requestId,
           method: "getLedgerEntries",
           params: { keys: [key] }
         })
       });
-      const json = JSON.parse(response);
-      if (json.error)
+      const envelope = parseJsonRpcResponse(
+        response,
+        requestId,
+        "getLedgerEntries",
+        rpcUrl
+      );
+      if (!envelope.ok)
         throw new Error(
-          `Account readiness RPC error at ${sanitizeEndpoint(rpcUrl)}: ${redactEndpointSecrets(JSON.stringify(json.error), rpcUrl)}`
+          `Account readiness RPC error at ${sanitizeEndpoint(rpcUrl)}: ${redactEndpointSecrets(JSON.stringify(envelope.error), rpcUrl)}`
         );
-      const entries = json.result?.entries;
-      if (!Number.isInteger(json.result?.latestLedger) || json.result.latestLedger <= 0 || !Array.isArray(entries) || entries.length > 1)
+      const result = envelope.result;
+      const entries = result?.entries;
+      if (!Number.isInteger(result?.latestLedger) || result.latestLedger <= 0 || !Array.isArray(entries) || entries.length > 1)
         throw new Error("Invalid account readiness RPC response");
       if (entries.length === 1) {
         const entry = entries[0];
@@ -52915,10 +52985,17 @@ async function callRpc(rpcUrl, method, params) {
     throw new Error(
       `RPC ${method}: HTTP ${response.status} at ${sanitizeEndpoint(rpcUrl)}`
     );
-  const body = await response.json();
-  if (body.error || body.result === void 0)
-    throw new RpcError(method, body.error, rpcUrl);
-  return body.result;
+  let body;
+  try {
+    body = await response.json();
+  } catch (error2) {
+    throw new Error(
+      `Invalid JSON-RPC envelope for ${method} at ${sanitizeEndpoint(rpcUrl)}: malformed JSON (${redactEndpointSecrets(String(error2?.message ?? error2), rpcUrl)})`
+    );
+  }
+  const envelope = validateJsonRpcEnvelope(body, 1, method, rpcUrl);
+  if (!envelope.ok) throw new RpcError(method, envelope.error, rpcUrl);
+  return envelope.result;
 }
 async function measureInvocation(rpcUrl, transaction, helperPath) {
   const network = external_exports.object({ passphrase: encoded, protocolVersion: integer }).parse(await callRpc(rpcUrl, "getNetwork", {}));
@@ -54152,34 +54229,75 @@ var configuredRpcUrl = "";
 async function assertRpcHealthy(rpcUrl) {
   core3.info(`Checking RPC health at ${sanitizeEndpoint(rpcUrl)} ...`);
   try {
+    const healthId = 1;
     const res = await fetch(rpcUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "getHealth" }),
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: healthId,
+        method: "getHealth"
+      }),
       signal: AbortSignal.timeout(1e4)
     });
     if (!res.ok) {
       throw new Error(`HTTP ${res.status} ${res.statusText}`);
     }
-    const json = await res.json();
-    if (json.error) {
-      throw new Error(`RPC error: ${JSON.stringify(json.error)}`);
+    let rawHealth;
+    try {
+      rawHealth = await res.json();
+    } catch (err) {
+      throw new Error(
+        `Invalid JSON-RPC envelope for getHealth at ${sanitizeEndpoint(rpcUrl)}: malformed JSON (${redactEndpointSecrets(String(err?.message ?? err), rpcUrl)})`
+      );
     }
-    if (json.result?.status !== "healthy")
+    const healthEnvelope = validateJsonRpcEnvelope(
+      rawHealth,
+      healthId,
+      "getHealth",
+      rpcUrl
+    );
+    if (!healthEnvelope.ok) {
+      throw new Error(`RPC error: ${JSON.stringify(healthEnvelope.error)}`);
+    }
+    const healthResult = healthEnvelope.result;
+    if (healthResult?.status !== "healthy")
       throw new Error("RPC has not reported healthy");
+    const networkId = 2;
     const network = await fetch(rpcUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ jsonrpc: "2.0", id: 2, method: "getNetwork" }),
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: networkId,
+        method: "getNetwork"
+      }),
       signal: AbortSignal.timeout(1e4)
     });
     if (!network.ok)
       throw new Error(`HTTP ${network.status} ${network.statusText}`);
-    const metadata = await network.json();
-    if (metadata.error || typeof metadata.result?.passphrase !== "string" || !metadata.result.passphrase.trim()) {
+    let rawMetadata;
+    try {
+      rawMetadata = await network.json();
+    } catch (err) {
+      throw new Error(
+        `Invalid JSON-RPC envelope for getNetwork at ${sanitizeEndpoint(rpcUrl)}: malformed JSON (${redactEndpointSecrets(String(err?.message ?? err), rpcUrl)})`
+      );
+    }
+    const metadataEnvelope = validateJsonRpcEnvelope(
+      rawMetadata,
+      networkId,
+      "getNetwork",
+      rpcUrl
+    );
+    if (!metadataEnvelope.ok) {
+      throw new Error(`RPC error: ${JSON.stringify(metadataEnvelope.error)}`);
+    }
+    const metadataResult = metadataEnvelope.result;
+    if (typeof metadataResult?.passphrase !== "string" || !metadataResult.passphrase.trim()) {
       throw new Error("Invalid RPC network metadata");
     }
-    core3.info(`RPC healthy \u2014 network: ${metadata.result.passphrase}`);
+    core3.info(`RPC healthy \u2014 network: ${metadataResult.passphrase}`);
   } catch (err) {
     core3.setFailed(
       `Soroban RPC at ${sanitizeEndpoint(rpcUrl)} is not reachable: ${redactEndpointSecrets(String(err?.message ?? err), rpcUrl)}

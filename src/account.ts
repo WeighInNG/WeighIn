@@ -1,5 +1,9 @@
 import { Keypair, xdr } from "@stellar/stellar-sdk";
-import { redactEndpointSecrets, sanitizeEndpoint } from "./endpoint";
+import {
+  parseJsonRpcResponse,
+  redactEndpointSecrets,
+  sanitizeEndpoint,
+} from "./endpoint";
 
 const DEADLINE_MS = 120_000;
 const REQUEST_MS = 15_000;
@@ -73,25 +77,32 @@ export async function ensureAccountReady(
   }
   while (Date.now() < deadline) {
     try {
+      const requestId = 1;
       const response = await request(rpcUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           jsonrpc: "2.0",
-          id: 1,
+          id: requestId,
           method: "getLedgerEntries",
           params: { keys: [key] },
         }),
       });
-      const json = JSON.parse(response) as any;
-      if (json.error)
+      const envelope = parseJsonRpcResponse(
+        response,
+        requestId,
+        "getLedgerEntries",
+        rpcUrl,
+      );
+      if (!envelope.ok)
         throw new Error(
-          `Account readiness RPC error at ${sanitizeEndpoint(rpcUrl)}: ${redactEndpointSecrets(JSON.stringify(json.error), rpcUrl)}`,
+          `Account readiness RPC error at ${sanitizeEndpoint(rpcUrl)}: ${redactEndpointSecrets(JSON.stringify(envelope.error), rpcUrl)}`,
         );
-      const entries = json.result?.entries;
+      const result = envelope.result as any;
+      const entries = result?.entries;
       if (
-        !Number.isInteger(json.result?.latestLedger) ||
-        json.result.latestLedger <= 0 ||
+        !Number.isInteger(result?.latestLedger) ||
+        result.latestLedger <= 0 ||
         !Array.isArray(entries) ||
         entries.length > 1
       )

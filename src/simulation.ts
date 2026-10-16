@@ -1,7 +1,11 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as crypto from "crypto";
-import { redactEndpointSecrets, sanitizeEndpoint } from "./endpoint";
+import {
+  redactEndpointSecrets,
+  sanitizeEndpoint,
+  validateJsonRpcEnvelope,
+} from "./endpoint";
 import { execFile } from "child_process";
 import { Keypair, Transaction, xdr } from "@stellar/stellar-sdk";
 import { z } from "zod";
@@ -364,10 +368,17 @@ async function callRpc(
     throw new Error(
       `RPC ${method}: HTTP ${response.status} at ${sanitizeEndpoint(rpcUrl)}`,
     );
-  const body = (await response.json()) as { error?: unknown; result?: unknown };
-  if (body.error || body.result === undefined)
-    throw new RpcError(method, body.error, rpcUrl);
-  return body.result;
+  let body: unknown;
+  try {
+    body = await response.json();
+  } catch (error) {
+    throw new Error(
+      `Invalid JSON-RPC envelope for ${method} at ${sanitizeEndpoint(rpcUrl)}: malformed JSON (${redactEndpointSecrets(String((error as any)?.message ?? error), rpcUrl)})`,
+    );
+  }
+  const envelope = validateJsonRpcEnvelope(body, 1, method, rpcUrl);
+  if (!envelope.ok) throw new RpcError(method, envelope.error, rpcUrl);
+  return envelope.result;
 }
 
 /** Capture all discovered keys/config at one ledger; retry the entire capture on drift.

@@ -62,3 +62,125 @@ export function redactEndpointSecrets(message: string, rawUrl: string): string {
   }
   return result;
 }
+
+export interface JsonRpcErrorObject {
+  code: number;
+  message: string;
+  data?: unknown;
+}
+
+export type ValidatedJsonRpcEnvelope =
+  { ok: true; result: unknown } | { ok: false; error: JsonRpcErrorObject };
+
+/**
+ * Validate a decoded JSON-RPC 2.0 response envelope against the issued request ID.
+ * Rejects non-object payloads, unsupported/missing jsonrpc version, missing or
+ * mismatched response ID, conflicting or absent result/error fields, unknown
+ * top-level keys, and malformed error objects.
+ */
+export function validateJsonRpcEnvelope(
+  rawBody: unknown,
+  expectedId: number | string,
+  method: string,
+  rpcUrl: string,
+): ValidatedJsonRpcEnvelope {
+  const endpoint = sanitizeEndpoint(rpcUrl);
+  const fail = (reason: string): never => {
+    throw new Error(
+      `Invalid JSON-RPC envelope for ${method} at ${endpoint}: ${redactEndpointSecrets(reason, rpcUrl)}`,
+    );
+  };
+
+  if (
+    typeof rawBody !== "object" ||
+    rawBody === null ||
+    Array.isArray(rawBody)
+  ) {
+    return fail("response body must be a JSON object");
+  }
+
+  const record = rawBody as Record<string, unknown>;
+  for (const key of Object.keys(record)) {
+    if (
+      key !== "jsonrpc" &&
+      key !== "id" &&
+      key !== "result" &&
+      key !== "error"
+    ) {
+      return fail(`unexpected top-level field "${key}"`);
+    }
+  }
+
+  if (record.jsonrpc !== "2.0") {
+    return fail(
+      `expected jsonrpc "2.0", got ${JSON.stringify(record.jsonrpc)}`,
+    );
+  }
+
+  if (
+    !Object.prototype.hasOwnProperty.call(record, "id") ||
+    record.id !== expectedId
+  ) {
+    return fail(
+      `response id ${JSON.stringify(record.id)} does not match request id ${JSON.stringify(expectedId)}`,
+    );
+  }
+
+  const hasResult =
+    Object.prototype.hasOwnProperty.call(record, "result") &&
+    record.result !== undefined;
+  const hasError =
+    Object.prototype.hasOwnProperty.call(record, "error") &&
+    record.error !== undefined;
+
+  if (hasResult && hasError) {
+    return fail("response must not contain both result and error");
+  }
+  if (!hasResult && !hasError) {
+    return fail("response must contain either result or error");
+  }
+
+  if (hasError) {
+    const errObj = record.error;
+    if (
+      typeof errObj !== "object" ||
+      errObj === null ||
+      Array.isArray(errObj)
+    ) {
+      return fail("error field must be a JSON object");
+    }
+    const errRecord = errObj as Record<string, unknown>;
+    if (
+      typeof errRecord.code !== "number" ||
+      !Number.isInteger(errRecord.code) ||
+      typeof errRecord.message !== "string"
+    ) {
+      return fail(
+        "error object must contain an integer code and string message",
+      );
+    }
+    return {
+      ok: false,
+      error: errRecord as unknown as JsonRpcErrorObject,
+    };
+  }
+
+  return { ok: true, result: record.result };
+}
+
+export function parseJsonRpcResponse(
+  rawText: string,
+  expectedId: number | string,
+  method: string,
+  rpcUrl: string,
+): ValidatedJsonRpcEnvelope {
+  let decoded: unknown;
+  try {
+    decoded = JSON.parse(rawText);
+  } catch (error: any) {
+    throw new Error(
+      `Invalid JSON-RPC envelope for ${method} at ${sanitizeEndpoint(rpcUrl)}: malformed JSON (${redactEndpointSecrets(String(error?.message ?? error), rpcUrl)})`,
+    );
+  }
+  return validateJsonRpcEnvelope(decoded, expectedId, method, rpcUrl);
+}
