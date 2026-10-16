@@ -122,6 +122,128 @@ function getSdkVersion(repoDir: string): string {
   return "unknown";
 }
 
+/**
+ * Resolve and validate that fixtures-path stays within the given revision
+ * worktree, rejecting absolute paths, directory traversal outside the revision,
+ * and existing symlink escapes before any build or measurement runs.
+ */
+function resolveRevisionFixturesPath(
+  worktreeRoot: string,
+  fixturesPathInput: string,
+  label: "HEAD" | "base",
+): { fixturesPath: string; fixtureId: string } {
+  const trimmed = fixturesPathInput.trim();
+  if (
+    !trimmed ||
+    path.isAbsolute(fixturesPathInput) ||
+    path.posix.isAbsolute(fixturesPathInput) ||
+    path.win32.isAbsolute(fixturesPathInput)
+  ) {
+    throw new Error(
+      `Invalid fixtures-path "${fixturesPathInput}": must be a relative path within the ${label} worktree`,
+    );
+  }
+
+  const resolvedRoot = path.resolve(worktreeRoot);
+  const rawSegments = fixturesPathInput.split(/[\\/]+/);
+  let depth = 0;
+  for (const seg of rawSegments) {
+    if (!seg || seg === ".") continue;
+    if (seg === "..") {
+      depth--;
+      if (depth < 0) {
+        throw new Error(
+          `Invalid fixtures-path "${fixturesPathInput}": path escapes ${label} worktree`,
+        );
+      }
+    } else {
+      depth++;
+    }
+  }
+  const candidatePath = path.resolve(resolvedRoot, fixturesPathInput);
+  const rel = path.relative(resolvedRoot, candidatePath);
+  if (
+    !rel ||
+    rel === "." ||
+    rel === ".." ||
+    rel.startsWith(`..${path.sep}`) ||
+    rel.startsWith("../") ||
+    path.isAbsolute(rel)
+  ) {
+    throw new Error(
+      `Invalid fixtures-path "${fixturesPathInput}": path escapes ${label} worktree`,
+    );
+  }
+  const fixtureId = rel.split(path.sep).join("/");
+
+  const realRoot = fs.realpathSync(resolvedRoot);
+  const segments = rel.split(path.sep);
+  let current = resolvedRoot;
+  for (const segment of segments) {
+    current = path.join(current, segment);
+    let lstat: fs.Stats;
+    try {
+      lstat = fs.lstatSync(current);
+    } catch {
+      throw new Error(
+        label === "base"
+          ? "fixtures-path not found in base ref"
+          : `fixtures-path not found: ${candidatePath}`,
+      );
+    }
+    let realCurrent: string;
+    try {
+      realCurrent = fs.realpathSync(current);
+    } catch {
+      if (lstat.isSymbolicLink()) {
+        const linkTarget = path.resolve(
+          path.dirname(current),
+          fs.readlinkSync(current),
+        );
+        const linkRel = path.relative(realRoot, linkTarget);
+        if (
+          !linkRel ||
+          linkRel === "." ||
+          linkRel === ".." ||
+          linkRel.startsWith(`..${path.sep}`) ||
+          linkRel.startsWith("../") ||
+          path.isAbsolute(linkRel)
+        ) {
+          throw new Error(
+            `Invalid fixtures-path "${fixturesPathInput}": symlink escapes ${label} worktree`,
+          );
+        }
+      }
+      throw new Error(
+        label === "base"
+          ? "fixtures-path not found in base ref"
+          : `fixtures-path not found: ${candidatePath}`,
+      );
+    }
+    const realRel = path.relative(realRoot, realCurrent);
+    if (
+      !realRel ||
+      realRel === "." ||
+      realRel === ".." ||
+      realRel.startsWith(`..${path.sep}`) ||
+      realRel.startsWith("../") ||
+      path.isAbsolute(realRel)
+    ) {
+      throw new Error(
+        `Invalid fixtures-path "${fixturesPathInput}": symlink escapes ${label} worktree`,
+      );
+    }
+  }
+
+  if (!fs.statSync(candidatePath).isFile()) {
+    throw new Error(
+      `Invalid fixtures-path "${fixturesPathInput}": must reference a file within the ${label} worktree`,
+    );
+  }
+
+  return { fixturesPath: candidatePath, fixtureId };
+}
+
 // ---------------------------------------------------------------------------
 // Two-directory checkout
 // ---------------------------------------------------------------------------
@@ -254,6 +376,8 @@ async function run(): Promise<void> {
 
     // 1. RPC health check — fail fast with a clear message
     await assertRpcHealthy(rpcUrl);
+    const { fixturesPath: validatedHeadFixturesPath, fixtureId: validatedHeadFixtureId } =
+      resolveRevisionFixturesPath(headWorkspace, fixturesPathRel, "HEAD");
 
     // 2. Resolve paths from the HEAD workspace (fixtures, config live there)
     const headFixturesPath = path.resolve(headWorkspace, fixturesPathRel);
@@ -276,15 +400,15 @@ async function run(): Promise<void> {
     let headResults: ContractBenchmark[];
     try {
       await buildForRevision(
-        headFixturesPath,
+        validatedHeadFixturesPath,
         headWorkspace,
         rustToolchain,
         buildCommand,
         skipBuild,
       );
       headResults = await runMeasurement({
-        fixturesPath: headFixturesPath,
-        fixtureId,
+        fixturesPath: validatedHeadFixturesPath,
+        fixtureId: validatedHeadFixtureId,
         gitCommit: headSha,
         sdkVersion: getSdkVersion(headWorkspace),
         rpcUrl,
@@ -317,33 +441,30 @@ async function run(): Promise<void> {
       baseSha = checkout.sha;
 
       // The fixtures file in the base worktree — same relative path
-      const baseFixturesPath = path.resolve(baseDir, fixturesPathRel);
-      if (!fs.existsSync(baseFixturesPath)) {
-        throw new Error("fixtures-path not found in base ref");
-      } else {
-        await buildForRevision(
-          baseFixturesPath,
-          baseDir,
-          rustToolchain,
-          buildCommand,
-          skipBuild,
-        );
-        baseResults = await runMeasurement({
-          fixturesPath: baseFixturesPath,
-          fixtureId,
-          gitCommit: baseSha,
-          sdkVersion: getSdkVersion(baseDir),
-          rpcUrl,
-          keyFile: sharedKeyFile,
-        });
+      const { fixturesPath: baseFixturesPath, fixtureId: baseFixtureId } =
+        resolveRevisionFixturesPath(baseDir, fixturesPathRel, "base");
+      await buildForRevision(
+        baseFixturesPath,
+        baseDir,
+        rustToolchain,
+        buildCommand,
+        skipBuild,
+      );
+      baseResults = await runMeasurement({
+        fixturesPath: baseFixturesPath,
+        fixtureId: baseFixtureId,
+        gitCommit: baseSha,
+        sdkVersion: getSdkVersion(baseDir),
+        rpcUrl,
+        keyFile: sharedKeyFile,
+      });
 
-        // Log WASM hashes from base
-        for (const contract of baseResults) {
-          for (const bench of contract.benchmarks) {
-            core.info(
-              `[BASE] WASM SHA256 (${bench.function_name}): ${bench.wasm_sha256}`,
-            );
-          }
+      // Log WASM hashes from base
+      for (const contract of baseResults) {
+        for (const bench of contract.benchmarks) {
+          core.info(
+            `[BASE] WASM SHA256 (${bench.function_name}): ${bench.wasm_sha256}`,
+          );
         }
       }
     } catch (err: any) {
