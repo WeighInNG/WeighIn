@@ -49,7 +49,9 @@ node dist/cli.js weighin-fixtures.json --rpc-url http://localhost:8000/rpc --out
 ```
 
 The CLI writes measurement JSON and exits 1 on measurement failure. It remains a
-measurement command; threshold comparison is performed by the Action.
+measurement command; threshold comparison is performed by the Action. `weighin --help`
+(`-h`) and `weighin --version` work offline before any fixture, Git, RPC or native
+helper access.
 
 ## Source and immutable state
 
