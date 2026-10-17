@@ -6,7 +6,8 @@ inputs:
   fixtures-path:
     description: >
       Path to the weighin-fixtures.json file in the caller repo, relative to the
-      repository root. Declares which WASM files to benchmark and which functions
+      repository root, resolved within both the HEAD workspace and the BASE worktree.
+      Declares which WASM files to benchmark and which functions
       to invoke. The Action builds with Stellar CLI 28.1+ (optimization enabled)
       and Rust 1.84+ as a minimum gate; SDK-specific requirements may be higher.
       Tested versions are Stellar CLI 28.1.0 and Rust 1.95.0. Callers must provision

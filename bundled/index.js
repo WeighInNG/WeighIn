@@ -54970,6 +54970,85 @@ function generateFailureReport(errorMessage) {
 
 // src/pr-metadata.ts
 var PR_METADATA_SCHEMA_VERSION = 1;
+function resolveRevisionFixturesPath(worktreeRoot, fixturesPathInput, label) {
+  const trimmed = fixturesPathInput.trim();
+  if (!trimmed || path6.isAbsolute(fixturesPathInput) || path6.posix.isAbsolute(fixturesPathInput) || path6.win32.isAbsolute(fixturesPathInput)) {
+    throw new Error(
+      `Invalid fixtures-path "${fixturesPathInput}": must be a relative path within the ${label} worktree`
+    );
+  }
+  const resolvedRoot = path6.resolve(worktreeRoot);
+  const rawSegments = fixturesPathInput.split(/[\\/]+/);
+  let depth = 0;
+  for (const seg of rawSegments) {
+    if (!seg || seg === ".") continue;
+    if (seg === "..") {
+      depth--;
+      if (depth < 0) {
+        throw new Error(
+          `Invalid fixtures-path "${fixturesPathInput}": path escapes ${label} worktree`
+        );
+      }
+    } else {
+      depth++;
+    }
+  }
+  const candidatePath = path6.resolve(resolvedRoot, fixturesPathInput);
+  const rel = path6.relative(resolvedRoot, candidatePath);
+  if (!rel || rel === "." || rel === ".." || rel.startsWith(`..${path6.sep}`) || rel.startsWith("../") || path6.isAbsolute(rel)) {
+    throw new Error(
+      `Invalid fixtures-path "${fixturesPathInput}": path escapes ${label} worktree`
+    );
+  }
+  const fixtureId = rel.split(path6.sep).join("/");
+  const realRoot = fs6.realpathSync(resolvedRoot);
+  const segments = rel.split(path6.sep);
+  let current = resolvedRoot;
+  for (const segment of segments) {
+    current = path6.join(current, segment);
+    let lstat;
+    try {
+      lstat = fs6.lstatSync(current);
+    } catch {
+      throw new Error(
+        label === "base" ? "fixtures-path not found in base ref" : `fixtures-path not found: ${candidatePath}`
+      );
+    }
+    let realCurrent;
+    try {
+      realCurrent = fs6.realpathSync(current);
+    } catch {
+      if (lstat.isSymbolicLink()) {
+        const linkTarget = path6.resolve(
+          path6.dirname(current),
+          fs6.readlinkSync(current)
+        );
+        const linkRel = path6.relative(realRoot, linkTarget);
+        if (!linkRel || linkRel === "." || linkRel === ".." || linkRel.startsWith(`..${path6.sep}`) || linkRel.startsWith("../") || path6.isAbsolute(linkRel)) {
+          throw new Error(
+            `Invalid fixtures-path "${fixturesPathInput}": symlink escapes ${label} worktree`
+          );
+        }
+      }
+      throw new Error(
+        label === "base" ? "fixtures-path not found in base ref" : `fixtures-path not found: ${candidatePath}`
+      );
+    }
+    const realRel = path6.relative(realRoot, realCurrent);
+    if (!realRel || realRel === "." || realRel === ".." || realRel.startsWith(`..${path6.sep}`) || realRel.startsWith("../") || path6.isAbsolute(realRel)) {
+      throw new Error(
+        `Invalid fixtures-path "${fixturesPathInput}": symlink escapes ${label} worktree`
+      );
+    }
+  }
+  if (!fs6.statSync(candidatePath).isFile()) {
+    throw new Error(
+      `Invalid fixtures-path "${fixturesPathInput}": must reference a file within the ${label} worktree`
+    );
+  }
+  return { fixturesPath: candidatePath, fixtureId };
+}
+
 function buildPrMetadata(repository, prNumber, headSha) {
   return {
     schemaVersion: PR_METADATA_SCHEMA_VERSION,
@@ -55218,18 +55297,19 @@ async function run() {
     core3.startGroup("Building + measuring HEAD");
     const headSha = await getHeadSha(headWorkspace);
     core3.info(`HEAD SHA: ${headSha}`);
+    const { fixturesPath: validatedHeadFixturesPath, fixtureId: validatedHeadFixtureId } = resolveRevisionFixturesPath(headWorkspace, fixturesPathRel, "HEAD");
     let headResults;
     try {
       await buildForRevision(
-        headFixturesPath,
+        validatedHeadFixturesPath,
         headWorkspace,
         rustToolchain,
         buildCommand,
         skipBuild
       );
       headResults = await runMeasurement({
-        fixturesPath: headFixturesPath,
-        fixtureId,
+        fixturesPath: validatedHeadFixturesPath,
+        fixtureId: validatedHeadFixtureId,
         gitCommit: headSha,
         sdkVersion: getSdkVersion(headWorkspace),
         rpcUrl,
@@ -55259,16 +55339,17 @@ async function run() {
       if (!fs5.existsSync(baseFixturesPath)) {
         throw new Error("fixtures-path not found in base ref");
       } else {
+        const { fixturesPath: validatedBaseFixturesPath, fixtureId: validatedBaseFixtureId } = resolveRevisionFixturesPath(baseDir, fixturesPathRel, "base");
         await buildForRevision(
-          baseFixturesPath,
+          validatedBaseFixturesPath,
           baseDir,
           rustToolchain,
           buildCommand,
           skipBuild
         );
         baseResults = await runMeasurement({
-          fixturesPath: baseFixturesPath,
-          fixtureId,
+          fixturesPath: validatedBaseFixturesPath,
+          fixtureId: validatedBaseFixtureId,
           gitCommit: baseSha,
           sdkVersion: getSdkVersion(baseDir),
           rpcUrl,

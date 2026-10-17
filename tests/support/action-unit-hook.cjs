@@ -7,7 +7,7 @@ const load = Module._load;
 const mode = process.env.WEIGHIN_UNIT_MODE;
 const logDir = process.env.WEIGHIN_UNIT_LOG_DIR;
 if (logDir) fs.mkdirSync(logDir, { recursive: true });
-function logKeyPath(filePath) {
+function logKeyPath(filePath, extra = {}) {
   if (!filePath || !logDir) return;
   const dir = path.dirname(filePath);
   const stats = fs.existsSync(dir) ? fs.statSync(dir) : null;
@@ -17,10 +17,19 @@ function logKeyPath(filePath) {
     dirMode: stats ? stats.mode & 0o777 : null,
     exists: fs.existsSync(filePath),
     mode: process.env.WEIGHIN_UNIT_MODE,
+    fixturesPath: extra.fixturesPath ?? null,
+    fixtureId: extra.fixtureId ?? null,
   };
   fs.appendFileSync(
     path.join(logDir, "key-paths.jsonl"),
     JSON.stringify(record) + "\n",
+  );
+}
+function logBuild(isBase, cwd) {
+  if (!logDir) return;
+  fs.appendFileSync(
+    path.join(logDir, "builds.jsonl"),
+    JSON.stringify({ isBase, cwd }) + "\n",
   );
 }
 globalThis.fetch = async (url, options) => {
@@ -50,10 +59,40 @@ if (mode === "funding-exhausted") {
   };
 }
 
+function copyPreservingSymlinks(srcDir, dstDir) {
+  fs.mkdirSync(dstDir, { recursive: true });
+  for (const entry of fs.readdirSync(srcDir)) {
+    const srcPath = path.join(srcDir, entry);
+    const dstPath = path.join(dstDir, entry);
+    const lstat = fs.lstatSync(srcPath);
+    if (lstat.isSymbolicLink()) {
+      const target = fs.readlinkSync(srcPath);
+      let isDir = false;
+      try {
+        isDir = fs.statSync(srcPath).isDirectory();
+      } catch {
+        /* broken symlink */
+      }
+      fs.symlinkSync(
+        target,
+        dstPath,
+        isDir ? (process.platform === "win32" ? "junction" : "dir") : "file",
+      );
+    } else if (lstat.isDirectory()) {
+      copyPreservingSymlinks(srcPath, dstPath);
+    } else {
+      fs.copyFileSync(srcPath, dstPath);
+    }
+  }
+}
+
 Module._load = function (name, parent, ...args) {
+  const parentFile = parent?.filename?.replace(/\\/g, "/") ?? "";
   if (
     parent?.filename.endsWith("/dist/action.js") ||
-    parent?.filename.endsWith("/dist/build.js")
+    parent?.filename.endsWith("/dist/build.js") ||
+    parentFile.endsWith("/dist/action.js") ||
+    parentFile.endsWith("/dist/build.js")
   ) {
     if (name === "@actions/github") return { context: { payload: {} } };
     if (name === "@actions/exec")
@@ -67,13 +106,12 @@ Module._load = function (name, parent, ...args) {
             throw new Error("unit checkout failure");
           if (command === "git" && argv[1] === "add") {
             if (mode === "worktree") throw new Error("unit worktree failure");
-            fs.cpSync(process.env.WEIGHIN_UNIT_BASE, argv[3], {
-              recursive: true,
-            });
+            copyPreservingSymlinks(process.env.WEIGHIN_UNIT_BASE, argv[3]);
           }
           if (command === "git" && argv[1] === "remove")
             fs.rmSync(argv.at(-1), { recursive: true, force: true });
           if (command === "stellar" && argv[0] === "contract") {
+            logBuild(isBase, options.cwd);
             if (isBase && mode === "build")
               throw new Error("unit base build failure");
             fs.writeFileSync(
@@ -106,7 +144,7 @@ Module._load = function (name, parent, ...args) {
     if (name === "./measurement" && mode !== "funding-exhausted")
       return {
         runMeasurement: async (options) => {
-          logKeyPath(options.keyFile);
+          logKeyPath(options.keyFile, options);
           const isBase = !options.fixturesPath.startsWith(
             process.env.GITHUB_WORKSPACE + path.sep,
           );
