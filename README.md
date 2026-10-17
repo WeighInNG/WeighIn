@@ -233,6 +233,10 @@ The CLI measures existing WASMs and writes JSON; it does not build, compare
 revisions, enforce thresholds or post comments. Provision the native helper/RPC,
 then run `node dist/cli.js <fixtures.json> --rpc-url <standalone-rpc> --output <results.json>`
 from a built checkout. See [native provisioning](docs/native-measurement.md).
+`weighin --help` (or `-h`) prints the argument syntax and defaults, and
+`weighin --version` prints the installed package version. Both exit 0 before any
+fixture read, Git probe, RPC request or helper provisioning, so they work offline
+and outside a Git repository, and neither writes a results file.
 
 ## Evidence
 
