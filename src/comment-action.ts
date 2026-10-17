@@ -1,7 +1,7 @@
 import * as core from "@actions/core";
 import * as github from "@actions/github";
 import * as fs from "fs";
-import { parsePrMetadata } from "./pr-metadata";
+import { parsePrMetadata, validateReportArtifact } from "./pr-metadata";
 import { upsertPrComment } from "./comment";
 
 async function run(): Promise<void> {
@@ -17,7 +17,9 @@ async function run(): Promise<void> {
       throw new Error(`Metadata file not found: ${metadataPath}`);
     }
 
-    const reportBody = fs.readFileSync(reportPath, "utf8");
+    const reportBody = validateReportArtifact(
+      fs.readFileSync(reportPath, "utf8"),
+    );
     const metadataRaw = fs.readFileSync(metadataPath, "utf8");
     const { owner, repo } = github.context.repo;
     const metadata = parsePrMetadata(metadataRaw, `${owner}/${repo}`);

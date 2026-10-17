@@ -4,11 +4,55 @@ const fs = require('node:fs'), os = require('node:os'), path = require('node:pat
 const { spawnSync, spawn } = require('node:child_process');
 const http = require('node:http');
 const YAML = require('yaml');
+const { renderComment, COMMENT_MARKER } = require('../dist/comment');
 const root = path.resolve(__dirname, '..');
 const workflow = YAML.parse(fs.readFileSync(path.join(root, '.github/workflows/comment.yml'), 'utf8'));
 const commentJob = workflow.jobs['post-comment'];
 const steps = commentJob.steps;
-const report = '<!-- weighin-comment -->\n# Resource report\nCPU instructions: 565371\n';
+const report = renderComment(
+  {
+    contracts: [
+      {
+        fixture_id: 'id:greeting-suite',
+        logical_id: 'id:greeting',
+        contract_id: 'greeting',
+        base_contract_id: 'CBASE',
+        head_contract_id: 'CHEAD',
+        base_commit: 'a'.repeat(40),
+        head_commit: 'f'.repeat(40),
+        hasRegression: false,
+        newFunctions: [],
+        removedFunctions: [],
+        newBenchmarks: [],
+        removedBenchmarks: [],
+        functions: [
+          {
+            function_name: 'hello',
+            case_id: 'id:world',
+            hasRegression: false,
+            metrics: [
+              {
+                key: 'cpu_instructions',
+                availability: 'available',
+                base: { consumed: 565371, limit: 100000000 },
+                head: { consumed: 565371, limit: 100000000 },
+                delta: 0,
+                pct: 0,
+                regression: false,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    hasRegression: false,
+    newContracts: [],
+    removedContracts: [],
+  },
+  [],
+  'main',
+  'f'.repeat(40),
+);
 function git(directory, ...args) {
   const result = spawnSync('git', args, { cwd: directory, encoding: 'utf8' });
   assert.equal(result.status, 0, result.stdout + result.stderr); return result.stdout;
@@ -25,14 +69,14 @@ function shouldRun(condition, run) {
 }
 const successfulPr = { conclusion: 'success', event: 'pull_request' };
 const validMetadata = { schemaVersion: 1, repository: 'WeighInNG/WeighIn', prNumber: 27, headSha: 'f'.repeat(40) };
-async function execute(order, metadata = true, run = successfulPr, condition = commentJob.if) {
+async function execute(order, metadata = true, run = successfulPr, condition = commentJob.if, reportContent = report) {
   if (!shouldRun(condition, run)) return { skipped: true, executedSteps: [], calls: [] };
   const temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'weighin-comment-test-'));
   const workspace = path.join(temporary, 'workspace'), calls = [];
   const server = http.createServer((request, response) => {
     let raw = ''; request.on('data', data => raw += data);
     request.on('end', () => {
-      if (request.url !== '/repos/WeighInNG/WeighIn/issues/27/comments' || !['GET', 'POST'].includes(request.method)) {
+      if (request.url !== '/repos/WeighInNG/WeighIn/issues/27/comments' || !['GET', 'POST', 'PATCH'].includes(request.method)) {
         response.writeHead(400); response.end('Unexpected test API request'); return;
       }
       const body = raw ? JSON.parse(raw) : undefined;
@@ -62,7 +106,9 @@ async function execute(order, metadata = true, run = successfulPr, condition = c
         assert.equal(step.with.name, 'weighin-artifacts');
         assert.equal(step.with['run-id'], '${{ github.event.workflow_run.id }}');
         const post = order.find(step => step.uses === './comment');
-        fs.writeFileSync(path.join(workspace, post.with['report-path']), report);
+        if (reportContent !== false) {
+          fs.writeFileSync(path.join(workspace, post.with['report-path']), reportContent);
+        }
         if (metadata !== false) {
           const value = metadata === true ? validMetadata : metadata;
           const text = typeof value === 'string' ? value : JSON.stringify(value);
@@ -101,6 +147,21 @@ test('a case-insensitive repository match is accepted by the bundled consumer', 
   assert.deepEqual(result.calls.map(call => call.method), ['GET', 'POST']);
   assert.equal(result.calls[1].body.body, report);
 });
+for (const [label, invalidReport, pattern] of [
+  ['a zero-byte report', '', /Report artifact is empty/],
+  ['a whitespace-only report', '  \n\t  \n', /Report artifact contains only whitespace/],
+  ['a marker-only report', `${COMMENT_MARKER}\n`, /Report artifact contains only the report marker/],
+  ['a missing-marker report', '## 🟢 WeighIn Benchmark Report\n\n**All thresholds passed**\n', /Report artifact is missing required marker/],
+  ['an unrelated weighin-comment marker report', '<!-- weighin-comment -->\n# Resource report\nCPU instructions: 565371\n', /Report artifact is missing required marker/],
+  ['an unrelated artifact with marker but missing report heading', `${COMMENT_MARKER}\n# Resource report\nCPU instructions: 565371\n`, /Report artifact is missing required WeighIn Benchmark Report heading/],
+]) {
+  test(`the bundled consumer rejects ${label} with zero mutation calls`, async () => {
+    const result = await execute(steps, true, successfulPr, commentJob.if, invalidReport);
+    assert.equal(result.status, 1, `${label} unexpectedly succeeded`);
+    assert.match(result.stdout + result.stderr, pattern);
+    assert.deepEqual(result.calls, []);
+  });
+}
 for (const [label, metadata, pattern] of [
   ['malformed JSON', '{ not json', /not valid JSON/],
   ['a JSON array', '[]', /must be a JSON object/],

@@ -26110,7 +26110,9 @@ function parsePrMetadata(raw, expectedRepository) {
   try {
     parsed = JSON.parse(raw);
   } catch {
-    throw new Error("PR metadata is not valid JSON");
+    throw new Error("PR metadata is not
+
+ valid JSON");
   }
   if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
     throw new Error("PR metadata must be a JSON object");
@@ -26218,7 +26220,9 @@ async function run() {
     if (!fs.existsSync(metadataPath)) {
       throw new Error(`Metadata file not found: ${metadataPath}`);
     }
-    const reportBody = fs.readFileSync(reportPath, "utf8");
+    const reportBody = validateReportArtifact(
+      fs.readFileSync(reportPath, "utf8")
+    );
     const metadataRaw = fs.readFileSync(metadataPath, "utf8");
     const { owner, repo } = context2.repo;
     const metadata = parsePrMetadata(metadataRaw, `${owner}/${repo}`);
