@@ -7,7 +7,11 @@
  * repository before it makes any GitHub API mutation.
  */
 
+import { COMMENT_MARKER } from "./comment";
+
 export const PR_METADATA_SCHEMA_VERSION = 1;
+export const REPORT_HEADING_PATTERN =
+  /^## (?:(?:🟢|🔴)\s+)?WeighIn Benchmark Report$/;
 
 export interface PrMetadata {
   schemaVersion: number;
@@ -17,6 +21,45 @@ export interface PrMetadata {
 }
 
 const SHA_PATTERN = /^[0-9a-f]{40}$/i;
+
+/**
+ * Validate a downloaded WeighIn report artifact before posting it as a PR comment.
+ *
+ * Rejects zero-byte, whitespace-only, marker-only and missing-marker content,
+ * and requires the exact `<!-- weighin-report -->` marker line plus the
+ * WeighIn Benchmark Report heading. Returns the original string untouched so
+ * valid renderer output is posted byte-for-byte unchanged.
+ *
+ * Note: Presence of the marker and heading is a structural sanity check, not
+ * cryptographic authentication of the artifact.
+ */
+export function validateReportArtifact(reportBody: string): string {
+  if (reportBody.length === 0) {
+    throw new Error("Report artifact is empty");
+  }
+  if (reportBody.trim() === "") {
+    throw new Error("Report artifact contains only whitespace");
+  }
+  const lines = reportBody.split(/\r?\n/).map((line) => line.trim());
+  const nonEmptyLines = lines.filter((line) => line !== "");
+  if (
+    nonEmptyLines.length > 0 &&
+    nonEmptyLines.every((line) => line === COMMENT_MARKER)
+  ) {
+    throw new Error("Report artifact contains only the report marker");
+  }
+  if (!nonEmptyLines.includes(COMMENT_MARKER)) {
+    throw new Error(
+      `Report artifact is missing required marker ${COMMENT_MARKER}`,
+    );
+  }
+  if (!nonEmptyLines.some((line) => REPORT_HEADING_PATTERN.test(line))) {
+    throw new Error(
+      "Report artifact is missing required WeighIn Benchmark Report heading",
+    );
+  }
+  return reportBody;
+}
 
 export function buildPrMetadata(
   repository: string,
