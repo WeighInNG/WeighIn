@@ -51,6 +51,129 @@ describe("renderComment", () => {
     expect(comment).toContain("**All thresholds passed**");
   });
 
+  it("collapses verbose provenance hashes and metric sources into expandable details while keeping summary evidence visible", () => {
+    const diff = createMockDiff(true);
+    const fn = diff.contracts[0].functions[0];
+    fn.case_id = "id:case-1";
+    fn.base_provenance = {
+      source: "soroban-simulation",
+      source_version: "28.0.1",
+      protocol: 28,
+      helper_sha256: "helper-hash-base",
+      network_id: "local-net",
+      ledger: 100,
+      header_sha256: "header-base",
+      snapshot_sha256: "snap-base",
+      config_sha256: "cfg-base-sha",
+      compute_config_sha256: "compute-cfg-sha",
+      resource_limits_sha256: "limits-sha-256",
+      input_sha256: "input-base",
+      seed: [0],
+      auth_mode: "recording(true,true)",
+      host_features: ["recording_mode", "testutils"],
+    };
+    fn.head_provenance = {
+      ...fn.base_provenance,
+      ledger: 105,
+      config_sha256: "cfg-head-sha",
+      helper_sha256: "helper-hash-head",
+    };
+    fn.metrics = [
+      {
+        key: "cpu_instructions",
+        availability: "comparable",
+        base: {
+          consumed: 100,
+          limit: 1000,
+          source: "soroban-simulation.simulated_instructions",
+          limit_source: "ConfigSettingContractComputeV0.txMaxInstructions",
+        },
+        head: {
+          consumed: 110,
+          limit: 1000,
+          source: "soroban-simulation.simulated_instructions",
+          limit_source: "ConfigSettingContractComputeV0.txMaxInstructions",
+        },
+        delta: 10,
+        pct: 10,
+        regression: true,
+      },
+      {
+        key: "historical_data_read_bytes",
+        availability: "unavailable",
+        reason: "No verified consumption source",
+        base: { consumed: null, limit: null },
+        head: { consumed: null, limit: null },
+        delta: null,
+        pct: null,
+        regression: false,
+      },
+    ];
+
+    const violation: Violation = {
+      logical_id: "id:contract-a",
+      contract_id: "contract-a",
+      function_name: "test-fn",
+      case_id: "id:case-1",
+      metric: "cpu_instructions",
+      delta: 10,
+      pct: 10,
+      rule: "strict_zero_tolerance",
+      message: "CPU regression exceeded zero tolerance",
+    };
+
+    const report = renderComment(diff, [violation], "main", "abcdef123456");
+    const visibleOnly = report.replace(/<details>[\s\S]*?<\/details>/g, "");
+
+    expect(visibleOnly).toContain("id:contract-a");
+    expect(visibleOnly).toContain("#### `test-fn / id:case-1`");
+    expect(visibleOnly).toContain(
+      "Compute source: soroban-simulation 28.0.1; protocol 28.",
+    );
+    expect(visibleOnly).toContain(
+      "| 🔴 | CPU Instructions | 100 | 110 | +10 | +10.0% | 1,000 |",
+    );
+    expect(visibleOnly).toContain(
+      "- **Historical Read Bytes unavailable**: No verified consumption source",
+    );
+    expect(visibleOnly).toContain("### ❌ Violations");
+    expect(visibleOnly).toContain("CPU regression exceeded zero tolerance");
+
+    expect(visibleOnly).not.toContain("Snapshot ledgers:");
+    expect(visibleOnly).not.toContain("compute-cfg-sha");
+    expect(visibleOnly).not.toContain("cfg-head-sha");
+    expect(visibleOnly).not.toContain("limits-sha-256");
+    expect(visibleOnly).not.toContain("helper-hash-head");
+    expect(visibleOnly).not.toContain(
+      "ConfigSettingContractComputeV0.txMaxInstructions",
+    );
+
+    expect(report).toContain(
+      "<details><summary>Provenance and metric sources</summary>",
+    );
+    expect(report).toContain(
+      "Snapshot ledgers: BASE 100 → HEAD 105; compute config SHA256: `compute-cfg-sha`.",
+    );
+    expect(report).toContain(
+      "Full config SHA256: BASE `cfg-base-sha` → HEAD `cfg-head-sha`.",
+    );
+    expect(report).toContain("Resource limits SHA256: `limits-sha-256`.");
+    expect(report).toContain("Helper SHA256: `helper-hash-head`.");
+    expect(report).toContain(
+      "- **CPU Instructions** source: `soroban-simulation.simulated_instructions`; limit: `ConfigSettingContractComputeV0.txMaxInstructions`.",
+    );
+
+    const legacyReport = renderComment(
+      createMockDiff(false),
+      [],
+      "main",
+      "abcdef123456",
+    );
+    expect(legacyReport).not.toContain(
+      "<details><summary>Provenance and metric sources</summary>",
+    );
+  });
+
   it("renders a success status when there are regressions but no threshold violations", () => {
     const diff = createMockDiff(true);
     const comment = renderComment(diff, [], "main", "abcdef123");

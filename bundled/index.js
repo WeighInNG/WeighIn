@@ -54138,6 +54138,63 @@ function writeReportFile(reportPathInput, headWorkspace, body) {
 
 // src/pr-metadata.ts
 var PR_METADATA_SCHEMA_VERSION = 1;
+renderFunctionTable = function(fn) {
+  const rows = fn.metrics.map((m) => {
+    if (m.availability === "unavailable") {
+      return `| \u26AA | ${metricLabel(m)} | ${fmt(m.base.consumed)} | ${fmt(m.head.consumed)} | Unavailable | \u2014 | ${fmt(m.head.limit)} |`;
+    }
+    const t = trend(m.delta);
+    const label = metricLabel(m);
+    const base = fmt(m.base.consumed);
+    const head = fmt(m.head.consumed);
+    const delta = fmtDelta(m.delta);
+    const pct = fmtPct(m.pct);
+    const limit = m.head.limit === null && m.head.limit_reason ? "No independent limit" : fmt(m.head.limit);
+    return `| ${t} | ${label} | ${base} | ${head} | ${delta} | ${pct} | ${limit} |`;
+  });
+  const unavailableLines = fn.metrics.filter((m) => m.availability === "unavailable").map((m) => `- **${metricLabel(m)} unavailable**: ${m.reason}`);
+  const provenanceLines = fn.head_provenance ? [
+    `Snapshot ledgers: BASE ${fn.base_provenance?.ledger} \u2192 HEAD ${fn.head_provenance.ledger}; compute config SHA256: \`${fn.head_provenance.compute_config_sha256}\`.`,
+    `Full config SHA256: BASE \`${fn.base_provenance?.config_sha256}\` \u2192 HEAD \`${fn.head_provenance.config_sha256}\`.`,
+    ...fn.head_provenance.resource_limits_sha256 ? [
+      `Resource limits SHA256: \`${fn.head_provenance.resource_limits_sha256}\`.`
+    ] : [],
+    ...fn.head_provenance.helper_sha256 ? [`Helper SHA256: \`${fn.head_provenance.helper_sha256}\`.`] : []
+  ] : [];
+  const metricSourceLines = fn.metrics.filter((m) => m.head.limit_source || m.head.limit_reason).map(
+    (m) => `- **${METRIC_LABELS[m.key]}** source: \`${m.head.source}\`; limit: ${m.head.limit_source ? `\`${m.head.limit_source}\`` : m.head.limit_reason}.`
+  );
+  const detailLines = [];
+  if (provenanceLines.length > 0 || metricSourceLines.length > 0) {
+    detailLines.push(
+      "<details><summary>Provenance and metric sources</summary>",
+      ""
+    );
+    if (provenanceLines.length > 0) {
+      detailLines.push(...provenanceLines);
+      if (metricSourceLines.length > 0) {
+        detailLines.push("");
+      }
+    }
+    if (metricSourceLines.length > 0) {
+      detailLines.push(...metricSourceLines);
+    }
+    detailLines.push("", "</details>");
+  }
+  return [
+    `#### \`${benchmarkLabel(fn)}\``,
+    "",
+    ...fn.head_provenance ? [
+      `Compute source: ${fn.head_provenance.source} ${fn.head_provenance.source_version}; protocol ${fn.head_provenance.protocol}.`,
+      ""
+    ] : [],
+    "| | Metric | Base | Head | Delta | Change | Limit |",
+    "|---|---|---|---|---|---|---|",
+    ...rows,
+    ...unavailableLines.length > 0 ? ["", ...unavailableLines] : [],
+    ...detailLines.length > 0 ? ["", ...detailLines] : []
+  ].join("\n");
+}
 function buildPrMetadata(repository, prNumber, headSha) {
   return {
     schemaVersion: PR_METADATA_SCHEMA_VERSION,
