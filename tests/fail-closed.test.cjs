@@ -184,10 +184,13 @@ function action(mode, config = policy, tmpRoot = null, reportPath = null) {
           .filter(Boolean)
           .map((line) => JSON.parse(line))
       : [];
-    const reportFilePath = reportPath ? path.join(temporary, "head", reportPath) : null;
-    const reportContent = reportFilePath && fs.existsSync(reportFilePath)
-      ? fs.readFileSync(reportFilePath, "utf8")
+    const reportFilePath = reportPath
+      ? path.join(temporary, "head", reportPath)
       : null;
+    const reportContent =
+      reportFilePath && fs.existsSync(reportFilePath)
+        ? fs.readFileSync(reportFilePath, "utf8")
+        : null;
     return {
       ...processResult,
       output: fs.readFileSync(output, "utf8"),
@@ -307,12 +310,22 @@ test("Action unchanged control and optional absent policy still pass; regression
 });
 
 test("Action persists an explicit unsuccessful-comparison report on configuration/fixture/RPC failures when report-path is set", () => {
-  for (const failureMode of ["rpc-unhealthy", "missing-fixtures", "malformed-fixtures"]) {
+  for (const failureMode of [
+    "rpc-unhealthy",
+    "missing-fixtures",
+    "malformed-fixtures",
+  ]) {
     const res = action(failureMode, policy, null, "weighin-report.md");
     assert.equal(res.status, 1);
     assert.match(res.output, /fail/);
-    assert.ok(res.reportContent, `expected report file to exist for ${failureMode}`);
-    assert.match(res.reportContent, /# WeighIn Resource Benchmark: Unsuccessful Comparison/);
+    assert.ok(
+      res.reportContent,
+      `expected report file to exist for ${failureMode}`,
+    );
+    assert.match(
+      res.reportContent,
+      /# WeighIn Resource Benchmark: Unsuccessful Comparison/,
+    );
     assert.match(res.reportContent, /> \*\*Status: FAILED\*\*/);
     assert.match(res.reportContent, /Policies established:\*\* No/);
     assert.match(res.reportContent, /Thresholds evaluated:\*\* None/);

@@ -6,7 +6,7 @@ const fs = require("node:fs");
 const capturePath = process.env.WEIGHIN_ENDPOINT_CAPTURE;
 
 globalThis.fetch = async (url, options) => {
-  const target = typeof url === "string" ? url : url?.url ?? String(url);
+  const target = typeof url === "string" ? url : (url?.url ?? String(url));
   if (capturePath) {
     fs.appendFileSync(
       capturePath,

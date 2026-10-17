@@ -1,0 +1,12 @@
+# Generated TypeScript build outputs and committed Action bundles
+dist/
+bundled/
+**/target/
+node_modules/
+
+# Frozen evidence snapshots, raw captures, original captured source bytes, and fixture data
+docs/experiments/
+tests/fixtures/
+
+# Compiled WebAssembly artifacts
+*.wasm

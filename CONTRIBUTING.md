@@ -33,10 +33,15 @@ git diff --check
 npm audit
 ```
 
-`lint` checks Prettier formatting in `src` and `test`; `typecheck` checks TypeScript.
+`lint` checks Prettier formatting across `src`, `test`, and the maintained Node
+suite (`tests/*.test.cjs`, `tests/native`, `tests/support`, `tests/experiments`);
+`typecheck` checks TypeScript. Frozen evidence snapshots (`docs/experiments/`),
+original captured source bytes and fixture inputs (`tests/fixtures/`), compiled
+`.wasm` binaries, and generated outputs (`dist/`, `bundled/`) are explicitly
+excluded via `.prettierignore` so formatting never alters archived checksums.
 `npm test` builds TypeScript, runs Node behavior/evidence tests under `tests`, and
 runs Vitest tests under `test`. `npm run test:watch` starts Vitest watch mode.
-Use `npm run format` for intentional formatting changes.
+Use `npm run format` for intentional formatting changes across the same scope.
 
 The Action executes committed bundles directly. After runtime/dependency changes,
 commit both regenerated `bundled/index.js` and `bundled/comment-action.js` with the
