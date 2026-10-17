@@ -24,16 +24,52 @@ function logKeyPath(filePath) {
   );
 }
 globalThis.fetch = async (url, options) => {
-  const method = options?.body ? JSON.parse(options.body).method : "";
+  const req = options?.body ? JSON.parse(options.body) : null;
+  const method = req?.method ?? "";
+  const id = req?.id ?? 1;
   if (mode === "funding-exhausted") {
     if (!method) return new Response("still warming", { status: 502 });
     if (method === "getLedgerEntries")
       return new Response(
-        JSON.stringify({ result: { entries: [], latestLedger: 100 } }),
+        JSON.stringify({
+          jsonrpc: "2.0",
+          id,
+          result: { entries: [], latestLedger: 100 },
+        }),
       );
+  }
+  if (mode === "rpc-wrong-version") {
+    return new Response(
+      JSON.stringify({
+        jsonrpc: "1.0",
+        id,
+        result: { status: "healthy", passphrase: "unit-test-network" },
+      }),
+    );
+  }
+  if (mode === "rpc-wrong-id" && method === "getNetwork") {
+    return new Response(
+      JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        result: { passphrase: "unit-test-network" },
+      }),
+    );
+  }
+  if (mode === "rpc-conflicting-envelope") {
+    return new Response(
+      JSON.stringify({
+        jsonrpc: "2.0",
+        id,
+        result: { status: "healthy" },
+        error: { code: -32603, message: "conflict" },
+      }),
+    );
   }
   return new Response(
     JSON.stringify({
+      jsonrpc: "2.0",
+      id,
       result: {
         passphrase: "unit-test-network",
         status: mode === "rpc-unhealthy" ? "starting" : "healthy",
@@ -51,9 +87,12 @@ if (mode === "funding-exhausted") {
 }
 
 Module._load = function (name, parent, ...args) {
+  const parentFile = parent?.filename?.replace(/\\/g, "/") ?? "";
   if (
     parent?.filename.endsWith("/dist/action.js") ||
-    parent?.filename.endsWith("/dist/build.js")
+    parent?.filename.endsWith("/dist/build.js") ||
+    parentFile.endsWith("/dist/action.js") ||
+    parentFile.endsWith("/dist/build.js")
   ) {
     if (name === "@actions/github") return { context: { payload: {} } };
     if (name === "@actions/exec")

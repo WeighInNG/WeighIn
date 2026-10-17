@@ -60,12 +60,29 @@ test('transport timeout can recover; persistent transport failure exhausts the d
 });
 test('RPC error is not interpreted as account absence and does not trigger funding', async () => {
   let calls = 0;
-  await assert.rejects(scenario(() => { calls++; return new Response(JSON.stringify({ error: { code: -32603, message: 'internal failure' } })); }), /Account readiness RPC error/);
+  await assert.rejects(scenario(() => { calls++; return new Response(JSON.stringify({ jsonrpc: '2.0', id: 1, error: { code: -32603, message: 'internal failure' } })); }), /Account readiness RPC error/);
   assert.equal(calls, 1);
+});
+test('malformed JSON-RPC envelopes are rejected immediately and never trigger Friendbot funding', async () => {
+  for (const payload of [
+    '{not-json',
+    JSON.stringify({ id: 1, result: { entries: [], latestLedger: 100 } }),
+    JSON.stringify({ jsonrpc: '1.0', id: 1, result: { entries: [], latestLedger: 100 } }),
+    JSON.stringify({ jsonrpc: '2.0', result: { entries: [], latestLedger: 100 } }),
+    JSON.stringify({ jsonrpc: '2.0', id: 2, result: { entries: [], latestLedger: 100 } }),
+    JSON.stringify({ jsonrpc: '2.0', id: null, result: { entries: [], latestLedger: 100 } }),
+    JSON.stringify({ jsonrpc: '2.0', id: 1, result: { entries: [], latestLedger: 100 }, error: { code: -32603, message: 'conflict' } }),
+    JSON.stringify({ jsonrpc: '2.0', id: 1 }),
+    JSON.stringify({ jsonrpc: '2.0', id: 1, error: 'malformed-error' }),
+  ]) {
+    let calls = 0;
+    await assert.rejects(scenario(() => { calls++; return new Response(payload); }), /Invalid JSON-RPC envelope for getLedgerEntries/);
+    assert.equal(calls, 1, 'must not retry or call Friendbot when RPC envelope is malformed');
+  }
 });
 test('malformed or unrelated account rows are rejected before measurement', async () => {
   for (const entries of [[{ ...entry, key: 'unrelated' }], [{ ...entry, xdr: 'broken' }], [entry, entry]]) {
-    await assert.rejects(scenario(() => new Response(JSON.stringify({ result: { entries, latestLedger: 100 } }))));
+    await assert.rejects(scenario(() => new Response(JSON.stringify({ jsonrpc: '2.0', id: 1, result: { entries, latestLedger: 100 } }))));
   }
 });
 
