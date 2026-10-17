@@ -12,6 +12,11 @@ function getGitCommit(): string {
   }
 }
 
+const USAGE =
+  "Usage: weighin [<fixtures.json> [<output.json>]] [--rpc-url <url>] [--output <path>] [--stdout]";
+
+class UsageError extends Error {}
+
 export interface CliOptions {
   fixturesPath: string;
   outputPath: string | null;
@@ -19,58 +24,76 @@ export interface CliOptions {
   jsonStdout: boolean;
 }
 
+/**
+ * Strict grammar: at most two positionals (fixtures, then legacy output), the
+ * single-value options --rpc-url and --output and the --stdout flag (alias
+ * --json-stdout), in any order. Before "--", every argument starting with "-"
+ * other than a lone "-" is an option; after it, all are positional. An output
+ * path of "-" selects JSON stdout mode. Anything ambiguous is rejected instead
+ * of guessed: grammar errors throw UsageError (exit 2), while JSON stdout mode
+ * combined with an output file keeps its plain Error (exit 1).
+ */
 export function parseArgs(
   rawArgs: string[] = process.argv.slice(2),
 ): CliOptions {
-  let fixturesPath: string | null = null;
-  let explicitOutputFile: string | null = null;
-  let jsonStdout = false;
-  let rpcUrl = "http://localhost:8000/rpc";
+  const positionals: string[] = [];
+  const options: { "--rpc-url"?: string; "--output"?: string } = {};
+  let stdoutFlag: string | undefined;
+  let optionsEnded = false;
 
   for (let i = 0; i < rawArgs.length; i++) {
     const arg = rawArgs[i];
-    if (arg === "--rpc-url" && rawArgs[i + 1]) {
-      rpcUrl = rawArgs[++i];
-    } else if (arg === "--output" && rawArgs[i + 1]) {
-      const target = rawArgs[++i];
-      if (target === "-") {
-        jsonStdout = true;
-      } else {
-        explicitOutputFile = target;
-      }
+    if (optionsEnded || arg === "-" || !arg.startsWith("-")) {
+      positionals.push(arg);
+    } else if (arg === "--") {
+      optionsEnded = true;
     } else if (arg === "--stdout" || arg === "--json-stdout") {
-      jsonStdout = true;
-    } else if (!arg.startsWith("--")) {
-      // Positional argument
-      if (fixturesPath === null) {
-        fixturesPath = arg;
-      } else if (explicitOutputFile === null) {
-        if (arg === "-") {
-          jsonStdout = true;
-        } else {
-          explicitOutputFile = arg;
-        }
-      } else {
-        throw new Error(`Unexpected argument: ${arg}`);
+      // The two spellings are one option, so giving both is a repetition.
+      if (stdoutFlag !== undefined) {
+        throw new UsageError(`duplicate option ${arg}`);
       }
+      stdoutFlag = arg;
+    } else if (arg === "--rpc-url" || arg === "--output") {
+      if (options[arg] !== undefined) {
+        throw new UsageError(`duplicate option ${arg}`);
+      }
+      const value = rawArgs[i + 1];
+      // An argument beginning with "--" is never consumed as a value.
+      if (value === undefined || value === "" || value.startsWith("--")) {
+        throw new UsageError(`option ${arg} requires a value`);
+      }
+      options[arg] = value;
+      i++;
     } else {
-      throw new Error(`Unknown option: ${arg}`);
+      throw new UsageError(`unknown option ${arg}`);
     }
   }
 
+  if (positionals.length > 2) {
+    throw new UsageError(`unexpected extra argument ${positionals[2]}`);
+  }
+  if (positionals.length === 2 && options["--output"] !== undefined) {
+    throw new UsageError(
+      "output path given both as a positional argument and with --output",
+    );
+  }
+  if (positionals.includes("")) {
+    throw new UsageError("path arguments must not be empty");
+  }
+
+  const output: string | undefined = options["--output"] ?? positionals[1];
+  const jsonStdout = stdoutFlag !== undefined || output === "-";
   // Reject ambiguous combinations before network side effects
-  if (jsonStdout && explicitOutputFile !== null) {
+  if (jsonStdout && output !== undefined && output !== "-") {
     throw new Error(
       "Ambiguous output configuration: cannot specify both JSON stdout mode and an output file path",
     );
   }
 
   return {
-    fixturesPath: fixturesPath || "weighin-fixtures.json",
-    outputPath: jsonStdout
-      ? null
-      : explicitOutputFile || "weighin-results.json",
-    rpcUrl,
+    fixturesPath: positionals[0] ?? "weighin-fixtures.json",
+    outputPath: jsonStdout ? null : (output ?? "weighin-results.json"),
+    rpcUrl: options["--rpc-url"] ?? "http://localhost:8000/rpc",
     jsonStdout,
   };
 }
@@ -80,6 +103,12 @@ async function main() {
   try {
     options = parseArgs();
   } catch (err: any) {
+    if (err instanceof UsageError) {
+      // Usage errors stop before Git, fixture, RPC or helper side effects.
+      console.error(`weighin: ${err.message}\n${USAGE}`);
+      process.exitCode = 2;
+      return;
+    }
     console.error(err.message);
     process.exit(1);
   }

@@ -233,6 +233,9 @@ The CLI measures existing WASMs and writes JSON; it does not build, compare
 revisions, enforce thresholds or post comments. Provision the native helper/RPC,
 then run `node dist/cli.js <fixtures.json> --rpc-url <standalone-rpc> --output <results.json>`
 from a built checkout. See [native provisioning](docs/native-measurement.md).
+Arguments are strict: unknown options, missing values, repeated options, extra
+positionals and an output path given twice exit 2 before any measurement. See the
+[CLI argument grammar](docs/native-measurement.md#cli-arguments).
 
 ## Evidence
 
