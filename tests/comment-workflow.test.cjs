@@ -5,6 +5,7 @@ const { spawnSync, spawn } = require('node:child_process');
 const http = require('node:http');
 const YAML = require('yaml');
 const root = path.resolve(__dirname, '..');
+const ciWorkflow = YAML.parse(fs.readFileSync(path.join(root, '.github/workflows/ci.yml'), 'utf8'));
 const workflow = YAML.parse(fs.readFileSync(path.join(root, '.github/workflows/comment.yml'), 'utf8'));
 const commentJob = workflow.jobs['post-comment'];
 const steps = commentJob.steps;
@@ -135,7 +136,8 @@ test('missing downloaded metadata fails before any posting request', async () =>
   assert.equal(result.status, 1); assert.match(result.stdout + result.stderr, /Metadata file not found/);
   assert.deepEqual(result.calls, []);
 });
-test('comment delivery retains trusted checkout and triggering-run artifact selection', () => {
+test('core CI stays read-only while trusted comment permissions remain isolated', () => {
+  assert.deepEqual(ciWorkflow.permissions, { contents: 'read' });
   assert.deepEqual(workflow.on.workflow_run.workflows, ['WeighIn CI']);
   assert.deepEqual(workflow.jobs['post-comment'].permissions, { 'pull-requests': 'write', actions: 'read' });
   const checkout = steps.find(step => step.uses === 'actions/checkout@v4');
