@@ -138,6 +138,11 @@ hexadecimal SHA. Malformed JSON, a missing or unsupported `schemaVersion`,
 another repository and malformed PR-number/SHA fields all fail before mutation.
 These checks only validate the artifact shape and repository identity; they do
 not prove the run belongs to the PR.
+The comment consumer also rejects empty or whitespace-only reports and reports
+missing the exact `<!-- weighin-report -->` marker or `WeighIn Benchmark Report`
+heading before looking up comments. These marker and heading checks validate
+only basic report shape; they are not authentication and do not establish that a
+report came from a trusted producer.
 
 Producer and consumer versions must be paired. **Producer v1 (this revision)
 requires consumer v1 (this revision), and the v1 consumer rejects legacy

@@ -26,9 +26,22 @@ export async function upsertPrComment(
   numberOrBody: number | string,
   explicitBody?: string,
 ): Promise<void> {
+  const body = typeof numberOrBody === "string" ? numberOrBody : explicitBody!;
+  if (!/\S/.test(body)) {
+    throw new Error("Report body is empty or whitespace-only.");
+  }
+  if (!body.includes(COMMENT_MARKER)) {
+    throw new Error(`Report body is missing ${COMMENT_MARKER}.`);
+  }
+  if (!/^## .*WeighIn Benchmark Report\s*$/m.test(body)) {
+    throw new Error(
+      "Report body is missing the WeighIn Benchmark Report heading.",
+    );
+  }
+  // The GitHub SDK is import-only ESM; static imports become require() in this
+  // CommonJS package and would break report-only consumers.
   const github = await import("@actions/github");
   const core = await import("@actions/core");
-  const body = typeof numberOrBody === "string" ? numberOrBody : explicitBody!;
   const prNumber =
     typeof numberOrBody === "number"
       ? numberOrBody
