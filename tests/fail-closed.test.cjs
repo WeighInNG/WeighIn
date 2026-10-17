@@ -89,7 +89,7 @@ test("policy referring to an unpaired function cannot silently pass", () => {
     /no matched/,
   );
 });
-test("empty fixture suites and contracts are rejected; zero argument invocations remain valid", () => {
+test("empty fixture suites and contracts are rejected; zero argument invocations and structured map/vec payloads remain valid", () => {
   assert.throws(() => parseFixtures('{"contracts":[]}', "fixtures.json"));
   assert.throws(() =>
     parseFixtures(
@@ -104,6 +104,167 @@ test("empty fixture suites and contracts are rejected; zero argument invocations
     ).contracts.length,
     1,
   );
+  const withPayloads = parseFixtures(
+    JSON.stringify({
+      id: "suite",
+      contracts: [
+        {
+          id: "c",
+          wasm_path: "contract.wasm",
+          invocations: [
+            {
+              id: "call",
+              function_name: "hello",
+              args: [
+                { type: "vec", value: [{ type: "symbol", value: "ok" }] },
+                {
+                  type: "map",
+                  value: [
+                    {
+                      key: { type: "symbol", value: "k" },
+                      value: { type: "u32", value: 1 },
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    }),
+    "fixtures.json",
+  );
+  assert.equal(withPayloads.contracts[0].invocations[0].args.length, 2);
+});
+
+test("unknown fixture declaration fields reject before contract build, funding, deployment, or simulation", async () => {
+  const exec = require("@actions/exec");
+  const { buildContracts } = require("../dist/build");
+  const { runMeasurement } = require("../dist/measurement");
+  const invalidByLevel = [
+    [
+      "root",
+      {
+        suite_id: "bad-root",
+        contracts: [
+          {
+            wasm_path: "contract.wasm",
+            invocations: [{ function_name: "hello", args: [] }],
+          },
+        ],
+      },
+      /suite_id/,
+    ],
+    [
+      "contract",
+      {
+        contracts: [
+          {
+            contract_id: "bad-contract",
+            wasm_path: "contract.wasm",
+            invocations: [{ function_name: "hello", args: [] }],
+          },
+        ],
+      },
+      /contracts\.0\.contract_id/,
+    ],
+    [
+      "invocation",
+      {
+        contracts: [
+          {
+            wasm_path: "contract.wasm",
+            invocations: [
+              { case_id: "bad-case", function_name: "hello", args: [] },
+            ],
+          },
+        ],
+      },
+      /contracts\.0\.invocations\.0\.case_id/,
+    ],
+    [
+      "arg",
+      {
+        contracts: [
+          {
+            wasm_path: "contract.wasm",
+            invocations: [
+              {
+                function_name: "hello",
+                args: [{ type: "symbol", value: "world", extra: true }],
+              },
+            ],
+          },
+        ],
+      },
+      /contracts\.0\.invocations\.0\.args\.0\.extra/,
+    ],
+  ];
+
+  const temporary = fs.mkdtempSync(
+    path.join(os.tmpdir(), "weighin-strict-fixtures-"),
+  );
+  const originalExec = exec.exec;
+  const originalFetch = globalThis.fetch;
+  try {
+    for (const [level, spec, expectedPath] of invalidByLevel) {
+      const fixtureFile = path.join(temporary, `${level}-fixtures.json`);
+      const keyFile = path.join(temporary, `${level}.key`);
+      fs.writeFileSync(fixtureFile, JSON.stringify(spec));
+
+      const execCalls = [];
+      const fetchCalls = [];
+      exec.exec = async (...args) => {
+        execCalls.push(args);
+        throw new Error("unexpected exec side effect");
+      };
+      globalThis.fetch = async (...args) => {
+        fetchCalls.push(args);
+        throw new Error("unexpected network side effect");
+      };
+
+      await assert.rejects(buildContracts(fixtureFile, "1.95.0"), (error) => {
+        assert.match(error.message, /Invalid fixture declaration/);
+        assert.match(error.message, expectedPath);
+        return true;
+      });
+      assert.equal(
+        execCalls.length,
+        0,
+        `buildContracts must not run commands for invalid ${level} fixture`,
+      );
+
+      await assert.rejects(
+        runMeasurement({
+          fixturesPath: fixtureFile,
+          fixtureId: `configs/${level}-fixtures.json`,
+          gitCommit: "deadbeef",
+          sdkVersion: "28.0.0",
+          rpcUrl: "http://127.0.0.1:1/rpc",
+          keyFile,
+        }),
+        (error) => {
+          assert.match(error.message, /Invalid fixture declaration/);
+          assert.match(error.message, expectedPath);
+          return true;
+        },
+      );
+      assert.equal(
+        fetchCalls.length,
+        0,
+        `runMeasurement must not contact RPC/Friendbot for invalid ${level} fixture`,
+      );
+      assert.equal(
+        fs.existsSync(keyFile),
+        false,
+        `runMeasurement must not create deployer key for invalid ${level} fixture`,
+      );
+    }
+  } finally {
+    exec.exec = originalExec;
+    globalThis.fetch = originalFetch;
+    fs.rmSync(temporary, { recursive: true, force: true });
+  }
 });
 
 function action(mode, config = policy, tmpRoot = null) {
@@ -123,21 +284,48 @@ function action(mode, config = policy, tmpRoot = null) {
         !(name === "base" && mode === "missing-fixtures") &&
         !(name === "head" && mode === "head-fixtures")
       ) {
+        const fixtureObject =
+          name === "head" && mode === "unknown-head-fixture-field"
+            ? {
+                contracts: [
+                  {
+                    contract_id: "typo",
+                    wasm_path: "contract/contract.wasm",
+                    invocations: [{ function_name: "hello", args: [] }],
+                  },
+                ],
+              }
+            : name === "base" && mode === "unknown-base-fixture-field"
+              ? {
+                  contracts: [
+                    {
+                      wasm_path: "contract/contract.wasm",
+                      invocations: [
+                        {
+                          case_id: "typo",
+                          function_name: "hello",
+                          args: [],
+                        },
+                      ],
+                    },
+                  ],
+                }
+              : {
+                  contracts:
+                    name === "base" && mode === "empty-fixtures"
+                      ? []
+                      : [
+                          {
+                            wasm_path: "contract/contract.wasm",
+                            invocations: [{ function_name: "hello", args: [] }],
+                          },
+                        ],
+                };
         fs.writeFileSync(
           path.join(directory, "fixtures.json"),
           name === "base" && mode === "malformed-fixtures"
             ? "{broken"
-            : JSON.stringify({
-                contracts:
-                  name === "base" && mode === "empty-fixtures"
-                    ? []
-                    : [
-                        {
-                          wasm_path: "contract/contract.wasm",
-                          invocations: [{ function_name: "hello", args: [] }],
-                        },
-                      ],
-              }),
+            : JSON.stringify(fixtureObject),
         );
       }
     }
@@ -210,6 +398,14 @@ for (const [mode, message] of [
   ["head-fixtures", /fixtures-path not found/],
   ["malformed-fixtures", /Required BASE comparison failed/],
   ["empty-fixtures", /Required BASE comparison failed/],
+  [
+    "unknown-head-fixture-field",
+    /HEAD measurement failed:[\s\S]*contracts\.0\.contract_id/,
+  ],
+  [
+    "unknown-base-fixture-field",
+    /Required BASE comparison failed:[\s\S]*contracts\.0\.invocations\.0\.case_id/,
+  ],
 ])
   test(`Action exits 1 and reports failure for ${mode}`, () => {
     const result = action(mode);
