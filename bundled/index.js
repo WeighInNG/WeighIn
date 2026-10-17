@@ -54970,6 +54970,44 @@ function generateFailureReport(errorMessage) {
 
 // src/pr-metadata.ts
 var PR_METADATA_SCHEMA_VERSION = 1;
+function formatJsonPath(segments) {
+  if (segments.length === 0) return "root";
+  return segments.reduce(
+    (acc, seg) => typeof seg === "number" ? `${acc}[${seg}]` : acc ? `${acc}.${seg}` : String(seg),
+    ""
+  );
+}
+function formatFixtureError(error2) {
+  const lines = ["Invalid fixture declaration:"];
+  for (const issue of error2?.issues ?? []) {
+    if (issue.code === "unrecognized_keys" && Array.isArray(issue.keys)) {
+      for (const key of issue.keys) {
+        const segments = [...issue.path, key];
+        const dotPath = segments.join(".");
+        const bracketPath = formatJsonPath(segments);
+        const pathLabel = bracketPath !== dotPath ? `${dotPath} (${bracketPath})` : dotPath;
+        lines.push(
+          `- ${pathLabel}: Unrecognized key "${key}" (${issue.message})`
+        );
+      }
+    } else {
+      const segments = issue.path ?? [];
+      const dotPath = segments.join(".") || "root";
+      const bracketPath = formatJsonPath(segments);
+      const pathLabel = bracketPath !== dotPath ? `${dotPath} (${bracketPath})` : dotPath;
+      lines.push(`- ${pathLabel}: ${issue.message}`);
+    }
+  }
+  return lines.join("\n");
+}
+FixturesSpecSchema.parse = (data, params) => {
+  const parsed = FixturesSpecSchema.safeParse(data, params);
+  if (!parsed.success) {
+    throw new Error(formatFixtureError(parsed.error));
+  }
+  return parsed.data;
+};
+
 function buildPrMetadata(repository, prNumber, headSha) {
   return {
     schemaVersion: PR_METADATA_SCHEMA_VERSION,
