@@ -83,3 +83,44 @@ Validation: `npm ci`, lint, typecheck, full behavior/Vitest tests, native frozen
 replay, build, regenerated bundles and real local control/regression/threshold
 verification are required for this change. The stage's actual results are
 recorded in [public documentation validation](experiments/public-docs/validation.json).
+
+## Reproducible dependency inventory
+
+The repository ships a deterministic machine-readable component inventory in
+[dependency-inventory.json](dependency-inventory.json) (schema
+`weighin.dependency-inventory.v1`), generated and verified by
+`dist/dependency-inventory.js` from locked repository inputs:
+
+- **Locked inputs**: `package.json`, `package-lock.json`,
+  `native/simulation/Cargo.toml`, `native/simulation/Cargo.lock`,
+  `bundled/index.js`, and `bundled/comment-action.js`. Exact versions, registry/source
+  references, and SHA-512/SHA-256 integrity checksums are resolved strictly from the
+  lockfiles rather than inferred from package names or semver ranges.
+- **Component identity and deduplication policy**: Each component is keyed by
+  `<ecosystem>:<name>@<version>` alongside its Package URL (`purl`). When the same
+  `(ecosystem, name, version)` appears at multiple `node_modules` locations in
+  `package-lock.json`, those entries are deduplicated into one record with all sorted
+  install locations preserved. When distinct versions of the same package name exist
+  in the lockfile, each `(name, version)` pair remains a separate record.
+- **Classification and native target/features**:
+  - `shipped-runtime`: npm packages in the production lock subgraph (`dev !== true`)
+    or statically present in `bundled/index.js` / `bundled/comment-action.js`.
+  - `native-helper`: Cargo crates reachable from `weighin-simulation` in
+    `native/simulation/Cargo.lock`, retaining the helper build target
+    (`x86_64-unknown-linux-gnu`) and declared Cargo features (such as
+    `recording_mode` and `testutils` on `soroban-env-host`).
+  - `build-tooling`: `typescript`, `esbuild`, `@types/node`, and their non-runtime
+    transitive dependencies.
+  - `dev-only`: test and formatting dependencies (`vitest`, `vite`, `prettier`,
+    `yaml`, and their remaining dev-only subgraph).
+- **Bundle and package reconciliation**: Every `// node_modules/...` module boundary
+  in `bundled/index.js` and `bundled/comment-action.js` is reconciled against
+  `shipped-runtime` components. Production lockfile packages not emitted into the
+  esbuild Action bundles (such as `axios` and unused transitive SDK subpaths) are
+  retained with `inclusionBasis: "conservative-production-lock"` because consumers
+  installing the published npm package for `dist/` CLI or library use receive the
+  full production dependency tree and static Action bundle reachability does not
+  bound all library entry points.
+- **Scope boundary**: This dependency inventory is a reproducible component and
+  provenance record only. It is **not** vulnerability clearance, an advisory audit
+  outcome, or a license/legal certification.
