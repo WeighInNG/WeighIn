@@ -60,7 +60,7 @@ async function scenario(options, verify) {
 }
 
 test('modern optimized build replaces stale configured WASM with fresh selected-package output', async () => scenario({}, async ({ fixtures, directory, commands, wasm, destinations }) => {
-  const results = await buildContracts(fixtures, '1.95.0');
+  const results = await buildContracts(fixtures, directory, '1.95.0');
   assert.deepEqual(fs.readFileSync(path.join(directory, destinations[0])), wasm);
   assert.equal(results[0].package, 'hello-contract'); assert.match(results[0].wasm_sha256, /^[a-f0-9]{64}$/);
   const build = commands.find(command => command.command === 'stellar' && command.args[0] === 'contract');
@@ -68,8 +68,8 @@ test('modern optimized build replaces stale configured WASM with fresh selected-
   assert.ok(commands.every(command => command.env.RUSTUP_TOOLCHAIN === '1.95.0'));
   assert.equal(commands.some(command => command.args.includes('wasm32-unknown-unknown')), false);
 }));
-test('multiple workspace contracts select independent packages; repeated package aliases build once', async () => scenario({ names: ['first', 'second'], paths: ['artifacts/first.wasm', 'artifacts/second.wasm', 'other/first.wasm'] }, async ({ fixtures, commands }) => {
-  const results = await buildContracts(fixtures);
+test('multiple workspace contracts select independent packages; repeated package aliases build once', async () => scenario({ names: ['first', 'second'], paths: ['artifacts/first.wasm', 'artifacts/second.wasm', 'other/first.wasm'] }, async ({ fixtures, directory, commands }) => {
+  const results = await buildContracts(fixtures, directory);
   assert.deepEqual(results.map(result => result.package), ['first', 'second', 'first']);
   assert.equal(commands.filter(command => command.command === 'stellar' && command.args[0] === 'contract').length, 2);
 }));
@@ -77,19 +77,19 @@ test('temporary migration alias receives the same fresh WASM from one modern bui
   'target/wasm32v1-none/release/hello_contract.wasm',
   'target/wasm32-unknown-unknown/release/hello_contract.wasm',
 ]},async({fixtures,directory,commands,destinations,wasm})=>{
-  const results=await buildContracts(fixtures,'1.95.0');
+  const results=await buildContracts(fixtures,directory,'1.95.0');
   assert.equal(results.length,2);assert.equal(results[0].wasm_sha256,results[1].wasm_sha256);
   for(const destination of destinations)assert.deepEqual(fs.readFileSync(path.join(directory,destination)),wasm);
   const builds=commands.filter(command=>command.command==='stellar'&&command.args[0]==='contract');
   assert.equal(builds.length,1);assert.ok(builds[0].args.includes('--optimize=true'));
   assert.equal(commands.some(command=>command.args.includes('wasm32-unknown-unknown')),false);
 }));
-test('ambiguous Cargo packages are rejected before building', async () => scenario({ names: ['same', 'same'], paths: ['artifacts/same.wasm'] }, async ({ fixtures, commands }) => {
-  await assert.rejects(buildContracts(fixtures), /exactly one.*found 2/);
+test('ambiguous Cargo packages are rejected before building', async () => scenario({ names: ['same', 'same'], paths: ['artifacts/same.wasm'] }, async ({ fixtures, directory, commands }) => {
+  await assert.rejects(buildContracts(fixtures, directory), /exactly one.*found 2/);
   assert.ok(!commands.some(command => command.args[0] === 'contract'));
 }));
-test('unknown artifact basename is rejected before building any package', async () => scenario({ paths: ['artifacts/unrelated.wasm'] }, async ({ fixtures }) => {
-  await assert.rejects(buildContracts(fixtures), /exactly one.*found 0/);
+test('unknown artifact basename is rejected before building any package', async () => scenario({ paths: ['artifacts/unrelated.wasm'] }, async ({ fixtures, directory }) => {
+  await assert.rejects(buildContracts(fixtures, directory), /exactly one.*found 0/);
 }));
 for (const [label, options, expected] of [
   ['missing CLI', { missingCli: true }, /not found/],
@@ -99,21 +99,22 @@ for (const [label, options, expected] of [
   ['missing output despite stale destination', { missingOutput: true }, /ENOENT/],
   ['invalid WASM output', { badWasm: true }, /valid WASM/],
   ['optimization skipped', { skippedOptimization: true }, /optimization support/],
-]) test(`build fails explicitly for ${label}`, async () => scenario(options, async ({ fixtures }) => {
-  await assert.rejects(buildContracts(fixtures), expected);
+]) test(`build fails explicitly for ${label}`, async () => scenario(options, async ({ fixtures, directory }) => {
+  await assert.rejects(buildContracts(fixtures, directory), expected);
 }));
 test('every declared contract must have a manifest, even when another one is valid', async () => scenario({}, async ({ fixtures, directory }) => {
   const spec = JSON.parse(fs.readFileSync(fixtures));
-  spec.contracts.push({ id: 'missing', wasm_path: path.join(directory, '../no-contract-here/other.wasm'), invocations: [{ function_name: 'hello', args: [] }] });
+  spec.contracts.push({ id: 'missing', wasm_path: 'isolated/no-manifest/other.wasm', invocations: [{ function_name: 'hello', args: [] }] });
+  fs.rmSync(path.join(directory, 'Cargo.toml'), { force: true });
   fs.writeFileSync(fixtures, JSON.stringify(spec));
-  await assert.rejects(buildContracts(fixtures), /No Cargo.toml/);
+  await assert.rejects(buildContracts(fixtures, directory), /No Cargo.toml/);
 }));
 
 
-test('both revisions use verified isolated CLI temporary storage without changing caller environment', async () => scenario({}, async ({ fixtures, commands }) => {
+test('both revisions use verified isolated CLI temporary storage without changing caller environment', async () => scenario({}, async ({ fixtures, directory, commands }) => {
   const callerEnvironment = { TMPDIR: process.env.TMPDIR, TEMP: process.env.TEMP, TMP: process.env.TMP };
-  await buildContracts(fixtures, '1.95.0');
-  await buildContracts(fixtures, '1.95.0');
+  await buildContracts(fixtures, directory, '1.95.0');
+  await buildContracts(fixtures, directory, '1.95.0');
   const builds = commands.filter(c => c.command === 'stellar' && c.args[0] === 'contract');
   assert.equal(builds.length, 2);
   assert.notEqual(builds[0].env.TMPDIR, builds[1].env.TMPDIR);
@@ -132,7 +133,7 @@ for (const [label, options, afterBuild] of [
   ['storage flush fails after successful CLI exit', { failedStorage: true, failAfterBuild: true }, true],
 ]) test(label, async () => scenario(options, async ({ fixtures, directory, commands, destinations }) => {
   const before = fs.readdirSync(os.tmpdir()).filter(name => name.startsWith('weighin-build-')).sort();
-  await assert.rejects(buildContracts(fixtures), /Build temporary storage is unusable.*refusing to accept optimizer output/);
+  await assert.rejects(buildContracts(fixtures, directory), /Build temporary storage is unusable.*refusing to accept optimizer output/);
   assert.equal(commands.some(c => c.command === 'stellar' && c.args[0] === 'contract'), afterBuild);
   assert.equal(fs.readFileSync(path.join(directory, destinations[0]), 'utf8'), 'stale artifact');
   assert.deepEqual(fs.readdirSync(os.tmpdir()).filter(name => name.startsWith('weighin-build-')).sort(), before);
@@ -140,7 +141,76 @@ for (const [label, options, afterBuild] of [
 test('missing caller temporary-storage directory fails visibly before optimization', async () => scenario({}, async ({ fixtures, directory, commands }) => {
   const previous = process.env.TMPDIR;
   process.env.TMPDIR = path.join(directory, 'missing-temp');
-  try { await assert.rejects(buildContracts(fixtures), /Cannot create build temporary storage/); }
+  try { await assert.rejects(buildContracts(fixtures, directory), /Cannot create build temporary storage/); }
   finally { if (previous === undefined) delete process.env.TMPDIR; else process.env.TMPDIR = previous; }
   assert.equal(commands.some(c => c.command === 'stellar' && c.args[0] === 'contract'), false);
+}));
+
+test('buildContracts requires an explicit workspace root in the builder API', async () => {
+  await assert.rejects(buildContracts('fixtures.json'), /Workspace root is required/);
+  await assert.rejects(buildContracts('fixtures.json', ''), /Workspace root is required/);
+  await assert.rejects(buildContracts('fixtures.json', '   '), /Workspace root is required/);
+  await assert.rejects(buildContracts('fixtures.json', '/nonexistent/workspace/root'), /Workspace root does not exist/);
+});
+
+test('rejects destination traversal escape before any commands or writes', async () => scenario({}, async ({ fixtures, directory, commands }) => {
+  const spec = JSON.parse(fs.readFileSync(fixtures));
+  spec.contracts[0].wasm_path = '../../outside.wasm';
+  fs.writeFileSync(fixtures, JSON.stringify(spec));
+  await assert.rejects(buildContracts(fixtures, directory), /escapes workspace root/);
+  assert.equal(commands.filter(c => c.command === 'stellar' && c.args[0] === 'contract').length, 0);
+}));
+
+test('rejects destination symlink escape before any commands or writes', async () => scenario({}, async ({ fixtures, directory, commands }) => {
+  const outsideDir = fs.mkdtempSync(path.join(os.tmpdir(), 'weighin-outside-dest-'));
+  const symlinkDir = path.join(directory, 'symlink-dest');
+  fs.symlinkSync(outsideDir, symlinkDir, 'dir');
+  const spec = JSON.parse(fs.readFileSync(fixtures));
+  spec.contracts[0].wasm_path = 'symlink-dest/sub/hello_contract.wasm';
+  fs.writeFileSync(fixtures, JSON.stringify(spec));
+  try {
+    await assert.rejects(buildContracts(fixtures, directory), /escapes workspace root/);
+    assert.equal(commands.filter(c => c.command === 'stellar' && c.args[0] === 'contract').length, 0);
+  } finally {
+    fs.rmSync(outsideDir, { recursive: true, force: true });
+  }
+}));
+
+test('manifest search stops at workspace root and does not ascend to filesystem root', async () => scenario({}, async ({ fixtures, directory, commands }) => {
+  fs.rmSync(path.join(directory, 'Cargo.toml'), { force: true });
+  fs.rmSync(path.join(directory, 'crate0', 'Cargo.toml'), { force: true });
+  await assert.rejects(buildContracts(fixtures, directory), /No Cargo.toml found/);
+  assert.equal(commands.filter(c => c.command === 'cargo' || (c.command === 'stellar' && c.args[0] === 'contract')).length, 0);
+}));
+
+test('rejects Cargo manifest symlink escaping workspace root', async () => scenario({}, async ({ fixtures, directory }) => {
+  const outsideDir = fs.mkdtempSync(path.join(os.tmpdir(), 'weighin-outside-manifest-'));
+  fs.writeFileSync(path.join(outsideDir, 'Cargo.toml'), '[workspace]');
+  fs.rmSync(path.join(directory, 'Cargo.toml'), { force: true });
+  fs.symlinkSync(path.join(outsideDir, 'Cargo.toml'), path.join(directory, 'Cargo.toml'));
+  try {
+    await assert.rejects(buildContracts(fixtures, directory), /escapes workspace root/);
+  } finally {
+    fs.rmSync(outsideDir, { recursive: true, force: true });
+  }
+}));
+
+test('nested legitimate Cargo workspaces within workspace root are supported', async () => scenario({}, async ({ directory, wasm }) => {
+  const nestedDir = path.join(directory, 'nested', 'workspace');
+  const crateDir = path.join(nestedDir, 'crate');
+  fs.mkdirSync(crateDir, { recursive: true });
+  fs.writeFileSync(path.join(nestedDir, 'Cargo.toml'), '[workspace]');
+  fs.writeFileSync(path.join(crateDir, 'Cargo.toml'), '[package]');
+  const nestedFixtures = path.join(nestedDir, 'fixtures.json');
+  fs.writeFileSync(nestedFixtures, JSON.stringify({
+    contracts: [{
+      id: 'nested-contract',
+      wasm_path: 'crate/target/wasm32v1-none/release/hello_contract.wasm',
+      invocations: [{ function_name: 'hello', args: [] }],
+    }],
+  }));
+  const results = await buildContracts(nestedFixtures, directory, '1.95.0');
+  assert.equal(results.length, 1);
+  assert.equal(results[0].package, 'hello-contract');
+  assert.deepEqual(fs.readFileSync(path.join(nestedDir, 'crate/target/wasm32v1-none/release/hello_contract.wasm')), wasm);
 }));
