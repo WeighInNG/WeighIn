@@ -825,14 +825,28 @@ export async function measureInvocation(
           signal,
         ),
       );
-    const row = headers.ledgers.find(
+    const matchingRows = headers.ledgers.filter(
       (item) => item.sequence === simulation.latestLedger,
     );
-    if (!row) throw new Error("Snapshot ledger header unavailable");
-    const header = xdr.LedgerHeaderHistoryEntry.fromXDR(
-      row.headerXdr,
-      "base64",
-    ).header();
+    if (matchingRows.length === 0) {
+      throw new Error("Snapshot ledger header unavailable");
+    }
+    if (matchingRows.length > 1) {
+      throw new Error(
+        `Ambiguous duplicate ledger headers returned for sequence ${simulation.latestLedger}`,
+      );
+    }
+    const row = matchingRows[0];
+    let historyEntry: xdr.LedgerHeaderHistoryEntry;
+    try {
+      historyEntry = xdr.LedgerHeaderHistoryEntry.fromXDR(
+        row.headerXdr,
+        "base64",
+      );
+    } catch {
+      throw new Error("Malformed ledger header history entry XDR");
+    }
+    const header = historyEntry.header();
     if (
       header.ledgerSeq() !== simulation.latestLedger ||
       header.ledgerVersion() !== network.protocolVersion

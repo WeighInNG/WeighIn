@@ -53728,14 +53728,28 @@ async function measureInvocation(rpcUrl, transaction, helperPath, options) {
         signal
       )
     );
-    const row = headers.ledgers.find(
+    const matchingRows = headers.ledgers.filter(
       (item) => item.sequence === simulation.latestLedger
     );
-    if (!row) throw new Error("Snapshot ledger header unavailable");
-    const header = types.LedgerHeaderHistoryEntry.fromXDR(
-      row.headerXdr,
-      "base64"
-    ).header();
+    if (matchingRows.length === 0) {
+      throw new Error("Snapshot ledger header unavailable");
+    }
+    if (matchingRows.length > 1) {
+      throw new Error(
+        `Ambiguous duplicate ledger headers returned for sequence ${simulation.latestLedger}`
+      );
+    }
+    const row = matchingRows[0];
+    let historyEntry;
+    try {
+      historyEntry = types.LedgerHeaderHistoryEntry.fromXDR(
+        row.headerXdr,
+        "base64"
+      );
+    } catch {
+      throw new Error("Malformed ledger header history entry XDR");
+    }
+    const header = historyEntry.header();
     if (header.ledgerSeq() !== simulation.latestLedger || header.ledgerVersion() !== network.protocolVersion) {
       throw new Error("Snapshot header ledger/protocol mismatch");
     }

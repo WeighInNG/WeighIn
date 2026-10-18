@@ -53,7 +53,19 @@ function scenario(t,options={}){
       const header=xdr.LedgerHeader.fromXDR(replay.input.header_xdr,'base64');
       header.ledgerSeq(baseLedger+state.simulations-1+(options.headerMismatch?1:0));
       const history=new xdr.LedgerHeaderHistoryEntry({hash:Buffer.alloc(32),header,ext:new xdr.LedgerHeaderHistoryEntryExt(0)});
-      result={ledgers:[{sequence:baseLedger+state.simulations-1,headerXdr:history.toXDR('base64')}]};
+      const seq = baseLedger+state.simulations-1;
+      const headerXdr = options.malformedHeaderXdr ? 'invalid-header-xdr' : history.toXDR('base64');
+      if (options.duplicateHeaders) {
+        result={ledgers:[{sequence:seq,headerXdr},{sequence:seq,headerXdr}]};
+      } else if (options.extraPageHeaders) {
+        result={ledgers:[
+          {sequence:seq - 1, headerXdr},
+          {sequence:seq, headerXdr},
+          {sequence:seq + 1, headerXdr},
+        ]};
+      } else {
+        result={ledgers:[{sequence:seq,headerXdr}]};
+      }
     }
     const error=options.error?.(request.method,state);
     let envelope=error?{jsonrpc:'2.0',id:request.id,error}:{jsonrpc:'2.0',id:request.id,result};
@@ -306,4 +318,30 @@ test('diagnostic events and failed-call events are excluded from charged event p
   const result = await run();
   assert.ok(result);
   assert.equal(result.provenance.protocol, 28);
+});
+
+test('ambiguous duplicate ledger headers for the captured sequence are rejected before helper execution', async t => {
+  const { state, run } = scenario(t, { duplicateHeaders: true });
+  await assert.rejects(
+    run(),
+    /Ambiguous duplicate ledger headers returned for sequence/,
+  );
+  assert.equal(state.helpers.length, 0);
+});
+
+test('malformed ledger header history entry XDR fails explicitly before helper execution', async t => {
+  const { state, run } = scenario(t, { malformedHeaderXdr: true });
+  await assert.rejects(
+    run(),
+    /Malformed ledger header history entry XDR/,
+  );
+  assert.equal(state.helpers.length, 0);
+});
+
+test('unrelated valid page rows alongside the captured ledger header are accepted', async t => {
+  const { state, run } = scenario(t, { extraPageHeaders: true });
+  const result = await run();
+  assert.ok(result);
+  assert.equal(result.provenance.protocol, 28);
+  assert.equal(state.helpers.length, 1);
 });
