@@ -33,9 +33,15 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      - name: Verify committed package provenance
+        run: npm run provenance
       - run: npm run bundle
       - name: Verify no uncommitted changes
         run: |
+          # The provenance manifest also records the commit and toolchain
+          # identities of the checkout that wrote it, which a fresh checkout
+          # cannot reproduce; their input digests were verified above.
+          git checkout -- provenance-manifest.json
           if [ -n "$(git status --porcelain)" ]; then
             echo "Error: Uncommitted changes detected after build. Please run 'npm run bundle' locally and commit the results."
             git status

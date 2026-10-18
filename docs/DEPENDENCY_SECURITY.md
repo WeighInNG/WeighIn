@@ -41,9 +41,11 @@ application component records `package.json`'s `files` entries and both
 committed bundle paths. Cargo components retain their lock source and checksum,
 the helper target (`x86_64-unknown-linux-gnu`), Cargo's target-filtered active
 features, and target inclusion resolved by `cargo metadata --filter-platform`.
-Generation requires the repository's pinned Cargo 1.95.0 toolchain and locally
-available locked crates; Cargo metadata runs offline and does not update the
-lockfile.
+Generation requires the repository's pinned Cargo 1.95.0 toolchain. Cargo
+metadata never updates the lockfile: it runs `--offline` against the locked
+crates already available locally, and only when that local cache cannot resolve
+them does it repeat the same `--locked` resolution with registry access, so a
+clean checkout generates the same inventory as a primed one.
 
 Missing source, integrity, or checksum data is represented by a
 `weighin:metadata-gap` property. Exact versions are never inferred from a

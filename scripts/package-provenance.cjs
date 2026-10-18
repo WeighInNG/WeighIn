@@ -51,9 +51,31 @@ if (process.argv.includes("--verify")) {
   if (!fs.existsSync(manifestPath))
     throw new Error("provenance-manifest.json is missing");
   const actual = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
-  if (JSON.stringify(actual) !== JSON.stringify(manifest))
+  // The digests are the evidence and must describe this checkout exactly.
+  // source_revision and tools record the environment that wrote the manifest,
+  // which no other checkout can reproduce, so they are recorded but not
+  // compared.
+  if (
+    actual.schema_version !== manifest.schema_version ||
+    actual.purpose !== manifest.purpose ||
+    JSON.stringify(actual.inputs) !== JSON.stringify(manifest.inputs)
+  )
     throw new Error(
       "package provenance manifest is stale or does not match source and bundles",
+    );
+  if (
+    typeof actual.source_revision !== "string" ||
+    !/^(unavailable|[0-9a-f]{40})$/.test(actual.source_revision)
+  )
+    throw new Error(
+      "provenance-manifest.json does not record a source revision",
+    );
+  if (
+    typeof actual.tools?.node !== "string" ||
+    typeof actual.tools?.npm !== "string"
+  )
+    throw new Error(
+      "provenance-manifest.json does not record the build tool identities",
     );
   process.stderr.write("Package provenance verified\n");
 } else {

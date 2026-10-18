@@ -18,9 +18,6 @@ Runtime addresses: BASE `CCCJJJDJ5HS676PYT6DCMY4RJVOAQMUOWBG5OQBVYTXNLWOFX4UF2ZK
 #### `hello / id:world`
 
 Compute source: soroban-simulation 28.0.1; protocol 28.
-Snapshot ledgers: BASE 900 → HEAD 1000; compute config SHA256: `5e0aaa432815c17b201e2eeb5591a85e2355d758dc9a3989e58d7319096cf6b5`.
-Full config SHA256: BASE `418969f287f51a60016ba316743bdb608fcd9f975c93f6e9cb1b7c2025dcc5eb` → HEAD `1ad75eb2419dea0958f9f52e4ae92ee4a60d0bb0ca18bb9e77da3e8daf85691a`.
-Resource limits SHA256: `bd6ad7c9ae2afffe53a3d12e11fd45f0d74cd49b40be76a1ed10ace6b0f215a9`.
 
 | | Metric | Base | Head | Delta | Change | Limit |
 |---|---|---|---|---|---|---|
@@ -39,6 +36,14 @@ Resource limits SHA256: `bd6ad7c9ae2afffe53a3d12e11fd45f0d74cd49b40be76a1ed10ace
 - **Historical Read Bytes unavailable**: BASE: Protocol 28 exposes historical-data fees, not a historical read consumption resource; HEAD: Protocol 28 exposes historical-data fees, not a historical read consumption resource
 - **Contract Data (instance) unavailable**: BASE: No verified instance-only post-invocation size and corresponding limit mapping; HEAD: No verified instance-only post-invocation size and corresponding limit mapping
 - **Tx Size Bytes unavailable**: BASE: Simulation estimates a maximum envelope; no signed benchmark transaction is submitted; HEAD: Simulation estimates a maximum envelope; no signed benchmark transaction is submitted
+
+<details><summary>Snapshot and metric provenance</summary>
+
+Snapshot ledgers: BASE 900 → HEAD 1000.
+Compute config SHA256: BASE `5e0aaa432815c17b201e2eeb5591a85e2355d758dc9a3989e58d7319096cf6b5` → HEAD `5e0aaa432815c17b201e2eeb5591a85e2355d758dc9a3989e58d7319096cf6b5`.
+Full config SHA256: BASE `418969f287f51a60016ba316743bdb608fcd9f975c93f6e9cb1b7c2025dcc5eb` → HEAD `1ad75eb2419dea0958f9f52e4ae92ee4a60d0bb0ca18bb9e77da3e8daf85691a`.
+Resource limits SHA256: BASE `bd6ad7c9ae2afffe53a3d12e11fd45f0d74cd49b40be76a1ed10ace6b0f215a9` → HEAD `bd6ad7c9ae2afffe53a3d12e11fd45f0d74cd49b40be76a1ed10ace6b0f215a9`.
+Helper SHA256: BASE `87f52e776f2689bb00c0c163a7f402c984c322c4c644d5f511bd46f25817010a` → HEAD `87f52e776f2689bb00c0c163a7f402c984c322c4c644d5f511bd46f25817010a`.
 - **CPU Instructions** source: `soroban-simulation.simulated_instructions`; limit: `ConfigSettingContractComputeV0.txMaxInstructions`.
 - **Memory Bytes** source: `soroban-simulation.simulated_memory`; limit: `ConfigSettingContractComputeV0.txMemoryLimit`.
 - **Footprint Entries (RO + RW)** source: `SorobanResources.footprint.readOnly.length + readWrite.length`; limit: `ConfigSettingContractLedgerCostExtV0.txMaxFootprintEntries`.
@@ -47,6 +52,8 @@ Resource limits SHA256: `bd6ad7c9ae2afffe53a3d12e11fd45f0d74cd49b40be76a1ed10ace
 - **Ledger Write Bytes** source: `SorobanResources.writeBytes (identity adjustment)`; limit: `ConfigSettingContractLedgerCostV0.txMaxWriteBytes`.
 - **Successful Contract/System Events** source: `successful non-diagnostic ContractEvents.length`; limit: Protocol 28 has no independent event-count cap.
 - **Events + Return XDR Bytes** source: `sum(successful non-diagnostic ContractEvent XDR bytes) + return ScVal XDR bytes`; limit: `ConfigSettingContractEventsV0.txMaxContractEventsSizeBytes`.
+
+</details>
 
 ---
 
