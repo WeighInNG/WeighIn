@@ -68,7 +68,7 @@ async function replay(t, response) {
   const accountRow = rows.find(e => { try { return xdr.LedgerEntryData.fromXDR(e.xdr, 'base64').switch().name === 'account'; } catch { return false; } });
   const accountValue = xdr.LedgerEntryData.fromXDR(accountRow.xdr, 'base64');
   accountValue.account().accountId(keypair.xdrPublicKey());
-  t.mock.method(globalThis, 'fetch', async (url, options) => new Response(JSON.stringify({ result: {
+  t.mock.method(globalThis, 'fetch', async (url, options) => new Response(JSON.stringify({ jsonrpc: '2.0', id: JSON.parse(options.body).id, result: {
     latestLedger: 100, entries: [{ key: JSON.parse(options.body).params.keys[0], xdr: accountValue.toXDR('base64') }],
   } })));
   t.mock.method(rpc.Server.prototype, 'getAccount', async () => new Account(keypair.publicKey(), '1'));

@@ -35,7 +35,9 @@ function scenario(t,options={}){
     let result;
     if(request.method==='getNetwork')result={passphrase:replay.input.network_passphrase,protocolVersion:28};
     if(request.method==='simulateTransaction'){
-      state.simulations++;result={...simulation,latestLedger:baseLedger+state.simulations-1};
+      state.simulations++;
+      const events = options.extraRpcEvents ? [...simulation.events, ...options.extraRpcEvents] : simulation.events;
+      result={...simulation,events,latestLedger:baseLedger+state.simulations-1};
     }
     if(request.method==='getLedgerEntries'){
       state.reads++;
@@ -54,14 +56,42 @@ function scenario(t,options={}){
       result={ledgers:[{sequence:baseLedger+state.simulations-1,headerXdr:history.toXDR('base64')}]};
     }
     const error=options.error?.(request.method,state);
-    return {ok:!options.httpFailure,status:options.httpFailure?404:200,json:async()=>error?{error}:{result}};
+    let envelope=error?{jsonrpc:'2.0',id:request.id,error}:{jsonrpc:'2.0',id:request.id,result};
+    if(options.badEnvelope==='wrong-id'&&request.method==='getNetwork')envelope={...envelope,id:request.id+1};
+    if(options.badEnvelope==='both'&&request.method==='getNetwork')envelope={...envelope,error:{code:-32603,message:'conflicting response'}};
+    if(options.badEnvelope==='wrong-version'&&request.method==='getNetwork')envelope={...envelope,jsonrpc:'1.0'};
+    return new Response(JSON.stringify(envelope),{status:options.httpFailure?404:200});
   });
   t.mock.method(cp,'execFile',(file,args,childOptions,callback)=>{
     assert.equal(file,__filename);
     const stdin=new EventEmitter();stdin.end=data=>{
       state.helpers.push(JSON.parse(data));
+      if(options.helperFailure)return setImmediate(()=>callback(new Error(options.helperFailure)));
+      if(options.uncapturedKeys){
+        const seed=Buffer.alloc(32);seed.writeUInt32BE(state.helpers.length+1000,28);
+        const k=xdr.LedgerKey.account(new xdr.LedgerKeyAccount({accountId:Keypair.fromRawEd25519Seed(seed).xdrPublicKey()})).toXDR('base64');
+        return setImmediate(()=>callback(new Error(`Simulation failed: UNCAPTURED_KEY:${k}`)));
+      }
       const actual=structuredClone(output);
-      if(options.parityMismatch)actual.retval_xdr=xdr.ScVal.scvU32(999).toXDR('base64');
+      if(options.parityMismatch||options.retvalMismatch)actual.retval_xdr=xdr.ScVal.scvU32(999).toXDR('base64');
+      if(options.txDataMismatch){
+        const td=xdr.SorobanTransactionData.fromXDR(actual.transaction_data_xdr,'base64');
+        td.resources().instructions(td.resources().instructions()+1);
+        actual.transaction_data_xdr=td.toXDR('base64');
+        actual.instruction_budget+=1;
+      }
+      if(options.eventsMismatch){
+        const ev=new xdr.ContractEvent({
+          ext:new xdr.ExtensionPoint(0),
+          contractId:null,
+          type:xdr.ContractEventType.contract(),
+          body:new xdr.ContractEventBody(0,new xdr.ContractEventV0({
+            topics:[xdr.ScVal.scvSymbol('test')],
+            data:xdr.ScVal.scvVoid(),
+          })),
+        });
+        actual.contract_events_xdr=[ev.toXDR('base64')];
+      }
       setImmediate(()=>callback(null,JSON.stringify(actual),''));
     };return {stdin};
   });
@@ -73,6 +103,15 @@ test('observed ledger-read failure recovers by re-simulating and returning only 
   const result=await run();assert.equal(result.output.cpu_instructions_consumed,replay.output.cpu_instructions_consumed);
   assert.equal(result.provenance.ledger,baseLedger+1);assert.equal(state.simulations,2);
   assert.equal(state.helpers.length,1);assert.deepEqual(state.delays,[250]);assert.equal(state.warnings.length,1);
+});
+
+test('malformed JSON-RPC responses stop measurement before any native helper call', async t=>{
+  for(const badEnvelope of ['wrong-id','both','wrong-version']){
+    const {state,run}=scenario(t,{badEnvelope});
+    await assert.rejects(run(),/RPC getNetwork invalid response.*(?:ID does not match|exactly one|jsonrpc version)/);
+    assert.equal(state.helpers.length,0);
+    t.mock.restoreAll();
+  }
 });
 test('three transient read failures recover on the fourth complete capture with bounded delays',async t=>{
   const {state,run}=scenario(t,{error:(method,s)=>method==='getLedgerEntries'&&s.reads<=3?transient:null});
@@ -131,4 +170,140 @@ test('recovery does not permit a subsequent native/RPC parity disagreement',asyn
     error:(method,s)=>method==='getLedgerEntries'&&s.reads===1?transient:null});
   await assert.rejects(run(),/Local simulation disagrees with RPC/);
   assert.equal(state.simulations,2);assert.equal(state.helpers.length,1);
+});
+
+test('repeated ledger drift exhausts attempt budget and reports drift counters and last cause', async t => {
+  const { state, run } = scenario(t, { driftReads: Array.from({ length: 30 }, (_, i) => i + 1) });
+  await assert.rejects(run(), (err) => {
+    assert.match(err.message, /Unable to capture a complete consistent snapshot after 30 attempts/);
+    assert.match(err.message, /last cause: ledger_drift/);
+    assert.match(err.message, /ledger_drift: 30/);
+    assert.equal(err.diagnostics?.lastCause, 'ledger_drift');
+    assert.equal(err.diagnostics?.causes.ledger_drift, 30);
+    return true;
+  });
+  assert.equal(state.simulations, 30);
+  assert.equal(state.helpers.length, 0);
+});
+
+test('batch ledger disagreement tracks batch mismatch and reports on exhaustion', async t => {
+  const { state, run } = scenario(t, { multibatch: true, driftReads: Array.from({ length: 30 }, (_, i) => (i + 1) * 2) });
+  await assert.rejects(run(), (err) => {
+    assert.match(err.message, /Unable to capture a complete consistent snapshot after 30 attempts/);
+    assert.match(err.message, /last cause: batch_ledger_disagreement/);
+    assert.equal(err.diagnostics?.lastCause, 'batch_ledger_disagreement');
+    assert.equal(err.diagnostics?.causes.batch_ledger_disagreement, 30);
+    return true;
+  });
+  assert.equal(state.simulations, 30);
+});
+
+test('repeated uncaptured keys exhaust attempt budget and report newly discovered keys', async t => {
+  const { state, run } = scenario(t, { uncapturedKeys: true });
+  await assert.rejects(run(), (err) => {
+    assert.match(err.message, /Unable to capture a complete consistent snapshot after 30 attempts/);
+    assert.match(err.message, /last cause: newly_discovered_keys/);
+    assert.equal(err.diagnostics?.lastCause, 'newly_discovered_keys');
+    assert.equal(err.diagnostics?.causes.newly_discovered_keys, 30);
+    assert.ok(err.diagnostics?.discoveredKeysCount >= 30);
+    return true;
+  });
+  assert.equal(state.simulations, 30);
+  assert.equal(state.helpers.length, 30);
+});
+
+test('fatal helper failure fails immediately and does not retry 30 times', async t => {
+  const { state, run } = scenario(t, { helperFailure: 'Fatal helper panic: unexpected assertion' });
+  await assert.rejects(run(), /Fatal helper panic/);
+  assert.equal(state.simulations, 1);
+  assert.equal(state.helpers.length, 1);
+});
+
+test('parity error distinguishes isolated transaction-data disagreement', async t => {
+  const { run } = scenario(t, { txDataMismatch: true });
+  await assert.rejects(run(), (err) => {
+    assert.match(err.message, /Local simulation disagrees with RPC/);
+    assert.match(err.message, /transaction-data disagreement/);
+    assert.doesNotMatch(err.message, /return-value disagreement/);
+    assert.doesNotMatch(err.message, /ordered charged-event disagreement/);
+    assert.equal(err.parityDetails?.transactionData, true);
+    assert.equal(err.parityDetails?.returnValue, false);
+    assert.equal(err.parityDetails?.contractEvents, false);
+    return true;
+  });
+});
+
+test('parity error distinguishes isolated return-value disagreement', async t => {
+  const { run } = scenario(t, { retvalMismatch: true });
+  await assert.rejects(run(), (err) => {
+    assert.match(err.message, /Local simulation disagrees with RPC/);
+    assert.match(err.message, /return-value disagreement/);
+    assert.doesNotMatch(err.message, /transaction-data disagreement/);
+    assert.doesNotMatch(err.message, /ordered charged-event disagreement/);
+    assert.equal(err.parityDetails?.returnValue, true);
+    assert.equal(err.parityDetails?.transactionData, false);
+    assert.equal(err.parityDetails?.contractEvents, false);
+    return true;
+  });
+});
+
+test('parity error distinguishes isolated ordered charged-event disagreement', async t => {
+  const { run } = scenario(t, { eventsMismatch: true });
+  await assert.rejects(run(), (err) => {
+    assert.match(err.message, /Local simulation disagrees with RPC/);
+    assert.match(err.message, /ordered charged-event disagreement/);
+    assert.doesNotMatch(err.message, /transaction-data disagreement/);
+    assert.doesNotMatch(err.message, /return-value disagreement/);
+    assert.equal(err.parityDetails?.contractEvents, true);
+    assert.equal(err.parityDetails?.transactionData, false);
+    assert.equal(err.parityDetails?.returnValue, false);
+    return true;
+  });
+});
+
+test('parity error distinguishes combined disagreement with all three components', async t => {
+  const { run } = scenario(t, { txDataMismatch: true, retvalMismatch: true, eventsMismatch: true });
+  await assert.rejects(run(), (err) => {
+    assert.match(err.message, /Local simulation disagrees with RPC/);
+    assert.match(err.message, /transaction-data disagreement/);
+    assert.match(err.message, /return-value disagreement/);
+    assert.match(err.message, /ordered charged-event disagreement/);
+    assert.equal(err.parityDetails?.transactionData, true);
+    assert.equal(err.parityDetails?.returnValue, true);
+    assert.equal(err.parityDetails?.contractEvents, true);
+    return true;
+  });
+});
+
+test('diagnostic events and failed-call events are excluded from charged event parity checks', async t => {
+  const diagEvent = new xdr.DiagnosticEvent({
+    inSuccessfulContractCall: true,
+    event: new xdr.ContractEvent({
+      ext: new xdr.ExtensionPoint(0),
+      contractId: null,
+      type: xdr.ContractEventType.diagnostic(),
+      body: new xdr.ContractEventBody(0, new xdr.ContractEventV0({
+        topics: [xdr.ScVal.scvSymbol('diag')],
+        data: xdr.ScVal.scvVoid(),
+      })),
+    }),
+  });
+  const failedCallEvent = new xdr.DiagnosticEvent({
+    inSuccessfulContractCall: false,
+    event: new xdr.ContractEvent({
+      ext: new xdr.ExtensionPoint(0),
+      contractId: null,
+      type: xdr.ContractEventType.contract(),
+      body: new xdr.ContractEventBody(0, new xdr.ContractEventV0({
+        topics: [xdr.ScVal.scvSymbol('failed')],
+        data: xdr.ScVal.scvVoid(),
+      })),
+    }),
+  });
+  const { run } = scenario(t, {
+    extraRpcEvents: [diagEvent.toXDR('base64'), failedCallEvent.toXDR('base64')],
+  });
+  const result = await run();
+  assert.ok(result);
+  assert.equal(result.provenance.protocol, 28);
 });

@@ -26150,6 +26150,22 @@ function parsePrMetadata(raw, expectedRepository) {
   };
 }
 
+// src/record-schema.ts
+var METRIC_KEYS = [
+  "cpu_instructions",
+  "memory_bytes",
+  "ledger_read_entries",
+  "ledger_read_bytes",
+  "ledger_write_entries",
+  "ledger_write_bytes",
+  "historical_data_read_bytes",
+  "contract_data_hard_limit",
+  "tx_size_bytes",
+  "events_count",
+  "event_data_bytes"
+];
+var METRIC_KEY_SET = new Set(METRIC_KEYS);
+
 // src/comment.ts
 var COMMENT_MARKER = "<!-- weighin-report -->";
 async function upsertPrComment(token, numberOrBody, explicitBody) {

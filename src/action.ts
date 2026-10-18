@@ -7,12 +7,23 @@ import * as os from "os";
 
 import { runMeasurement, ContractBenchmark } from "./measurement";
 import { diffBenchmarks, DiffResult, contractLabel } from "./diff";
-import { loadConfig, enforceThresholds, Violation } from "./threshold";
+import {
+  loadConfig,
+  loadConfigContent,
+  policyContentSha256,
+  enforceThresholds,
+  Violation,
+  PolicyOrigin,
+} from "./threshold";
 import { renderComment } from "./comment";
-import { buildForRevision } from "./build-selection";
-import { writeReportFile } from "./report";
+import { buildForRevision, parseOptionalBooleanInput } from "./build-selection";
+import { writeReportFile, generateFailureReport } from "./report";
 import { buildPrMetadata } from "./pr-metadata";
-import { redactEndpointSecrets, sanitizeEndpoint } from "./endpoint";
+import {
+  parseJsonRpcResponse,
+  redactEndpointSecrets,
+  sanitizeEndpoint,
+} from "./endpoint";
 
 // The configured endpoint is tracked only so the terminal failure path can
 // redact any credential it may contain before reporting.
@@ -39,11 +50,13 @@ async function assertRpcHealthy(rpcUrl: string): Promise<void> {
     if (!res.ok) {
       throw new Error(`HTTP ${res.status} ${res.statusText}`);
     }
-    const json = (await res.json()) as any;
-    if (json.error) {
-      throw new Error(`RPC error: ${JSON.stringify(json.error)}`);
+    const health = parseJsonRpcResponse(await res.text(), 1);
+    if ("error" in health) {
+      throw new Error(
+        `RPC getHealth method error: ${JSON.stringify(health.error)}`,
+      );
     }
-    if (json.result?.status !== "healthy")
+    if ((health.result as any)?.status !== "healthy")
       throw new Error("RPC has not reported healthy");
     const network = await fetch(rpcUrl, {
       method: "POST",
@@ -53,15 +66,20 @@ async function assertRpcHealthy(rpcUrl: string): Promise<void> {
     });
     if (!network.ok)
       throw new Error(`HTTP ${network.status} ${network.statusText}`);
-    const metadata = (await network.json()) as any;
+    const metadata = parseJsonRpcResponse(await network.text(), 2);
+    if ("error" in metadata) {
+      throw new Error(
+        `RPC getNetwork method error: ${JSON.stringify(metadata.error)}`,
+      );
+    }
+    const networkResult = metadata.result as { passphrase?: unknown } | null;
     if (
-      metadata.error ||
-      typeof metadata.result?.passphrase !== "string" ||
-      !metadata.result.passphrase.trim()
+      typeof networkResult?.passphrase !== "string" ||
+      !networkResult.passphrase.trim()
     ) {
       throw new Error("Invalid RPC network metadata");
     }
-    core.info(`RPC healthy — network: ${metadata.result.passphrase}`);
+    core.info(`RPC healthy — network: ${networkResult.passphrase}`);
   } catch (err: any) {
     core.setFailed(
       `Soroban RPC at ${sanitizeEndpoint(rpcUrl)} is not reachable: ${redactEndpointSecrets(String(err?.message ?? err), rpcUrl)}\n` +
@@ -70,6 +88,64 @@ async function assertRpcHealthy(rpcUrl: string): Promise<void> {
     );
     throw err; // halt execution
   }
+}
+
+function isPathWithin(root: string, candidate: string): boolean {
+  const relative = path.relative(root, candidate);
+  return (
+    relative === "" ||
+    (relative !== ".." &&
+      !relative.startsWith(`..${path.sep}`) &&
+      !path.isAbsolute(relative))
+  );
+}
+
+/** Resolve fixture inputs only when the lexical and real paths stay in a revision. */
+function resolveRevisionFixturesPath(
+  worktreeRoot: string,
+  fixturesPathInput: string,
+  revision: "HEAD" | "BASE",
+): string {
+  const invalidPathMessage = `fixtures-path for ${revision} must be a relative path inside the ${revision} worktree`;
+  if (
+    !fixturesPathInput.trim() ||
+    path.isAbsolute(fixturesPathInput) ||
+    path.win32.isAbsolute(fixturesPathInput) ||
+    /^[A-Za-z]:/.test(fixturesPathInput)
+  ) {
+    throw new Error(invalidPathMessage);
+  }
+
+  const root = path.resolve(worktreeRoot);
+  const resolved = path.resolve(root, fixturesPathInput);
+  if (!isPathWithin(root, resolved)) throw new Error(invalidPathMessage);
+
+  try {
+    const realRoot = fs.realpathSync(root);
+    let current = root;
+    for (const segment of path.relative(root, resolved).split(path.sep)) {
+      if (!segment) continue;
+      current = path.join(current, segment);
+      let currentStats: fs.Stats;
+      try {
+        currentStats = fs.lstatSync(current);
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === "ENOENT") break;
+        throw error;
+      }
+      if (
+        currentStats.isSymbolicLink() &&
+        !isPathWithin(realRoot, fs.realpathSync(current))
+      ) {
+        throw new Error(invalidPathMessage);
+      }
+    }
+  } catch (error) {
+    if (error instanceof Error && error.message === invalidPathMessage)
+      throw error;
+    throw new Error(`${invalidPathMessage}: could not verify symlink targets`);
+  }
+  return resolved;
 }
 
 // ---------------------------------------------------------------------------
@@ -93,6 +169,76 @@ async function capture(
     silent: true,
   });
   return out.trim();
+}
+
+async function captureRaw(
+  cmd: string,
+  args: string[],
+  cwd?: string,
+): Promise<string> {
+  let out = "";
+  await exec.exec(cmd, args, {
+    cwd,
+    silent: true,
+    listeners: {
+      stdout: (d: Buffer) => {
+        out += d.toString();
+      },
+    },
+  });
+  return out;
+}
+
+async function loadPolicy(
+  repoDir: string,
+  configPathRel: string,
+  trustedRef: string,
+  trustedPath: string,
+): Promise<{ config: ReturnType<typeof loadConfig>; origin: PolicyOrigin }> {
+  if (!trustedRef && !trustedPath) {
+    const configPath = path.resolve(repoDir, configPathRel || "weighin.toml");
+    const content = fs.existsSync(configPath)
+      ? fs.readFileSync(configPath, "utf8")
+      : "";
+    return {
+      config: content ? loadConfigContent(content, configPath) : null,
+      origin: {
+        mode: "head",
+        path: path.relative(repoDir, configPath),
+        revision: await getHeadSha(repoDir),
+        content_sha256: policyContentSha256(content),
+      },
+    };
+  }
+  if (!trustedRef || !trustedPath)
+    throw new Error(
+      "trusted-policy-ref and trusted-policy-path must be supplied together",
+    );
+  const fetched = await capture(
+    "git",
+    ["fetch", "--depth=1", "origin", trustedRef],
+    repoDir,
+  );
+  void fetched;
+  const revision = await capture("git", ["rev-parse", "FETCH_HEAD"], repoDir);
+  const content = await captureRaw(
+    "git",
+    ["show", `${revision}:${trustedPath}`],
+    repoDir,
+  );
+  if (!content.trim())
+    throw new Error(
+      `Trusted policy is missing or empty: ${trustedPath} at ${revision}`,
+    );
+  return {
+    config: loadConfigContent(content, `${revision}:${trustedPath}`),
+    origin: {
+      mode: "trusted",
+      path: trustedPath,
+      revision,
+      content_sha256: policyContentSha256(content),
+    },
+  };
 }
 
 /** Get HEAD SHA in the given directory. */
@@ -227,6 +373,8 @@ async function run(): Promise<void> {
   try {
     const fixturesPathRel = core.getInput("fixtures-path", { required: true });
     const configPathRel = core.getInput("config-path");
+    const trustedPolicyRef = core.getInput("trusted-policy-ref").trim();
+    const trustedPolicyPath = core.getInput("trusted-policy-path").trim();
     const rpcUrl = core.getInput("rpc-url") || "http://localhost:8000/rpc";
     configuredRpcUrl = rpcUrl;
     const githubToken = core.getInput("github-token");
@@ -235,7 +383,11 @@ async function run(): Promise<void> {
     const reportPathInput = core.getInput("report-path");
     const metadataPathInput = core.getInput("metadata-path");
     const buildCommand = core.getInput("build-command");
-    const skipBuild = core.getInput("skip-build") === "true";
+    const skipBuild = parseOptionalBooleanInput("skip-build", false);
+
+    if (buildCommand && skipBuild) {
+      throw new Error("build-command and skip-build cannot be used together");
+    }
 
     // The runner's checkout of the PR head is at GITHUB_WORKSPACE
     const headWorkspace = process.env["GITHUB_WORKSPACE"] ?? process.cwd();
@@ -256,13 +408,22 @@ async function run(): Promise<void> {
     await assertRpcHealthy(rpcUrl);
 
     // 2. Resolve paths from the HEAD workspace (fixtures, config live there)
-    const headFixturesPath = path.resolve(headWorkspace, fixturesPathRel);
-    const fixtureId = path.relative(headWorkspace, headFixturesPath);
-    const configPath = path.resolve(
+    const headFixturesPath = resolveRevisionFixturesPath(
       headWorkspace,
-      configPathRel || "weighin.toml",
+      fixturesPathRel,
+      "HEAD",
     );
-    const config = loadConfig(configPath);
+    const fixtureId = path
+      .relative(path.resolve(headWorkspace), headFixturesPath)
+      .split(path.sep)
+      .join("/");
+    const policy = await loadPolicy(
+      headWorkspace,
+      configPathRel,
+      trustedPolicyRef,
+      trustedPolicyPath,
+    );
+    const config = policy.config;
 
     if (!fs.existsSync(headFixturesPath)) {
       throw new Error(`fixtures-path not found: ${headFixturesPath}`);
@@ -317,7 +478,11 @@ async function run(): Promise<void> {
       baseSha = checkout.sha;
 
       // The fixtures file in the base worktree — same relative path
-      const baseFixturesPath = path.resolve(baseDir, fixturesPathRel);
+      const baseFixturesPath = resolveRevisionFixturesPath(
+        baseDir,
+        fixturesPathRel,
+        "BASE",
+      );
       if (!fs.existsSync(baseFixturesPath)) {
         throw new Error("fixtures-path not found in base ref");
       } else {
@@ -393,7 +558,13 @@ async function run(): Promise<void> {
     core.setOutput("diff-json", JSON.stringify(diff));
 
     // Report is available in the job summary even without permission to post a PR comment.
-    const body = renderComment(diff, violations, baseRef, headSha);
+    const body = renderComment(
+      diff,
+      violations,
+      baseRef,
+      headSha,
+      policy.origin,
+    );
     if (process.env.GITHUB_STEP_SUMMARY)
       await core.summary.addRaw(body).write();
     if (reportPathInput) writeReportFile(reportPathInput, headWorkspace, body);
@@ -449,6 +620,20 @@ run().catch(async (error: Error) => {
   core.setOutput("result", "fail");
   core.setOutput("diff-json", "{}");
   core.setFailed(message);
+
+  const reportPathInput = core.getInput("report-path");
+  const headWorkspace = process.env["GITHUB_WORKSPACE"] ?? process.cwd();
+  if (reportPathInput) {
+    try {
+      const failureReport = generateFailureReport(message);
+      writeReportFile(reportPathInput, headWorkspace, failureReport);
+    } catch (writeErr: any) {
+      core.warning(
+        `Failed to write unsuccessful-comparison report: ${writeErr.message}`,
+      );
+    }
+  }
+
   if (process.env.GITHUB_STEP_SUMMARY) {
     await core.summary
       .addRaw(

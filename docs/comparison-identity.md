@@ -68,7 +68,8 @@ re-measure both revisions to migrate. Partial schema 2 records are rejected.
 
 Schema 3 introduced consumed native compute and explicit availability. Schema 4
 adds audited IO/event semantics and limit provenance with the same logical tuple.
-Availability and migration rules are documented in
-[native measurement](native-measurement.md) and the [metric audit](metric-provenance.md).
+Availability, standalone record validation, and migration rules are documented in
+[native measurement](native-measurement.md), the [metric audit](metric-provenance.md),
+and the [authoritative record schema](record-schema.md).
 Different measurement schemas are not silently mixed; measure both revisions
 with the current producer to migrate.

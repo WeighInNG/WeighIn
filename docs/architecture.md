@@ -20,8 +20,11 @@ HEAD is built and measured first. BASE defaults to the PR base branch, otherwise
 `main`, or the supplied `base-ref`. The Action fetches that ref from `origin` with
 depth 1, then creates a detached worktree at `FETCH_HEAD`. This is not a merge-base
 calculation. BASE reads its own fixture file at the same relative path and builds
-and measures its own declarations. HEAD policy governs the resulting diff. The
-BASE worktree is removed in `finally`; HEAD remains the caller's checkout.
+and measures its own declarations. HEAD policy governs the resulting diff unless
+the caller opts into `trusted-policy-ref`/`trusted-policy-path`. In that mode
+the action reads the exact resolved commit from `origin`, validates it before
+measurement, and reports its revision and content hash; HEAD cannot replace it.
+The BASE worktree is removed in `finally`; HEAD remains the caller's checkout.
 
 ## Contract build selection
 
@@ -123,12 +126,17 @@ records environment differences; it does not freeze state across the suite.
 
 ## Diff and policy
 
-`src/diff.ts::diffBenchmarks` validates all records, including unmatched ones.
-Contracts pair by fixture/logical identity, invocations by function/case identity.
-It requires equal schemas and compatible compute/resource/source semantics.
-Ledger/full-config metadata can change while comparable calibration/caps remain
-constant. Mixed historical/current schemas fail explicitly; legacy records only
-retain their legacy runtime-address matching against other legacy records.
+`src/record-schema.ts` provides the authoritative versioned schema and standalone
+runtime validator (`validateMeasurementRecord`, `validateMeasurementRecords`,
+`inspectMeasurementRecords`, and `getMeasurementRecordJsonSchema`) for saved
+measurement envelopes (`legacy`, `2`, `3`, and `4`; see
+[record schema](record-schema.md)). `src/diff.ts::diffBenchmarks` delegates record
+validation to `src/record-schema.ts`, validating all records including unmatched
+ones. Contracts pair by fixture/logical identity, invocations by function/case
+identity. It requires equal schemas and compatible compute/resource/source
+semantics. Ledger/full-config metadata can change while comparable calibration/caps
+remain constant. Mixed historical/current schemas fail explicitly; legacy records
+only retain their legacy runtime-address matching against other legacy records.
 
 Comparable deltas are HEAD minus BASE. Positive values mark regressions;
 negative values mark improvements. A zero baseline has null percentage, not an

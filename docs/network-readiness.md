@@ -6,6 +6,12 @@ status `healthy` and valid network metadata before builds. Account initializatio
 then confirms the deployer's account through raw `getLedgerEntries` before any
 contract deployment or benchmark measurement.
 
+Every owned raw JSON-RPC request validates a `2.0` response envelope, the exact
+request ID, and exactly one `result` or well-formed `error`. Invalid envelopes
+fail before their payload can affect readiness, funding, or measurement. HTTP
+status failures, malformed responses, valid method errors, and unsupported
+method result schemas remain distinct failure classes.
+
 The raw read avoids SDK 16.0.1 `getAccountEntry`, which converts all read errors
 into account-not-found errors. A successful empty ledger response means absence;
 an invalid response or RPC error fails instead of triggering funding.

@@ -1,42 +1,6 @@
 import * as path from "path";
-import { z } from "zod";
 import type { FixturesSpec, ContractSpec, InvocationSpec } from "./measurement";
-
-const id = z
-  .string()
-  .refine((value) => value.trim().length > 0, "ID must not be blank");
-const fixturesSchema = z.object({
-  id: id.optional(),
-  contracts: z
-    .array(
-      z.object({
-        id: id.optional(),
-        wasm_path: z.string().min(1),
-        invocations: z
-          .array(
-            z.object({
-              id: id.optional(),
-              function_name: z.string().min(1),
-              args: z.array(
-                z.object({
-                  type: z.string().min(1),
-                  value: z.union([
-                    z.string(),
-                    z.number(),
-                    z.boolean(),
-                    z.null(),
-                    z.array(z.any()),
-                    z.record(z.any()),
-                  ]),
-                }),
-              ),
-            }),
-          )
-          .min(1),
-      }),
-    )
-    .min(1),
-});
+import { FixturesSpecSchema } from "./config";
 
 export interface IdentifiedInvocation extends InvocationSpec {
   case_id: string;
@@ -83,7 +47,7 @@ export function parseFixtures(
   raw: string,
   fixturePath: string,
 ): IdentifiedFixtures {
-  const fixtures = fixturesSchema.parse(JSON.parse(raw));
+  const fixtures = FixturesSpecSchema.parse(JSON.parse(raw));
   const fixture_id =
     fixtures.id === undefined
       ? `path:${relativePath(fixturePath)}`

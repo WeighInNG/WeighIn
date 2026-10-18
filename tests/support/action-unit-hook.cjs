@@ -7,12 +7,13 @@ const load = Module._load;
 const mode = process.env.WEIGHIN_UNIT_MODE;
 const logDir = process.env.WEIGHIN_UNIT_LOG_DIR;
 if (logDir) fs.mkdirSync(logDir, { recursive: true });
-function logKeyPath(filePath) {
+function logKeyPath(filePath, fixtureId) {
   if (!filePath || !logDir) return;
   const dir = path.dirname(filePath);
   const stats = fs.existsSync(dir) ? fs.statSync(dir) : null;
   const record = {
     filePath,
+    fixtureId,
     dirPath: dir,
     dirMode: stats ? stats.mode & 0o777 : null,
     exists: fs.existsSync(filePath),
@@ -24,20 +25,27 @@ function logKeyPath(filePath) {
   );
 }
 globalThis.fetch = async (url, options) => {
-  const method = options?.body ? JSON.parse(options.body).method : "";
+  const request = options?.body ? JSON.parse(options.body) : null;
+  const method = request?.method ?? "";
   if (mode === "funding-exhausted") {
     if (!method) return new Response("still warming", { status: 502 });
     if (method === "getLedgerEntries")
       return new Response(
-        JSON.stringify({ result: { entries: [], latestLedger: 100 } }),
+        JSON.stringify({ jsonrpc: "2.0", id: request.id, result: { entries: [], latestLedger: 100 } }),
       );
+  }
+  const result = {
+    passphrase: "unit-test-network",
+    status: mode === "rpc-unhealthy" ? "starting" : "healthy",
+  };
+  if (mode === "rpc-invalid-envelope" && method === "getHealth") {
+    return new Response(JSON.stringify({ jsonrpc: "2.0", id: request.id + 1, result }));
   }
   return new Response(
     JSON.stringify({
-      result: {
-        passphrase: "unit-test-network",
-        status: mode === "rpc-unhealthy" ? "starting" : "healthy",
-      },
+      jsonrpc: "2.0",
+      id: request?.id,
+      result,
     }),
   );
 };
@@ -74,6 +82,11 @@ Module._load = function (name, parent, ...args) {
           if (command === "git" && argv[1] === "remove")
             fs.rmSync(argv.at(-1), { recursive: true, force: true });
           if (command === "stellar" && argv[0] === "contract") {
+            if (logDir)
+              fs.appendFileSync(
+                path.join(logDir, "builds.jsonl"),
+                `${JSON.stringify({ revision: isBase ? "BASE" : "HEAD", cwd: options.cwd })}\n`,
+              );
             if (isBase && mode === "build")
               throw new Error("unit base build failure");
             fs.writeFileSync(
@@ -106,7 +119,7 @@ Module._load = function (name, parent, ...args) {
     if (name === "./measurement" && mode !== "funding-exhausted")
       return {
         runMeasurement: async (options) => {
-          logKeyPath(options.keyFile);
+          logKeyPath(options.keyFile, options.fixtureId);
           const isBase = !options.fixturesPath.startsWith(
             process.env.GITHUB_WORKSPACE + path.sep,
           );

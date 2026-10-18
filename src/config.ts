@@ -212,23 +212,30 @@ export const InvocationArgSchema: z.ZodType<any> = z.lazy(() =>
     }),
 );
 
+const idSchema = z
+  .string()
+  .refine((value) => value.trim().length > 0, "ID must not be blank");
+
 export const InvocationSpecSchema = z
   .object({
-    function_name: z.string(),
+    id: idSchema.optional(),
+    function_name: z.string().min(1),
     args: z.array(InvocationArgSchema),
   })
   .strict();
 
 export const ContractSpecSchema = z
   .object({
-    wasm_path: z.string(),
-    invocations: z.array(InvocationSpecSchema),
+    id: idSchema.optional(),
+    wasm_path: z.string().min(1),
+    invocations: z.array(InvocationSpecSchema).min(1),
   })
   .strict();
 
 export const FixturesSpecSchema = z
   .object({
-    contracts: z.array(ContractSpecSchema),
+    id: idSchema.optional(),
+    contracts: z.array(ContractSpecSchema).min(1),
   })
   .strict();
 

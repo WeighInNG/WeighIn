@@ -379,6 +379,30 @@ as a passing benchmark. The [security review](DEPENDENCY_SECURITY.md) identifies
 the dependency updates. The publication validation above verifies the patched
 public revision now used by consumer pins.
 
+## Distinct benchmark contracts control validation
+
+The [distinct contracts control proof](distinct-contracts-control.md) validates two
+genuinely distinct contract WASMs with overlapping function and case labels (`hello` / `id:world`)
+and explicit logical identities (`id:contract-alpha` and `id:contract-beta`).
+Durable evidence in [distinct-contracts-control](experiments/distinct-contracts-control/)
+verifies that both contracts pair independently with zero control deltas across all 8
+comparable metrics, with complete return parity and verifier rejection of swapped or missing
+identities. This independent deployment proof remains distinct from stateful caller/callee proofs.
+
+## Ledger-dependent benchmark variation validation
+
+The [controlled ledger-dependent variation proof](ledger-variation.md) demonstrates that
+bounded repeatability on state-invariant fixtures does not imply arbitrary ledger/time
+independence. Using a proof-only contract branch (`hello(Env, Symbol) -> Vec<Symbol>`) that
+depends explicitly on `env.ledger().sequence()` and `env.ledger().timestamp()` while keeping
+source, compiled WASM (`87f52e776f2689bb00c0c163a7f402c984c322c4c644d5f511bd46f25817010a`),
+runtime address, seed, and cost calibration fixed, durable evidence in
+[ledger-variation](experiments/ledger-variation/) records five controlled standalone ledger
+steps (ledgers 900–1000). Pre-threshold snapshots (900 → 925) have zero deltas, whereas
+crossing the ledger threshold (900 → 1000) produces +52,966 CPU, +70,658 memory, +96 write
+bytes, and +36 event+return bytes (`REPEATABILITY_VARIATION_FOUND`), triggering all 6 configured
+policy violations without suppressing them for an unchanged artifact.
+
 ## Known boundaries
 
 See [Known limitations](KNOWN_LIMITATIONS.md). [Hosted external validation](hosted-soroban-forge.md)

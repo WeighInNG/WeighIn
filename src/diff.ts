@@ -5,23 +5,51 @@ import {
   Metrics,
   MetricValue,
 } from "./measurement";
+import {
+  METRIC_KEYS,
+  MetricKey,
+  CURRENT_RECORD_SCHEMA_VERSION,
+  SUPPORTED_RECORD_SCHEMA_VERSIONS,
+  SUPPORTED_MEASUREMENT_ENVELOPES,
+  RUNTIME_RECORD_INVARIANTS,
+  MeasurementRecordValidationError,
+  detectRecordEnvelopeVersion,
+  inspectMeasurementRecord,
+  validateMeasurementRecord,
+  inspectMeasurementRecords,
+  validateMeasurementRecords,
+  resolveContractIdentityKey,
+  validateBenchmarkComparisonCompatibility,
+  getMeasurementRecordJsonSchema,
+  RecordSchemaVersion,
+  MeasurementEnvelopeVersion,
+  RecordValidationDiagnostic,
+  SingleRecordValidationResult,
+  RecordValidationResult,
+} from "./record-schema";
 
-// All 11 metric keys in display order
-export const METRIC_KEYS = [
-  "cpu_instructions",
-  "memory_bytes",
-  "ledger_read_entries",
-  "ledger_read_bytes",
-  "ledger_write_entries",
-  "ledger_write_bytes",
-  "historical_data_read_bytes",
-  "contract_data_hard_limit",
-  "tx_size_bytes",
-  "events_count",
-  "event_data_bytes",
-] as const;
-
-export type MetricKey = (typeof METRIC_KEYS)[number];
+export {
+  METRIC_KEYS,
+  MetricKey,
+  CURRENT_RECORD_SCHEMA_VERSION,
+  SUPPORTED_RECORD_SCHEMA_VERSIONS,
+  SUPPORTED_MEASUREMENT_ENVELOPES,
+  RUNTIME_RECORD_INVARIANTS,
+  MeasurementRecordValidationError,
+  detectRecordEnvelopeVersion,
+  inspectMeasurementRecord,
+  validateMeasurementRecord,
+  inspectMeasurementRecords,
+  validateMeasurementRecords,
+  resolveContractIdentityKey,
+  validateBenchmarkComparisonCompatibility,
+  getMeasurementRecordJsonSchema,
+  RecordSchemaVersion,
+  MeasurementEnvelopeVersion,
+  RecordValidationDiagnostic,
+  SingleRecordValidationResult,
+  RecordValidationResult,
+};
 
 export interface MetricDiff {
   key: MetricKey;
@@ -83,34 +111,8 @@ export interface DiffResult {
 
 function diffMetrics(base: Metrics, head: Metrics): MetricDiff[] {
   return METRIC_KEYS.map((key) => {
-    const b = base?.[key];
-    const h = head?.[key];
-    for (const value of [b, h]) {
-      if (!value)
-        throw new Error(
-          `Missing metric ${key}; use an explicit unavailable record`,
-        );
-      if (
-        value.availability !== undefined &&
-        !["measured", "unavailable"].includes(value.availability)
-      )
-        throw new Error(`Invalid metric availability ${key}`);
-      if (value.availability === "unavailable") {
-        if (value.consumed !== null || !value.reason?.trim())
-          throw new Error(`Invalid unavailable metric ${key}`);
-      } else if (
-        value.consumed === null ||
-        !Number.isSafeInteger(value.consumed) ||
-        value.consumed < 0
-      ) {
-        throw new Error(`Invalid measured metric ${key}`);
-      }
-      if (
-        value.limit !== null &&
-        (!Number.isSafeInteger(value.limit) || value.limit < 0)
-      )
-        throw new Error(`Invalid metric limit ${key}`);
-    }
+    const b = base[key];
+    const h = head[key];
     if (b.consumed === null || h.consumed === null) {
       return {
         key,
@@ -177,56 +179,7 @@ function diffFunctions(
     const baseFn = baseMap.get(key);
     if (!baseFn) continue;
 
-    if (baseFn.provenance || headFn.provenance) {
-      const fields = [
-        "source",
-        "source_version",
-        "protocol",
-        "helper_sha256",
-        "network_id",
-        "compute_config_sha256",
-        "seed",
-        "auth_mode",
-        "host_features",
-      ] as const;
-      for (const field of fields) {
-        if (
-          !baseFn.provenance ||
-          !headFn.provenance ||
-          JSON.stringify(baseFn.provenance[field]) !==
-            JSON.stringify(headFn.provenance[field])
-        ) {
-          throw new Error(`Incompatible measurement environment: ${field}`);
-        }
-      }
-      if (
-        JSON.stringify(baseFn.provenance?.resource_limits_sha256) !==
-        JSON.stringify(headFn.provenance?.resource_limits_sha256)
-      ) {
-        throw new Error(
-          "Incompatible measurement environment: resource_limits_sha256",
-        );
-      }
-      if (headFn.provenance?.resource_limits_sha256) {
-        for (const metric of METRIC_KEYS) {
-          for (const field of [
-            "availability",
-            "source",
-            "limit",
-            "limit_source",
-            "limit_reason",
-          ] as const) {
-            if (
-              baseFn.metrics[metric][field] !== headFn.metrics[metric][field]
-            ) {
-              throw new Error(
-                `Incompatible metric semantics: ${metric}.${field}`,
-              );
-            }
-          }
-        }
-      }
-    }
+    validateBenchmarkComparisonCompatibility(baseFn, headFn);
     const metrics = diffMetrics(baseFn.metrics, headFn.metrics);
     const hasRegression = metrics.some((m) => m.regression);
     functions.push({
@@ -259,135 +212,21 @@ function benchmarkMap(
 ): Map<string, BenchmarkResult> {
   const result = new Map<string, BenchmarkResult>();
   for (const fn of functions) {
-    if (!nonblank(fn.function_name))
-      throw new Error("Benchmark function_name must not be blank");
     const key = JSON.stringify([fn.function_name, fn.case_id ?? null]);
-    if (result.has(key))
-      throw new Error(`Duplicate benchmark identity: ${key}`);
     result.set(key, fn);
   }
   return result;
 }
 
-function contractKey(contract: ContractBenchmark): string {
-  const logical =
-    contract.schema_version !== undefined ||
-    contract.fixture_id !== undefined ||
-    contract.logical_id !== undefined;
-  if (!logical) {
-    if (contract.benchmarks.some((fn) => fn.case_id !== undefined)) {
-      throw new Error(
-        "Case identity requires fixture and logical contract identities",
-      );
-    }
-    return JSON.stringify(["legacy", contract.contract_id]);
-  }
-  if (
-    ![2, 3, 4].includes(contract.schema_version!) ||
-    !nonblank(contract.fixture_id) ||
-    !nonblank(contract.logical_id) ||
-    contract.benchmarks.some((fn) => !nonblank(fn.case_id))
-  ) {
-    throw new Error(
-      "Version 2/3/4 results require fixture_id, logical_id, and case_id for every benchmark",
-    );
-  }
-  return JSON.stringify(["logical", contract.fixture_id, contract.logical_id]);
-}
-
-function nonblank(value: unknown): value is string {
-  return typeof value === "string" && value.trim().length > 0;
-}
-
 function contractMap(
   contracts: ContractBenchmark[],
 ): Map<string, ContractBenchmark> {
+  const validated = validateMeasurementRecords(contracts);
   const result = new Map<string, ContractBenchmark>();
-  for (const contract of contracts) {
-    const key = contractKey(contract);
-    if (result.has(key))
-      throw new Error(`Duplicate logical contract identity: ${key}`);
-    // Validate even unmatched contracts: never silently discard duplicate cases.
-    benchmarkMap(contract.benchmarks);
-    for (const benchmark of contract.benchmarks) {
-      diffMetrics(benchmark.metrics, benchmark.metrics); // Validate unmatched records too.
-      if (contract.schema_version === 3 || contract.schema_version === 4) {
-        if (!benchmark.provenance)
-          throw new Error(
-            `Schema ${contract.schema_version} benchmarks require compute provenance`,
-          );
-        for (const field of [
-          "source",
-          "source_version",
-          "helper_sha256",
-          "network_id",
-          "compute_config_sha256",
-          "header_sha256",
-          "snapshot_sha256",
-          "config_sha256",
-          "input_sha256",
-          "auth_mode",
-        ] as const) {
-          if (!nonblank(benchmark.provenance[field]))
-            throw new Error(`Invalid compute provenance: ${field}`);
-        }
-        if (
-          !Number.isSafeInteger(benchmark.provenance.ledger) ||
-          benchmark.provenance.ledger < 0 ||
-          !Number.isSafeInteger(benchmark.provenance.protocol) ||
-          !Array.isArray(benchmark.provenance.host_features) ||
-          !benchmark.provenance.host_features.every(nonblank)
-        ) {
-          throw new Error(
-            "Invalid compute provenance: ledger/protocol/host_features",
-          );
-        }
-        if (
-          !Array.isArray(benchmark.provenance.seed) ||
-          benchmark.provenance.seed.length !== 32 ||
-          !benchmark.provenance.seed.every(
-            (value) => Number.isInteger(value) && value >= 0 && value <= 255,
-          )
-        ) {
-          throw new Error("Invalid compute provenance: seed");
-        }
-        for (const key of METRIC_KEYS) {
-          const value = benchmark.metrics[key];
-          if (
-            value.availability === undefined ||
-            (value.availability === "measured" && !nonblank(value.source))
-          ) {
-            throw new Error(
-              `Schema ${contract.schema_version} requires explicit availability and measured source for ${key}`,
-            );
-          }
-          if (
-            contract.schema_version === 4 &&
-            value.availability === "measured"
-          ) {
-            if (
-              value.limit === null
-                ? !nonblank(value.limit_reason)
-                : !nonblank(value.limit_source)
-            ) {
-              throw new Error(
-                `Schema 4 requires explicit limit provenance for ${key}`,
-              );
-            }
-          }
-        }
-        if (
-          contract.schema_version === 4 &&
-          !/^[a-f0-9]{64}$/.test(
-            benchmark.provenance.resource_limits_sha256 ?? "",
-          )
-        ) {
-          throw new Error("Schema 4 requires resource_limits_sha256");
-        }
-      }
-    }
+  validated.forEach((contract, index) => {
+    const key = resolveContractIdentityKey(contract, index);
     result.set(key, contract);
-  }
+  });
   return result;
 }
 
@@ -417,6 +256,18 @@ export function diffBenchmarks(
   const baseMap = contractMap(base);
   const headMap = contractMap(head);
 
+  if (
+    base.length > 0 &&
+    head.length > 0 &&
+    base[0].schema_version !== undefined &&
+    head[0].schema_version !== undefined &&
+    base[0].schema_version !== head[0].schema_version
+  ) {
+    throw new Error(
+      "Cannot compare measurements with different schema versions",
+    );
+  }
+
   const newContracts: string[] = [];
   const removedContracts: string[] = [];
   const contracts: ContractDiff[] = [];
@@ -436,14 +287,6 @@ export function diffBenchmarks(
       throw new Error(
         "Cannot compare measurements with different schema versions",
       );
-    if (
-      headContract.schema_version === 3 &&
-      [...baseContract.benchmarks, ...headContract.benchmarks].some(
-        (fn) => !fn.provenance,
-      )
-    ) {
-      throw new Error("Schema 3 benchmarks require compute provenance");
-    }
     const benchmarkDiff = diffFunctions(
       baseContract.benchmarks,
       headContract.benchmarks,

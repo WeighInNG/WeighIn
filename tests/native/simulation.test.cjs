@@ -52,7 +52,7 @@ function capturedRpc(t, mutate) {
     if (body.method === 'getLedgers') result = snapshot.headers.raw.result;
     if (mutate) result = mutate(body, result, entryCalls);
     assert.ok(result, body.method);
-    return { ok: true, json: async () => ({ result }) };
+    return new Response(JSON.stringify({ jsonrpc: '2.0', id: body.id, result }));
   });
   return () => entryCalls;
 }

@@ -22,3 +22,26 @@ export function writeReportFile(
     );
   }
 }
+
+export function generateFailureReport(errorMessage: string): string {
+  return [
+    "# WeighIn Resource Benchmark: Unsuccessful Comparison",
+    "",
+    "> **Status: FAILED** — A comparison or policy result could not be established due to an execution failure.",
+    "",
+    "## Failure Details",
+    "",
+    "```",
+    errorMessage,
+    "```",
+    "",
+    "## Policy Result",
+    "",
+    "- **Policies established:** No",
+    "- **Thresholds evaluated:** None",
+    "- **Benchmark metrics:** None (not measured)",
+    "",
+    "No passing comparison, deltas, or resource consumption metrics were established.",
+    "",
+  ].join("\n");
+}

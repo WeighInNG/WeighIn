@@ -42,6 +42,8 @@ jobs:
             git diff
             exit 1
           fi
+      - name: Smoke-test packed npm artifact from clean installed consumer
+        run: node --test tests/package-smoke.test.cjs
 
   benchmark:
     name: Soroban Resource Benchmark
@@ -62,6 +64,19 @@ jobs:
           # Pin to the same channel declared in rust-toolchain.toml
           toolchain: "1.95.0"
           targets: wasm32v1-none
+          components: rustfmt
+
+      - name: Cache native simulation helper
+        uses: actions/cache@v4
+        with:
+          path: |
+            native/simulation/target
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/git/db
+          key: ${{ runner.os }}-cargo-simulation-helper-1.95.0-x86_64-unknown-linux-gnu-${{ hashFiles('native/simulation/Cargo.lock', 'native/simulation/Cargo.toml', 'native/simulation/src/**') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-simulation-helper-1.95.0-x86_64-unknown-linux-gnu-
 
       - name: Install Node dependencies
         run: npm ci
@@ -83,6 +98,7 @@ jobs:
 
       - name: Test measurement adapter and native source
         run: |
+          cargo +1.95.0 fmt --check --manifest-path native/simulation/Cargo.toml
           npm test
           npm run test:native
           npm run bundle

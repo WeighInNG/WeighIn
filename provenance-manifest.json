@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "purpose": "verifiable WeighIn package build provenance",
+  "source_revision": "unavailable",
+  "tools": {
+    "node": "v22.23.1",
+    "npm": "unavailable"
+  },
+  "inputs": [
+    {
+      "path": "action.yml",
+      "sha256": "bc77be47dd15f85c94775908023055a3b414916476158a7db5627e1807a14954"
+    },
+    {
+      "path": "bundled/comment-action.js",
+      "sha256": "afac41bf65d49309065f622bbd370a73aed1387231dae3ca6300498efcca1d52"
+    },
+    {
+      "path": "bundled/index.js",
+      "sha256": "4bbb9ded1d26fc9bec3582c52089eaa3073c63984f4e7c5da21d5142669f062c"
+    },
+    {
+      "path": "native/simulation/Cargo.lock",
+      "sha256": "4e8dbe9f2964a53fdf7aebc5f8de27f81a427e165c9e81a7d6565d22f821d22f"
+    },
+    {
+      "path": "native/simulation/Cargo.toml",
+      "sha256": "5668215acc89d889f89bf37d918b81a3493fd2642df8dcc0b5ecbbdf77fb759b"
+    },
+    {
+      "path": "native/simulation/src/main.rs",
+      "sha256": "9b83079ed0d532d315d4f05295742ba99d3e9731afb9d16fa8b928ac3c5a8e31"
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "492e3e9b1bec64039b8ab30976b30ee6dee0b6a1dfdbce6231d49a9e03d7076c"
+    },
+    {
+      "path": "package.json",
+      "sha256": "b5df08e8b04384aa6b508e66fd45a12e23ab57c664fa919e8e2c666efe76fe3f"
+    },
+    {
+      "path": "src/account.ts",
+      "sha256": "9949bb13d768db84bbf000f78d96bd84f2b78dc76b48b250f4e4d841a7d92534"
+    },
+    {
+      "path": "src/action.ts",
+      "sha256": "b98f94dd581e0db13f9ef7b6c1cb013cd40027585a99e45bbc7de33a99575baa"
+    },
+    {
+      "path": "src/build-selection.ts",
+      "sha256": "838d8060022377c89286c29cdf4443849750c51c03dde174e490a6d60dd11cb1"
+    },
+    {
+      "path": "src/build.ts",
+      "sha256": "2ddf88a78668f695ef618ba904efe3a1c1bf1dbb0c1d540c8e6160a624fb576a"
+    },
+    {
+      "path": "src/cli.ts",
+      "sha256": "959ad3312510c83d43e2141446f29810c4f152b069e2d1ed01360802bc387e21"
+    },
+    {
+      "path": "src/comment-action.ts",
+      "sha256": "1644ad2ea499ae7bc763392435478ce8f840f63190d8a1691bc552223fc84a1c"
+    },
+    {
+      "path": "src/comment.ts",
+      "sha256": "2d5abbf5898a07248dfe29f8c36d09fcd1aadab1e243c1703ce98ff63fafaf05"
+    },
+    {
+      "path": "src/config.ts",
+      "sha256": "ddc8c4849b30eb8b2db1e80d48b8f2f5426c3183a50e15a7fe5292e1c79aa9d0"
+    },
+    {
+      "path": "src/diff.ts",
+      "sha256": "1670678eec6547966090d2c1f675b57c0e7c0c5ba019f99ff4714fbe1b0f2074"
+    },
+    {
+      "path": "src/endpoint.ts",
+      "sha256": "19e787ac486c183973e98121697530f991faac25f71ef5afa091bcc63ed50b7b"
+    },
+    {
+      "path": "src/identity.ts",
+      "sha256": "9da2912c09aa7ccfc1f711d25d5fc5eb2fe4080383239a1adff6f979cb71494f"
+    },
+    {
+      "path": "src/measurement.ts",
+      "sha256": "37ecd44887170522acf8218735e5cb1d19f5e738aec9be24a20061ecdf1c2fb2"
+    },
+    {
+      "path": "src/pr-metadata.ts",
+      "sha256": "6c5e5d0b199519e5c90e8a9fda56fff2b329e33618c2bb507c1410decd80a7ba"
+    },
+    {
+      "path": "src/record-schema.ts",
+      "sha256": "207c928ccc2005b97b09e9ea74336abf715b40a7acae55b8e0f895e320c4d10d"
+    },
+    {
+      "path": "src/report.ts",
+      "sha256": "f47e80cb1f72dca555457e2319eafdca7c48a397db0dc7cebc56286bfe6ea46e"
+    },
+    {
+      "path": "src/simulation.ts",
+      "sha256": "f52e39702751e4cf615e7c5ef304f72b55eabf5e17bf37cd9430c8e9f24d8c8e"
+    },
+    {
+      "path": "src/threshold.ts",
+      "sha256": "0a337cb0dbb56a1214394933db6dea8ddd7b294adb31e46587a854da0ba2eb53"
+    }
+  ]
+}

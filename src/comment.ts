@@ -8,6 +8,7 @@ import {
   contractLabel,
 } from "./diff";
 import { Violation } from "./threshold";
+import { PolicyOrigin } from "./threshold";
 
 export const COMMENT_MARKER = "<!-- weighin-report -->";
 
@@ -147,19 +148,33 @@ function renderFunctionTable(fn: FunctionDiff): string {
     return `| ${t} | ${label} | ${base} | ${head} | ${delta} | ${pct} | ${limit} |`;
   });
 
+  const provenanceDetails: string[] = [];
+  if (fn.head_provenance) {
+    provenanceDetails.push(
+      `Snapshot ledgers: BASE ${fn.base_provenance?.ledger ?? "Unavailable"} → HEAD ${fn.head_provenance.ledger}.`,
+      `Compute config SHA256: BASE \`${fn.base_provenance?.compute_config_sha256 ?? "Unavailable"}\` → HEAD \`${fn.head_provenance.compute_config_sha256}\`.`,
+      `Full config SHA256: BASE \`${fn.base_provenance?.config_sha256 ?? "Unavailable"}\` → HEAD \`${fn.head_provenance.config_sha256}\`.`,
+      `Resource limits SHA256: BASE \`${fn.base_provenance?.resource_limits_sha256 ?? "Unavailable"}\` → HEAD \`${fn.head_provenance.resource_limits_sha256 ?? "Unavailable"}\`.`,
+      `Helper SHA256: BASE \`${fn.base_provenance?.helper_sha256 ?? "Unavailable"}\` → HEAD \`${fn.head_provenance.helper_sha256}\`.`,
+    );
+  }
+  provenanceDetails.push(
+    ...fn.metrics
+      .filter(
+        (m) => m.head.source || m.head.limit_source || m.head.limit_reason,
+      )
+      .map(
+        (m) =>
+          `- **${METRIC_LABELS[m.key]}** source: ${m.head.source ? `\`${m.head.source}\`` : "Unavailable"}; limit: ${m.head.limit_source ? `\`${m.head.limit_source}\`` : (m.head.limit_reason ?? "Unavailable")}.`,
+      ),
+  );
+
   return [
     `#### \`${benchmarkLabel(fn)}\``,
     "",
     ...(fn.head_provenance
       ? [
           `Compute source: ${fn.head_provenance.source} ${fn.head_provenance.source_version}; protocol ${fn.head_provenance.protocol}.`,
-          `Snapshot ledgers: BASE ${fn.base_provenance?.ledger} → HEAD ${fn.head_provenance.ledger}; compute config SHA256: \`${fn.head_provenance.compute_config_sha256}\`.`,
-          `Full config SHA256: BASE \`${fn.base_provenance?.config_sha256}\` → HEAD \`${fn.head_provenance.config_sha256}\`.`,
-          ...(fn.head_provenance.resource_limits_sha256
-            ? [
-                `Resource limits SHA256: \`${fn.head_provenance.resource_limits_sha256}\`.`,
-              ]
-            : []),
           "",
         ]
       : []),
@@ -170,13 +185,61 @@ function renderFunctionTable(fn: FunctionDiff): string {
     ...fn.metrics
       .filter((m) => m.availability === "unavailable")
       .map((m) => `- **${metricLabel(m)} unavailable**: ${m.reason}`),
-    ...fn.metrics
-      .filter((m) => m.head.limit_source || m.head.limit_reason)
-      .map(
-        (m) =>
-          `- **${METRIC_LABELS[m.key]}** source: \`${m.head.source}\`; limit: ${m.head.limit_source ? `\`${m.head.limit_source}\`` : m.head.limit_reason}.`,
-      ),
+    ...(provenanceDetails.length > 0
+      ? [
+          "",
+          "<details><summary>Snapshot and metric provenance</summary>",
+          "",
+          ...provenanceDetails,
+          "",
+          "</details>",
+        ]
+      : []),
   ].join("\n");
+}
+
+function compareCodePoints(a?: string, b?: string): number {
+  const sa = a ?? "";
+  const sb = b ?? "";
+  if (sa < sb) return -1;
+  if (sa > sb) return 1;
+  return 0;
+}
+
+function compareContracts(a: any, b: any): number {
+  return (
+    compareCodePoints(a.fixture_id, b.fixture_id) ||
+    compareCodePoints(a.logical_id, b.logical_id) ||
+    compareCodePoints(a.contract_id, b.contract_id)
+  );
+}
+
+function compareBenchmarkIdentities(
+  a: BenchmarkIdentity,
+  b: BenchmarkIdentity,
+): number {
+  return (
+    compareCodePoints(a.function_name, b.function_name) ||
+    compareCodePoints(a.case_id, b.case_id)
+  );
+}
+
+function compareFunctions(a: FunctionDiff, b: FunctionDiff): number {
+  return (
+    compareCodePoints(a.function_name, b.function_name) ||
+    compareCodePoints(a.case_id, b.case_id)
+  );
+}
+
+function compareViolations(a: Violation, b: Violation): number {
+  return (
+    compareCodePoints(a.fixture_id, b.fixture_id) ||
+    compareCodePoints(a.logical_id, b.logical_id) ||
+    compareCodePoints(a.contract_id, b.contract_id) ||
+    compareCodePoints(a.function_name, b.function_name) ||
+    compareCodePoints(a.case_id, b.case_id) ||
+    compareCodePoints(a.metric, b.metric)
+  );
 }
 
 /**
@@ -187,27 +250,37 @@ export function renderComment(
   violations: Violation[],
   baseRef: string,
   headSha: string,
+  policyOrigin?: PolicyOrigin,
 ): string {
   const lines: string[] = [];
 
+  // Sort violations without mutating input
+  const sortedViolations = [...violations].sort(compareViolations);
+
   // Header
-  const statusEmoji = violations.length > 0 ? "🔴" : "🟢";
+  const statusEmoji = sortedViolations.length > 0 ? "🔴" : "🟢";
   const statusText =
-    violations.length > 0
-      ? `**${violations.length} threshold violation${violations.length > 1 ? "s" : ""}**`
+    sortedViolations.length > 0
+      ? `**${sortedViolations.length} threshold violation${sortedViolations.length > 1 ? "s" : ""}**`
       : "**All thresholds passed**";
   lines.push(`## ${statusEmoji} WeighIn Benchmark Report`);
   lines.push("");
+  if (policyOrigin) {
+    lines.push(
+      `Policy source: **${policyOrigin.mode}** \`${policyOrigin.path}\` at \`${policyOrigin.revision}\`; content SHA256 \`${policyOrigin.content_sha256}\`.`,
+    );
+    lines.push("");
+  }
   lines.push(
     `${statusText} — comparing \`${baseRef}\` → \`${headSha.slice(0, 8)}\``,
   );
   lines.push("");
 
   // Violations block
-  if (violations.length > 0) {
+  if (sortedViolations.length > 0) {
     lines.push("### ❌ Violations");
     lines.push("");
-    for (const v of violations) {
+    for (const v of sortedViolations) {
       const measured = diff.contracts
         .find((c) => contractLabel(c) === contractLabel(v))
         ?.functions.find(
@@ -222,22 +295,28 @@ export function renderComment(
     lines.push("");
   }
 
-  // New / removed contracts
-  if (diff.newContracts.length > 0) {
+  // New / removed contracts (sorted copies)
+  const sortedNewContracts = [...diff.newContracts].sort(compareCodePoints);
+  const sortedRemovedContracts = [...diff.removedContracts].sort(
+    compareCodePoints,
+  );
+
+  if (sortedNewContracts.length > 0) {
     lines.push(
-      `> **New contracts** (no baseline): ${diff.newContracts.map((c) => `\`${c}\``).join(", ")}`,
+      `> **New contracts** (no baseline): ${sortedNewContracts.map((c) => `\`${c}\``).join(", ")}`,
     );
     lines.push("");
   }
-  if (diff.removedContracts.length > 0) {
+  if (sortedRemovedContracts.length > 0) {
     lines.push(
-      `> **Removed contracts**: ${diff.removedContracts.map((c) => `\`${c}\``).join(", ")}`,
+      `> **Removed contracts**: ${sortedRemovedContracts.map((c) => `\`${c}\``).join(", ")}`,
     );
     lines.push("");
   }
 
-  // Per-contract sections
-  for (const contract of diff.contracts) {
+  // Per-contract sections (sorted copy)
+  const sortedContracts = [...diff.contracts].sort(compareContracts);
+  for (const contract of sortedContracts) {
     lines.push(`### Contract \`${contractLabel(contract)}\``);
     lines.push("");
     lines.push(
@@ -245,20 +324,28 @@ export function renderComment(
     );
     lines.push("");
 
-    if (contract.newBenchmarks.length > 0) {
+    const sortedNewBenchmarks = [...contract.newBenchmarks].sort(
+      compareBenchmarkIdentities,
+    );
+    const sortedRemovedBenchmarks = [...contract.removedBenchmarks].sort(
+      compareBenchmarkIdentities,
+    );
+
+    if (sortedNewBenchmarks.length > 0) {
       lines.push(
-        `> New benchmarks (no baseline): ${contract.newBenchmarks.map((f) => `\`${benchmarkLabel(f)}\``).join(", ")}`,
+        `> New benchmarks (no baseline): ${sortedNewBenchmarks.map((f) => `\`${benchmarkLabel(f)}\``).join(", ")}`,
       );
       lines.push("");
     }
-    if (contract.removedBenchmarks.length > 0) {
+    if (sortedRemovedBenchmarks.length > 0) {
       lines.push(
-        `> Removed benchmarks: ${contract.removedBenchmarks.map((f) => `\`${benchmarkLabel(f)}\``).join(", ")}`,
+        `> Removed benchmarks: ${sortedRemovedBenchmarks.map((f) => `\`${benchmarkLabel(f)}\``).join(", ")}`,
       );
       lines.push("");
     }
 
-    for (const fn of contract.functions) {
+    const sortedFunctions = [...contract.functions].sort(compareFunctions);
+    for (const fn of sortedFunctions) {
       lines.push(renderFunctionTable(fn));
       lines.push("");
     }

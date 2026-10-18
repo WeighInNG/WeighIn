@@ -6,8 +6,9 @@ inputs:
   fixtures-path:
     description: >
       Path to the weighin-fixtures.json file in the caller repo, relative to the
-      repository root. Declares which WASM files to benchmark and which functions
-      to invoke. The Action builds with Stellar CLI 28.1+ (optimization enabled)
+      repository root. The path must remain within both the HEAD workspace and
+      the independently checked-out BASE worktree. Declares which WASM files
+      to benchmark and which functions to invoke. The Action builds with Stellar CLI 28.1+ (optimization enabled)
       and Rust 1.84+ as a minimum gate; SDK-specific requirements may be higher.
       Tested versions are Stellar CLI 28.1.0 and Rust 1.95.0. Callers must provision
       these tools, wasm32v1-none, and Rust 1.95.0 for the native helper.
@@ -20,7 +21,22 @@ inputs:
       repository root. If the file does not exist the action runs without
       enforcing any regression rules.
     required: false
-    default: 'weighin.toml'
+    default: "weighin.toml"
+
+  trusted-policy-ref:
+    description: >
+      Optional immutable Git ref (branch, tag, or SHA) from origin from which
+      the threshold policy is loaded. Must be paired with trusted-policy-path.
+      The resolved commit SHA is recorded in the report.
+    required: false
+    default: ''
+
+  trusted-policy-path:
+    description: >
+      Optional path inside trusted-policy-ref for the threshold policy. When
+      supplied, HEAD cannot select or modify the policy used by this run.
+    required: false
+    default: ''
 
   rpc-url:
     description: >
@@ -70,10 +86,10 @@ inputs:
   build-command:
     description: "Optional shell command run in each revision; bypasses default build checks and cannot be combined with skip-build"
     required: false
-    default: ""
+    default: ''
 
   skip-build:
-    description: "Skip compilation and use precompiled fixture WASMs in both revisions; bypasses default build checks"
+    description: "Skip compilation and use precompiled fixture WASMs in both revisions; bypasses default build checks. Accepts standard YAML 1.2 boolean spellings (true, True, TRUE, false, False, FALSE); defaults to false when omitted. Non-boolean values are rejected."
     required: false
     default: "false"
 

@@ -1,7 +1,11 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as crypto from "crypto";
-import { redactEndpointSecrets, sanitizeEndpoint } from "./endpoint";
+import {
+  parseJsonRpcResponse,
+  redactEndpointSecrets,
+  sanitizeEndpoint,
+} from "./endpoint";
 import { execFile } from "child_process";
 import { Keypair, Transaction, xdr } from "@stellar/stellar-sdk";
 import { z } from "zod";
@@ -83,13 +87,117 @@ export interface ResourceLimits {
   events_and_return_bytes: number;
 }
 
+function sameXdr(
+  left: { toXDR(format: "raw"): Buffer } | Buffer | string,
+  right: { toXDR(format: "raw"): Buffer } | Buffer | string,
+): boolean {
+  const bytes = (value: { toXDR(format: "raw"): Buffer } | Buffer | string) =>
+    typeof value === "string"
+      ? Buffer.from(value)
+      : Buffer.isBuffer(value)
+        ? value
+        : value.toXDR("raw");
+  return bytes(left).equals(bytes(right));
+}
+
+/**
+ * Verify that a captured LedgerEntryData is the value addressed by its
+ * LedgerKey. Membership in the response is not sufficient: a substituted
+ * account, contract, code hash, config setting, or durability would otherwise
+ * be accepted as snapshot state.
+ */
+export function validateLedgerKeyEntryCorrespondence(
+  keyXdr: string,
+  dataXdr: string,
+): void {
+  const key = xdr.LedgerKey.fromXDR(keyXdr, "base64");
+  const data = xdr.LedgerEntryData.fromXDR(dataXdr, "base64");
+  const keyName = key.switch().name;
+  const dataName = data.switch().name;
+  if (keyName === "account") {
+    if (
+      dataName !== "account" ||
+      !sameXdr(key.account().accountId(), data.account().accountId())
+    )
+      throw new Error("Ledger entry/key mismatch: account identity");
+  } else if (keyName === "trustline") {
+    if (
+      dataName !== "trustline" ||
+      !sameXdr(key.trustLine().accountId(), data.trustLine().accountId()) ||
+      !sameXdr(key.trustLine().asset(), data.trustLine().asset())
+    )
+      throw new Error("Ledger entry/key mismatch: trustline identity");
+  } else if (keyName === "offer") {
+    if (
+      dataName !== "offer" ||
+      !sameXdr(key.offer().sellerId(), data.offer().sellerId()) ||
+      !sameXdr(key.offer().offerId(), data.offer().offerId())
+    )
+      throw new Error("Ledger entry/key mismatch: offer identity");
+  } else if (keyName === "data") {
+    if (
+      dataName !== "data" ||
+      !sameXdr(key.data().accountId(), data.data().accountId()) ||
+      !sameXdr(key.data().dataName(), data.data().dataName())
+    )
+      throw new Error("Ledger entry/key mismatch: data identity");
+  } else if (keyName === "claimableBalance") {
+    if (
+      dataName !== "claimableBalance" ||
+      !sameXdr(
+        key.claimableBalance().balanceId(),
+        data.claimableBalance().balanceId(),
+      )
+    )
+      throw new Error("Ledger entry/key mismatch: claimable-balance identity");
+  } else if (keyName === "contractData") {
+    if (
+      dataName !== "contractData" ||
+      !sameXdr(key.contractData().contract(), data.contractData().contract()) ||
+      !sameXdr(key.contractData().key(), data.contractData().key()) ||
+      key.contractData().durability().name !==
+        data.contractData().durability().name
+    )
+      throw new Error("Ledger entry/key mismatch: contract-data identity");
+  } else if (keyName === "contractCode") {
+    if (
+      dataName !== "contractCode" ||
+      !sameXdr(key.contractCode().hash(), data.contractCode().hash())
+    )
+      throw new Error("Ledger entry/key mismatch: contract-code hash");
+  } else if (keyName === "configSetting") {
+    if (
+      dataName !== "configSetting" ||
+      key.configSetting().configSettingId().name !==
+        data.configSetting().switch().name
+    )
+      throw new Error("Ledger entry/key mismatch: config-setting identity");
+  } else if (keyName === "ttl") {
+    if (
+      dataName !== "ttl" ||
+      !sameXdr(key.ttl().keyHash(), data.ttl().keyHash())
+    )
+      throw new Error("Ledger entry/key mismatch: TTL identity");
+  } else {
+    throw new Error(
+      `Unsupported LedgerKey variant for correspondence validation: ${keyName}`,
+    );
+  }
+}
+
 function execute(
   file: string,
   args: string[],
   input?: string,
   cwd?: string,
+  signal?: AbortSignal,
 ): Promise<string> {
   return new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      return reject(
+        signal.reason || new Error("Simulation helper execution cancelled"),
+      );
+    }
     const child = execFile(
       file,
       args,
@@ -97,13 +205,35 @@ function execute(
         cwd,
         timeout: input === undefined ? 600_000 : 30_000,
         maxBuffer: 16 * 1024 * 1024,
+        signal,
       },
       (error, stdout, stderr) => {
-        if (error)
+        if (signal?.aborted) {
           reject(
-            new Error(`Simulation helper failed: ${stderr || error.message}`),
+            signal.reason || new Error("Simulation helper execution cancelled"),
           );
-        else resolve(stdout);
+        } else if (error) {
+          if (
+            error.name === "AbortError" ||
+            (error as any).code === "ABORT_ERR"
+          ) {
+            reject(
+              signal?.reason ||
+                new Error("Simulation helper execution cancelled"),
+            );
+          } else {
+            const failure = new Error(
+              `Simulation helper failed: ${stderr || error.message}`,
+            ) as Error & { stdout?: string; exitCode?: number };
+            failure.stdout = stdout;
+            failure.exitCode =
+              typeof (error as NodeJS.ErrnoException & { code?: unknown })
+                .code === "number"
+                ? (error as NodeJS.ErrnoException & { code: number }).code
+                : undefined;
+            reject(failure);
+          }
+        } else resolve(stdout);
       },
     );
     // Ignore EPIPE here: the exit callback reports a helper that rejects input.
@@ -112,10 +242,120 @@ function execute(
   });
 }
 
+interface HelperFailureEnvelope {
+  protocol_version: 1;
+  status:
+    | "uncaptured"
+    | "unsupported"
+    | "invalid_input"
+    | "incomplete"
+    | "host_failure";
+  keys?: string[];
+  message: string;
+}
+
+function parseHelperFailure(error: unknown): HelperFailureEnvelope | null {
+  const stdout = (error as { stdout?: unknown })?.stdout;
+  if (typeof stdout !== "string" || !stdout.trim()) return null;
+  try {
+    const parsed = JSON.parse(stdout) as Partial<HelperFailureEnvelope>;
+    if (
+      parsed.protocol_version !== 1 ||
+      typeof parsed.status !== "string" ||
+      typeof parsed.message !== "string"
+    ) {
+      throw new Error("invalid protocol envelope");
+    }
+    if (
+      ![
+        "uncaptured",
+        "unsupported",
+        "invalid_input",
+        "incomplete",
+        "host_failure",
+      ].includes(parsed.status)
+    )
+      throw new Error("unknown protocol status");
+    if (
+      parsed.status === "uncaptured" &&
+      (!Array.isArray(parsed.keys) || parsed.keys.length === 0)
+    )
+      throw new Error("uncaptured envelope has no keys");
+    return parsed as HelperFailureEnvelope;
+  } catch (parseError) {
+    throw new Error(
+      `Invalid native helper failure protocol: ${parseError instanceof Error ? parseError.message : parseError}`,
+    );
+  }
+}
+
 let provisioned: Promise<string> | undefined;
+
+/** Reset helper provisioning state (used for testing failure and recovery). */
+export function _resetSimulationHelperState(): void {
+  provisioned = undefined;
+}
+
+export interface HelperCompatibilityInputs {
+  os?: string;
+  arch?: string;
+  toolchain?: string;
+  target?: string;
+  manifestPath?: string;
+  lockPath?: string;
+  sourcePath?: string;
+  features?: string[];
+  flags?: string[];
+}
+
+/**
+ * Define complete compatibility keys including helper source, manifest, lock,
+ * pinned compiler, target, enabled features, and build flags.
+ */
+export function computeHelperCacheKey(
+  inputs?: Partial<HelperCompatibilityInputs>,
+): string {
+  const directory = path.resolve(__dirname, "../native/simulation");
+  const os = inputs?.os ?? process.platform;
+  const arch = inputs?.arch ?? process.arch;
+  const toolchain = inputs?.toolchain ?? "1.95.0";
+  const target = inputs?.target ?? "x86_64-unknown-linux-gnu";
+  const manifestPath =
+    inputs?.manifestPath ?? path.join(directory, "Cargo.toml");
+  const lockPath = inputs?.lockPath ?? path.join(directory, "Cargo.lock");
+  const sourcePath = inputs?.sourcePath ?? path.join(directory, "src/main.rs");
+
+  const manifestContent = fs.existsSync(manifestPath)
+    ? fs.readFileSync(manifestPath)
+    : Buffer.from("");
+  const lockContent = fs.existsSync(lockPath)
+    ? fs.readFileSync(lockPath)
+    : Buffer.from("");
+  const sourceContent = fs.existsSync(sourcePath)
+    ? fs.readFileSync(sourcePath)
+    : Buffer.from("");
+
+  const features = [...(inputs?.features ?? [])].sort().join(",");
+  const flags = [...(inputs?.flags ?? ["--release", "--locked"])]
+    .sort()
+    .join(" ");
+
+  const hash = crypto
+    .createHash("sha256")
+    .update(manifestContent)
+    .update(lockContent)
+    .update(sourceContent)
+    .update(features)
+    .update(flags)
+    .digest("hex");
+
+  return `${os}-${arch}-cargo-simulation-helper-${toolchain}-${target}-${hash}`;
+}
+
 /** Linux x64 is the initial supported runtime. Cargo is never installed implicitly. */
 export async function resolveSimulationHelper(
   explicitPath?: string,
+  customBuild?: () => Promise<string>,
 ): Promise<string> {
   if (process.platform !== "linux" || process.arch !== "x64") {
     throw new Error("Native simulation currently supports Linux x64 only");
@@ -130,8 +370,11 @@ export async function resolveSimulationHelper(
     }
     return file;
   }
-  if (!provisioned)
-    provisioned = (async () => {
+  if (!provisioned) {
+    const buildPromise = (async () => {
+      if (customBuild) {
+        return customBuild();
+      }
       const directory = path.resolve(__dirname, "../native/simulation");
       const manifest = path.join(directory, "Cargo.toml");
       if (!fs.existsSync(manifest))
@@ -162,6 +405,17 @@ export async function resolveSimulationHelper(
         "target/x86_64-unknown-linux-gnu/release/weighin-simulation",
       );
     })();
+
+    // Clear failed provisioning so subsequent calls can retry; do not let older
+    // rejections clear newer in-flight attempts.
+    const attempt = buildPromise.catch((err) => {
+      if (provisioned === attempt) {
+        provisioned = undefined;
+      }
+      throw err;
+    });
+    provisioned = attempt;
+  }
   return provisioned;
 }
 
@@ -169,8 +423,15 @@ export async function resolveSimulationHelper(
 export async function simulateSnapshot(
   input: SimulationInput,
   helperPath: string,
+  signal?: AbortSignal,
 ): Promise<SimulationOutput> {
-  const stdout = await execute(helperPath, [], JSON.stringify(input));
+  const stdout = await execute(
+    helperPath,
+    [],
+    JSON.stringify(input),
+    undefined,
+    signal,
+  );
   let output: SimulationOutput;
   try {
     output = outputSchema.parse(JSON.parse(stdout));
@@ -326,6 +587,8 @@ class RpcError extends Error {
   }
 }
 
+let nextRpcRequestId = 0;
+
 // Only the error actually observed during live snapshot reads is retryable.
 // HTTP failures, other RPC errors and simulation/helper failures remain fatal.
 function isTransientLedgerRead(failure: unknown): boolean {
@@ -346,16 +609,33 @@ async function callRpc(
   rpcUrl: string,
   method: string,
   params: unknown,
+  signal?: AbortSignal,
 ): Promise<unknown> {
+  if (signal?.aborted) {
+    throw signal.reason || new Error(`RPC ${method} cancelled`);
+  }
   let response: Response;
+  const timeoutSignal = AbortSignal.timeout(30_000);
+  const combinedSignal = signal
+    ? AbortSignal.any([signal, timeoutSignal])
+    : timeoutSignal;
+  const requestId = ++nextRpcRequestId;
   try {
     response = await fetch(rpcUrl, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
-      signal: AbortSignal.timeout(30_000),
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: requestId,
+        method,
+        params,
+      }),
+      signal: combinedSignal,
     });
   } catch (error) {
+    if (signal?.aborted) {
+      throw signal.reason || new Error(`RPC ${method} cancelled`);
+    }
     throw new Error(
       `RPC ${method} transport failure at ${sanitizeEndpoint(rpcUrl)}: ${redactEndpointSecrets(String((error as any)?.message ?? error), rpcUrl)}`,
     );
@@ -364,10 +644,33 @@ async function callRpc(
     throw new Error(
       `RPC ${method}: HTTP ${response.status} at ${sanitizeEndpoint(rpcUrl)}`,
     );
-  const body = (await response.json()) as { error?: unknown; result?: unknown };
-  if (body.error || body.result === undefined)
-    throw new RpcError(method, body.error, rpcUrl);
-  return body.result;
+  let responseBody: string;
+  try {
+    responseBody = await response.text();
+  } catch (error) {
+    if (signal?.aborted) {
+      throw signal.reason || new Error(`RPC ${method} cancelled`);
+    }
+    throw new Error(
+      `RPC ${method} response transport failure at ${sanitizeEndpoint(rpcUrl)}: ${redactEndpointSecrets(String((error as any)?.message ?? error), rpcUrl)}`,
+    );
+  }
+  let envelope;
+  try {
+    envelope = parseJsonRpcResponse(responseBody, requestId);
+  } catch (error) {
+    throw new Error(
+      `RPC ${method} invalid response at ${sanitizeEndpoint(rpcUrl)}: ${redactEndpointSecrets(String((error as Error)?.message ?? error), rpcUrl)}`,
+    );
+  }
+  if ("error" in envelope) {
+    throw new RpcError(method, envelope.error, rpcUrl);
+  }
+  return envelope.result;
+}
+
+export interface MeasureInvocationOptions {
+  signal?: AbortSignal;
 }
 
 /** Capture all discovered keys/config at one ledger; retry the entire capture on drift.
@@ -378,24 +681,50 @@ export async function measureInvocation(
   rpcUrl: string,
   transaction: Transaction,
   helperPath: string,
+  options?: MeasureInvocationOptions,
 ): Promise<{
   output: SimulationOutput;
   provenance: ComputeProvenance;
   limits: ResourceLimits;
 }> {
+  const signal = options?.signal;
+  if (signal?.aborted) {
+    throw signal.reason || new Error("Measurement cancelled");
+  }
   const network = z
     .object({ passphrase: encoded, protocolVersion: integer })
-    .parse(await callRpc(rpcUrl, "getNetwork", {}));
+    .parse(await callRpc(rpcUrl, "getNetwork", {}, signal));
   if (network.protocolVersion !== 28)
     throw new Error(
       `Unsupported protocol ${network.protocolVersion}: simulation helper supports 28`,
     );
   const keys = new Set(configKeys);
   let transientReadFailures = 0;
+  let lastCause:
+    | "ledger_drift"
+    | "batch_ledger_disagreement"
+    | "newly_discovered_keys"
+    | "transient_read"
+    | "none" = "none";
+  const causes = {
+    ledger_drift: 0,
+    batch_ledger_disagreement: 0,
+    newly_discovered_keys: 0,
+    transient_read: 0,
+  };
+  let discoveredKeysCount = 0;
   for (let attempt = 0; attempt < 30; attempt++) {
-    const raw = await callRpc(rpcUrl, "simulateTransaction", {
-      transaction: transaction.toXDR(),
-    });
+    if (signal?.aborted) {
+      throw signal.reason || new Error("Measurement cancelled");
+    }
+    const raw = await callRpc(
+      rpcUrl,
+      "simulateTransaction",
+      {
+        transaction: transaction.toXDR(),
+      },
+      signal,
+    );
     const error = (raw as { error?: string }).error;
     if (error) throw new Error(`RPC simulation failed: ${error}`);
     const simulation = simulationSchema.parse(raw);
@@ -415,13 +744,23 @@ export async function measureInvocation(
     >();
     let drift = false;
     for (let offset = 0; offset < requested.length; offset += 200) {
+      if (signal?.aborted) {
+        throw signal.reason || new Error("Measurement cancelled");
+      }
       const batch = requested.slice(offset, offset + 200);
       let rawEntries: unknown;
       try {
-        rawEntries = await callRpc(rpcUrl, "getLedgerEntries", { keys: batch });
+        rawEntries = await callRpc(
+          rpcUrl,
+          "getLedgerEntries",
+          { keys: batch },
+          signal,
+        );
       } catch (failure) {
         if (!isTransientLedgerRead(failure)) throw failure;
         transientReadFailures++;
+        lastCause = "transient_read";
+        causes.transient_read++;
         if (transientReadFailures > 3 || attempt === 29) {
           throw new Error(
             `Snapshot ledger-read retry limit exhausted: ${failure instanceof Error ? failure.message : failure}`,
@@ -431,12 +770,34 @@ export async function measureInvocation(
         console.warn(
           `Transient captive-core ledger-read failure; discarding snapshot and retrying capture (${transientReadFailures}/3, ${delay}ms): ${failure instanceof Error ? failure.message : failure}`,
         );
-        await new Promise((resolve) => setTimeout(resolve, delay));
+        await new Promise<void>((resolve, reject) => {
+          const timer = setTimeout(resolve, delay);
+          if (signal) {
+            const onAbort = () => {
+              clearTimeout(timer);
+              reject(signal.reason || new Error("Measurement cancelled"));
+            };
+            if (signal.aborted) {
+              clearTimeout(timer);
+              return reject(
+                signal.reason || new Error("Measurement cancelled"),
+              );
+            }
+            signal.addEventListener("abort", onAbort, { once: true });
+          }
+        });
         drift = true;
         break;
       }
       const result = entriesSchema.parse(rawEntries);
       if (result.latestLedger !== simulation.latestLedger) {
+        if (offset === 0) {
+          lastCause = "ledger_drift";
+          causes.ledger_drift++;
+        } else {
+          lastCause = "batch_ledger_disagreement";
+          causes.batch_ledger_disagreement++;
+        }
         drift = true;
         break;
       }
@@ -454,10 +815,15 @@ export async function measureInvocation(
         ledgers: z.array(z.object({ sequence: integer, headerXdr: encoded })),
       })
       .parse(
-        await callRpc(rpcUrl, "getLedgers", {
-          startLedger: simulation.latestLedger,
-          pagination: { limit: 1 },
-        }),
+        await callRpc(
+          rpcUrl,
+          "getLedgers",
+          {
+            startLedger: simulation.latestLedger,
+            pagination: { limit: 1 },
+          },
+          signal,
+        ),
       );
     const row = headers.ledgers.find(
       (item) => item.sequence === simulation.latestLedger,
@@ -475,6 +841,7 @@ export async function measureInvocation(
     }
     const entries: SnapshotEntry[] = requested.map((key) => {
       const entry = rows.get(key);
+      if (entry?.xdr) validateLedgerKeyEntryCorrespondence(key, entry.xdr);
       return entry
         ? {
             key,
@@ -509,8 +876,32 @@ export async function measureInvocation(
     };
     let output: SimulationOutput;
     try {
-      output = await simulateSnapshot(input, helperPath);
+      output = await simulateSnapshot(input, helperPath, signal);
     } catch (failure) {
+      const envelope = parseHelperFailure(failure);
+      if (envelope) {
+        if (envelope.status !== "uncaptured")
+          throw new Error(
+            `Native helper ${envelope.status}: ${envelope.message}`,
+          );
+        const additional = (envelope.keys ?? []).filter(
+          (key) => !keys.has(key),
+        );
+        if (!additional.length)
+          throw new Error("Native helper reported no new captured keys");
+        for (const key of additional) {
+          try {
+            xdr.LedgerKey.fromXDR(key, "base64");
+          } catch {
+            throw new Error("Native helper reported malformed LedgerKey");
+          }
+          keys.add(key);
+        }
+        lastCause = "newly_discovered_keys";
+        causes.newly_discovered_keys++;
+        discoveredKeysCount += additional.length;
+        continue;
+      }
       const message =
         failure instanceof Error ? failure.message : String(failure);
       const missing = [
@@ -518,6 +909,9 @@ export async function measureInvocation(
       ].map((match) => match[1]);
       const additional = missing.filter((key) => !keys.has(key));
       if (!additional.length) throw failure;
+      lastCause = "newly_discovered_keys";
+      causes.newly_discovered_keys++;
+      discoveredKeysCount += additional.length;
       for (const key of additional) {
         xdr.LedgerKey.fromXDR(key, "base64");
         keys.add(key);
@@ -534,14 +928,37 @@ export async function measureInvocation(
           event.event().type().name !== "diagnostic",
       )
       .map((event) => event.event().toXDR("base64"));
-    if (
-      output.transaction_data_xdr !== simulation.transactionData ||
-      output.retval_xdr !== simulation.results[0].xdr ||
-      JSON.stringify(output.contract_events_xdr) !== JSON.stringify(rpcEvents)
-    ) {
-      throw new Error(
-        "Local simulation disagrees with RPC at captured ledger; auth/random/state-dependent invocation is unsupported",
+    const txDataMismatch =
+      output.transaction_data_xdr !== simulation.transactionData;
+    const retvalMismatch = output.retval_xdr !== simulation.results[0].xdr;
+    const eventsMismatch =
+      JSON.stringify(output.contract_events_xdr) !== JSON.stringify(rpcEvents);
+    if (txDataMismatch || retvalMismatch || eventsMismatch) {
+      const mismatches: string[] = [];
+      if (txDataMismatch) {
+        mismatches.push(
+          `transaction-data disagreement (native_sha256: ${sha256(output.transaction_data_xdr)}, rpc_sha256: ${sha256(simulation.transactionData)})`,
+        );
+      }
+      if (retvalMismatch) {
+        mismatches.push(
+          `return-value disagreement (native_sha256: ${sha256(output.retval_xdr)}, rpc_sha256: ${sha256(simulation.results[0].xdr)})`,
+        );
+      }
+      if (eventsMismatch) {
+        mismatches.push(
+          `ordered charged-event disagreement (native_count: ${output.contract_events_xdr.length}, rpc_count: ${rpcEvents.length}, native_sha256: ${sha256(JSON.stringify(output.contract_events_xdr))}, rpc_sha256: ${sha256(JSON.stringify(rpcEvents))})`,
+        );
+      }
+      const err = new Error(
+        `Local simulation disagrees with RPC at captured ledger [${mismatches.join("; ")}]; auth/random/state-dependent invocation is unsupported`,
       );
+      (err as any).parityDetails = {
+        transactionData: txDataMismatch,
+        returnValue: retvalMismatch,
+        contractEvents: eventsMismatch,
+      };
+      throw err;
     }
     const limits = snapshotLimits(entries);
     if (
@@ -594,7 +1011,15 @@ export async function measureInvocation(
       },
     };
   }
-  throw new Error(
-    "Unable to capture a complete consistent snapshot after 30 attempts",
+  const exhaustionError = new Error(
+    `Unable to capture a complete consistent snapshot after 30 attempts (last cause: ${lastCause}; attempts: 30, ledger_drift: ${causes.ledger_drift}, batch_ledger_disagreement: ${causes.batch_ledger_disagreement}, newly_discovered_keys: ${causes.newly_discovered_keys}, transient_reads: ${causes.transient_read}, tracked_keys: ${keys.size})`,
   );
+  (exhaustionError as any).diagnostics = {
+    lastCause,
+    attempts: 30,
+    causes,
+    trackedKeys: keys.size,
+    discoveredKeysCount,
+  };
+  throw exhaustionError;
 }

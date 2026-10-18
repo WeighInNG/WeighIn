@@ -3,6 +3,7 @@ import * as TOML from "toml";
 import { z } from "zod";
 import { formatZodError } from "./config";
 import { DiffResult, METRIC_KEYS, MetricDiff, MetricKey } from "./diff";
+import * as crypto from "crypto";
 
 // ---------------------------------------------------------------------------
 // Config schema
@@ -37,6 +38,13 @@ export interface WeighinConfig {
     /** Per-function overrides keyed by function name */
     functions?: Record<string, Partial<Record<MetricKey, RuleValue>>>;
   };
+}
+
+export interface PolicyOrigin {
+  mode: "head" | "trusted";
+  path: string;
+  revision: string;
+  content_sha256: string;
 }
 
 const percentage = z.number().finite().nonnegative();
@@ -116,6 +124,27 @@ export function loadConfig(configPath: string): WeighinConfig | null {
       throw error;
     throw new Error(`Failed to parse TOML in ${configPath}: ${error.message}`);
   }
+}
+
+/** Parse policy content while retaining a verifiable origin for reports. */
+export function loadConfigContent(
+  content: string,
+  sourcePath: string,
+): WeighinConfig {
+  try {
+    return validateConfig(TOML.parse(content));
+  } catch (error: any) {
+    if (
+      error instanceof Error &&
+      error.message.startsWith("Invalid WeighIn configuration")
+    )
+      throw error;
+    throw new Error(`Failed to parse TOML in ${sourcePath}: ${error.message}`);
+  }
+}
+
+export function policyContentSha256(content: string): string {
+  return crypto.createHash("sha256").update(content, "utf8").digest("hex");
 }
 
 // ---------------------------------------------------------------------------

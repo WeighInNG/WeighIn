@@ -138,4 +138,97 @@ describe("toScVal", () => {
       expect(entries[2].key().sym().toString()).toBe("c");
     }
   });
+
+  it("rejects map keys that encode identically", () => {
+    // 1. Byte-identical keys
+    expect(() =>
+      toScVal({
+        type: "map",
+        value: [
+          {
+            key: { type: "symbol", value: "dup" },
+            value: { type: "u32", value: 1 },
+          },
+          {
+            key: { type: "symbol", value: "dup" },
+            value: { type: "u32", value: 2 },
+          },
+        ],
+      }),
+    ).toThrow(/Duplicate map key detected at entry 1/);
+
+    // 2. Differently formatted large integers that encode to identical ScVal
+    expect(() =>
+      toScVal({
+        type: "map",
+        value: [
+          {
+            key: { type: "u64", value: "100" },
+            value: { type: "u32", value: 1 },
+          },
+          {
+            key: { type: "u64", value: "0100" },
+            value: { type: "u32", value: 2 },
+          },
+        ],
+      }),
+    ).toThrow(/Duplicate map key detected at entry 1/);
+
+    // 3. Nested map with duplicate keys
+    expect(() =>
+      toScVal({
+        type: "map",
+        value: [
+          {
+            key: { type: "symbol", value: "nested" },
+            value: {
+              type: "map",
+              value: [
+                {
+                  key: { type: "i32", value: 42 },
+                  value: { type: "bool", value: true },
+                },
+                {
+                  key: { type: "i32", value: 42 },
+                  value: { type: "bool", value: false },
+                },
+              ],
+            },
+          },
+        ],
+      }),
+    ).toThrow(/Duplicate map key detected at entry 1/);
+  });
+
+  it("permits keys with different ScVal types even if their string representations match", () => {
+    // Symbol "test" vs String "test"
+    const m = toScVal({
+      type: "map",
+      value: [
+        {
+          key: { type: "symbol", value: "test" },
+          value: { type: "u32", value: 1 },
+        },
+        {
+          key: { type: "string", value: "test" },
+          value: { type: "u32", value: 2 },
+        },
+      ],
+    });
+    expect(m.switch().name).toBe("scvMap");
+    expect(m.map()?.length).toBe(2);
+  });
+
+  it("does not mutate the input fixture when sorting map entries", () => {
+    const original = [
+      {
+        key: { type: "symbol", value: "z" },
+        value: { type: "u32", value: 26 },
+      },
+      { key: { type: "symbol", value: "a" }, value: { type: "u32", value: 1 } },
+    ];
+    toScVal({ type: "map", value: original });
+    expect(original[0].key.value).toBe("z");
+    expect(original[1].key.value).toBe("a");
+  });
 });

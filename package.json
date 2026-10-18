@@ -7,9 +7,12 @@
     "weighin": "dist/cli.js"
   },
   "scripts": {
-    "prepack": "npm run build && npm run bundle",
+    "prepack": "npm run build && npm run bundle && node dist/dependency-inventory.js --quiet",
     "build": "tsc",
-    "bundle": "tsc --noEmit && esbuild src/action.ts --bundle --platform=node --target=node20 --outfile=bundled/index.js --format=cjs && esbuild src/comment-action.ts --bundle --platform=node --target=node20 --outfile=bundled/comment-action.js --format=cjs",
+    "bundle": "tsc --noEmit && esbuild src/action.ts --bundle --platform=node --target=node20 --outfile=bundled/index.js --format=cjs && esbuild src/comment-action.ts --bundle --platform=node --target=node20 --outfile=bundled/comment-action.js --format=cjs && node scripts/package-provenance.cjs",
+    "provenance": "node scripts/package-provenance.cjs --verify",
+    "inventory:generate": "npm run build && node dist/dependency-inventory.js",
+    "inventory:check": "npm run build && node dist/dependency-inventory.js --check",
     "test": "npm run build && node --test tests/*.test.cjs && npm run test:vitest",
     "test:vitest": "vitest run test/*.test.ts",
     "test:watch": "vitest test/*.test.ts",
@@ -51,7 +54,10 @@
     "docs/fixture-migration.md",
     "docs/network-readiness.md",
     "docs/flagship-ci.md",
-    "docs/*.md"
+    "docs/*.md",
+    "docs/dependency-inventory.json",
+    "docs/schemas/*.json",
+    "provenance-manifest.json"
   ],
   "overrides": {
     "@stellar/stellar-sdk": {

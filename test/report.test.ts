@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { writeReportFile } from "../src/report";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { writeReportFile, generateFailureReport } from "../src/report";
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
@@ -48,6 +48,25 @@ describe("writeReportFile", () => {
 
     expect(() => writeReportFile(dirAsFile, tempDir, "body")).toThrow(
       /Failed to write WeighIn report to .*dir-as-file: EISDIR/,
+    );
+  });
+});
+
+describe("generateFailureReport", () => {
+  it("generates an explicit unsuccessful comparison report with failure details", () => {
+    const errorMsg = "RPC connection refused at http://127.0.0.1:8000/rpc";
+    const report = generateFailureReport(errorMsg);
+
+    expect(report).toContain(
+      "# WeighIn Resource Benchmark: Unsuccessful Comparison",
+    );
+    expect(report).toContain("Status: FAILED");
+    expect(report).toContain(errorMsg);
+    expect(report).toContain("**Policies established:** No");
+    expect(report).toContain("**Thresholds evaluated:** None");
+    expect(report).toContain("**Benchmark metrics:** None (not measured)");
+    expect(report).toContain(
+      "No passing comparison, deltas, or resource consumption metrics were established.",
     );
   });
 });

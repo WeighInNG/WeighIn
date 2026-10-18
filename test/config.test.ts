@@ -213,4 +213,67 @@ describe("FixturesSpecSchema", () => {
       expect(args[2].value[0].value.type).toBe("i64");
     }
   });
+
+  it("accepts valid optional ID-bearing fixtures at fixture, contract, and invocation level", () => {
+    const input = {
+      id: "fixture-main",
+      contracts: [
+        {
+          id: "contract-1",
+          wasm_path: "test.wasm",
+          invocations: [
+            {
+              id: "inv-1",
+              function_name: "test_fn",
+              args: [{ type: "U32", value: 42 }],
+            },
+          ],
+        },
+      ],
+    };
+    const res = FixturesSpecSchema.safeParse(input);
+    expect(res.success).toBe(true);
+    if (res.success) {
+      expect(res.data.id).toBe("fixture-main");
+      expect(res.data.contracts[0].id).toBe("contract-1");
+      expect(res.data.contracts[0].invocations[0].id).toBe("inv-1");
+    }
+  });
+
+  it("rejects blank IDs at fixture, contract, and invocation level", () => {
+    expect(
+      FixturesSpecSchema.safeParse({
+        id: "   ",
+        contracts: [
+          {
+            wasm_path: "test.wasm",
+            invocations: [{ function_name: "test_fn", args: [] }],
+          },
+        ],
+      }).success,
+    ).toBe(false);
+
+    expect(
+      FixturesSpecSchema.safeParse({
+        contracts: [
+          {
+            id: "",
+            wasm_path: "test.wasm",
+            invocations: [{ function_name: "test_fn", args: [] }],
+          },
+        ],
+      }).success,
+    ).toBe(false);
+
+    expect(
+      FixturesSpecSchema.safeParse({
+        contracts: [
+          {
+            wasm_path: "test.wasm",
+            invocations: [{ id: "  ", function_name: "test_fn", args: [] }],
+          },
+        ],
+      }).success,
+    ).toBe(false);
+  });
 });

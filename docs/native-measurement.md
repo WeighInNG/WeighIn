@@ -92,6 +92,17 @@ config hashes remain diagnostics and are shown for both revisions. They do not
 change the consumed compute calibration. It records both snapshot ledgers/hashes. It does not guarantee
 that arbitrary live contract state remains unchanged between captures.
 
+## Cancellation lifecycle
+
+Measurement and helper operations accept an optional `signal?: AbortSignal` across all phases:
+
+- **Account and network readiness**: `ensureAccountReady` and `getOrInitAccount` check cancellation before and during polling. Readiness retry backoffs listen to `signal` to abort immediately rather than waiting for remaining sleep durations.
+- **RPC calls and polling**: `callRpc`, `waitForTransaction`, and `submitAndConfirm` link the caller's cancellation signal with internal timeouts via `AbortSignal.any`. Polling intervals abort promptly on signal trigger.
+- **Native helper execution**: `simulateSnapshot` and `execute` pass `signal` to Node's `execFile`, which terminates the spawned native helper child process promptly (`SIGTERM` / `SIGKILL`) on abort.
+- **Simulation and transient recovery**: `measureInvocation` aborts transient captive-core retry delays immediately upon cancellation and halts retry loops.
+- **Resource protection**: Caller-provided key files (`keyFile`) are preserved on cancellation; temporary deployment keys and scratch files are cleaned up.
+- **Fail-closed guarantees**: Cancelled measurements throw explicit cancellation errors (`AbortError`) and never produce synthetic zero or fallback benchmarks.
+
 ## Schema migration
 
 `ContractBenchmark.schema_version` is now **4**. See the
