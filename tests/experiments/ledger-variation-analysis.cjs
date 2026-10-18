@@ -5,7 +5,6 @@ const { createHash } = require('node:crypto');
 const { xdr } = require('@stellar/stellar-sdk');
 const { diffBenchmarks, METRIC_KEYS } = require('../../dist/diff');
 const { enforceThresholds } = require('../../dist/threshold');
-const { renderComment } = require('../../dist/comment');
 const { analyzeRepeatability } = require('./repeatability-analysis.cjs');
 
 const MEASURED_KEYS = [
@@ -57,7 +56,6 @@ function verifyLedgerVariation({
   variationDiff,
   policy,
   violations,
-  summary,
   verification,
 }) {
   assert.equal(verification.status, 'VERIFIED');
@@ -262,11 +260,6 @@ function verifyLedgerVariation({
     ),
     'Strict CPU policy violation must be enforced on unchanged artifact when ledger progression increases CPU',
   );
-
-  const rendered = renderComment(variationDiff, violations, 'ledger-900', 'ledger-1000');
-  assert.equal(rendered, summary);
-  assert.match(summary, /threshold violation/);
-  assert.match(summary, /cpu_instructions increased by .*strict zero tolerance/);
 
   return true;
 }

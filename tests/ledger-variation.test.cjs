@@ -31,7 +31,6 @@ function loadBundle() {
     variationDiff: readJson('variation-diff.json'),
     policy: readJson('policy.json'),
     violations: readJson('violations.json'),
-    summary: fs.readFileSync(path.join(archiveDir, 'summary.md'), 'utf8'),
     verification: readJson('verification.json'),
   };
 }

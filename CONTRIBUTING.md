@@ -21,6 +21,20 @@ needs `wasm32v1-none`, checksum-verified Stellar CLI 28.1.0 and Docker. Provisio
 these as shown in [the proof workflow](.github/workflows/flagship-proof.yml).
 WeighIn does not install the Rust or Stellar toolchains itself.
 
+The full test suite includes package-inventory and offline-consumer checks.
+Prepare their caches before running those checks on a clean machine:
+
+```bash
+rustup toolchain install 1.95.0 --profile minimal
+cargo +1.95.0 fetch --locked --manifest-path native/simulation/Cargo.toml --target x86_64-unknown-linux-gnu
+npm run build
+RUNNER_TEMP="${RUNNER_TEMP:-${TMPDIR:-/tmp}}" bash scripts/prime-npm-consumer-cache.sh
+```
+
+Preparation downloads dependencies; the offline acceptance checks stay offline.
+The cache-prime helper disables package lifecycle scripts and removes its
+temporary consumer. Full native helper coverage still requires Linux x64.
+
 ## Quality gates
 
 ```bash
