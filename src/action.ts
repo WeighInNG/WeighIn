@@ -28,6 +28,7 @@ import {
 // The configured endpoint is tracked only so the terminal failure path can
 // redact any credential it may contain before reporting.
 let configuredRpcUrl = "";
+let validatedDiff: DiffResult | null = null;
 
 // ---------------------------------------------------------------------------
 // RPC health check
@@ -367,6 +368,7 @@ async function upsertPrComment(token: string, body: string): Promise<void> {
 // ---------------------------------------------------------------------------
 
 async function run(): Promise<void> {
+  validatedDiff = null;
   let keyDir: string | null = null;
   let sharedKeyFile: string | null = null;
 
@@ -556,6 +558,7 @@ async function run(): Promise<void> {
     const result = violations.length > 0 ? "fail" : "pass";
     core.setOutput("result", result);
     core.setOutput("diff-json", JSON.stringify(diff));
+    validatedDiff = diff;
 
     // Report is available in the job summary even without permission to post a PR comment.
     const body = renderComment(
@@ -618,12 +621,16 @@ run().catch(async (error: Error) => {
     configuredRpcUrl,
   );
   core.setOutput("result", "fail");
-  core.setOutput("diff-json", "{}");
+  if (validatedDiff) {
+    core.setOutput("diff-json", JSON.stringify(validatedDiff));
+  } else {
+    core.setOutput("diff-json", "{}");
+  }
   core.setFailed(message);
 
   const reportPathInput = core.getInput("report-path");
   const headWorkspace = process.env["GITHUB_WORKSPACE"] ?? process.cwd();
-  if (reportPathInput) {
+  if (reportPathInput && !validatedDiff) {
     try {
       const failureReport = generateFailureReport(message);
       writeReportFile(reportPathInput, headWorkspace, failureReport);
@@ -635,10 +642,15 @@ run().catch(async (error: Error) => {
   }
 
   if (process.env.GITHUB_STEP_SUMMARY) {
-    await core.summary
-      .addRaw(
-        `## WeighIn comparison failed\n\n${message}\n\nNo passing comparison or policy result was established.\n`,
-      )
-      .write();
+    try {
+      const summaryHeader = validatedDiff
+        ? `## WeighIn delivery failed\n\n${message}\n\nComparison and policy evaluation succeeded, but artifact delivery failed.\n`
+        : `## WeighIn comparison failed\n\n${message}\n\nNo passing comparison or policy result was established.\n`;
+      await core.summary.addRaw(summaryHeader).write();
+    } catch (summaryErr: any) {
+      core.warning(
+        `Failed to write step summary: ${summaryErr?.message ?? summaryErr}`,
+      );
+    }
   }
 });

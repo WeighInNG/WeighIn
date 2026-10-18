@@ -167,8 +167,10 @@ consumer versions must be paired.
 
 The Action emits `result` and `diff-json` before failing a valid policy violation.
 Comparison/build/measurement/configuration errors emit `fail` and `{}`, an error
-summary, and unsuccessful execution. There is no successful no-baseline fallback.
-Optional direct-comment failure is warning-only.
+summary, and unsuccessful execution. If subsequent report-file or summary delivery
+fails after comparison and policy evaluation succeed, the validated computed
+`diff-json` is preserved while the Action still fails with the delivery diagnostic.
+There is no successful no-baseline fallback. Optional direct-comment failure is warning-only.
 
 The separate `comment/` Action runs `bundled/comment-action.js`, reads and
 validates downloaded report/PR metadata, and creates or updates the comment

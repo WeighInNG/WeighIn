@@ -446,3 +446,31 @@ test("Action preserves primary error when writing report-path fails due to inval
   assert.match(res.output, /fail/);
   assert.match(res.summary, /RPC has not reported healthy/);
 });
+
+test("Action preserves validated computed diff when report delivery subsequently fails", () => {
+  // Pass an invalid report path that attempts to write into an existing file as a directory
+  const res = action("control", policy, null, "fixtures.json/report.md");
+  assert.equal(res.status, 1);
+  assert.match(res.output, /result<<[^\r\n]*\r?\nfail/);
+  assert.match(res.output, /diff-json<<[^\r\n]*\r?\n\{"contracts":/);
+  assert.doesNotMatch(res.output, /diff-json<<[^\r\n]*\r?\n\{\}\r?\n/);
+  assert.match(res.summary, /Failed to write WeighIn report/);
+});
+
+test("Action preserves validated computed diff when summary delivery subsequently fails", () => {
+  const res = action("summary-failure", policy);
+  assert.equal(res.status, 1);
+  assert.match(res.output, /result<<[^\n]*[\r\n]+fail/);
+  assert.match(res.output, /diff-json<<[^\n]*[\r\n]+\{"contracts":/);
+  assert.doesNotMatch(res.output, /diff-json<<[^\n]*[\r\n]+\{\}[\r\n]+/);
+  assert.match(res.stdout + res.stderr, /unit summary delivery failure/);
+});
+
+test("Action emits empty diff-json on failure before comparison and never invents diff data", () => {
+  const res = action("rpc-unhealthy", policy, null, "fixtures.json/report.md");
+  assert.equal(res.status, 1);
+  assert.match(res.output, /result<<[^\n]*[\r\n]+fail/);
+  assert.match(res.output, /diff-json<<[^\n]*[\r\n]+\{\}[\r\n]+/);
+  assert.match(res.summary, /RPC has not reported healthy/);
+  assert.match(res.summary, /No passing comparison/);
+});
