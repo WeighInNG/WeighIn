@@ -33,6 +33,12 @@ validated for executable access and versioned output; the binary's SHA256 is
 recorded. Missing binaries, malformed output, host failures and unsupported
 protocols produce errors, not measurements containing zero.
 
+Structured native failures use their validated protocol status for the public
+diagnostic, rather than the helper's generic stderr. Uncaptured state reports
+`UNCAPTURED_KEY`; host failures retain their stable failure classification.
+The original structured stdout stays attached for bounded snapshot recapture,
+without placing ledger keys or arbitrary envelope messages in that diagnostic.
+
 The local network script and workflow example pin the exact protocol-28 image
 used in the proof. The Action's modern contract build now uses the
 [Stellar build path](contract-build.md), with its own verified reference and

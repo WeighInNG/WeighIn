@@ -8,12 +8,12 @@ const input = require('../docs/experiments/compute-source-spike/base-input.json'
 const captured = require('../docs/experiments/compute-source-spike/base-output.json');
 const valid = () => ({ ...captured, host_features: ['recording_mode', 'testutils'], auth_mode: 'recording(true,true)' });
 
-function transport(t, output, failure) {
+function transport(t, output, failure, stderr = failure ? 'host invocation failed' : '') {
   t.mock.method(childProcess, 'execFile', (file, args, options, callback) => {
     assert.deepEqual(args, [], 'Helper runs directly without a shell or interpolated arguments');
     const stdin = new EventEmitter(); stdin.end = data => {
       assert.deepEqual(JSON.parse(data), input);
-      setImmediate(() => callback(failure, output, failure ? 'host invocation failed' : ''));
+      setImmediate(() => callback(failure, output, stderr));
     };
     return { stdin };
   });
@@ -44,6 +44,20 @@ test('transport rejects malformed JSON and resource fields inconsistent with XDR
 test('helper exit failures do not produce successful or zero benchmark values', async t => {
   transport(t, '', new Error('exit 1'));
   await assert.rejects(simulateSnapshot(input, '/test/helper'), /Simulation helper failed: host invocation failed/);
+});
+test('structured native failures preserve capture payload but expose only the stable code', async t => {
+  const envelope = {
+    protocol_version: 1,
+    status: 'uncaptured',
+    keys: [input.entries[0].key],
+    message: 'snapshot is missing ledger keys',
+  };
+  transport(t, JSON.stringify(envelope), new Error('native helper failure'), 'native helper failure');
+  await assert.rejects(simulateSnapshot(input, '/test/helper'), error => {
+    assert.equal(error.message, 'Simulation helper failed: UNCAPTURED_KEY');
+    assert.equal(error.stdout, JSON.stringify(envelope));
+    return true;
+  });
 });
 test('helper diagnostic events cannot be accepted as charged contract events', async t => {
   const rpc = require('../docs/experiments/compute-source-spike/base-rpc.json');

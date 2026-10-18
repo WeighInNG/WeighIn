@@ -53344,11 +53344,12 @@ function parseHelperFailure(error2) {
     if (parsed.status === "uncaptured" && (!Array.isArray(parsed.keys) || parsed.keys.length === 0))
       throw new Error("uncaptured envelope has no keys");
     return parsed;
-  } catch (parseError) {
-    throw new Error(
-      `Invalid native helper failure protocol: ${parseError instanceof Error ? parseError.message : parseError}`
-    );
+  } catch {
+    throw new Error("Invalid native helper failure protocol");
   }
+}
+function helperFailureDiagnostic(status) {
+  return status === "uncaptured" ? "UNCAPTURED_KEY" : status === "host_failure" ? "host_failure: host invocation failed" : status;
 }
 var provisioned;
 async function resolveSimulationHelper(explicitPath, customBuild) {
@@ -53410,13 +53411,24 @@ async function resolveSimulationHelper(explicitPath, customBuild) {
   return provisioned;
 }
 async function simulateSnapshot(input, helperPath, signal) {
-  const stdout = await execute(
-    helperPath,
-    [],
-    JSON.stringify(input),
-    void 0,
-    signal
-  );
+  let stdout;
+  try {
+    stdout = await execute(
+      helperPath,
+      [],
+      JSON.stringify(input),
+      void 0,
+      signal
+    );
+  } catch (failure) {
+    const envelope = parseHelperFailure(failure);
+    if (envelope && failure instanceof Error) {
+      failure.message = `Simulation helper failed: ${helperFailureDiagnostic(
+        envelope.status
+      )}`;
+    }
+    throw failure;
+  }
   let output;
   try {
     output = outputSchema.parse(JSON.parse(stdout));
@@ -53771,7 +53783,7 @@ async function measureInvocation(rpcUrl, transaction, helperPath, options) {
       if (envelope) {
         if (envelope.status !== "uncaptured")
           throw new Error(
-            `Native helper ${envelope.status}: ${envelope.message}`
+            `Native helper ${helperFailureDiagnostic(envelope.status)}`
           );
         const additional2 = (envelope.keys ?? []).filter(
           (key) => !keys.has(key)
