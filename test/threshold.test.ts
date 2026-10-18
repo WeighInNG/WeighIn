@@ -245,5 +245,61 @@ describe("enforceThresholds", () => {
       expect(v[0].rule).toBe("absolute_limit(50)");
       expect(v[1].rule).toBe("allow_10_percent_increase");
     });
+
+    it("rejects nonempty global limits on empty comparison with no contracts", () => {
+      const config: WeighinConfig = {
+        limits: {
+          global: { cpu_instructions: 50 },
+        },
+      };
+      const emptyDiff: DiffResult = {
+        contracts: [],
+        hasRegression: false,
+        newContracts: [],
+        removedContracts: [],
+      };
+      expect(() => enforceThresholds(emptyDiff, config)).toThrow(
+        "Cannot evaluate global limits: no matched BASE/HEAD benchmarks",
+      );
+    });
+
+    it("rejects nonempty global limits on comparison with contracts but zero matched functions", () => {
+      const config: WeighinConfig = {
+        limits: {
+          global: { cpu_instructions: 50 },
+        },
+      };
+      const diffWithEmptyFunctions = {
+        contracts: [
+          {
+            contract_id: "c1",
+            functions: [],
+          },
+        ],
+        hasRegression: false,
+        newContracts: [],
+        removedContracts: [],
+      };
+      expect(() =>
+        enforceThresholds(diffWithEmptyFunctions as any, config),
+      ).toThrow(
+        "Cannot evaluate global limits: no matched BASE/HEAD benchmarks",
+      );
+    });
+
+    it("allows report-only and explicit empty limits on empty comparison", () => {
+      const emptyDiff: DiffResult = {
+        contracts: [],
+        hasRegression: false,
+        newContracts: [],
+        removedContracts: [],
+      };
+      expect(enforceThresholds(emptyDiff, null)).toEqual([]);
+      expect(enforceThresholds(emptyDiff, {})).toEqual([]);
+      expect(enforceThresholds(emptyDiff, { limits: {} })).toEqual([]);
+      expect(enforceThresholds(emptyDiff, { limits: { global: {} } })).toEqual(
+        [],
+      );
+    });
   });
 });
