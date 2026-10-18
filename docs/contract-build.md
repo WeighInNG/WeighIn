@@ -18,11 +18,15 @@ back to plain Cargo or the older target.
 ## Artifact selection
 
 For each declared `wasm_path`, WeighIn locates the nearest owning Cargo manifest
-and reads locked Cargo workspace metadata. The WASM basename must identify
-exactly one workspace `cdylib` package (`my-contract` emits `my_contract.wasm`).
-Unknown/ambiguous package names, missing manifests and build failures are errors.
-All declarations are resolved before builds start; unrelated workspace packages
-are not selected. Multiple declarations of one package share one build.
+and reads locked Cargo workspace metadata. Workspace metadata is validated against
+a strict schema before package selection: package identifiers, names, and manifest
+paths must be non-empty and present on disk, target structures must define valid
+crate type arrays, and all workspace members must resolve to known packages. The
+WASM basename must identify exactly one workspace `cdylib` package (`my-contract`
+emits `my_contract.wasm`). Unknown/ambiguous package names, missing manifests,
+malformed metadata and build failures are errors. All declarations are resolved
+before builds start; unrelated workspace packages are not selected. Multiple
+declarations of one package share one build.
 
 Each package builds into a fresh temporary output directory:
 

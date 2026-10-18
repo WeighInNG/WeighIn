@@ -3,6 +3,7 @@ import * as path from "path";
 import * as os from "os";
 import { createHash } from "crypto";
 import * as exec from "@actions/exec";
+import { z } from "zod";
 import { parseFixtures } from "./identity";
 
 export interface BuiltContract {
@@ -14,11 +15,61 @@ export interface BuiltContract {
   rust_version: string;
 }
 
-interface CargoPackage {
-  id: string;
-  name: string;
-  manifest_path: string;
-  targets: Array<{ crate_types: string[] }>;
+export const CargoTargetSchema = z
+  .object({
+    name: z.string().optional(),
+    crate_types: z.array(z.string()),
+  })
+  .passthrough();
+
+export const CargoPackageSchema = z
+  .object({
+    id: z.string().min(1, "package id must not be empty"),
+    name: z.string().min(1, "package name must not be empty"),
+    manifest_path: z.string().min(1, "manifest_path must not be empty"),
+    targets: z.array(CargoTargetSchema),
+  })
+  .passthrough();
+
+export const CargoMetadataSchema = z
+  .object({
+    packages: z.array(CargoPackageSchema),
+    workspace_members: z.array(z.string()),
+  })
+  .passthrough();
+
+export type CargoPackage = z.infer<typeof CargoPackageSchema>;
+export type CargoMetadata = z.infer<typeof CargoMetadataSchema>;
+
+export function validateCargoMetadata(
+  raw: unknown,
+  manifest: string,
+): CargoMetadata {
+  const result = CargoMetadataSchema.safeParse(raw);
+  if (!result.success) {
+    const issues = result.error.issues
+      .map((i) => `${i.path.join(".") || "metadata"}: ${i.message}`)
+      .join("; ");
+    throw new Error(`Invalid Cargo metadata for ${manifest}: ${issues}`);
+  }
+  const metadata = result.data;
+  const packageMap = new Map<string, CargoPackage>();
+  for (const pkg of metadata.packages) {
+    if (!fs.existsSync(pkg.manifest_path)) {
+      throw new Error(
+        `Cargo package ${pkg.name} has unusable manifest_path ${pkg.manifest_path}: file does not exist`,
+      );
+    }
+    packageMap.set(pkg.id, pkg);
+  }
+  for (const memberId of metadata.workspace_members) {
+    if (!packageMap.has(memberId)) {
+      throw new Error(
+        `Cargo metadata for ${manifest} contains foreign workspace member ${memberId} not found in packages list`,
+      );
+    }
+  }
+  return metadata;
 }
 
 /** Detect storage errors that the optimizer's temporary-file writer may hide. */
@@ -135,22 +186,30 @@ export async function buildContracts(
     const manifest = path.join(dir, "Cargo.toml");
     let packages = metadataCache.get(manifest);
     if (!packages) {
-      const metadata = JSON.parse(
-        await command(
-          "cargo",
-          [
-            "metadata",
-            "--no-deps",
-            "--locked",
-            "--format-version",
-            "1",
-            "--manifest-path",
-            manifest,
-          ],
-          dir,
-        ),
-      );
-      packages = (metadata.packages as CargoPackage[]).filter(
+      let rawMetadata: unknown;
+      try {
+        rawMetadata = JSON.parse(
+          await command(
+            "cargo",
+            [
+              "metadata",
+              "--no-deps",
+              "--locked",
+              "--format-version",
+              "1",
+              "--manifest-path",
+              manifest,
+            ],
+            dir,
+          ),
+        );
+      } catch (error: any) {
+        throw new Error(
+          `Failed to parse Cargo metadata for ${manifest}: ${error.message}`,
+        );
+      }
+      const metadata = validateCargoMetadata(rawMetadata, manifest);
+      packages = metadata.packages.filter(
         (pkg) =>
           metadata.workspace_members.includes(pkg.id) &&
           pkg.targets.some((target) => target.crate_types.includes("cdylib")),

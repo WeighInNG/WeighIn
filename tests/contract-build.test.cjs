@@ -40,7 +40,14 @@ async function scenario(options, verify) {
     commands.push({ command, args, env: config.env });
     const emit = text => config.listeners.stdout(Buffer.from(text));
     if (command === 'rustc') emit(options.rust || 'rustc 1.95.0');
-    else if (command === 'cargo') emit(JSON.stringify({ workspace_members: packages.map(pkg => pkg.id), packages }));
+    else if (command === 'cargo') {
+      if (options.cargoMetadataRaw !== undefined) {
+        const raw = typeof options.cargoMetadataRaw === 'function' ? options.cargoMetadataRaw(directory) : options.cargoMetadataRaw;
+        emit(typeof raw === 'string' ? raw : JSON.stringify(raw));
+      } else {
+        emit(JSON.stringify({ workspace_members: packages.map(pkg => pkg.id), packages, ...(options.cargoMetadataExtra || {}) }));
+      }
+    }
     else if (command === 'stellar' && args[0] === '--version') {
       if (options.missingCli) throw new Error('stellar executable not found');
       emit(options.stellar || 'stellar 28.1.0');
@@ -144,3 +151,58 @@ test('missing caller temporary-storage directory fails visibly before optimizati
   finally { if (previous === undefined) delete process.env.TMPDIR; else process.env.TMPDIR = previous; }
   assert.equal(commands.some(c => c.command === 'stellar' && c.args[0] === 'contract'), false);
 }));
+
+test('foreign workspace members in Cargo metadata are rejected with actionable error', async () => scenario({
+  cargoMetadataRaw: directory => ({
+    packages: [{ id: 'pkg0', name: 'hello-contract', manifest_path: path.join(directory, 'crate0', 'Cargo.toml'), targets: [{ crate_types: ['cdylib'] }] }],
+    workspace_members: ['pkg0', 'foreign-crate-id'],
+  }),
+}, async ({ fixtures, commands }) => {
+  await assert.rejects(buildContracts(fixtures), /foreign workspace member foreign-crate-id not found in packages list/);
+  assert.ok(!commands.some(c => c.args[0] === 'contract'));
+}));
+
+test('unusable manifest_path in Cargo metadata is rejected before building', async () => scenario({
+  cargoMetadataRaw: {
+    packages: [{ id: 'pkg0', name: 'hello-contract', manifest_path: '/nonexistent/path/Cargo.toml', targets: [{ crate_types: ['cdylib'] }] }],
+    workspace_members: ['pkg0'],
+  },
+}, async ({ fixtures, commands }) => {
+  await assert.rejects(buildContracts(fixtures), /has unusable manifest_path \/nonexistent\/path\/Cargo.toml: file does not exist/);
+  assert.ok(!commands.some(c => c.args[0] === 'contract'));
+}));
+
+test('malformed targets in Cargo metadata are rejected before building', async () => scenario({
+  cargoMetadataRaw: directory => ({
+    packages: [{ id: 'pkg0', name: 'hello-contract', manifest_path: path.join(directory, 'crate0', 'Cargo.toml'), targets: 'not-an-array' }],
+    workspace_members: ['pkg0'],
+  }),
+}, async ({ fixtures, commands }) => {
+  await assert.rejects(buildContracts(fixtures), /Invalid Cargo metadata/);
+  assert.ok(!commands.some(c => c.args[0] === 'contract'));
+}));
+
+test('malformed Cargo metadata payload is rejected before building', async () => scenario({
+  cargoMetadataRaw: {
+    packages: 'invalid',
+    workspace_members: ['pkg0'],
+  },
+}, async ({ fixtures, commands }) => {
+  await assert.rejects(buildContracts(fixtures), /Invalid Cargo metadata/);
+  assert.ok(!commands.some(c => c.args[0] === 'contract'));
+}));
+
+test('valid version-1 Cargo metadata with harmless unknown fields passes cleanly', async () => scenario({
+  cargoMetadataExtra: {
+    version: 1,
+    workspace_root: '/workspace',
+    target_directory: '/workspace/target',
+    harmless_extension_field: { key: 'value' },
+  },
+}, async ({ fixtures, directory, destinations, wasm }) => {
+  const results = await buildContracts(fixtures, '1.95.0');
+  assert.equal(results.length, 1);
+  assert.equal(results[0].package, 'hello-contract');
+  assert.deepEqual(fs.readFileSync(path.join(directory, destinations[0])), wasm);
+}));
+

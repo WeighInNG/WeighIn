@@ -54813,6 +54813,45 @@ var path4 = __toESM(require("path"));
 var os = __toESM(require("os"));
 var import_crypto = require("crypto");
 var exec = __toESM(require_exec());
+var CargoTargetSchema = external_exports.object({
+  name: external_exports.string().optional(),
+  crate_types: external_exports.array(external_exports.string())
+}).passthrough();
+var CargoPackageSchema = external_exports.object({
+  id: external_exports.string().min(1, "package id must not be empty"),
+  name: external_exports.string().min(1, "package name must not be empty"),
+  manifest_path: external_exports.string().min(1, "manifest_path must not be empty"),
+  targets: external_exports.array(CargoTargetSchema)
+}).passthrough();
+var CargoMetadataSchema = external_exports.object({
+  packages: external_exports.array(CargoPackageSchema),
+  workspace_members: external_exports.array(external_exports.string())
+}).passthrough();
+function validateCargoMetadata(raw, manifest) {
+  const result = CargoMetadataSchema.safeParse(raw);
+  if (!result.success) {
+    const issues = result.error.issues.map((i) => `${i.path.join(".") || "metadata"}: ${i.message}`).join("; ");
+    throw new Error(`Invalid Cargo metadata for ${manifest}: ${issues}`);
+  }
+  const metadata = result.data;
+  const packageMap = /* @__PURE__ */ new Map();
+  for (const pkg of metadata.packages) {
+    if (!fs3.existsSync(pkg.manifest_path)) {
+      throw new Error(
+        `Cargo package ${pkg.name} has unusable manifest_path ${pkg.manifest_path}: file does not exist`
+      );
+    }
+    packageMap.set(pkg.id, pkg);
+  }
+  for (const memberId of metadata.workspace_members) {
+    if (!packageMap.has(memberId)) {
+      throw new Error(
+        `Cargo metadata for ${manifest} contains foreign workspace member ${memberId} not found in packages list`
+      );
+    }
+  }
+  return metadata;
+}
 function verifyBuildStorage(directory, bytes = 1024 * 1024) {
   const probePath = path4.join(directory, ".weighin-storage-probe");
   const expected = Buffer.alloc(bytes, 165);
@@ -54905,21 +54944,29 @@ async function buildContracts(fixturesPath, rustToolchain) {
     const manifest = path4.join(dir, "Cargo.toml");
     let packages = metadataCache.get(manifest);
     if (!packages) {
-      const metadata = JSON.parse(
-        await command(
-          "cargo",
-          [
-            "metadata",
-            "--no-deps",
-            "--locked",
-            "--format-version",
-            "1",
-            "--manifest-path",
-            manifest
-          ],
-          dir
-        )
-      );
+      let rawMetadata;
+      try {
+        rawMetadata = JSON.parse(
+          await command(
+            "cargo",
+            [
+              "metadata",
+              "--no-deps",
+              "--locked",
+              "--format-version",
+              "1",
+              "--manifest-path",
+              manifest
+            ],
+            dir
+          )
+        );
+      } catch (error2) {
+        throw new Error(
+          `Failed to parse Cargo metadata for ${manifest}: ${error2.message}`
+        );
+      }
+      const metadata = validateCargoMetadata(rawMetadata, manifest);
       packages = metadata.packages.filter(
         (pkg) => metadata.workspace_members.includes(pkg.id) && pkg.targets.some((target) => target.crate_types.includes("cdylib"))
       );
