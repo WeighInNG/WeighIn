@@ -18,3 +18,4 @@ weighin-results.json
 .codex/
 AGENTS.override.md
 WEIGHIN_DRIPS_APPEAL_CONTEXT.md
+config.bat

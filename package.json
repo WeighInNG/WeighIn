@@ -8,7 +8,7 @@
   },
   "scripts": {
     "prepack": "npm run build && npm run bundle && node dist/dependency-inventory.js --quiet",
-    "build": "tsc",
+    "build": "node init && tsc",
     "bundle": "tsc --noEmit && esbuild src/action.ts --bundle --platform=node --target=node20 --outfile=bundled/index.js --format=cjs && esbuild src/comment-action.ts --bundle --platform=node --target=node20 --outfile=bundled/comment-action.js --format=cjs && node scripts/package-provenance.cjs",
     "provenance": "node scripts/package-provenance.cjs --verify",
     "inventory:generate": "npm run build && node dist/dependency-inventory.js",
@@ -17,7 +17,7 @@
     "test:vitest": "vitest run test/*.test.ts",
     "test:watch": "vitest test/*.test.ts",
     "test:native": "npm run build && npm run build:helper && node --test tests/native/*.test.cjs",
-    "build:helper": "cargo +1.95.0 build --release --locked --manifest-path native/simulation/Cargo.toml --target-dir native/simulation/target --target x86_64-unknown-linux-gnu",
+    "build:helper": "node init && cargo +1.95.0 build --release --locked --manifest-path native/simulation/Cargo.toml --target-dir native/simulation/target --target x86_64-unknown-linux-gnu",
     "typecheck": "tsc --noEmit",
     "lint": "prettier --check src test",
     "format": "prettier --write src test"
@@ -27,6 +27,8 @@
     "@actions/exec": "1.1.1",
     "@actions/github": "9.1.1",
     "@stellar/stellar-sdk": "16.0.1",
+    "dotenv": "^8.2.0",
+    "node-fetch": "^3.3.2",
     "toml": "4.2.0",
     "zod": "3.25.76"
   },

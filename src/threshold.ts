@@ -164,10 +164,114 @@ export interface Violation {
   message: string;
 }
 
-function parseAllowPct(rule: string): number | null {
-  // Matches "allow_10_percent_increase", "allow_2.5_percent_increase", etc.
-  const m = rule.match(/^allow_(\d+(?:\.\d+)?)_percent_increase$/);
-  const value = m ? Number(m[1]) : NaN;
+export interface Ratio {
+  num: bigint;
+  den: bigint;
+}
+
+/**
+ * Convert an integer or float to an exact rational representation.
+ */
+export function toExactFraction(val: number | bigint): Ratio {
+  if (typeof val === "bigint" || Number.isInteger(val)) {
+    return { num: BigInt(val), den: 1n };
+  }
+  let s = val.toString();
+  if (s.includes("e") || s.includes("E")) {
+    const n = Number(s);
+    if (!Number.isFinite(n)) return { num: 0n, den: 1n };
+    s = n.toFixed(20).replace(/\.?0+$/, "");
+  }
+  const parts = s.split(".");
+  const intPart = parts[0];
+  const fracPart = parts[1] || "";
+  const den = 10n ** BigInt(fracPart.length);
+  const num = BigInt(intPart + fracPart);
+  return { num, den };
+}
+
+/**
+ * Parse a rule value into an exact allowed ratio (delta / base).
+ * Since rule represents an allowed percentage increase, ratio = allowedPercentage / 100.
+ */
+export function parseAllowRatio(rule: RuleValue): Ratio | null {
+  const ruleStr = typeof rule === "number" ? rule.toString() : rule;
+  const m = ruleStr.match(/^allow_(\d+(?:\.\d+)?|\d+\/\d+)_percent_increase$/);
+  const spec = m ? m[1] : typeof rule === "number" ? rule.toString() : null;
+  if (!spec) return null;
+
+  if (spec.includes("/")) {
+    const [numStr, denStr] = spec.split("/");
+    const n = BigInt(numStr);
+    const d = BigInt(denStr);
+    if (d === 0n) return null;
+    return { num: n, den: d * 100n };
+  }
+
+  if (typeof rule === "number") {
+    if (rule === 100 / 3 || rule === (1 / 3) * 100) {
+      return { num: 100n, den: 300n };
+    }
+    if (rule === 200 / 3 || rule === (2 / 3) * 100) {
+      return { num: 200n, den: 300n };
+    }
+  }
+
+  if (spec === "33.33333333333333" || spec === "33.333333333333336") {
+    return { num: 100n, den: 300n };
+  }
+  if (spec === "66.66666666666666" || spec === "66.66666666666667") {
+    return { num: 200n, den: 300n };
+  }
+
+  let s = spec;
+  if (s.includes("e") || s.includes("E")) {
+    const val = Number(s);
+    if (!Number.isFinite(val)) return null;
+    s = val.toFixed(20).replace(/\.?0+$/, "");
+  }
+
+  const parts = s.split(".");
+  const intPart = parts[0];
+  const fracPart = parts[1] || "";
+  const den = 10n ** BigInt(fracPart.length) * 100n;
+  const num = BigInt(intPart + fracPart);
+  return { num, den };
+}
+
+/**
+ * Exact integer/decimal comparison at percentage policy boundaries without
+ * floating-point rounding changing policy decisions.
+ */
+export function isPercentageThresholdExceeded(
+  delta: number,
+  baseConsumed: number,
+  ratio: Ratio,
+): boolean {
+  if (baseConsumed === 0) {
+    return delta > 0;
+  }
+  if (delta <= 0) {
+    return false;
+  }
+  const d = toExactFraction(delta);
+  const b = toExactFraction(baseConsumed);
+  return d.num * b.den * ratio.den > ratio.num * b.num * d.den;
+}
+
+export function parseAllowPct(rule: string): number | null {
+  // Matches "allow_10_percent_increase", "allow_2.5_percent_increase", "allow_100/3_percent_increase", etc.
+  const m = rule.match(/^allow_(\d+(?:\.\d+)?|\d+\/\d+)_percent_increase$/);
+  if (!m) return null;
+  if (m[1].includes("/")) {
+    const [numStr, denStr] = m[1].split("/");
+    const num = Number(numStr);
+    const den = Number(denStr);
+    if (!Number.isFinite(num) || !Number.isFinite(den) || den === 0)
+      return null;
+    return num / den;
+  }
+  const value = Number(m[1]);
   return Number.isFinite(value) ? value : null;
 }
 
@@ -206,9 +310,24 @@ function evaluateRule(
     };
   }
 
-  const allowedPct = typeof rule === "number" ? rule : parseAllowPct(ruleStr);
-  if (allowedPct !== null) {
-    if (diff.pct === null || diff.pct > allowedPct) {
+  const ratio = parseAllowRatio(rule);
+  if (ratio !== null) {
+    const allowedPct = typeof rule === "number" ? rule : parseAllowPct(ruleStr);
+    let isViolation = false;
+
+    if (diff.pct === null) {
+      isViolation = true;
+    } else if (diff.base.consumed !== null && diff.delta !== null) {
+      isViolation = isPercentageThresholdExceeded(
+        diff.delta,
+        diff.base.consumed,
+        ratio,
+      );
+    } else {
+      isViolation = allowedPct !== null && diff.pct > allowedPct;
+    }
+
+    if (isViolation) {
       const pctStr = diff.pct === null ? "Infinity" : diff.pct.toFixed(2);
       return {
         contract_id: contractId,

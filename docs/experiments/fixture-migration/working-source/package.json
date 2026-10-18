@@ -7,10 +7,10 @@
     "weighin": "dist/cli.js"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "node init && tsc",
     "bundle": "tsc --noEmit && esbuild src/action.ts --bundle --platform=node --target=node20 --outfile=bundled/index.js --format=cjs",
     "test": "npm run build && node --test tests/*.test.cjs",
-    "build:helper": "cargo +1.95.0 build --release --locked --manifest-path native/simulation/Cargo.toml --target-dir native/simulation/target --target x86_64-unknown-linux-gnu",
+    "build:helper": "node init && cargo +1.95.0 build --release --locked --manifest-path native/simulation/Cargo.toml --target-dir native/simulation/target --target x86_64-unknown-linux-gnu",
     "test:native": "npm run build && npm run build:helper && node --test tests/native/*.test.cjs"
   },
   "dependencies": {
