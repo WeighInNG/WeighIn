@@ -59,11 +59,29 @@ if (mode === "funding-exhausted") {
 }
 
 Module._load = function (name, parent, ...args) {
+  const norm = parent?.filename ? parent.filename.replace(/\\/g, "/") : "";
   if (
-    parent?.filename.endsWith("/dist/action.js") ||
-    parent?.filename.endsWith("/dist/build.js")
+    norm.endsWith("/dist/action.js") ||
+    norm.endsWith("/dist/build.js")
   ) {
     if (name === "@actions/github") return { context: { payload: {} } };
+    if (name === "@actions/core" && mode === "summary-failure") {
+      const realCore = load.call(this, name, parent, ...args);
+      const origSummary = realCore.summary;
+      return {
+        ...realCore,
+        summary: {
+          ...origSummary,
+          addRaw: function (...a) {
+            origSummary.addRaw.apply(this, a);
+            return this;
+          },
+          write: async function () {
+            throw new Error("unit summary delivery failure");
+          },
+        },
+      };
+    }
     if (name === "@actions/exec")
       return {
         exec: async (command, argv, options = {}) => {

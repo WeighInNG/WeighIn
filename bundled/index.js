@@ -55079,6 +55079,7 @@ function buildPrMetadata(repository, prNumber, headSha) {
 
 // src/action.ts
 var configuredRpcUrl = "";
+var validatedDiff = null;
 async function assertRpcHealthy(rpcUrl) {
   core3.info(`Checking RPC health at ${sanitizeEndpoint(rpcUrl)} ...`);
   try {
@@ -55316,6 +55317,7 @@ async function upsertPrComment(token, body) {
   }
 }
 async function run() {
+  validatedDiff = null;
   let keyDir = null;
   let sharedKeyFile = null;
   try {
@@ -55470,6 +55472,7 @@ async function run() {
     const result = violations.length > 0 ? "fail" : "pass";
     core3.setOutput("result", result);
     core3.setOutput("diff-json", JSON.stringify(diff));
+    validatedDiff = diff;
     const body = renderComment(
       diff,
       violations,
@@ -55525,11 +55528,15 @@ run().catch(async (error2) => {
     configuredRpcUrl
   );
   core3.setOutput("result", "fail");
-  core3.setOutput("diff-json", "{}");
+  if (validatedDiff) {
+    core3.setOutput("diff-json", JSON.stringify(validatedDiff));
+  } else {
+    core3.setOutput("diff-json", "{}");
+  }
   core3.setFailed(message);
   const reportPathInput = core3.getInput("report-path");
   const headWorkspace = process.env["GITHUB_WORKSPACE"] ?? process.cwd();
-  if (reportPathInput) {
+  if (reportPathInput && !validatedDiff) {
     try {
       const failureReport = generateFailureReport(message);
       writeReportFile(reportPathInput, headWorkspace, failureReport);
@@ -55540,14 +55547,24 @@ run().catch(async (error2) => {
     }
   }
   if (process.env.GITHUB_STEP_SUMMARY) {
-    await core3.summary.addRaw(
-      `## WeighIn comparison failed
+    try {
+      const summaryHeader = validatedDiff ? `## WeighIn delivery failed
+
+${message}
+
+Comparison and policy evaluation succeeded, but artifact delivery failed.
+` : `## WeighIn comparison failed
 
 ${message}
 
 No passing comparison or policy result was established.
-`
-    ).write();
+`;
+      await core3.summary.addRaw(summaryHeader).write();
+    } catch (summaryErr) {
+      core3.warning(
+        `Failed to write step summary: ${summaryErr?.message ?? summaryErr}`
+      );
+    }
   }
 });
 /*! Bundled license information:
