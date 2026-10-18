@@ -202,7 +202,7 @@ var require_file_command = __commonJS({
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.issueFileCommand = issueFileCommand;
     exports2.prepareKeyValueMessage = prepareKeyValueMessage;
-    var crypto5 = __importStar(require("crypto"));
+    var crypto6 = __importStar(require("crypto"));
     var fs6 = __importStar(require("fs"));
     var os3 = __importStar(require("os"));
     var utils_1 = require_utils();
@@ -219,7 +219,7 @@ var require_file_command = __commonJS({
       });
     }
     function prepareKeyValueMessage(key, value) {
-      const delimiter = `ghadelimiter_${crypto5.randomUUID()}`;
+      const delimiter = `ghadelimiter_${crypto6.randomUUID()}`;
       const convertedValue = (0, utils_1.toCommandValue)(value);
       if (key.includes(delimiter)) {
         throw new Error(`Unexpected input: name should not contain the delimiter "${delimiter}"`);
@@ -4301,11 +4301,11 @@ var require_util2 = __commonJS({
     var { isUint8Array } = require("node:util/types");
     var { webidl } = require_webidl();
     var supportedHashes = [];
-    var crypto5;
+    var crypto6;
     try {
-      crypto5 = require("node:crypto");
+      crypto6 = require("node:crypto");
       const possibleRelevantHashes = ["sha256", "sha384", "sha512"];
-      supportedHashes = crypto5.getHashes().filter((hash2) => possibleRelevantHashes.includes(hash2));
+      supportedHashes = crypto6.getHashes().filter((hash2) => possibleRelevantHashes.includes(hash2));
     } catch {
     }
     function responseURL(response) {
@@ -4578,7 +4578,7 @@ var require_util2 = __commonJS({
       }
     }
     function bytesMatch(bytes, metadataList) {
-      if (crypto5 === void 0) {
+      if (crypto6 === void 0) {
         return true;
       }
       const parsedMetadata = parseMetadata(metadataList);
@@ -4593,7 +4593,7 @@ var require_util2 = __commonJS({
       for (const item of metadata) {
         const algorithm = item.algo;
         const expectedValue = item.hash;
-        let actualValue = crypto5.createHash(algorithm).update(bytes).digest("base64");
+        let actualValue = crypto6.createHash(algorithm).update(bytes).digest("base64");
         if (actualValue[actualValue.length - 1] === "=") {
           if (actualValue[actualValue.length - 2] === "=") {
             actualValue = actualValue.slice(0, -2);
@@ -5657,8 +5657,8 @@ var require_body = __commonJS({
     var { multipartFormDataParser } = require_formdata_parser();
     var random;
     try {
-      const crypto5 = require("node:crypto");
-      random = (max) => crypto5.randomInt(0, max);
+      const crypto6 = require("node:crypto");
+      random = (max) => crypto6.randomInt(0, max);
     } catch {
       random = (max) => Math.floor(Math.random(max));
     }
@@ -17256,13 +17256,13 @@ var require_frame = __commonJS({
     "use strict";
     var { maxUnsigned16Bit } = require_constants5();
     var BUFFER_SIZE = 16386;
-    var crypto5;
+    var crypto6;
     var buffer = null;
     var bufIdx = BUFFER_SIZE;
     try {
-      crypto5 = require("node:crypto");
+      crypto6 = require("node:crypto");
     } catch {
-      crypto5 = {
+      crypto6 = {
         // not full compatibility, but minimum.
         randomFillSync: function randomFillSync(buffer2, _offset, _size) {
           for (let i = 0; i < buffer2.length; ++i) {
@@ -17275,7 +17275,7 @@ var require_frame = __commonJS({
     function generateMask() {
       if (bufIdx === BUFFER_SIZE) {
         bufIdx = 0;
-        crypto5.randomFillSync(buffer ??= Buffer.allocUnsafe(BUFFER_SIZE), 0, BUFFER_SIZE);
+        crypto6.randomFillSync(buffer ??= Buffer.allocUnsafe(BUFFER_SIZE), 0, BUFFER_SIZE);
       }
       return [buffer[bufIdx++], buffer[bufIdx++], buffer[bufIdx++], buffer[bufIdx++]];
     }
@@ -17347,9 +17347,9 @@ var require_connection = __commonJS({
     var { Headers: Headers2, getHeadersList } = require_headers();
     var { getDecodeSplit } = require_util2();
     var { WebsocketFrameSend } = require_frame();
-    var crypto5;
+    var crypto6;
     try {
-      crypto5 = require("node:crypto");
+      crypto6 = require("node:crypto");
     } catch {
     }
     function establishWebSocketConnection(url, protocols, client, ws, onEstablish, options) {
@@ -17369,7 +17369,7 @@ var require_connection = __commonJS({
         const headersList = getHeadersList(new Headers2(options.headers));
         request3.headersList = headersList;
       }
-      const keyValue = crypto5.randomBytes(16).toString("base64");
+      const keyValue = crypto6.randomBytes(16).toString("base64");
       request3.headersList.append("sec-websocket-key", keyValue);
       request3.headersList.append("sec-websocket-version", "13");
       for (const protocol of protocols) {
@@ -17399,7 +17399,7 @@ var require_connection = __commonJS({
             return;
           }
           const secWSAccept = response.headersList.get("Sec-WebSocket-Accept");
-          const digest = crypto5.createHash("sha1").update(keyValue + uid).digest("base64");
+          const digest = crypto6.createHash("sha1").update(keyValue + uid).digest("base64");
           if (secWSAccept !== digest) {
             failWebsocketConnection(ws, "Incorrect hash received in Sec-WebSocket-Accept header.");
             return;
@@ -55026,18 +55026,34 @@ async function buildForRevision(fixturesPath, worktreeRoot, rustToolchain, build
 // src/report.ts
 var fs4 = __toESM(require("fs"));
 var path5 = __toESM(require("path"));
+var crypto5 = __toESM(require("crypto"));
 var core2 = __toESM(require_core());
 function writeReportFile(reportPathInput, headWorkspace, body) {
   if (!reportPathInput) return;
   const targetPath = path5.resolve(headWorkspace, reportPathInput);
+  const parentDir = path5.dirname(targetPath);
+  let tempPath;
   try {
-    const parentDir = path5.dirname(targetPath);
     if (!fs4.existsSync(parentDir)) {
       fs4.mkdirSync(parentDir, { recursive: true });
     }
-    fs4.writeFileSync(targetPath, body, "utf8");
+    const uniqueSuffix = `${process.pid}.${Date.now()}.${crypto5.randomBytes(6).toString("hex")}`;
+    tempPath = path5.join(
+      parentDir,
+      `.${path5.basename(targetPath)}.${uniqueSuffix}.tmp`
+    );
+    fs4.writeFileSync(tempPath, body, "utf8");
+    fs4.renameSync(tempPath, targetPath);
     core2.info(`Wrote Markdown report to ${targetPath}`);
   } catch (err) {
+    if (tempPath) {
+      try {
+        if (fs4.existsSync(tempPath)) {
+          fs4.unlinkSync(tempPath);
+        }
+      } catch {
+      }
+    }
     throw new Error(
       `Failed to write WeighIn report to ${targetPath}: ${err.message}`
     );

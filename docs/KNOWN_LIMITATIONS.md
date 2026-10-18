@@ -28,6 +28,7 @@ see [Evidence](EVIDENCE.md), [metric provenance](metric-provenance.md) and
 | CLI | Intentionally limited | Measurement JSON from prebuilt WASM only. Comparison, thresholds and GitHub reporting belong to the Action/API |
 | GitHub comments | Supported with constraints | Separate consumer runs only for successful PR producers, so policy-failure reports remain artifacts/summaries. Direct comment API errors warn without failing an otherwise valid benchmark. Artifacts require retention/auth permissions. Comment upsert scans one comments API response; it does not paginate or disambiguate multiple marker comments (`src/comment.ts`) |
 | Endpoint diagnostics | Shape-based redaction only | CLI/Action/transport render a sanitized endpoint: userinfo stripped, query values redacted, fragment dropped, malformed input replaced with `[invalid endpoint]`. Not general-purpose DLP: secrets embedded in the path, response bodies or unrelated text are not guaranteed to be removed. Requests still use the unchanged endpoint |
+| Report file persistence | Supported | Action Markdown reports write atomically via owned same-directory temporary files and rename, preserving existing reports on write/rename failure and isolating concurrent writers (`src/report.ts`) |
 | External-project coverage | Validated within a bounded scope | [Hosted Soroban Forge proof](hosted-soroban-forge.md) covers the empty participant view in a permitted WeighInNG fork. Funded settlement, populated pagination, deposit/release and upstream adoption are not proven |
 
 ## Dependency audit

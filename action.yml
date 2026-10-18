@@ -79,7 +79,7 @@ inputs:
     default: ''
 
   report-path:
-    description: "Optional path where the generated Markdown benchmark report should be written"
+    description: "Optional path where the generated Markdown benchmark report should be written; written atomically via an owned same-directory temporary file and rename"
     required: false
     default: ''
 
