@@ -23,11 +23,23 @@ async function scenario(options, verify) {
   const commands = [];
   const wasm = Buffer.from([0, 97, 115, 109, 1, 0, 0, 0, 0, 1, 0]);
   const names = options.names || ['hello-contract'];
-  const packages = names.map((name, index) => {
+  const packages = options.packages || names.map((name, index) => {
     const manifest_path = path.join(directory, `crate${index}`, 'Cargo.toml');
     fs.mkdirSync(path.dirname(manifest_path)); fs.writeFileSync(manifest_path, '[package]');
     return { id: `pkg${index}`, name, manifest_path, targets: [{ crate_types: ['cdylib'] }] };
   });
+  if (options.packages) {
+    for (let index = 0; index < packages.length; index++) {
+      const pkg = packages[index];
+      if (!pkg.manifest_path) {
+        pkg.manifest_path = path.join(directory, `crate${index}`, 'Cargo.toml');
+      }
+      fs.mkdirSync(path.dirname(pkg.manifest_path), { recursive: true });
+      if (!fs.existsSync(pkg.manifest_path)) {
+        fs.writeFileSync(pkg.manifest_path, '[package]');
+      }
+    }
+  }
   fs.writeFileSync(path.join(directory, 'Cargo.toml'), '[workspace]');
   const fixtures = path.join(directory, 'fixtures.json');
   const destinations = options.paths || names.map(name => `target/wasm32v1-none/release/${name.replaceAll('-', '_')}.wasm`);
@@ -48,7 +60,11 @@ async function scenario(options, verify) {
       if (options.buildFailure) throw new Error('actual build failed');
       if (options.skippedOptimization) config.listeners.stderr(Buffer.from('Optimization skipped'));
       if (!options.missingOutput) {
-        const name = args[args.indexOf('--package') + 1].replaceAll('-', '_');
+        const pkgName = args[args.indexOf('--package') + 1];
+        const matchedPkg = packages.find(p => p.name === pkgName);
+        const cdylibs = matchedPkg?.targets?.filter(t => t.crate_types?.includes('cdylib')) || [];
+        const targetName = (cdylibs[0]?.name && cdylibs[0].name.trim()) || pkgName;
+        const name = targetName.replaceAll('-', '_');
         fs.writeFileSync(path.join(args[args.indexOf('--out-dir') + 1], `${name}.wasm`), options.badWasm ? 'invalid' : wasm);
       }
       buildReturned = true;
@@ -90,6 +106,40 @@ test('ambiguous Cargo packages are rejected before building', async () => scenar
 }));
 test('unknown artifact basename is rejected before building any package', async () => scenario({ paths: ['artifacts/unrelated.wasm'] }, async ({ fixtures }) => {
   await assert.rejects(buildContracts(fixtures), /exactly one.*found 0/);
+}));
+test('builds a package whose lib name differs from its package name', async () => scenario({
+  packages: [
+    {
+      id: 'pkg0',
+      name: 'my-package',
+      targets: [{ name: 'custom_lib_name', crate_types: ['cdylib'] }]
+    }
+  ],
+  paths: ['target/wasm32v1-none/release/custom_lib_name.wasm']
+}, async ({ fixtures, directory, commands, wasm, destinations }) => {
+  const results = await buildContracts(fixtures, '1.95.0');
+  assert.deepEqual(fs.readFileSync(path.join(directory, destinations[0])), wasm);
+  assert.equal(results[0].package, 'my-package');
+  assert.match(results[0].wasm_sha256, /^[a-f0-9]{64}$/);
+  const build = commands.find(command => command.command === 'stellar' && command.args[0] === 'contract');
+  assert.ok(build.args.includes('--package'));
+  assert.equal(build.args[build.args.indexOf('--package') + 1], 'my-package');
+}));
+test('rejects ambiguous multiple cdylib targets before compilation', async () => scenario({
+  packages: [
+    {
+      id: 'pkg0',
+      name: 'multi-cdylib-pkg',
+      targets: [
+        { name: 'lib_one', crate_types: ['cdylib'] },
+        { name: 'lib_two', crate_types: ['cdylib'] }
+      ]
+    }
+  ],
+  paths: ['artifacts/lib_one.wasm']
+}, async ({ fixtures, commands }) => {
+  await assert.rejects(buildContracts(fixtures), /Cargo package multi-cdylib-pkg has ambiguous multiple cdylib targets; found 2/);
+  assert.equal(commands.some(command => command.args[0] === 'contract'), false);
 }));
 for (const [label, options, expected] of [
   ['missing CLI', { missingCli: true }, /not found/],
@@ -138,9 +188,18 @@ for (const [label, options, afterBuild] of [
   assert.deepEqual(fs.readdirSync(os.tmpdir()).filter(name => name.startsWith('weighin-build-')).sort(), before);
 }));
 test('missing caller temporary-storage directory fails visibly before optimization', async () => scenario({}, async ({ fixtures, directory, commands }) => {
-  const previous = process.env.TMPDIR;
-  process.env.TMPDIR = path.join(directory, 'missing-temp');
+  const previous = { TMPDIR: process.env.TMPDIR, TEMP: process.env.TEMP, TMP: process.env.TMP };
+  const missing = path.join(directory, 'missing-temp');
+  process.env.TMPDIR = missing;
+  if (process.platform === 'win32') {
+    process.env.TEMP = missing;
+    process.env.TMP = missing;
+  }
   try { await assert.rejects(buildContracts(fixtures), /Cannot create build temporary storage/); }
-  finally { if (previous === undefined) delete process.env.TMPDIR; else process.env.TMPDIR = previous; }
+  finally {
+    if (previous.TMPDIR === undefined) delete process.env.TMPDIR; else process.env.TMPDIR = previous.TMPDIR;
+    if (previous.TEMP === undefined) delete process.env.TEMP; else process.env.TEMP = previous.TEMP;
+    if (previous.TMP === undefined) delete process.env.TMP; else process.env.TMP = previous.TMP;
+  }
   assert.equal(commands.some(c => c.command === 'stellar' && c.args[0] === 'contract'), false);
 }));

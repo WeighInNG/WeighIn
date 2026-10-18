@@ -54923,20 +54923,39 @@ async function buildContracts(fixturesPath, rustToolchain) {
       packages = metadata.packages.filter(
         (pkg) => metadata.workspace_members.includes(pkg.id) && pkg.targets.some((target) => target.crate_types.includes("cdylib"))
       );
+      for (const pkg of packages) {
+        const cdylibs = pkg.targets.filter(
+          (target) => target.crate_types.includes("cdylib")
+        );
+        if (cdylibs.length > 1) {
+          throw new Error(
+            `Cargo package ${pkg.name} has ambiguous multiple cdylib targets; found ${cdylibs.length}`
+          );
+        }
+      }
       metadataCache.set(manifest, packages);
     }
-    const matches = packages.filter(
-      (pkg) => `${pkg.name.replace(/-/g, "_")}.wasm` === path4.basename(destination)
-    );
+    const matches = packages.filter((pkg) => {
+      const cdylibs = pkg.targets.filter(
+        (target) => target.crate_types.includes("cdylib")
+      );
+      const targetName2 = cdylibs[0]?.name && cdylibs[0].name.trim() || pkg.name;
+      return `${targetName2.replace(/-/g, "_")}.wasm` === path4.basename(destination);
+    });
     if (matches.length !== 1)
       throw new Error(
         `wasm_path ${contract.wasm_path} must identify exactly one Cargo cdylib package; found ${matches.length}`
       );
-    plans.push({ destination, pkg: matches[0] });
+    const matchedPkg = matches[0];
+    const matchedCdylib = matchedPkg.targets.find(
+      (target) => target.crate_types.includes("cdylib")
+    );
+    const targetName = matchedCdylib?.name && matchedCdylib.name.trim() || matchedPkg.name;
+    plans.push({ destination, pkg: matchedPkg, targetName });
   }
   const artifacts = /* @__PURE__ */ new Map();
   const results = [];
-  for (const { destination, pkg } of plans) {
+  for (const { destination, pkg, targetName } of plans) {
     let wasm = artifacts.get(pkg.manifest_path);
     if (!wasm) {
       let outputDir;
@@ -54967,7 +54986,7 @@ async function buildContracts(fixturesPath, rustToolchain) {
           { ...env, TMPDIR: outputDir, TMP: outputDir, TEMP: outputDir }
         );
         wasm = fs3.readFileSync(
-          path4.join(outputDir, `${pkg.name.replace(/-/g, "_")}.wasm`)
+          path4.join(outputDir, `${targetName.replace(/-/g, "_")}.wasm`)
         );
         verifyBuildStorage(outputDir, Math.max(1024 * 1024, wasm.length));
         if (!wasm.subarray(0, 8).equals(Buffer.from([0, 97, 115, 109, 1, 0, 0, 0])))
