@@ -79,6 +79,7 @@ corresponding control for workflow dependencies, and
 | `dtolnay/rust-toolchain` | `dtolnay/rust-toolchain@d1031067263f94b142dd6c0ce24c5eb9d02d52a0` (unchanged) | `d1031067263f94b142dd6c0ce24c5eb9d02d52a0` | [dtolnay/rust-toolchain](https://github.com/dtolnay/rust-toolchain) commit, already reviewed | `d103106726` |
 | `WeighInNG/WeighIn` | `WeighInNG/WeighIn@bbbe9001bbd375fd6a1ff75be5da2593c86fff20` (unchanged) | `bbbe9001bbd375fd6a1ff75be5da2593c86fff20` | [WeighInNG/WeighIn](https://github.com/WeighInNG/WeighIn) revision verified by PR #13 | `bbbe9001bb` |
 | `WeighInNG/WeighIn/comment` | `WeighInNG/WeighIn/comment@bbbe9001bbd375fd6a1ff75be5da2593c86fff20` (unchanged) | `bbbe9001bbd375fd6a1ff75be5da2593c86fff20` | [WeighInNG/WeighIn](https://github.com/WeighInNG/WeighIn) `comment` subdirectory | `bbbe9001bb` |
+| `actions/cache` | `actions/cache@v4` | `0057852bfaa89a56745cba8c7296529d2fc39830` | [actions/cache](https://github.com/actions/cache) tag `v4.3.0` | v4.3.0 |
 
 Frozen experiment snapshots under `docs/experiments/**` are historical evidence and
 are deliberately outside this inventory and outside the check; they keep the moving

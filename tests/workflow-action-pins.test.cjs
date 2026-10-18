@@ -20,6 +20,7 @@ const reviewed = {
   'actions/setup-node': ['49933ea5288caeca8642d1e84afbd3f7d6820020'],
   'actions/upload-artifact': ['ea165f8d65b6e75b540449e92b4886f43607fa02'],
   'actions/download-artifact': ['d3f86a106a0bac45b974a628896c90dbdf5c8093'],
+  'actions/cache': ['0057852bfaa89a56745cba8c7296529d2fc39830'],
   'dtolnay/rust-toolchain': ['d1031067263f94b142dd6c0ce24c5eb9d02d52a0', '683b588c487a69d01f6c6ddf40f036ff682cc2c8'],
   'WeighInNG/WeighIn': ['bbbe9001bbd375fd6a1ff75be5da2593c86fff20'],
   'WeighInNG/WeighIn/comment': ['bbbe9001bbd375fd6a1ff75be5da2593c86fff20'],
