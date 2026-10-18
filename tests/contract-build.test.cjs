@@ -23,7 +23,7 @@ async function scenario(options, verify) {
   const commands = [];
   const wasm = Buffer.from([0, 97, 115, 109, 1, 0, 0, 0, 0, 1, 0]);
   const names = options.names || ['hello-contract'];
-  const packages = names.map((name, index) => {
+  const packages = options.packages ? options.packages(directory) : names.map((name, index) => {
     const manifest_path = path.join(directory, `crate${index}`, 'Cargo.toml');
     fs.mkdirSync(path.dirname(manifest_path)); fs.writeFileSync(manifest_path, '[package]');
     return { id: `pkg${index}`, name, manifest_path, targets: [{ crate_types: ['cdylib'] }] };
@@ -40,7 +40,13 @@ async function scenario(options, verify) {
     commands.push({ command, args, env: config.env });
     const emit = text => config.listeners.stdout(Buffer.from(text));
     if (command === 'rustc') emit(options.rust || 'rustc 1.95.0');
-    else if (command === 'cargo') emit(JSON.stringify({ workspace_members: packages.map(pkg => pkg.id), packages }));
+    else if (command === 'cargo') {
+      const manifestIndex = args.indexOf('--manifest-path');
+      const manifestArg = manifestIndex !== -1 ? args[manifestIndex + 1] : null;
+      const relevantPackages = packages.filter(p => !manifestArg || p.manifest_path === manifestArg || path.dirname(p.manifest_path) === path.dirname(manifestArg));
+      const selected = relevantPackages.length > 0 ? relevantPackages : packages;
+      emit(JSON.stringify({ workspace_members: selected.map(pkg => pkg.id), packages: selected }));
+    }
     else if (command === 'stellar' && args[0] === '--version') {
       if (options.missingCli) throw new Error('stellar executable not found');
       emit(options.stellar || 'stellar 28.1.0');
@@ -144,3 +150,41 @@ test('missing caller temporary-storage directory fails visibly before optimizati
   finally { if (previous === undefined) delete process.env.TMPDIR; else process.env.TMPDIR = previous; }
   assert.equal(commands.some(c => c.command === 'stellar' && c.args[0] === 'contract'), false);
 }));
+
+test('conflicting build destinations with incompatible packages are rejected before building', async () => scenario({
+  packages: directory => {
+    const dir0 = path.join(directory, 'crate0');
+    const dir1 = path.join(directory, 'crate1');
+    fs.mkdirSync(path.join(dir0, 'target/wasm32v1-none/release'), { recursive: true });
+    fs.writeFileSync(path.join(dir0, 'Cargo.toml'), '[package]');
+    fs.mkdirSync(dir1, { recursive: true });
+    fs.writeFileSync(path.join(dir1, 'Cargo.toml'), '[package]');
+    fs.symlinkSync(path.join(dir0, 'target'), path.join(dir1, 'target_alias'));
+    return [
+      { id: 'pkg0', name: 'common-contract', manifest_path: path.join(dir0, 'Cargo.toml'), targets: [{ crate_types: ['cdylib'] }] },
+      { id: 'pkg1', name: 'common-contract', manifest_path: path.join(dir1, 'Cargo.toml'), targets: [{ crate_types: ['cdylib'] }] },
+    ];
+  },
+  paths: [
+    'crate0/target/wasm32v1-none/release/common_contract.wasm',
+    'crate1/target_alias/wasm32v1-none/release/common_contract.wasm',
+  ],
+}, async ({ fixtures, commands }) => {
+  await assert.rejects(buildContracts(fixtures), /Conflicting build destinations:.*already claimed by package/);
+  assert.ok(!commands.some(command => command.args[0] === 'contract'));
+}));
+
+test('intentional repeated declarations with the same destination and package succeed', async () => scenario({
+  names: ['hello-contract'],
+  paths: [
+    'target/wasm32v1-none/release/hello_contract.wasm',
+    'target/wasm32v1-none/release/./hello_contract.wasm',
+  ],
+}, async ({ fixtures, directory, destinations, wasm }) => {
+  const results = await buildContracts(fixtures, '1.95.0');
+  assert.equal(results.length, 2);
+  assert.equal(results[0].package, 'hello-contract');
+  assert.equal(results[1].package, 'hello-contract');
+  assert.deepEqual(fs.readFileSync(path.join(directory, destinations[0])), wasm);
+}));
+

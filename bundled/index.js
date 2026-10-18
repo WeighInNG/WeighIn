@@ -54836,6 +54836,23 @@ function verifyBuildStorage(directory, bytes = 1024 * 1024) {
     fs3.rmSync(probePath, { force: true });
   }
 }
+function getCanonicalPath(filePath) {
+  const normalized = path4.normalize(filePath);
+  let current = normalized;
+  const segments = [];
+  while (current && !fs3.existsSync(current)) {
+    const parent = path4.dirname(current);
+    if (parent === current) break;
+    segments.unshift(path4.basename(current));
+    current = parent;
+  }
+  try {
+    const realCurrent = fs3.existsSync(current) ? fs3.realpathSync(current) : current;
+    return segments.length > 0 ? path4.join(realCurrent, ...segments) : realCurrent;
+  } catch {
+    return normalized;
+  }
+}
 async function buildContracts(fixturesPath, rustToolchain) {
   const fixtures = parseFixtures(
     fs3.readFileSync(fixturesPath, "utf8"),
@@ -54891,8 +54908,12 @@ async function buildContracts(fixturesPath, rustToolchain) {
   }
   const plans = [];
   const metadataCache = /* @__PURE__ */ new Map();
+  const destinationOwnership = /* @__PURE__ */ new Map();
   for (const contract of fixtures.contracts) {
-    const destination = path4.resolve(fixturesDir, contract.wasm_path);
+    const destination = path4.normalize(
+      path4.resolve(fixturesDir, contract.wasm_path)
+    );
+    const canonicalDestination = getCanonicalPath(destination);
     let dir = path4.dirname(destination);
     while (!fs3.existsSync(path4.join(dir, "Cargo.toml"))) {
       const parent = path4.dirname(dir);
@@ -54932,11 +54953,25 @@ async function buildContracts(fixturesPath, rustToolchain) {
       throw new Error(
         `wasm_path ${contract.wasm_path} must identify exactly one Cargo cdylib package; found ${matches.length}`
       );
-    plans.push({ destination, pkg: matches[0] });
+    const existing = destinationOwnership.get(canonicalDestination);
+    if (existing) {
+      if (existing.pkg.id !== matches[0].id || existing.pkg.manifest_path !== matches[0].manifest_path) {
+        throw new Error(
+          `Conflicting build destinations: ${contract.wasm_path} resolves to ${canonicalDestination} which is already claimed by package ${existing.pkg.name} (${existing.pkg.manifest_path})`
+        );
+      }
+    } else {
+      destinationOwnership.set(canonicalDestination, {
+        pkg: matches[0],
+        wasm_path: contract.wasm_path
+      });
+    }
+    plans.push({ destination, canonicalDestination, pkg: matches[0] });
   }
   const artifacts = /* @__PURE__ */ new Map();
+  const writtenDestinations = /* @__PURE__ */ new Map();
   const results = [];
-  for (const { destination, pkg } of plans) {
+  for (const { destination, canonicalDestination, pkg } of plans) {
     let wasm = artifacts.get(pkg.manifest_path);
     if (!wasm) {
       let outputDir;
@@ -54977,8 +55012,18 @@ async function buildContracts(fixturesPath, rustToolchain) {
         fs3.rmSync(outputDir, { recursive: true, force: true });
       }
     }
-    fs3.mkdirSync(path4.dirname(destination), { recursive: true });
-    fs3.writeFileSync(destination, wasm);
+    const prevWritten = writtenDestinations.get(canonicalDestination);
+    if (prevWritten) {
+      if (!prevWritten.equals(wasm)) {
+        throw new Error(
+          `Conflicting build output for destination ${destination}: bytes disagree across declarations`
+        );
+      }
+    } else {
+      fs3.mkdirSync(path4.dirname(destination), { recursive: true });
+      fs3.writeFileSync(destination, wasm);
+      writtenDestinations.set(canonicalDestination, wasm);
+    }
     const record = {
       wasm_path: destination,
       manifest_path: pkg.manifest_path,
