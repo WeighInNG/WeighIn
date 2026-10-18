@@ -7,6 +7,7 @@ see [Evidence](EVIDENCE.md), [metric provenance](metric-provenance.md) and
 | Area | Classification | Current boundary and evidence |
 |---|---|---|
 | Native platform | Unsupported outside tested path | Default helper provisioning is Linux x64 and Rust 1.95.0; `src/simulation.ts` rejects other platforms. A compatible binary override is not proof of another platform |
+| Helper executable integrity | Filesystem trust boundary | Helper content SHA256 is captured before execution, verified after execution, across retry attempts, and before emitting provenance. Any in-flight mutation fails fast. Host filesystem permissions and kernel process creation (`execve`) outside Node's control remain trusted boundaries (`src/simulation.ts`) |
 | Protocol and network | Protocol-dependent / unsupported | Snapshot measurement requires protocol 28. Deployment uses the standalone passphrase and Friendbot; `rpc-url` is not arbitrary mainnet/testnet support (`src/measurement.ts`, `src/account.ts`) |
 | CPU / memory | Protocol-dependent | Official native cost-model consumption, not RPC instruction budgets, hardware instructions, RSS, time or fees. Changing helper/calibration invalidates comparison |
 | Three metric names | Unavailable | `historical_data_read_bytes`, `contract_data_hard_limit`, `tx_size_bytes` have null consumption/limit and reasons; required policy rules fail, explicit `ignore` opts out |

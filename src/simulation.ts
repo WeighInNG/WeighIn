@@ -419,6 +419,30 @@ export async function resolveSimulationHelper(
   return provisioned;
 }
 
+/** Capture and hash the helper executable's content; rejects missing, unreadable, or non-file paths. */
+export function captureHelperIdentity(helperPath: string): string {
+  try {
+    const stats = fs.statSync(helperPath);
+    if (!stats.isFile()) {
+      throw new Error(
+        `Simulation helper at ${helperPath} is not a regular file`,
+      );
+    }
+    const bytes = fs.readFileSync(helperPath);
+    return sha256(bytes);
+  } catch (err) {
+    if (
+      err instanceof Error &&
+      err.message.startsWith("Simulation helper at")
+    ) {
+      throw err;
+    }
+    throw new Error(
+      `Failed to capture simulation helper identity for ${helperPath}: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  }
+}
+
 /** Execute the versioned helper transport; never accept missing/invalid meters. */
 export async function simulateSnapshot(
   input: SimulationInput,
@@ -713,6 +737,7 @@ export async function measureInvocation(
     transient_read: 0,
   };
   let discoveredKeysCount = 0;
+  let initialHelperSha256: string | null = null;
   for (let attempt = 0; attempt < 30; attempt++) {
     if (signal?.aborted) {
       throw signal.reason || new Error("Measurement cancelled");
@@ -874,10 +899,24 @@ export async function measureInvocation(
       instruction_leeway: 0,
       seed: Array(32).fill(0),
     };
+    const preHelperSha256 = captureHelperIdentity(helperPath);
+    if (initialHelperSha256 === null) {
+      initialHelperSha256 = preHelperSha256;
+    } else if (preHelperSha256 !== initialHelperSha256) {
+      throw new Error(
+        `Simulation helper executable was modified across attempts (expected: ${initialHelperSha256}, current: ${preHelperSha256})`,
+      );
+    }
     let output: SimulationOutput;
     try {
       output = await simulateSnapshot(input, helperPath, signal);
     } catch (failure) {
+      const postFailureSha256 = captureHelperIdentity(helperPath);
+      if (postFailureSha256 !== initialHelperSha256) {
+        throw new Error(
+          `Simulation helper executable was modified during execution (expected: ${initialHelperSha256}, current: ${postFailureSha256})`,
+        );
+      }
       const envelope = parseHelperFailure(failure);
       if (envelope) {
         if (envelope.status !== "uncaptured")
@@ -917,6 +956,12 @@ export async function measureInvocation(
         keys.add(key);
       }
       continue; // Recapture all state, including newly discovered keys, at one ledger.
+    }
+    const postHelperSha256 = captureHelperIdentity(helperPath);
+    if (postHelperSha256 !== initialHelperSha256) {
+      throw new Error(
+        `Simulation helper executable was modified during execution (expected: ${initialHelperSha256}, current: ${postHelperSha256})`,
+      );
     }
     // RPC events are DiagnosticEvent wrappers. Only successful non-diagnostic
     // ContractEvents contribute to this charged resource; preserve their order.
@@ -969,6 +1014,12 @@ export async function measureInvocation(
         "Native compute limits disagree with captured configuration",
       );
     }
+    const finalHelperSha256 = captureHelperIdentity(helperPath);
+    if (finalHelperSha256 !== initialHelperSha256) {
+      throw new Error(
+        `Simulation helper executable was modified before emitting provenance (expected: ${initialHelperSha256}, current: ${finalHelperSha256})`,
+      );
+    }
     return {
       output,
       limits,
@@ -976,7 +1027,7 @@ export async function measureInvocation(
         source: output.source,
         source_version: output.source_version,
         protocol: output.protocol,
-        helper_sha256: sha256(fs.readFileSync(helperPath)),
+        helper_sha256: initialHelperSha256,
         network_id: sha256(network.passphrase),
         ledger: simulation.latestLedger,
         header_sha256: sha256(input.header_xdr),

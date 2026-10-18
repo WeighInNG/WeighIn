@@ -33,6 +33,15 @@ validated for executable access and versioned output; the binary's SHA256 is
 recorded. Missing binaries, malformed output, host failures and unsupported
 protocols produce errors, not measurements containing zero.
 
+Helper executable identity is strictly bound to actual execution: the executable
+file's content SHA256 is captured before invocation, re-verified immediately after
+process termination, validated across retry attempts, and checked before emitting
+provenance. If the binary is replaced, mutated, or modified during or across execution,
+measurement fails fast with an explicit error. Remaining filesystem trust assumptions:
+WeighIn relies on standard OS filesystem access controls and assumes the host storage
+hosting the binary is not subject to in-flight inode replacement or unauthorized write
+mutation by concurrent untrusted local processes outside Node's process space.
+
 The local network script and workflow example pin the exact protocol-28 image
 used in the proof. The Action's modern contract build now uses the
 [Stellar build path](contract-build.md), with its own verified reference and

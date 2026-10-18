@@ -2,10 +2,14 @@
 // Injected failures and altered ledgers are not live network evidence.
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const os=require('node:os');
+const path=require('node:path');
+const crypto=require('node:crypto');
 const {EventEmitter}=require('node:events');
 const cp=require('node:child_process');
 const {Transaction,Keypair,xdr}=require('@stellar/stellar-sdk');
-const {measureInvocation}=require('../dist/simulation');
+const {measureInvocation,captureHelperIdentity}=require('../dist/simulation');
 const calls=require('../docs/experiments/repeatability/completed/run-1-rpc.json');
 const replay=require('../docs/experiments/repeatability/completed/run-1-native.json')[0];
 const saved=calls.find(c=>c.request.method==='simulateTransaction'
@@ -62,12 +66,19 @@ function scenario(t,options={}){
     if(options.badEnvelope==='wrong-version'&&request.method==='getNetwork')envelope={...envelope,jsonrpc:'1.0'};
     return new Response(JSON.stringify(envelope),{status:options.httpFailure?404:200});
   });
+  const helperFile = options.helperPath ?? __filename;
   t.mock.method(cp,'execFile',(file,args,childOptions,callback)=>{
-    assert.equal(file,__filename);
+    assert.equal(file, helperFile);
     const stdin=new EventEmitter();stdin.end=data=>{
       state.helpers.push(JSON.parse(data));
+      if(options.mutateHelperDuringExecution){
+        fs.appendFileSync(helperFile, ' // mutated during execution');
+      }
       if(options.helperFailure)return setImmediate(()=>callback(new Error(options.helperFailure)));
       if(options.uncapturedKeys){
+        if(options.mutateHelperAcrossAttempts){
+          fs.appendFileSync(helperFile, ' // mutated across attempts');
+        }
         const seed=Buffer.alloc(32);seed.writeUInt32BE(state.helpers.length+1000,28);
         const k=xdr.LedgerKey.account(new xdr.LedgerKeyAccount({accountId:Keypair.fromRawEd25519Seed(seed).xdrPublicKey()})).toXDR('base64');
         return setImmediate(()=>callback(new Error(`Simulation failed: UNCAPTURED_KEY:${k}`)));
@@ -95,7 +106,7 @@ function scenario(t,options={}){
       setImmediate(()=>callback(null,JSON.stringify(actual),''));
     };return {stdin};
   });
-  return {state,run:()=>measureInvocation('http://controlled.invalid/rpc',transaction,__filename),baseLedger};
+  return {state,run:()=>measureInvocation('http://controlled.invalid/rpc',transaction,helperFile),baseLedger};
 }
 
 test('observed ledger-read failure recovers by re-simulating and returning only the new snapshot',async t=>{
@@ -306,4 +317,121 @@ test('diagnostic events and failed-call events are excluded from charged event p
   const result = await run();
   assert.ok(result);
   assert.equal(result.provenance.protocol, 28);
+});
+
+test('captureHelperIdentity reads and hashes valid files and rejects non-files or missing paths', t => {
+  const tmpDir = os.tmpdir();
+  const tmpFile = path.join(tmpDir, `weighin-helper-test-${Date.now()}-${Math.random().toString(36).slice(2)}.bin`);
+  const content = 'mock-executable-binary-contents-12345';
+  fs.writeFileSync(tmpFile, content);
+  t.after(() => {
+    try { fs.unlinkSync(tmpFile); } catch {}
+  });
+
+  const expectedHash = crypto.createHash('sha256').update(content).digest('hex');
+  const actualHash = captureHelperIdentity(tmpFile);
+  assert.equal(actualHash, expectedHash);
+
+  assert.throws(
+    () => captureHelperIdentity(path.join(tmpDir, 'nonexistent-helper-file-path-xyz')),
+    /Failed to capture simulation helper identity/,
+  );
+
+  assert.throws(
+    () => captureHelperIdentity(tmpDir),
+    /is not a regular file/,
+  );
+});
+
+test('helper executable modified during execution is rejected before emitting provenance', async t => {
+  const tmpDir = os.tmpdir();
+  const tmpFile = path.join(tmpDir, `weighin-helper-mutate-${Date.now()}-${Math.random().toString(36).slice(2)}.bin`);
+  fs.writeFileSync(tmpFile, 'initial-helper-bytes');
+  t.after(() => {
+    try { fs.unlinkSync(tmpFile); } catch {}
+  });
+
+  const { state, run } = scenario(t, {
+    helperPath: tmpFile,
+    mutateHelperDuringExecution: true,
+  });
+
+  await assert.rejects(
+    run(),
+    /Simulation helper executable was modified during execution/,
+  );
+  assert.equal(state.helpers.length, 1);
+});
+
+test('helper executable modified across retry attempts is rejected before re-execution', async t => {
+  const tmpDir = os.tmpdir();
+  const tmpFile = path.join(tmpDir, `weighin-helper-retry-${Date.now()}-${Math.random().toString(36).slice(2)}.bin`);
+  fs.writeFileSync(tmpFile, 'initial-retry-helper-bytes');
+  t.after(() => {
+    try { fs.unlinkSync(tmpFile); } catch {}
+  });
+
+  let mutated = false;
+  const { state, run } = scenario(t, {
+    helperPath: tmpFile,
+    uncapturedKeys: true,
+    error: (method, s) => {
+      if (s.helpers.length === 1 && !mutated) {
+        mutated = true;
+        fs.appendFileSync(tmpFile, ' // mutated between attempt 1 and 2');
+      }
+      return null;
+    },
+  });
+
+  await assert.rejects(
+    run(),
+    /Simulation helper executable was modified across attempts/,
+  );
+  assert.equal(state.helpers.length, 1);
+});
+
+test('helper executable modified before emitting provenance is rejected', async t => {
+  const tmpDir = os.tmpdir();
+  const tmpFile = path.join(tmpDir, `weighin-helper-prov-${Date.now()}-${Math.random().toString(36).slice(2)}.bin`);
+  fs.writeFileSync(tmpFile, 'initial-prov-helper-bytes');
+  t.after(() => {
+    try { fs.unlinkSync(tmpFile); } catch {}
+  });
+
+  let readCount = 0;
+  const originalReadFileSync = fs.readFileSync;
+  t.mock.method(fs, 'readFileSync', (p, opts) => {
+    if (p === tmpFile) {
+      readCount++;
+      if (readCount === 3) {
+        return Buffer.from('tampered-bytes-before-provenance');
+      }
+    }
+    return originalReadFileSync(p, opts);
+  });
+
+  const { state, run } = scenario(t, { helperPath: tmpFile });
+
+  await assert.rejects(
+    run(),
+    /Simulation helper executable was modified before emitting provenance/,
+  );
+  assert.equal(state.helpers.length, 1);
+});
+
+test('unchanged helper executable records verified helper_sha256 in provenance', async t => {
+  const tmpDir = os.tmpdir();
+  const tmpFile = path.join(tmpDir, `weighin-helper-clean-${Date.now()}-${Math.random().toString(36).slice(2)}.bin`);
+  const content = 'clean-verified-helper-binary';
+  fs.writeFileSync(tmpFile, content);
+  t.after(() => {
+    try { fs.unlinkSync(tmpFile); } catch {}
+  });
+
+  const expectedHash = crypto.createHash('sha256').update(content).digest('hex');
+  const { run } = scenario(t, { helperPath: tmpFile });
+  const result = await run();
+
+  assert.equal(result.provenance.helper_sha256, expectedHash);
 });
