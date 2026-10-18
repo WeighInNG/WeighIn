@@ -42,7 +42,11 @@ function scenario(t,options={}){
     if(request.method==='getLedgerEntries'){
       state.reads++;
       const ledger=baseLedger+state.simulations-1;
-      result={latestLedger:ledger,entries:entries.filter(row=>request.params.keys.includes(row.key)).map(row=>({
+      let matchingEntries = entries.filter(row=>request.params.keys.includes(row.key));
+      if(options.omitConfigKeys){
+        matchingEntries = matchingEntries.filter(row => !options.omitConfigKeys.includes(row.key));
+      }
+      result={latestLedger:ledger,entries:matchingEntries.map(row=>({
         key:row.key,xdr:row.xdr,extXdr:row.extension_xdr,lastModifiedLedgerSeq:ledger,
         ...(row.live_until===null?{}:{liveUntilLedgerSeq:row.live_until})}))};
       if(options.driftFirst&&state.reads===1)result.latestLedger++;
@@ -306,4 +310,32 @@ test('diagnostic events and failed-call events are excluded from charged event p
   const result = await run();
   assert.ok(result);
   assert.equal(result.provenance.protocol, 28);
+});
+
+test('missing required configuration entries fail before helper execution and do not retry as ledger drift', async t => {
+  const targetKey = xdr.LedgerKey.configSetting(
+    new xdr.LedgerKeyConfigSetting({
+      configSettingId: xdr.ConfigSettingId.configSettingContractComputeV0(),
+    }),
+  ).toXDR('base64');
+  const targetKey2 = xdr.LedgerKey.configSetting(
+    new xdr.LedgerKeyConfigSetting({
+      configSettingId: xdr.ConfigSettingId.configSettingStateArchival(),
+    }),
+  ).toXDR('base64');
+
+  const { state, run } = scenario(t, {
+    omitConfigKeys: [targetKey, targetKey2],
+  });
+
+  await assert.rejects(run(), (err) => {
+    assert.match(err.message, /^Missing required network configuration entries: \[configSettingContractComputeV0, configSettingStateArchival\]$/);
+    return true;
+  });
+
+  // Verify that the helper was never invoked
+  assert.equal(state.helpers.length, 0);
+  // Verify that permanent missing configuration was not retried 30 times as ledger drift
+  assert.equal(state.simulations, 1);
+  assert.equal(state.reads, 1);
 });
