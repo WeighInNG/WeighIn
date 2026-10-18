@@ -11,9 +11,9 @@ jobs:
     name: Lint, Typecheck, and Test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0 (resolved from @v4)
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0 (resolved from @v4)
         with:
           node-version: 24
           cache: npm
@@ -26,9 +26,9 @@ jobs:
     name: Verify Bundle Freshness
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0 (resolved from @v4)
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0 (resolved from @v4)
         with:
           node-version: 24
           cache: npm
@@ -51,7 +51,7 @@ jobs:
 
     steps:
       - name: Checkout PR head
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0 (resolved from @v4)
         with:
           # Full history needed so git worktree add can fetch the base ref
           fetch-depth: 0
@@ -101,7 +101,7 @@ jobs:
 
       - name: Upload Report Artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2 (resolved from @v4)
         with:
           name: weighin-artifacts
           path: |
