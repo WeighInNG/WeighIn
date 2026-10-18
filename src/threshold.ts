@@ -292,6 +292,11 @@ export function enforceThresholds(
       "Cannot evaluate global policy: no matched BASE/HEAD benchmarks",
     );
   }
+  if (Object.keys(globalLimits).length > 0 && comparedNames.size === 0) {
+    throw new Error(
+      "Cannot evaluate global limits: no matched BASE/HEAD benchmarks",
+    );
+  }
 
   for (const contract of diff.contracts) {
     for (const fn of contract.functions) {
