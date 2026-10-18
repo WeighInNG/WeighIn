@@ -93,6 +93,11 @@ inputs:
     required: false
     default: "false"
 
+  allow-cross-target-substitution:
+    description: "Optional boolean to permit substituting an alternative supported target directory (wasm32-unknown-unknown vs wasm32v1-none) when the declared WASM artifact is absent. Accepts standard YAML 1.2 boolean spellings; defaults to false when omitted (fails closed on missing declared artifact)."
+    required: false
+    default: "false"
+
 outputs:
   result:
     description: >

@@ -107,3 +107,45 @@ test('simulation errors retain their original failure reason', async t => {
 test('a response without transaction data fails before attempting metric extraction', async t => {
   await assert.rejects(replay(t, { _parsed: true, latestLedger: 1, events: [] }), /Simulation did not return transaction data for hello/);
 });
+
+test('missing declared WASM artifact fails closed by default in runMeasurement', async t => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'weighin-cross-target-test-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const unknownDir = path.join(dir, 'target', 'wasm32-unknown-unknown', 'release');
+  const v1Dir = path.join(dir, 'target', 'wasm32v1-none', 'release');
+  fs.mkdirSync(unknownDir, { recursive: true });
+  fs.mkdirSync(v1Dir, { recursive: true });
+  fs.writeFileSync(path.join(v1Dir, 'contract.wasm'), Buffer.from('test-wasm'));
+  const fixturesPath = path.join(dir, 'fixtures.json');
+  fs.writeFileSync(fixturesPath, JSON.stringify({
+    contracts: [{ id: 'test', wasm_path: 'target/wasm32-unknown-unknown/release/contract.wasm', invocations: [{ function_name: 'hello', args: [{ type: 'Symbol', value: 'world' }] }] }]
+  }));
+  await assert.rejects(
+    runMeasurement({ fixturesPath, gitCommit: 'test', sdkVersion: '25.3.1' }),
+    /WASM not found[\s\S]*Build the contract before running measurements/
+  );
+});
+
+test('missing declared WASM artifact substitutes cross-target with explicit opt-in in runMeasurement', async t => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'weighin-cross-target-optin-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const unknownDir = path.join(dir, 'target', 'wasm32-unknown-unknown', 'release');
+  const v1Dir = path.join(dir, 'target', 'wasm32v1-none', 'release');
+  fs.mkdirSync(unknownDir, { recursive: true });
+  fs.mkdirSync(v1Dir, { recursive: true });
+  fs.writeFileSync(path.join(v1Dir, 'contract.wasm'), Buffer.from('test-wasm'));
+  const fixturesPath = path.join(dir, 'fixtures.json');
+  fs.writeFileSync(fixturesPath, JSON.stringify({
+    contracts: [{ id: 'test', wasm_path: 'target/wasm32-unknown-unknown/release/contract.wasm', invocations: [{ function_name: 'hello', args: [{ type: 'Symbol', value: 'world' }] }] }]
+  }));
+  await assert.rejects(
+    runMeasurement({
+      fixturesPath,
+      gitCommit: 'test',
+      sdkVersion: '25.3.1',
+      allowCrossTargetSubstitution: true,
+      rpcUrl: 'invalid-endpoint',
+    }),
+    /Invalid URL/
+  );
+});

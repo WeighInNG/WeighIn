@@ -51,6 +51,24 @@ node dist/cli.js weighin-fixtures.json --rpc-url http://localhost:8000/rpc --out
 The CLI writes measurement JSON and exits 1 on measurement failure. It remains a
 measurement command; threshold comparison is performed by the Action.
 
+## Artifact resolution
+
+By default, `runMeasurement` requires each declared contract `wasm_path` to exist
+at its exact declared path. It fails closed with an actionable error if the artifact
+is missing. It does not silently substitute cross-target directories (`wasm32-unknown-unknown`
+vs `wasm32v1-none`).
+
+To preserve compatibility during migration workflows where contracts were compiled under an
+alternative target directory, callers may explicitly opt in:
+- In programmatic measurement: pass `allowCrossTargetSubstitution: true` in `RunMeasurementOptions`.
+- In the CLI: pass the `--allow-cross-target-substitution` flag.
+- In the Action: configure `allow-cross-target-substitution: true`.
+- In the environment: set `WEIGHIN_ALLOW_CROSS_TARGET_SUBSTITUTION=true`.
+
+When enabled, WeighIn checks whether the corresponding alternative target directory contains the
+artifact, logs an explicit substitution warning, and uses the resolved path. If both paths are
+absent, measurement fails immediately.
+
 ## Source and immutable state
 
 CPU comes directly from `simulated_instructions`; memory from `simulated_memory`.

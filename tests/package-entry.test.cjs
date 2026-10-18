@@ -2,6 +2,7 @@ const {test}=require('node:test'),assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path'),os=require('node:os'),{spawnSync}=require('node:child_process');
 test('package main loads the existing measurement API',()=>{
   const api=require('..');assert.equal(typeof api.runMeasurement,'function');
+  assert.equal(typeof api.resolveWasmPath,'function');
   assert.equal(typeof api.metricsFromSimulation,'function');
 });
 test('declared CLI entry runs and fails clearly without producing results for missing fixtures',()=>{
@@ -43,5 +44,18 @@ test('CLI stdout failure emits error on stderr and nothing on stdout',()=>{
     assert.equal(r.status,1);
     assert.match(r.stderr,/Benchmarking failed/);
     assert.equal(r.stdout,'');
+  }finally{fs.rmSync(temporary,{recursive:true,force:true});}
+});
+
+test('CLI accepts --allow-cross-target-substitution flag without unknown option failure',()=>{
+  const temporary=fs.mkdtempSync(path.join(os.tmpdir(),'weighin-cli-optin-'));
+  try{
+    const pkg=require('../package.json');
+    const bin=path.resolve(__dirname,'..',pkg.bin.weighin);
+    const r=spawnSync(process.execPath,[bin,path.join(temporary,'missing.json'),'--allow-cross-target-substitution'],
+      {cwd:temporary,encoding:'utf8',timeout:10000});
+    assert.equal(r.status,1);
+    assert.doesNotMatch(r.stderr,/Unknown option/);
+    assert.match(r.stderr,/Benchmarking failed/);
   }finally{fs.rmSync(temporary,{recursive:true,force:true});}
 });

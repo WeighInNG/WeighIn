@@ -54198,6 +54198,31 @@ async function isContractDeployed(server, contractId) {
     return false;
   }
 }
+function resolveWasmPath(fixturesDir, declaredWasmPath, options) {
+  const wasmPath = path3.resolve(fixturesDir, declaredWasmPath);
+  if (fs2.existsSync(wasmPath)) {
+    return wasmPath;
+  }
+  const allowCrossTarget = Boolean(options?.allowCrossTargetSubstitution) || process.env.WEIGHIN_ALLOW_CROSS_TARGET_SUBSTITUTION === "true" || process.env.WEIGHIN_ALLOW_CROSS_TARGET_SUBSTITUTION === "1";
+  if (allowCrossTarget) {
+    let altPath = "";
+    if (wasmPath.includes("wasm32-unknown-unknown")) {
+      altPath = wasmPath.replace("wasm32-unknown-unknown", "wasm32v1-none");
+    } else if (wasmPath.includes("wasm32v1-none")) {
+      altPath = wasmPath.replace("wasm32v1-none", "wasm32-unknown-unknown");
+    }
+    if (altPath && fs2.existsSync(altPath)) {
+      console.warn(
+        `Warning: Declared artifact ${wasmPath} not found; substituting cross-target artifact ${altPath} via explicit opt-in (allowCrossTargetSubstitution).`
+      );
+      return altPath;
+    }
+  }
+  throw new Error(
+    `WASM not found: ${wasmPath}
+Build the contract before running measurements.`
+  );
+}
 async function runMeasurement(fixturesPathOrOptions, gitCommit, sdkVersion, rpcUrl) {
   let opts;
   if (typeof fixturesPathOrOptions === "string") {
@@ -54221,6 +54246,13 @@ async function runMeasurement(fixturesPathOrOptions, gitCommit, sdkVersion, rpcU
     rawFixtures,
     opts.fixtureId ?? path3.relative(process.cwd(), path3.resolve(opts.fixturesPath))
   );
+  const resolvedWasmPaths = /* @__PURE__ */ new Map();
+  for (const contractSpec of fixturesSpec.contracts) {
+    const wasmPath = resolveWasmPath(fixturesDir, contractSpec.wasm_path, {
+      allowCrossTargetSubstitution: opts.allowCrossTargetSubstitution
+    });
+    resolvedWasmPaths.set(contractSpec, wasmPath);
+  }
   const server = new rpc_exports.Server(effectiveRpcUrl, { allowHttp: true });
   const deployer = await getOrInitAccount(
     keyFile,
@@ -54230,23 +54262,7 @@ async function runMeasurement(fixturesPathOrOptions, gitCommit, sdkVersion, rpcU
   const deployerAddress = Address.fromString(deployer.publicKey());
   const results = [];
   for (const contractSpec of fixturesSpec.contracts) {
-    let wasmPath = path3.resolve(fixturesDir, contractSpec.wasm_path);
-    if (!fs2.existsSync(wasmPath)) {
-      let altPath = "";
-      if (wasmPath.includes("wasm32-unknown-unknown")) {
-        altPath = wasmPath.replace("wasm32-unknown-unknown", "wasm32v1-none");
-      } else if (wasmPath.includes("wasm32v1-none")) {
-        altPath = wasmPath.replace("wasm32v1-none", "wasm32-unknown-unknown");
-      }
-      if (altPath && fs2.existsSync(altPath)) {
-        wasmPath = altPath;
-      } else {
-        throw new Error(
-          `WASM not found: ${wasmPath}
-Build the contract before running measurements.`
-        );
-      }
-    }
+    const wasmPath = resolvedWasmPaths.get(contractSpec);
     const wasmBytes = fs2.readFileSync(wasmPath);
     const wasmHash = crypto3.createHash("sha256").update(wasmBytes).digest();
     const wasmSha256 = wasmHash.toString("hex");
@@ -55332,6 +55348,10 @@ async function run() {
     const metadataPathInput = core3.getInput("metadata-path");
     const buildCommand = core3.getInput("build-command");
     const skipBuild = parseOptionalBooleanInput("skip-build", false);
+    const allowCrossTargetSubstitution = parseOptionalBooleanInput(
+      "allow-cross-target-substitution",
+      false
+    );
     if (buildCommand && skipBuild) {
       throw new Error("build-command and skip-build cannot be used together");
     }
@@ -55379,7 +55399,8 @@ async function run() {
         gitCommit: headSha,
         sdkVersion: getSdkVersion(headWorkspace),
         rpcUrl,
-        keyFile: sharedKeyFile
+        keyFile: sharedKeyFile,
+        allowCrossTargetSubstitution
       });
     } catch (err) {
       throw new Error(`HEAD measurement failed: ${err.message}`);
@@ -55422,7 +55443,8 @@ async function run() {
           gitCommit: baseSha,
           sdkVersion: getSdkVersion(baseDir),
           rpcUrl,
-          keyFile: sharedKeyFile
+          keyFile: sharedKeyFile,
+          allowCrossTargetSubstitution
         });
         for (const contract of baseResults) {
           for (const bench of contract.benchmarks) {
