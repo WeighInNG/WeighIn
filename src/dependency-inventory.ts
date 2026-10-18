@@ -636,7 +636,6 @@ export function generateDependencyInventory(
           "+1.95.0",
           "metadata",
           "--locked",
-          "--offline",
           "--format-version",
           "1",
           "--manifest-path",

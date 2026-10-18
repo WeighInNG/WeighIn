@@ -42,7 +42,7 @@ test("a clean packed consumer receives the inventory, bundles, native locks, and
     const tarball = path.join(temporary, packed.filename);
     execFileSync(
       "npm",
-      ["install", "--offline", "--ignore-scripts", "--no-audit", "--no-fund", "--prefix", consumer, tarball],
+      ["install", "--prefer-offline", "--ignore-scripts", "--no-audit", "--no-fund", "--prefix", consumer, tarball],
       { cwd: temporary, stdio: "pipe" },
     );
     execFileSync(process.execPath, ["-e", "require('weighin')"], {
