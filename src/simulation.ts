@@ -282,11 +282,19 @@ function parseHelperFailure(error: unknown): HelperFailureEnvelope | null {
     )
       throw new Error("uncaptured envelope has no keys");
     return parsed as HelperFailureEnvelope;
-  } catch (parseError) {
-    throw new Error(
-      `Invalid native helper failure protocol: ${parseError instanceof Error ? parseError.message : parseError}`,
-    );
+  } catch {
+    throw new Error("Invalid native helper failure protocol");
   }
+}
+
+function helperFailureDiagnostic(
+  status: HelperFailureEnvelope["status"],
+): string {
+  return status === "uncaptured"
+    ? "UNCAPTURED_KEY"
+    : status === "host_failure"
+      ? "host_failure: host invocation failed"
+      : status;
 }
 
 let provisioned: Promise<string> | undefined;
@@ -425,13 +433,24 @@ export async function simulateSnapshot(
   helperPath: string,
   signal?: AbortSignal,
 ): Promise<SimulationOutput> {
-  const stdout = await execute(
-    helperPath,
-    [],
-    JSON.stringify(input),
-    undefined,
-    signal,
-  );
+  let stdout: string;
+  try {
+    stdout = await execute(
+      helperPath,
+      [],
+      JSON.stringify(input),
+      undefined,
+      signal,
+    );
+  } catch (failure) {
+    const envelope = parseHelperFailure(failure);
+    if (envelope && failure instanceof Error) {
+      failure.message = `Simulation helper failed: ${helperFailureDiagnostic(
+        envelope.status,
+      )}`;
+    }
+    throw failure;
+  }
   let output: SimulationOutput;
   try {
     output = outputSchema.parse(JSON.parse(stdout));
@@ -882,7 +901,7 @@ export async function measureInvocation(
       if (envelope) {
         if (envelope.status !== "uncaptured")
           throw new Error(
-            `Native helper ${envelope.status}: ${envelope.message}`,
+            `Native helper ${helperFailureDiagnostic(envelope.status)}`,
           );
         const additional = (envelope.keys ?? []).filter(
           (key) => !keys.has(key),
