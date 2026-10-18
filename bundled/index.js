@@ -53477,6 +53477,12 @@ var configKeys = configNames.map(
     })
   ).toXDR("base64")
 );
+var configKeyToName = new Map(
+  configNames.map((name, i) => [configKeys[i], name])
+);
+var configNameToKey = new Map(
+  configNames.map((name, i) => [name, configKeys[i]])
+);
 var entriesSchema = external_exports.object({
   latestLedger: integer.positive(),
   entries: external_exports.array(
@@ -53738,6 +53744,16 @@ async function measureInvocation(rpcUrl, transaction, helperPath, options) {
     ).header();
     if (header.ledgerSeq() !== simulation.latestLedger || header.ledgerVersion() !== network.protocolVersion) {
       throw new Error("Snapshot header ledger/protocol mismatch");
+    }
+    const missingConfigs = configNames.filter((name) => {
+      const key = configNameToKey.get(name);
+      const row2 = rows.get(key);
+      return !row2 || !row2.xdr;
+    });
+    if (missingConfigs.length > 0) {
+      throw new Error(
+        `Missing required network configuration entries: [${missingConfigs.join(", ")}]`
+      );
     }
     const entries = requested.map((key) => {
       const entry = rows.get(key);
