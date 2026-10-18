@@ -55077,6 +55077,78 @@ function buildPrMetadata(repository, prNumber, headSha) {
   };
 }
 
+// src/ref-validation.ts
+function validateGitRef(ref, paramName = "base-ref") {
+  if (!ref || typeof ref !== "string" || ref.trim().length === 0) {
+    throw new Error(`Invalid ${paramName}: ref cannot be empty or whitespace`);
+  }
+  const trimmed = ref.trim();
+  if (trimmed.startsWith("-")) {
+    throw new Error(
+      `Invalid ${paramName}: option-like refs are not permitted: "${trimmed}"`
+    );
+  }
+  if (/[\x00-\x20\x7f\s]/.test(trimmed)) {
+    throw new Error(
+      `Invalid ${paramName}: ref cannot contain whitespace or control characters: "${trimmed}"`
+    );
+  }
+  if (/[~^:?*\[\\]/.test(trimmed)) {
+    throw new Error(
+      `Invalid ${paramName}: ref contains invalid characters (~, ^, :, ?, *, [, \\): "${trimmed}"`
+    );
+  }
+  if (trimmed.includes("..")) {
+    throw new Error(
+      `Invalid ${paramName}: ref cannot contain consecutive dots "..": "${trimmed}"`
+    );
+  }
+  if (trimmed.includes("//")) {
+    throw new Error(
+      `Invalid ${paramName}: ref cannot contain consecutive slashes "//": "${trimmed}"`
+    );
+  }
+  if (trimmed.startsWith("/") || trimmed.endsWith("/")) {
+    throw new Error(
+      `Invalid ${paramName}: ref cannot begin or end with "/": "${trimmed}"`
+    );
+  }
+  if (trimmed.endsWith(".") || trimmed.endsWith(".lock")) {
+    throw new Error(
+      `Invalid ${paramName}: ref cannot end with "." or ".lock": "${trimmed}"`
+    );
+  }
+  const segments = trimmed.split("/");
+  for (const segment of segments) {
+    if (segment.startsWith(".") || segment.endsWith(".lock")) {
+      throw new Error(
+        `Invalid ${paramName}: ref component cannot begin with "." or end with ".lock": "${trimmed}"`
+      );
+    }
+  }
+  if (trimmed.includes("@{")) {
+    throw new Error(
+      `Invalid ${paramName}: ref cannot contain "@{": "${trimmed}"`
+    );
+  }
+  if (trimmed === "@") {
+    throw new Error(
+      `Invalid ${paramName}: ref cannot be a single "@": "${trimmed}"`
+    );
+  }
+  return trimmed;
+}
+function resolveBaseRef(rawInput, prBaseRef) {
+  if (rawInput !== void 0 && rawInput !== "") {
+    if (rawInput.trim().length === 0) {
+      throw new Error(`Invalid base-ref: ref cannot be empty or whitespace`);
+    }
+    return validateGitRef(rawInput.trim(), "base-ref");
+  }
+  const fallback = prBaseRef && prBaseRef.trim() ? prBaseRef.trim() : "main";
+  return validateGitRef(fallback, "base-ref");
+}
+
 // src/action.ts
 var configuredRpcUrl = "";
 async function assertRpcHealthy(rpcUrl) {
@@ -55208,7 +55280,7 @@ async function loadPolicy(repoDir, configPathRel, trustedRef, trustedPath) {
     );
   const fetched = await capture(
     "git",
-    ["fetch", "--depth=1", "origin", trustedRef],
+    ["fetch", "--depth=1", "origin", "--", trustedRef],
     repoDir
   );
   void fetched;
@@ -55254,7 +55326,7 @@ function getSdkVersion(repoDir) {
   return "unknown";
 }
 async function checkoutRef(repoRoot, ref, label) {
-  await exec5.exec("git", ["fetch", "--depth=1", "origin", ref], {
+  await exec5.exec("git", ["fetch", "--depth=1", "origin", "--", ref], {
     cwd: repoRoot
   });
   const dir = fs5.mkdtempSync(path6.join(os2.tmpdir(), `weighin-${label}-`));
@@ -55321,12 +55393,29 @@ async function run() {
   try {
     const fixturesPathRel = core3.getInput("fixtures-path", { required: true });
     const configPathRel = core3.getInput("config-path");
-    const trustedPolicyRef = core3.getInput("trusted-policy-ref").trim();
+    const rawTrustedPolicyRef = core3.getInput("trusted-policy-ref", {
+      trimWhitespace: false
+    });
+    if (rawTrustedPolicyRef.length > 0 && rawTrustedPolicyRef.trim().length === 0) {
+      throw new Error(
+        "Invalid trusted-policy-ref: ref cannot be empty or whitespace"
+      );
+    }
+    const trustedPolicyRef = rawTrustedPolicyRef.trim();
+    if (trustedPolicyRef) {
+      validateGitRef(trustedPolicyRef, "trusted-policy-ref");
+    }
     const trustedPolicyPath = core3.getInput("trusted-policy-path").trim();
     const rpcUrl = core3.getInput("rpc-url") || "http://localhost:8000/rpc";
     configuredRpcUrl = rpcUrl;
     const githubToken = core3.getInput("github-token");
-    const baseRefInput = core3.getInput("base-ref");
+    const rawBaseRefInput = core3.getInput("base-ref", {
+      trimWhitespace: false
+    });
+    const baseRef = resolveBaseRef(
+      rawBaseRefInput,
+      context2.payload.pull_request?.base?.ref
+    );
     const rustToolchain = core3.getInput("rust-toolchain");
     const reportPathInput = core3.getInput("report-path");
     const metadataPathInput = core3.getInput("metadata-path");
@@ -55336,7 +55425,6 @@ async function run() {
       throw new Error("build-command and skip-build cannot be used together");
     }
     const headWorkspace = process.env["GITHUB_WORKSPACE"] ?? process.cwd();
-    const baseRef = baseRefInput || context2.payload.pull_request?.base?.ref || "main";
     keyDir = fs5.mkdtempSync(path6.join(os2.tmpdir(), "weighin-key-"));
     fs5.chmodSync(keyDir, 448);
     sharedKeyFile = path6.join(keyDir, "weighin-deployer.key");

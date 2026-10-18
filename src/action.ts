@@ -24,6 +24,7 @@ import {
   redactEndpointSecrets,
   sanitizeEndpoint,
 } from "./endpoint";
+import { resolveBaseRef, validateGitRef } from "./ref-validation";
 
 // The configured endpoint is tracked only so the terminal failure path can
 // redact any credential it may contain before reporting.
@@ -216,7 +217,7 @@ async function loadPolicy(
     );
   const fetched = await capture(
     "git",
-    ["fetch", "--depth=1", "origin", trustedRef],
+    ["fetch", "--depth=1", "origin", "--", trustedRef],
     repoDir,
   );
   void fetched;
@@ -286,7 +287,7 @@ async function checkoutRef(
   // Fetch the ref into the existing repo's object store, then use
   // git worktree add to get a clean directory without touching the
   // main workspace.
-  await exec.exec("git", ["fetch", "--depth=1", "origin", ref], {
+  await exec.exec("git", ["fetch", "--depth=1", "origin", "--", ref], {
     cwd: repoRoot,
   });
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), `weighin-${label}-`));
@@ -373,12 +374,34 @@ async function run(): Promise<void> {
   try {
     const fixturesPathRel = core.getInput("fixtures-path", { required: true });
     const configPathRel = core.getInput("config-path");
-    const trustedPolicyRef = core.getInput("trusted-policy-ref").trim();
+    const rawTrustedPolicyRef = core.getInput("trusted-policy-ref", {
+      trimWhitespace: false,
+    });
+    if (
+      rawTrustedPolicyRef.length > 0 &&
+      rawTrustedPolicyRef.trim().length === 0
+    ) {
+      throw new Error(
+        "Invalid trusted-policy-ref: ref cannot be empty or whitespace",
+      );
+    }
+    const trustedPolicyRef = rawTrustedPolicyRef.trim();
+    if (trustedPolicyRef) {
+      validateGitRef(trustedPolicyRef, "trusted-policy-ref");
+    }
     const trustedPolicyPath = core.getInput("trusted-policy-path").trim();
     const rpcUrl = core.getInput("rpc-url") || "http://localhost:8000/rpc";
     configuredRpcUrl = rpcUrl;
     const githubToken = core.getInput("github-token");
-    const baseRefInput = core.getInput("base-ref");
+
+    const rawBaseRefInput = core.getInput("base-ref", {
+      trimWhitespace: false,
+    });
+    const baseRef = resolveBaseRef(
+      rawBaseRefInput,
+      github.context.payload.pull_request?.base?.ref,
+    );
+
     const rustToolchain = core.getInput("rust-toolchain");
     const reportPathInput = core.getInput("report-path");
     const metadataPathInput = core.getInput("metadata-path");
@@ -391,9 +414,6 @@ async function run(): Promise<void> {
 
     // The runner's checkout of the PR head is at GITHUB_WORKSPACE
     const headWorkspace = process.env["GITHUB_WORKSPACE"] ?? process.cwd();
-
-    const baseRef =
-      baseRefInput || github.context.payload.pull_request?.base?.ref || "main";
 
     keyDir = fs.mkdtempSync(path.join(os.tmpdir(), "weighin-key-"));
     fs.chmodSync(keyDir, 0o700);
