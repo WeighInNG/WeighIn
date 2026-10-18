@@ -53409,6 +53409,21 @@ async function resolveSimulationHelper(explicitPath, customBuild) {
   }
   return provisioned;
 }
+function validateLedgerHeaderHash(history, responseHash) {
+  const computedHash = sha2562(history.header().toXDR());
+  const historyHash = history.hash().toString("hex").toLowerCase();
+  if (historyHash !== computedHash) {
+    throw new Error(
+      `Snapshot ledger header hash mismatch (expected ${computedHash}, got ${historyHash})`
+    );
+  }
+  if (responseHash && responseHash.toLowerCase() !== computedHash) {
+    throw new Error(
+      `Snapshot ledger header response hash mismatch (expected ${computedHash}, got ${responseHash.toLowerCase()})`
+    );
+  }
+  return computedHash;
+}
 async function simulateSnapshot(input, helperPath, signal) {
   const stdout = await execute(
     helperPath,
@@ -53716,7 +53731,13 @@ async function measureInvocation(rpcUrl, transaction, helperPath, options) {
     }
     if (drift) continue;
     const headers = external_exports.object({
-      ledgers: external_exports.array(external_exports.object({ sequence: integer, headerXdr: encoded }))
+      ledgers: external_exports.array(
+        external_exports.object({
+          sequence: integer,
+          headerXdr: encoded,
+          hash: external_exports.string().regex(/^[a-f0-9]{64}$/i).optional()
+        })
+      )
     }).parse(
       await callRpc(
         rpcUrl,
@@ -53732,10 +53753,12 @@ async function measureInvocation(rpcUrl, transaction, helperPath, options) {
       (item) => item.sequence === simulation.latestLedger
     );
     if (!row) throw new Error("Snapshot ledger header unavailable");
-    const header = types.LedgerHeaderHistoryEntry.fromXDR(
+    const history = types.LedgerHeaderHistoryEntry.fromXDR(
       row.headerXdr,
       "base64"
-    ).header();
+    );
+    validateLedgerHeaderHash(history, row.hash);
+    const header = history.header();
     if (header.ledgerSeq() !== simulation.latestLedger || header.ledgerVersion() !== network.protocolVersion) {
       throw new Error("Snapshot header ledger/protocol mismatch");
     }

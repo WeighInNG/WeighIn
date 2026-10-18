@@ -232,8 +232,9 @@ async function runControlledLedgerExperiment(destination = defaultDestination) {
       const header = xdr.LedgerHeader.fromXDR(baseNative.input.header_xdr, 'base64');
       header.ledgerSeq(step.ledger);
       header.scpValue().closeTime(xdr.Uint64.fromString(String(step.timestamp)));
+      const hash = createHash('sha256').update(header.toXDR()).digest();
       const historyEntry = new xdr.LedgerHeaderHistoryEntry({
-        hash: Buffer.alloc(32, step.run),
+        hash,
         header,
         ext: new xdr.LedgerHeaderHistoryEntryExt(0),
       });
@@ -276,6 +277,7 @@ async function runControlledLedgerExperiment(destination = defaultDestination) {
               {
                 sequence: step.ledger,
                 headerXdr: historyHeaderXdr,
+                hash: hash.toString('hex'),
               },
             ],
           };

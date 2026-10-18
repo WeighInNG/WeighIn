@@ -4,8 +4,9 @@ const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const {EventEmitter}=require('node:events');
 const cp=require('node:child_process');
+const crypto=require('node:crypto');
 const {Transaction,Keypair,xdr}=require('@stellar/stellar-sdk');
-const {measureInvocation}=require('../dist/simulation');
+const {measureInvocation,validateLedgerHeaderHash}=require('../dist/simulation');
 const calls=require('../docs/experiments/repeatability/completed/run-1-rpc.json');
 const replay=require('../docs/experiments/repeatability/completed/run-1-native.json')[0];
 const saved=calls.find(c=>c.request.method==='simulateTransaction'
@@ -52,8 +53,11 @@ function scenario(t,options={}){
     if(request.method==='getLedgers'){
       const header=xdr.LedgerHeader.fromXDR(replay.input.header_xdr,'base64');
       header.ledgerSeq(baseLedger+state.simulations-1+(options.headerMismatch?1:0));
-      const history=new xdr.LedgerHeaderHistoryEntry({hash:Buffer.alloc(32),header,ext:new xdr.LedgerHeaderHistoryEntryExt(0)});
-      result={ledgers:[{sequence:baseLedger+state.simulations-1,headerXdr:history.toXDR('base64')}]};
+      const computedHash=crypto.createHash('sha256').update(header.toXDR()).digest();
+      const historyHash=options.corruptHistoryHash?Buffer.alloc(32):computedHash;
+      const history=new xdr.LedgerHeaderHistoryEntry({hash:historyHash,header,ext:new xdr.LedgerHeaderHistoryEntryExt(0)});
+      const responseHash=options.corruptResponseHash?'0000000000000000000000000000000000000000000000000000000000000000':computedHash.toString('hex');
+      result={ledgers:[{sequence:baseLedger+state.simulations-1,headerXdr:history.toXDR('base64'),hash:responseHash}]};
     }
     const error=options.error?.(request.method,state);
     let envelope=error?{jsonrpc:'2.0',id:request.id,error}:{jsonrpc:'2.0',id:request.id,result};
@@ -306,4 +310,63 @@ test('diagnostic events and failed-call events are excluded from charged event p
   const result = await run();
   assert.ok(result);
   assert.equal(result.provenance.protocol, 28);
+});
+
+test('validateLedgerHeaderHash computes canonical hash and rejects mismatched history hash or response hash', () => {
+  const header = xdr.LedgerHeader.fromXDR(replay.input.header_xdr, 'base64');
+  const canonicalBytes = header.toXDR();
+  const validHash = crypto.createHash('sha256').update(canonicalBytes).digest();
+  const validHex = validHash.toString('hex');
+
+  const validEntry = new xdr.LedgerHeaderHistoryEntry({
+    hash: validHash,
+    header,
+    ext: new xdr.LedgerHeaderHistoryEntryExt(0),
+  });
+
+  // Success case: matching hash
+  const computed = validateLedgerHeaderHash(validEntry, validHex);
+  assert.equal(computed, validHex);
+
+  // Failure case: history entry hash mismatch
+  const corruptHistoryEntry = new xdr.LedgerHeaderHistoryEntry({
+    hash: Buffer.alloc(32, 1),
+    header,
+    ext: new xdr.LedgerHeaderHistoryEntryExt(0),
+  });
+  assert.throws(
+    () => validateLedgerHeaderHash(corruptHistoryEntry, validHex),
+    /Snapshot ledger header hash mismatch/,
+  );
+
+  // Failure case: response row hash mismatch
+  assert.throws(
+    () => validateLedgerHeaderHash(validEntry, '0000000000000000000000000000000000000000000000000000000000000000'),
+    /Snapshot ledger header response hash mismatch/,
+  );
+});
+
+test('getLedgers with corrupt history hash fails before executing helper', async t => {
+  const { state, run } = scenario(t, { corruptHistoryHash: true });
+  await assert.rejects(
+    run(),
+    /Snapshot ledger header hash mismatch/,
+  );
+  assert.equal(state.helpers.length, 0);
+});
+
+test('getLedgers with corrupt response hash fails before executing helper', async t => {
+  const { state, run } = scenario(t, { corruptResponseHash: true });
+  await assert.rejects(
+    run(),
+    /Snapshot ledger header response hash mismatch/,
+  );
+  assert.equal(state.helpers.length, 0);
+});
+
+test('matching history hash succeeds and retains provenance header_sha256', async t => {
+  const { run } = scenario(t);
+  const result = await run();
+  assert.ok(result);
+  assert.match(result.provenance.header_sha256, /^[a-f0-9]{64}$/);
 });

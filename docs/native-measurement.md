@@ -61,7 +61,10 @@ network configuration. No RPC instruction-budget substitution is used.
 The adapter captures all footprint keys plus network config, ledger data,
 extensions, last-modified sequence, TTL metadata and explicitly queried absence.
 Batches must share the simulation's reported ledger. It verifies the matching
-ledger header, retries the entire capture on drift, and expands discovered keys
+ledger header: the header hash is cryptographically validated against the canonical
+recomputed SHA-256 digest of decoded `LedgerHeader` XDR bytes, and the returned
+`LedgerHeaderHistoryEntry` hash (as well as the optional RPC `hash` property) must match before
+state is accepted. Discrepancies produce an explicit mismatch error. It retries the entire capture on drift, and expands discovered keys
 when the helper reports an uncaptured read. After 30 attempts, incomplete/drifting
 state is an error. This uses current-state RPC APIs; it is not a historical-state
 reader.

@@ -419,6 +419,29 @@ export async function resolveSimulationHelper(
   return provisioned;
 }
 
+/**
+ * Recompute the canonical SHA-256 hash of a decoded LedgerHeader and validate
+ * that it matches the history entry's hash (and optional RPC response row hash).
+ */
+export function validateLedgerHeaderHash(
+  history: xdr.LedgerHeaderHistoryEntry,
+  responseHash?: string,
+): string {
+  const computedHash = sha256(history.header().toXDR());
+  const historyHash = history.hash().toString("hex").toLowerCase();
+  if (historyHash !== computedHash) {
+    throw new Error(
+      `Snapshot ledger header hash mismatch (expected ${computedHash}, got ${historyHash})`,
+    );
+  }
+  if (responseHash && responseHash.toLowerCase() !== computedHash) {
+    throw new Error(
+      `Snapshot ledger header response hash mismatch (expected ${computedHash}, got ${responseHash.toLowerCase()})`,
+    );
+  }
+  return computedHash;
+}
+
 /** Execute the versioned helper transport; never accept missing/invalid meters. */
 export async function simulateSnapshot(
   input: SimulationInput,
@@ -812,7 +835,16 @@ export async function measureInvocation(
     if (drift) continue;
     const headers = z
       .object({
-        ledgers: z.array(z.object({ sequence: integer, headerXdr: encoded })),
+        ledgers: z.array(
+          z.object({
+            sequence: integer,
+            headerXdr: encoded,
+            hash: z
+              .string()
+              .regex(/^[a-f0-9]{64}$/i)
+              .optional(),
+          }),
+        ),
       })
       .parse(
         await callRpc(
@@ -829,10 +861,12 @@ export async function measureInvocation(
       (item) => item.sequence === simulation.latestLedger,
     );
     if (!row) throw new Error("Snapshot ledger header unavailable");
-    const header = xdr.LedgerHeaderHistoryEntry.fromXDR(
+    const history = xdr.LedgerHeaderHistoryEntry.fromXDR(
       row.headerXdr,
       "base64",
-    ).header();
+    );
+    validateLedgerHeaderHash(history, row.hash);
+    const header = history.header();
     if (
       header.ledgerSeq() !== simulation.latestLedger ||
       header.ledgerVersion() !== network.protocolVersion
