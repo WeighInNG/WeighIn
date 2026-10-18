@@ -50,6 +50,11 @@ npm audit
 `lint` checks Prettier formatting in `src` and `test`; `typecheck` checks TypeScript.
 `npm test` builds TypeScript, runs Node behavior/evidence tests under `tests`, and
 runs Vitest tests under `test`. `npm run test:watch` starts Vitest watch mode.
+Node test files use `--test-concurrency=1` because `package-smoke.test.cjs` runs
+normal `npm pack`, whose `prepack` rebuilds `dist` while other test files import it.
+ponytail: this caps file-level parallelism; isolate the packaging test's checkout
+before re-enabling parallel files.
+
 Use `npm run format` for intentional formatting changes.
 
 The Action executes committed bundles directly. After runtime/dependency changes,
