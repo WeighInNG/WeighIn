@@ -1,7 +1,7 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { StrKey } = require('@stellar/stellar-sdk');
-const { parseFixtures } = require('../dist/identity');
+const { parseFixtures, canonical, canonicalArg } = require('../dist/identity');
 const { diffBenchmarks } = require('../dist/diff');
 const { enforceThresholds } = require('../dist/threshold');
 const { renderComment } = require('../dist/comment');
@@ -206,6 +206,186 @@ test('argument object key order and type capitalization do not alter default cas
   const input = fixture([{ function_name: 'hello', args: [{ type: 'Symbol', value: 'world' }] }]);
   const reordered = fixture([{ function_name: 'hello', args: [{ value: 'world', type: 'symbol' }] }]);
   assert.equal(diffBenchmarks(measurement(input), measurement(reordered)).contracts[0].functions.length, 1);
+});
+
+test('nested vec and map type capitalization do not alter default case identity', () => {
+  const base = fixture([
+    {
+      function_name: 'complex',
+      args: [
+        {
+          type: 'Vec',
+          value: [
+            { type: 'U32', value: 42 },
+            {
+              type: 'Map',
+              value: [
+                {
+                  key: { type: 'Symbol', value: 'myKey' },
+                  value: { type: 'String', value: 'myValue' },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ]);
+  const head = fixture([
+    {
+      function_name: 'complex',
+      args: [
+        {
+          type: 'vec',
+          value: [
+            { type: 'u32', value: 42 },
+            {
+              type: 'map',
+              value: [
+                {
+                  key: { type: 'symbol', value: 'myKey' },
+                  value: { type: 'string', value: 'myValue' },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ]);
+  const diff = diffBenchmarks(measurement(base), measurement(head));
+  assert.equal(diff.contracts.length, 1);
+  assert.equal(diff.contracts[0].functions.length, 1);
+  assert.deepEqual(diff.contracts[0].newBenchmarks, []);
+  assert.deepEqual(diff.contracts[0].removedBenchmarks, []);
+});
+
+test('nested map entry key order does not alter default case identity', () => {
+  const base = fixture([
+    {
+      function_name: 'mapped',
+      args: [
+        {
+          type: 'map',
+          value: [
+            {
+              key: { type: 'symbol', value: 'k' },
+              value: { type: 'i64', value: '100' },
+            },
+          ],
+        },
+      ],
+    },
+  ]);
+  const reordered = fixture([
+    {
+      function_name: 'mapped',
+      args: [
+        {
+          type: 'map',
+          value: [
+            {
+              value: { type: 'i64', value: '100' },
+              key: { type: 'symbol', value: 'k' },
+            },
+          ],
+        },
+      ],
+    },
+  ]);
+  const diff = diffBenchmarks(measurement(base), measurement(reordered));
+  assert.equal(diff.contracts[0].functions.length, 1);
+});
+
+test('nested string payload casing is preserved and distinct string payloads do not match', () => {
+  const base = fixture([
+    {
+      function_name: 'test',
+      args: [
+        {
+          type: 'vec',
+          value: [{ type: 'string', value: 'PayloadCase' }],
+        },
+      ],
+    },
+  ]);
+  const head = fixture([
+    {
+      function_name: 'test',
+      args: [
+        {
+          type: 'vec',
+          value: [{ type: 'string', value: 'payloadcase' }],
+        },
+      ],
+    },
+  ]);
+  const diff = diffBenchmarks(measurement(base), measurement(head));
+  assert.equal(diff.contracts[0].functions.length, 0);
+  assert.equal(diff.contracts[0].newBenchmarks.length, 1);
+  assert.equal(diff.contracts[0].removedBenchmarks.length, 1);
+});
+
+test('distinct nested argument values remain separate in fallback identity', () => {
+  const base = fixture([
+    {
+      function_name: 'test',
+      args: [
+        {
+          type: 'vec',
+          value: [{ type: 'u32', value: 1 }],
+        },
+      ],
+    },
+  ]);
+  const head = fixture([
+    {
+      function_name: 'test',
+      args: [
+        {
+          type: 'vec',
+          value: [{ type: 'u32', value: 2 }],
+        },
+      ],
+    },
+  ]);
+  const diff = diffBenchmarks(measurement(base), measurement(head));
+  assert.equal(diff.contracts[0].functions.length, 0);
+  assert.equal(diff.contracts[0].newBenchmarks.length, 1);
+  assert.equal(diff.contracts[0].removedBenchmarks.length, 1);
+});
+
+test('canonicalArg normalizes nested typed vec and map nodes while preserving payloads', () => {
+  const normalized = canonicalArg({
+    type: 'VEC',
+    value: [
+      { type: 'I32', value: -10 },
+      {
+        type: 'MAP',
+        value: [
+          {
+            value: { type: 'BOOL', value: true },
+            key: { type: 'SYMBOL', value: 'MySymbol' },
+          },
+        ],
+      },
+    ],
+  });
+  assert.deepEqual(normalized, {
+    type: 'vec',
+    value: [
+      { type: 'i32', value: -10 },
+      {
+        type: 'map',
+        value: [
+          {
+            key: { type: 'symbol', value: 'MySymbol' },
+            value: { type: 'bool', value: true },
+          },
+        ],
+      },
+    ],
+  });
 });
 
 test('duplicate logical contracts or cases are rejected instead of overwritten', () => {

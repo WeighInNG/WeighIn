@@ -27,7 +27,7 @@ function relativePath(value: string): string {
 }
 
 // Argument object key order is irrelevant; argument array order is significant.
-function canonical(value: any): any {
+export function canonical(value: any): any {
   if (Array.isArray(value)) return value.map(canonical);
   if (value !== null && typeof value === "object") {
     return Object.fromEntries(
@@ -37,6 +37,68 @@ function canonical(value: any): any {
     );
   }
   return value;
+}
+
+/**
+ * Canonicalize an invocation argument and any nested typed nodes (vec / map)
+ * using conversion semantics matching toScVal:
+ * - Lowercases the type property of top-level and nested typed vec/map nodes.
+ * - Recursively processes elements within `vec` and key/value pairs within `map`.
+ * - Preserves string payloads, numbers, booleans, addresses, and unrelated objects without alteration.
+ * - Sorts object keys deterministically.
+ */
+export function canonicalArg(arg: { type: string; value: any }): {
+  type: string;
+  value: any;
+} {
+  const normalizedType = arg.type.toLowerCase();
+  const val = arg.value;
+  if (normalizedType === "vec" && Array.isArray(val)) {
+    return {
+      type: normalizedType,
+      value: val.map((item) => {
+        if (
+          item !== null &&
+          typeof item === "object" &&
+          typeof item.type === "string" &&
+          "value" in item
+        ) {
+          return canonicalArg(item);
+        }
+        return canonical(item);
+      }),
+    };
+  }
+  if (normalizedType === "map" && Array.isArray(val)) {
+    return {
+      type: normalizedType,
+      value: val.map((entry) => {
+        if (entry !== null && typeof entry === "object") {
+          const sortedKeys = Object.keys(entry).sort();
+          const canonicalEntry: Record<string, any> = {};
+          for (const k of sortedKeys) {
+            if (
+              (k === "key" || k === "value") &&
+              entry[k] !== null &&
+              typeof entry[k] === "object" &&
+              typeof entry[k].type === "string" &&
+              "value" in entry[k]
+            ) {
+              canonicalEntry[k] = canonicalArg(entry[k]);
+            } else {
+              canonicalEntry[k] = canonical(entry[k]);
+            }
+          }
+          return canonicalEntry;
+        }
+        return canonical(entry);
+      }),
+    };
+  }
+  return {
+    type: normalizedType,
+    value: canonical(val),
+  };
 }
 
 /** Resolve logical identities before any deployment or simulation side effects.
@@ -67,10 +129,7 @@ export function parseFixtures(
 
     const caseIds = new Set<string>();
     const invocations = contract.invocations.map((invocation) => {
-      const args = invocation.args.map((arg) => ({
-        type: arg.type.toLowerCase(),
-        value: canonical(arg.value),
-      }));
+      const args = invocation.args.map((arg) => canonicalArg(arg));
       const case_id =
         invocation.id === undefined
           ? `args:${JSON.stringify(args)}`

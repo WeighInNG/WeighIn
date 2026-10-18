@@ -36161,6 +36161,45 @@ function canonical(value) {
   }
   return value;
 }
+function canonicalArg(arg) {
+  const normalizedType = arg.type.toLowerCase();
+  const val = arg.value;
+  if (normalizedType === "vec" && Array.isArray(val)) {
+    return {
+      type: normalizedType,
+      value: val.map((item) => {
+        if (item !== null && typeof item === "object" && typeof item.type === "string" && "value" in item) {
+          return canonicalArg(item);
+        }
+        return canonical(item);
+      })
+    };
+  }
+  if (normalizedType === "map" && Array.isArray(val)) {
+    return {
+      type: normalizedType,
+      value: val.map((entry) => {
+        if (entry !== null && typeof entry === "object") {
+          const sortedKeys = Object.keys(entry).sort();
+          const canonicalEntry = {};
+          for (const k of sortedKeys) {
+            if ((k === "key" || k === "value") && entry[k] !== null && typeof entry[k] === "object" && typeof entry[k].type === "string" && "value" in entry[k]) {
+              canonicalEntry[k] = canonicalArg(entry[k]);
+            } else {
+              canonicalEntry[k] = canonical(entry[k]);
+            }
+          }
+          return canonicalEntry;
+        }
+        return canonical(entry);
+      })
+    };
+  }
+  return {
+    type: normalizedType,
+    value: canonical(val)
+  };
+}
 function parseFixtures(raw, fixturePath) {
   const fixtures = FixturesSpecSchema.parse(JSON.parse(raw));
   const fixture_id = fixtures.id === void 0 ? `path:${relativePath(fixturePath)}` : `id:${fixtures.id}`;
@@ -36175,10 +36214,7 @@ function parseFixtures(raw, fixturePath) {
     contractIds.add(logical_id);
     const caseIds = /* @__PURE__ */ new Set();
     const invocations = contract.invocations.map((invocation) => {
-      const args = invocation.args.map((arg) => ({
-        type: arg.type.toLowerCase(),
-        value: canonical(arg.value)
-      }));
+      const args = invocation.args.map((arg) => canonicalArg(arg));
       const case_id = invocation.id === void 0 ? `args:${JSON.stringify(args)}` : `id:${invocation.id}`;
       const key = JSON.stringify([invocation.function_name, case_id]);
       if (caseIds.has(key)) {
