@@ -60,6 +60,9 @@ network configuration. No RPC instruction-budget substitution is used.
 
 The adapter captures all footprint keys plus network config, ledger data,
 extensions, last-modified sequence, TTL metadata and explicitly queried absence.
+Every required network configuration setting is identified and verified before
+native helper execution; missing configuration entries fail immediately with a
+bounded list of missing setting names and are not retried as ordinary ledger drift.
 Batches must share the simulation's reported ledger. It verifies the matching
 ledger header, retries the entire capture on drift, and expands discovered keys
 when the helper reports an uncaptured read. After 30 attempts, incomplete/drifting

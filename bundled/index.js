@@ -53470,13 +53470,17 @@ var computeConfigNames = /* @__PURE__ */ new Set([
   "configSettingContractCostParamsMemoryBytes",
   "configSettingStateArchival"
 ]);
-var configKeys = configNames.map(
-  (name) => types.LedgerKey.configSetting(
-    new types.LedgerKeyConfigSetting({
-      configSettingId: types.ConfigSettingId[name]()
-    })
-  ).toXDR("base64")
+var configNameToKey = new Map(
+  configNames.map((name) => [
+    name,
+    types.LedgerKey.configSetting(
+      new types.LedgerKeyConfigSetting({
+        configSettingId: types.ConfigSettingId[name]()
+      })
+    ).toXDR("base64")
+  ])
 );
+var configKeys = Array.from(configNameToKey.values());
 var entriesSchema = external_exports.object({
   latestLedger: integer.positive(),
   entries: external_exports.array(
@@ -53738,6 +53742,16 @@ async function measureInvocation(rpcUrl, transaction, helperPath, options) {
     ).header();
     if (header.ledgerSeq() !== simulation.latestLedger || header.ledgerVersion() !== network.protocolVersion) {
       throw new Error("Snapshot header ledger/protocol mismatch");
+    }
+    const missingConfigs = configNames.filter((name) => {
+      const key = configNameToKey.get(name);
+      const row2 = rows.get(key);
+      return !row2 || !row2.xdr;
+    });
+    if (missingConfigs.length > 0) {
+      throw new Error(
+        `Missing required configuration entries: [${missingConfigs.join(", ")}]`
+      );
     }
     const entries = requested.map((key) => {
       const entry = rows.get(key);

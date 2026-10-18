@@ -501,13 +501,17 @@ const computeConfigNames = new Set([
   "configSettingContractCostParamsMemoryBytes",
   "configSettingStateArchival",
 ]);
-const configKeys = configNames.map((name) =>
-  xdr.LedgerKey.configSetting(
-    new xdr.LedgerKeyConfigSetting({
-      configSettingId: xdr.ConfigSettingId[name](),
-    }),
-  ).toXDR("base64"),
+const configNameToKey = new Map(
+  configNames.map((name) => [
+    name,
+    xdr.LedgerKey.configSetting(
+      new xdr.LedgerKeyConfigSetting({
+        configSettingId: xdr.ConfigSettingId[name](),
+      }),
+    ).toXDR("base64"),
+  ]),
 );
+const configKeys = Array.from(configNameToKey.values());
 const entriesSchema = z.object({
   latestLedger: integer.positive(),
   entries: z.array(
@@ -838,6 +842,16 @@ export async function measureInvocation(
       header.ledgerVersion() !== network.protocolVersion
     ) {
       throw new Error("Snapshot header ledger/protocol mismatch");
+    }
+    const missingConfigs = configNames.filter((name) => {
+      const key = configNameToKey.get(name)!;
+      const row = rows.get(key);
+      return !row || !row.xdr;
+    });
+    if (missingConfigs.length > 0) {
+      throw new Error(
+        `Missing required configuration entries: [${missingConfigs.join(", ")}]`,
+      );
     }
     const entries: SnapshotEntry[] = requested.map((key) => {
       const entry = rows.get(key);

@@ -27,7 +27,18 @@ function scenario(t,options={}){
   }
   const transaction=new Transaction(saved.request.params.transaction,replay.input.network_passphrase);
   const baseLedger=saved.raw.result.latestLedger;
-  const entries=replay.input.entries.filter(row=>row.xdr);
+  let entries=replay.input.entries.filter(row=>row.xdr);
+  if(options.omitConfigs){
+    entries = entries.filter(row => {
+      try {
+        const k = xdr.LedgerKey.fromXDR(row.key, 'base64');
+        if (k.switch().name === 'configSetting') {
+          return !options.omitConfigs.includes(k.configSetting().configSettingId().name);
+        }
+      } catch {}
+      return true;
+    });
+  }
   t.mock.method(console,'warn',message=>state.warnings.push(message));
   t.mock.method(globalThis,'setTimeout',(callback,delay)=>{state.delays.push(delay);return setImmediate(callback);});
   t.mock.method(globalThis,'fetch',async(url,fetchOptions)=>{
@@ -306,4 +317,28 @@ test('diagnostic events and failed-call events are excluded from charged event p
   const result = await run();
   assert.ok(result);
   assert.equal(result.provenance.protocol, 28);
+});
+
+test('missing single required configuration setting fails fast with setting name before helper execution', async t => {
+  const { state, run } = scenario(t, { omitConfigs: ['configSettingStateArchival'] });
+  await assert.rejects(
+    run(),
+    /Missing required configuration entries: \[configSettingStateArchival\]/,
+  );
+  assert.equal(state.helpers.length, 0);
+  assert.equal(state.delays.length, 0);
+  assert.equal(state.simulations, 1);
+});
+
+test('multiple missing required configuration settings report all missing names and do not retry as drift', async t => {
+  const { state, run } = scenario(t, {
+    omitConfigs: ['configSettingStateArchival', 'configSettingContractComputeV0'],
+  });
+  await assert.rejects(
+    run(),
+    /Missing required configuration entries: \[configSettingContractComputeV0, configSettingStateArchival\]/,
+  );
+  assert.equal(state.helpers.length, 0);
+  assert.equal(state.delays.length, 0);
+  assert.equal(state.simulations, 1);
 });
