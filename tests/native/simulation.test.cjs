@@ -88,6 +88,21 @@ test('protocol mismatch and missing extension metadata fail explicitly', async t
   capturedRpc(t, (body, result) => body.method === 'getLedgerEntries' ? { ...result, entries: result.entries.map(({ extXdr, ...entry }) => entry) } : result);
   await assert.rejects(measureInvocation('http://captured/rpc', transaction(), helper));
 });
+test('RPC simulation with duplicate footprint keys is rejected before ledger reading or helper execution', async t => {
+  capturedRpc(t, (body, result) => {
+    if (body.method === 'simulateTransaction') {
+      const data = xdr.SorobanTransactionData.fromXDR(result.transactionData, 'base64');
+      const ro = data.resources().footprint().readOnly();
+      data.resources().footprint().readOnly([...ro, ro[0]]);
+      return { ...result, transactionData: data.toXDR('base64') };
+    }
+    return result;
+  });
+  await assert.rejects(
+    measureInvocation('http://captured/rpc', transaction(), helper),
+    /Duplicate read-only footprint key/,
+  );
+});
 test('captured-state/local result disagreement is rejected rather than blended with RPC values', async t => {
   capturedRpc(t, (body, result) => body.method === 'simulateTransaction' ? { ...result, results: [{ ...result.results[0], xdr: xdr.ScVal.scvVoid().toXDR('base64') }] } : result);
   await assert.rejects(measureInvocation('http://captured/rpc', transaction(), helper), /disagrees with RPC/);

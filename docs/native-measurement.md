@@ -60,6 +60,11 @@ network configuration. No RPC instruction-budget substitution is used.
 
 The adapter captures all footprint keys plus network config, ledger data,
 extensions, last-modified sequence, TTL metadata and explicitly queried absence.
+Read-only and read-write footprint keys must be mutually disjoint and contain no
+duplicate entries within either set. Malformed footprints containing duplicates
+or overlapping keys between read-only and read-write sets are rejected before
+reading ledger entries and before resource counting. Distinct-key semantics
+remain strictly unchanged for valid RPC and native data.
 Batches must share the simulation's reported ledger. It verifies the matching
 ledger header, retries the entire capture on drift, and expands discovered keys
 when the helper reports an uncaptured read. After 30 attempts, incomplete/drifting

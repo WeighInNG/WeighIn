@@ -53417,6 +53417,36 @@ async function simulateSnapshot(input, helperPath, signal) {
     void 0,
     signal
   );
+  return parseHelperOutput(stdout);
+}
+function validateFootprintKeys(readOnlyKeys, readWriteKeys, context3 = "footprint") {
+  const roSet = /* @__PURE__ */ new Set();
+  for (const key of readOnlyKeys) {
+    if (roSet.has(key)) {
+      throw new Error(
+        `Duplicate read-only footprint key in ${context3}: ${key}`
+      );
+    }
+    roSet.add(key);
+  }
+  const rwSet = /* @__PURE__ */ new Set();
+  for (const key of readWriteKeys) {
+    if (rwSet.has(key)) {
+      throw new Error(
+        `Duplicate read-write footprint key in ${context3}: ${key}`
+      );
+    }
+    rwSet.add(key);
+  }
+  for (const key of readWriteKeys) {
+    if (roSet.has(key)) {
+      throw new Error(
+        `Overlapping read-only and read-write footprint key in ${context3}: ${key}`
+      );
+    }
+  }
+}
+function parseHelperOutput(stdout) {
   let output;
   try {
     output = outputSchema.parse(JSON.parse(stdout));
@@ -53425,6 +53455,11 @@ async function simulateSnapshot(input, helperPath, signal) {
       `Invalid simulation helper output: ${error2 instanceof Error ? error2.message : error2}`
     );
   }
+  validateFootprintKeys(
+    output.read_only_keys,
+    output.read_write_keys,
+    "simulation helper output"
+  );
   const data = types.SorobanTransactionData.fromXDR(
     output.transaction_data_xdr,
     "base64"
@@ -53640,11 +53675,14 @@ async function measureInvocation(rpcUrl, transaction, helperPath, options) {
       simulation.transactionData,
       "base64"
     ).resources();
-    for (const key of [
-      ...resources.footprint().readOnly(),
-      ...resources.footprint().readWrite()
-    ])
-      keys.add(key.toXDR("base64"));
+    const rpcReadOnly = resources.footprint().readOnly().map((k) => k.toXDR("base64"));
+    const rpcReadWrite = resources.footprint().readWrite().map((k) => k.toXDR("base64"));
+    validateFootprintKeys(
+      rpcReadOnly,
+      rpcReadWrite,
+      "RPC simulation transaction data"
+    );
+    for (const key of [...rpcReadOnly, ...rpcReadWrite]) keys.add(key);
     const requested = [...keys].sort();
     const rows = /* @__PURE__ */ new Map();
     let drift = false;
@@ -53899,6 +53937,11 @@ async function measureInvocation(rpcUrl, transaction, helperPath, options) {
 var DEFAULT_RPC_URL = "http://localhost:8000/rpc";
 var NETWORK_PASSPHRASE = "Standalone Network ; February 2017";
 function metricsFromSimulation(output, limits) {
+  validateFootprintKeys(
+    output.read_only_keys,
+    output.read_write_keys,
+    "simulation output footprint before resource calculation"
+  );
   const measured = (consumed, limit, source, limit_source) => ({
     availability: "measured",
     consumed,

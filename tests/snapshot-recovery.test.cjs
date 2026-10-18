@@ -5,7 +5,8 @@ const assert=require('node:assert/strict');
 const {EventEmitter}=require('node:events');
 const cp=require('node:child_process');
 const {Transaction,Keypair,xdr}=require('@stellar/stellar-sdk');
-const {measureInvocation}=require('../dist/simulation');
+const {measureInvocation,validateFootprintKeys}=require('../dist/simulation');
+const {metricsFromSimulation}=require('../dist/measurement');
 const calls=require('../docs/experiments/repeatability/completed/run-1-rpc.json');
 const replay=require('../docs/experiments/repeatability/completed/run-1-native.json')[0];
 const saved=calls.find(c=>c.request.method==='simulateTransaction'
@@ -24,6 +25,27 @@ function scenario(t,options={}){
     data.resources().footprint().readOnly([...data.resources().footprint().readOnly(),...extra]);
     simulation.transactionData=data.toXDR('base64');output.transaction_data_xdr=simulation.transactionData;
     output.read_only_keys=data.resources().footprint().readOnly().map(k=>k.toXDR('base64'));
+  }
+  if(options.duplicateRpcReadOnly){
+    const data=xdr.SorobanTransactionData.fromXDR(simulation.transactionData,'base64');
+    const ro=data.resources().footprint().readOnly();
+    data.resources().footprint().readOnly([...ro,ro[0]]);
+    simulation.transactionData=data.toXDR('base64');
+  }
+  if(options.duplicateRpcReadWrite){
+    const data=xdr.SorobanTransactionData.fromXDR(simulation.transactionData,'base64');
+    const ro=data.resources().footprint().readOnly();
+    const key=ro[0];
+    data.resources().footprint().readWrite([key,key]);
+    data.resources().footprint().readOnly(ro.slice(1));
+    simulation.transactionData=data.toXDR('base64');
+  }
+  if(options.overlappingRpcFootprint){
+    const data=xdr.SorobanTransactionData.fromXDR(simulation.transactionData,'base64');
+    const ro=data.resources().footprint().readOnly();
+    const rw=data.resources().footprint().readWrite();
+    data.resources().footprint().readWrite([...rw,ro[0]]);
+    simulation.transactionData=data.toXDR('base64');
   }
   const transaction=new Transaction(saved.request.params.transaction,replay.input.network_passphrase);
   const baseLedger=saved.raw.result.latestLedger;
@@ -91,6 +113,17 @@ function scenario(t,options={}){
           })),
         });
         actual.contract_events_xdr=[ev.toXDR('base64')];
+      }
+      if(options.duplicateHelperReadOnly){
+        actual.read_only_keys=[...actual.read_only_keys, actual.read_only_keys[0]];
+      }
+      if(options.duplicateHelperReadWrite){
+        const key = actual.read_only_keys[0];
+        actual.read_only_keys = actual.read_only_keys.slice(1);
+        actual.read_write_keys = [key, key];
+      }
+      if(options.overlappingHelperFootprint){
+        actual.read_write_keys=[...actual.read_write_keys, actual.read_only_keys[0]];
       }
       setImmediate(()=>callback(null,JSON.stringify(actual),''));
     };return {stdin};
@@ -306,4 +339,95 @@ test('diagnostic events and failed-call events are excluded from charged event p
   const result = await run();
   assert.ok(result);
   assert.equal(result.provenance.protocol, 28);
+});
+
+test('RPC simulation with duplicate read-only footprint key fails before reading ledger entries', async t => {
+  const { state, run } = scenario(t, { duplicateRpcReadOnly: true });
+  await assert.rejects(
+    run(),
+    /Duplicate read-only footprint key in RPC simulation transaction data/,
+  );
+  assert.equal(state.reads, 0);
+  assert.equal(state.helpers.length, 0);
+});
+
+test('RPC simulation with duplicate read-write footprint key fails before reading ledger entries', async t => {
+  const { state, run } = scenario(t, { duplicateRpcReadWrite: true });
+  await assert.rejects(
+    run(),
+    /Duplicate read-write footprint key in RPC simulation transaction data/,
+  );
+  assert.equal(state.reads, 0);
+  assert.equal(state.helpers.length, 0);
+});
+
+test('RPC simulation with overlapping read-only and read-write footprint keys fails before reading ledger entries', async t => {
+  const { state, run } = scenario(t, { overlappingRpcFootprint: true });
+  await assert.rejects(
+    run(),
+    /Overlapping read-only and read-write footprint key in RPC simulation transaction data/,
+  );
+  assert.equal(state.reads, 0);
+  assert.equal(state.helpers.length, 0);
+});
+
+test('native helper output with duplicate read-only footprint key is rejected before metrics calculation', async t => {
+  const { state, run } = scenario(t, { duplicateHelperReadOnly: true });
+  await assert.rejects(
+    run(),
+    /Duplicate read-only footprint key in simulation helper output/,
+  );
+  assert.equal(state.helpers.length, 1);
+});
+
+test('native helper output with duplicate read-write footprint key is rejected before metrics calculation', async t => {
+  const { state, run } = scenario(t, { duplicateHelperReadWrite: true });
+  await assert.rejects(
+    run(),
+    /Duplicate read-write footprint key in simulation helper output/,
+  );
+  assert.equal(state.helpers.length, 1);
+});
+
+test('native helper output with overlapping read-only and read-write footprint keys is rejected', async t => {
+  const { state, run } = scenario(t, { overlappingHelperFootprint: true });
+  await assert.rejects(
+    run(),
+    /Overlapping read-only and read-write footprint key in simulation helper output/,
+  );
+  assert.equal(state.helpers.length, 1);
+});
+
+test('metricsFromSimulation rejects malformed footprints before counting resources', () => {
+  const fakeLimits = {
+    cpu_instructions: 400000000,
+    memory_bytes: 41943040,
+    footprint_entries: 400,
+    disk_read_bytes: 200000,
+    write_entries: 200,
+    write_bytes: 132096,
+    events_and_return_bytes: 16384,
+  };
+  const keyA = 'AAAAAQ==';
+  const keyB = 'AAAAAg==';
+  const validOutput = { ...replay.output, read_only_keys: [keyA], read_write_keys: [keyB] };
+
+  // Success case: disjoint distinct keys
+  const metrics = metricsFromSimulation(validOutput, fakeLimits);
+  assert.equal(metrics.ledger_read_entries.consumed, 2);
+  assert.equal(metrics.ledger_write_entries.consumed, 1);
+
+  // Failure cases: duplicates and overlap
+  assert.throws(
+    () => metricsFromSimulation({ ...validOutput, read_only_keys: [keyA, keyA] }, fakeLimits),
+    /Duplicate read-only footprint key/,
+  );
+  assert.throws(
+    () => metricsFromSimulation({ ...validOutput, read_write_keys: [keyB, keyB] }, fakeLimits),
+    /Duplicate read-write footprint key/,
+  );
+  assert.throws(
+    () => metricsFromSimulation({ ...validOutput, read_only_keys: [keyA], read_write_keys: [keyA] }, fakeLimits),
+    /Overlapping read-only and read-write footprint key/,
+  );
 });

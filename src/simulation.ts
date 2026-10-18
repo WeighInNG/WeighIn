@@ -432,6 +432,42 @@ export async function simulateSnapshot(
     undefined,
     signal,
   );
+  return parseHelperOutput(stdout);
+}
+
+export function validateFootprintKeys(
+  readOnlyKeys: readonly string[],
+  readWriteKeys: readonly string[],
+  context: string = "footprint",
+): void {
+  const roSet = new Set<string>();
+  for (const key of readOnlyKeys) {
+    if (roSet.has(key)) {
+      throw new Error(
+        `Duplicate read-only footprint key in ${context}: ${key}`,
+      );
+    }
+    roSet.add(key);
+  }
+  const rwSet = new Set<string>();
+  for (const key of readWriteKeys) {
+    if (rwSet.has(key)) {
+      throw new Error(
+        `Duplicate read-write footprint key in ${context}: ${key}`,
+      );
+    }
+    rwSet.add(key);
+  }
+  for (const key of readWriteKeys) {
+    if (roSet.has(key)) {
+      throw new Error(
+        `Overlapping read-only and read-write footprint key in ${context}: ${key}`,
+      );
+    }
+  }
+}
+
+export function parseHelperOutput(stdout: string): SimulationOutput {
   let output: SimulationOutput;
   try {
     output = outputSchema.parse(JSON.parse(stdout));
@@ -440,6 +476,11 @@ export async function simulateSnapshot(
       `Invalid simulation helper output: ${error instanceof Error ? error.message : error}`,
     );
   }
+  validateFootprintKeys(
+    output.read_only_keys,
+    output.read_write_keys,
+    "simulation helper output",
+  );
   const data = xdr.SorobanTransactionData.fromXDR(
     output.transaction_data_xdr,
     "base64",
@@ -732,11 +773,20 @@ export async function measureInvocation(
       simulation.transactionData,
       "base64",
     ).resources();
-    for (const key of [
-      ...resources.footprint().readOnly(),
-      ...resources.footprint().readWrite(),
-    ])
-      keys.add(key.toXDR("base64"));
+    const rpcReadOnly = resources
+      .footprint()
+      .readOnly()
+      .map((k) => k.toXDR("base64"));
+    const rpcReadWrite = resources
+      .footprint()
+      .readWrite()
+      .map((k) => k.toXDR("base64"));
+    validateFootprintKeys(
+      rpcReadOnly,
+      rpcReadWrite,
+      "RPC simulation transaction data",
+    );
+    for (const key of [...rpcReadOnly, ...rpcReadWrite]) keys.add(key);
     const requested = [...keys].sort();
     const rows = new Map<
       string,

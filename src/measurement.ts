@@ -8,6 +8,7 @@ import { validateLargeInt } from "./config";
 import {
   measureInvocation,
   resolveSimulationHelper,
+  validateFootprintKeys,
   ComputeProvenance,
   SimulationOutput,
   ResourceLimits,
@@ -106,6 +107,11 @@ export function metricsFromSimulation(
   output: SimulationOutput,
   limits: ResourceLimits,
 ): Metrics {
+  validateFootprintKeys(
+    output.read_only_keys,
+    output.read_write_keys,
+    "simulation output footprint before resource calculation",
+  );
   const measured = (
     consumed: number,
     limit: number,
