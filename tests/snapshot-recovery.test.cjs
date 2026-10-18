@@ -25,7 +25,7 @@ function scenario(t,options={}){
     simulation.transactionData=data.toXDR('base64');output.transaction_data_xdr=simulation.transactionData;
     output.read_only_keys=data.resources().footprint().readOnly().map(k=>k.toXDR('base64'));
   }
-  const transaction=new Transaction(saved.request.params.transaction,replay.input.network_passphrase);
+  const transaction=new Transaction(saved.request.params.transaction,options.txPassphrase||replay.input.network_passphrase);
   const baseLedger=saved.raw.result.latestLedger;
   const entries=replay.input.entries.filter(row=>row.xdr);
   t.mock.method(console,'warn',message=>state.warnings.push(message));
@@ -112,6 +112,12 @@ test('malformed JSON-RPC responses stop measurement before any native helper cal
     assert.equal(state.helpers.length,0);
     t.mock.restoreAll();
   }
+});
+test('transaction prepared for another network is rejected before native measurement without metrics', async t => {
+  const { state, run } = scenario(t, { txPassphrase: 'Test SDF Network ; September 2015' });
+  await assert.rejects(run(), /Transaction network passphrase "Test SDF Network ; September 2015" does not match RPC network passphrase/);
+  assert.equal(state.helpers.length, 0);
+  assert.equal(state.simulations, 0);
 });
 test('three transient read failures recover on the fourth complete capture with bounded delays',async t=>{
   const {state,run}=scenario(t,{error:(method,s)=>method==='getLedgerEntries'&&s.reads<=3?transient:null});
