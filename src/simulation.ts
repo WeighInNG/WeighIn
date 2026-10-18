@@ -231,6 +231,25 @@ function execute(
                 .code === "number"
                 ? (error as NodeJS.ErrnoException & { code: number }).code
                 : undefined;
+            // The helper reports structured failures as a JSON envelope on
+            // stdout and a generic reason on stderr; carry the envelope detail
+            // in the message so a rejected simulation stays diagnosable while
+            // `failure.stdout` keeps feeding the envelope protocol above.
+            try {
+              const envelope = parseHelperFailure(failure);
+              if (envelope) {
+                failure.message = [
+                  failure.message,
+                  `Native helper ${envelope.status}: ${envelope.message}`,
+                  ...(envelope.keys ?? []).map(
+                    (key) => `UNCAPTURED_KEY:${key}`,
+                  ),
+                ].join("\n");
+              }
+            } catch {
+              // A malformed envelope is reported by the envelope protocol's own
+              // caller; keep the raw helper failure here.
+            }
             reject(failure);
           }
         } else resolve(stdout);
