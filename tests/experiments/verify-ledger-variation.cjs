@@ -526,7 +526,6 @@ async function runControlledLedgerExperiment(destination = defaultDestination) {
       variationDiff,
       policy,
       violations,
-      summary,
       verification,
     }),
   );

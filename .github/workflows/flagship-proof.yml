@@ -30,13 +30,28 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - uses: dtolnay/rust-toolchain@master
+          cache: npm
+      - uses: dtolnay/rust-toolchain@d1031067263f94b142dd6c0ce24c5eb9d02d52a0
         with:
           toolchain: '1.95.0'
           targets: wasm32v1-none
+      - name: Cache locked Cargo dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-1.95.0-${{ hashFiles('native/simulation/Cargo.lock', 'contract/Cargo.lock') }}
+      - name: Pre-fetch locked Cargo dependencies
+        run: |
+          cargo +1.95.0 fetch --locked --manifest-path native/simulation/Cargo.toml --target x86_64-unknown-linux-gnu
+          cargo +1.95.0 fetch --locked --manifest-path contract/Cargo.toml --target wasm32v1-none
+
       - name: Install dependencies and validate source
         run: |
           npm ci
+          npm run build
+          bash scripts/prime-npm-consumer-cache.sh
           npm test
           npm run test:native
           npm run build

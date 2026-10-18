@@ -1,7 +1,6 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const crypto = require("node:crypto");
-const { execFileSync } = require("node:child_process");
 
 const root = path.resolve(__dirname, "..");
 const manifestPath = path.join(root, "provenance-manifest.json");
@@ -30,21 +29,12 @@ function sha256(file) {
     .update(fs.readFileSync(path.join(root, file)))
     .digest("hex");
 }
-function command(name, args) {
-  try {
-    return execFileSync(name, args, { cwd: root, encoding: "utf8" }).trim();
-  } catch {
-    return "unavailable";
-  }
-}
 const entries = [...new Set(tracked.flatMap(files))]
   .sort()
   .map((file) => ({ path: file, sha256: sha256(file) }));
 const manifest = {
   schema_version: 1,
   purpose: "verifiable WeighIn package build provenance",
-  source_revision: command("git", ["rev-parse", "HEAD"]),
-  tools: { node: process.version, npm: command("npm", ["--version"]) },
   inputs: entries,
 };
 if (process.argv.includes("--verify")) {
