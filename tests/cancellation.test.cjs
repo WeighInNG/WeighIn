@@ -114,7 +114,7 @@ test("measureInvocation interrupts captive-core transient read backoff delay pro
   globalThis.fetch = async (url, options) => {
     const body = options?.body ? JSON.parse(options.body) : {};
     if (body.method === "getNetwork") {
-      return new Response(JSON.stringify({ jsonrpc: "2.0", id: body.id, result: { passphrase: "test", protocolVersion: 28 } }));
+      return new Response(JSON.stringify({ jsonrpc: "2.0", id: body.id, result: { passphrase: Networks.TESTNET, protocolVersion: 28 } }));
     }
     const calls = require("../docs/experiments/repeatability/completed/run-1-rpc.json");
     const replay = require("../docs/experiments/repeatability/completed/run-1-native.json")[0];

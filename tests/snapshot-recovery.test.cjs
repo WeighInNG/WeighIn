@@ -25,7 +25,7 @@ function scenario(t,options={}){
     simulation.transactionData=data.toXDR('base64');output.transaction_data_xdr=simulation.transactionData;
     output.read_only_keys=data.resources().footprint().readOnly().map(k=>k.toXDR('base64'));
   }
-  const transaction=new Transaction(saved.request.params.transaction,replay.input.network_passphrase);
+  const transaction=new Transaction(saved.request.params.transaction,options.txPassphrase ?? replay.input.network_passphrase);
   const baseLedger=saved.raw.result.latestLedger;
   const entries=replay.input.entries.filter(row=>row.xdr);
   t.mock.method(console,'warn',message=>state.warnings.push(message));
@@ -33,7 +33,7 @@ function scenario(t,options={}){
   t.mock.method(globalThis,'fetch',async(url,fetchOptions)=>{
     const request=JSON.parse(fetchOptions.body);state.methods.push(request.method);
     let result;
-    if(request.method==='getNetwork')result={passphrase:replay.input.network_passphrase,protocolVersion:28};
+    if(request.method==='getNetwork')result={passphrase:options.networkPassphrase ?? replay.input.network_passphrase,protocolVersion:28};
     if(request.method==='simulateTransaction'){
       state.simulations++;
       const events = options.extraRpcEvents ? [...simulation.events, ...options.extraRpcEvents] : simulation.events;
@@ -306,4 +306,38 @@ test('diagnostic events and failed-call events are excluded from charged event p
   const result = await run();
   assert.ok(result);
   assert.equal(result.provenance.protocol, 28);
+});
+
+test('transaction prepared for another network is rejected before simulation or helper execution', async t => {
+  const { state, run } = scenario(t, { txPassphrase: 'Test SDF Network ; September 2015' });
+  await assert.rejects(
+    run(),
+    /Transaction network passphrase "Test SDF Network ; September 2015" does not match RPC network passphrase "Standalone Network ; February 2017"/,
+  );
+  assert.equal(state.simulations, 0);
+  assert.equal(state.reads, 0);
+  assert.equal(state.helpers.length, 0);
+});
+
+test('RPC network passphrase mismatch rejects transaction before simulation or helper execution', async t => {
+  const { state, run } = scenario(t, { networkPassphrase: 'Other Network Passphrase ; 2026' });
+  await assert.rejects(
+    run(),
+    /Transaction network passphrase "Standalone Network ; February 2017" does not match RPC network passphrase "Other Network Passphrase ; 2026"/,
+  );
+  assert.equal(state.simulations, 0);
+  assert.equal(state.reads, 0);
+  assert.equal(state.helpers.length, 0);
+});
+
+test('transaction with missing network passphrase rejects before simulation or helper execution', async t => {
+  const badTx = new Transaction(saved.request.params.transaction, replay.input.network_passphrase);
+  Object.defineProperty(badTx, 'networkPassphrase', { value: undefined });
+  const { state } = scenario(t);
+  await assert.rejects(
+    measureInvocation('http://controlled.invalid/rpc', badTx, __filename),
+    /Transaction network passphrase "undefined" does not match RPC network passphrase "Standalone Network ; February 2017"/,
+  );
+  assert.equal(state.simulations, 0);
+  assert.equal(state.helpers.length, 0);
 });

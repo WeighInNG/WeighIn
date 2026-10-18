@@ -58,6 +58,11 @@ They are consumed Soroban cost-model units, not submission budgets, hardware
 instruction counts or process RSS. Compute limits come from the same captured
 network configuration. No RPC instruction-budget substitution is used.
 
+## Network identity binding
+
+`measureInvocation` verifies that the supplied transaction's `networkPassphrase` strictly matches the network passphrase returned by the RPC `getNetwork` endpoint before proceeding with simulation or helper execution. Any transaction prepared or signed for a different network is rejected immediately with an explicit error, preventing cross-network ledger queries, wasted simulation calls, or misleading zero metrics.
+
+
 The adapter captures all footprint keys plus network config, ledger data,
 extensions, last-modified sequence, TTL metadata and explicitly queried absence.
 Batches must share the simulation's reported ledger. It verifies the matching

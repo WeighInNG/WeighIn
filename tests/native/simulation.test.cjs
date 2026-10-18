@@ -88,6 +88,13 @@ test('protocol mismatch and missing extension metadata fail explicitly', async t
   capturedRpc(t, (body, result) => body.method === 'getLedgerEntries' ? { ...result, entries: result.entries.map(({ extXdr, ...entry }) => entry) } : result);
   await assert.rejects(measureInvocation('http://captured/rpc', transaction(), helper));
 });
+test('transaction network passphrase mismatch fails explicitly before simulation or helper invocation', async t => {
+  capturedRpc(t, (body, result) => body.method === 'getNetwork' ? { ...result, passphrase: 'Different Network ; 2026' } : result);
+  await assert.rejects(
+    measureInvocation('http://captured/rpc', transaction(), helper),
+    /does not match RPC network passphrase/
+  );
+});
 test('captured-state/local result disagreement is rejected rather than blended with RPC values', async t => {
   capturedRpc(t, (body, result) => body.method === 'simulateTransaction' ? { ...result, results: [{ ...result.results[0], xdr: xdr.ScVal.scvVoid().toXDR('base64') }] } : result);
   await assert.rejects(measureInvocation('http://captured/rpc', transaction(), helper), /disagrees with RPC/);

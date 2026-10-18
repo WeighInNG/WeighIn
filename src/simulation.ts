@@ -698,6 +698,14 @@ export async function measureInvocation(
     throw new Error(
       `Unsupported protocol ${network.protocolVersion}: simulation helper supports 28`,
     );
+  if (
+    !transaction.networkPassphrase ||
+    transaction.networkPassphrase !== network.passphrase
+  ) {
+    throw new Error(
+      `Transaction network passphrase "${transaction.networkPassphrase}" does not match RPC network passphrase "${network.passphrase}"`,
+    );
+  }
   const keys = new Set(configKeys);
   let transientReadFailures = 0;
   let lastCause:
