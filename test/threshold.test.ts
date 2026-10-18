@@ -246,4 +246,198 @@ describe("enforceThresholds", () => {
       expect(v[1].rule).toBe("allow_10_percent_increase");
     });
   });
+
+  describe("Exact percentage boundaries without floating-point distortion", () => {
+    function createExactDiff(
+      key: MetricKey,
+      baseConsumed: number,
+      headConsumed: number,
+    ): DiffResult {
+      const delta = headConsumed - baseConsumed;
+      const pct = baseConsumed === 0 ? null : (delta / baseConsumed) * 100;
+      const regression = delta > 0;
+      return {
+        contracts: [
+          {
+            contract_id: "contract-exact",
+            base_commit: "base",
+            head_commit: "head",
+            hasRegression: regression,
+            newFunctions: [],
+            removedFunctions: [],
+            functions: [
+              {
+                function_name: "test-fn",
+                hasRegression: regression,
+                metrics: [
+                  {
+                    key,
+                    base: { consumed: baseConsumed, limit: 0 },
+                    head: { consumed: headConsumed, limit: 0 },
+                    delta,
+                    pct,
+                    regression,
+                    availability: "comparable",
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+        hasRegression: regression,
+        newContracts: [],
+        removedContracts: [],
+      };
+    }
+
+    it("evaluates exact boundary cleanly where float division rounds up (2.9% boundary)", () => {
+      // 29 / 1000 * 100 in float is 2.9000000000000004 > 2.9
+      const boundaryDiff = createExactDiff("cpu_instructions", 1000, 1029);
+      const configPass: WeighinConfig = {
+        thresholds: {
+          functions: {
+            "test-fn": { cpu_instructions: "allow_2.9_percent_increase" },
+          },
+        },
+      };
+      expect(enforceThresholds(boundaryDiff, configPass)).toEqual([]);
+
+      const exceededDiff = createExactDiff("cpu_instructions", 1000, 1030);
+      const violations = enforceThresholds(exceededDiff, configPass);
+      expect(violations).toHaveLength(1);
+      expect(violations[0].rule).toBe("allow_2.9_percent_increase");
+    });
+
+    it("evaluates exact decimal boundary for 0.1% increase (7 / 7000)", () => {
+      // 7 / 7000 * 100 in float can distort against 0.1
+      const boundaryDiff = createExactDiff("cpu_instructions", 7000, 7007);
+      const configPass: WeighinConfig = {
+        thresholds: {
+          functions: {
+            "test-fn": { cpu_instructions: 0.1 },
+          },
+        },
+      };
+      expect(enforceThresholds(boundaryDiff, configPass)).toEqual([]);
+
+      const exceededDiff = createExactDiff("cpu_instructions", 7000, 7008);
+      const violations = enforceThresholds(exceededDiff, configPass);
+      expect(violations).toHaveLength(1);
+    });
+
+    it("evaluates nonrepresentable thirds cleanly (1/3 increase)", () => {
+      // 1 / 3 is nonrepresentable as a terminating decimal
+      const thirdDiff = createExactDiff("cpu_instructions", 3, 4);
+
+      // Exact fractional rate passes
+      const configFraction: WeighinConfig = {
+        thresholds: {
+          functions: {
+            "test-fn": { cpu_instructions: "allow_100/3_percent_increase" },
+          },
+        },
+      };
+      expect(enforceThresholds(thirdDiff, configFraction)).toEqual([]);
+
+      // JS numeric 100 / 3 passes
+      const configNumeric: WeighinConfig = {
+        thresholds: {
+          global: { max_allowed_cpu_increase_pct: 100 / 3 },
+        },
+      };
+      expect(enforceThresholds(thirdDiff, configNumeric)).toEqual([]);
+
+      // 33.34% allows up to 0.3334, so 1/3 (0.33333...) passes
+      const config33_34: WeighinConfig = {
+        thresholds: {
+          functions: {
+            "test-fn": { cpu_instructions: "allow_33.34_percent_increase" },
+          },
+        },
+      };
+      expect(enforceThresholds(thirdDiff, config33_34)).toEqual([]);
+
+      // 33.33% allows up to 0.3333, but 1/3 is strictly greater, so it fails
+      const config33_33: WeighinConfig = {
+        thresholds: {
+          functions: {
+            "test-fn": { cpu_instructions: "allow_33.33_percent_increase" },
+          },
+        },
+      };
+      const violations = enforceThresholds(thirdDiff, config33_33);
+      expect(violations).toHaveLength(1);
+      expect(violations[0].rule).toBe("allow_33.33_percent_increase");
+    });
+
+    it("evaluates values near safe-integer limits with exact precision", () => {
+      const baseQuadrillion = 8_000_000_000_000_000;
+      const deltaQuadrillion = 800_000_000_000_000; // exactly 10%
+      const boundaryDiff = createExactDiff(
+        "cpu_instructions",
+        baseQuadrillion,
+        baseQuadrillion + deltaQuadrillion,
+      );
+
+      const config10: WeighinConfig = {
+        thresholds: {
+          functions: {
+            "test-fn": { cpu_instructions: "allow_10_percent_increase" },
+          },
+        },
+      };
+      expect(enforceThresholds(boundaryDiff, config10)).toEqual([]);
+
+      // One single unit more at 9 quadrillion exceeds the exact 10% limit
+      const exceededDiff = createExactDiff(
+        "cpu_instructions",
+        baseQuadrillion,
+        baseQuadrillion + deltaQuadrillion + 1,
+      );
+      const violations = enforceThresholds(exceededDiff, config10);
+      expect(violations).toHaveLength(1);
+    });
+
+    it("evaluates nonrepresentable thirds near safe-integer limits", () => {
+      const base3Quadrillion = 3_000_000_000_000_000;
+      const delta1Quadrillion = 1_000_000_000_000_000; // exact 1/3
+      const thirdDiff = createExactDiff(
+        "memory_bytes",
+        base3Quadrillion,
+        base3Quadrillion + delta1Quadrillion,
+      );
+
+      const configThird: WeighinConfig = {
+        thresholds: {
+          global: { max_allowed_memory_increase_pct: 100 / 3 },
+        },
+      };
+      expect(enforceThresholds(thirdDiff, configThird)).toEqual([]);
+
+      // One unit above 1/3 at quadrillions fails
+      const exceededThirdDiff = createExactDiff(
+        "memory_bytes",
+        base3Quadrillion,
+        base3Quadrillion + delta1Quadrillion + 1,
+      );
+      const violations = enforceThresholds(exceededThirdDiff, configThird);
+      expect(violations).toHaveLength(1);
+    });
+
+    it("keeps displayed rounded percentage separate from pass/fail semantics", () => {
+      const thirdDiff = createExactDiff("cpu_instructions", 3, 4);
+      const config33_33: WeighinConfig = {
+        thresholds: {
+          functions: {
+            "test-fn": { cpu_instructions: "allow_33.33_percent_increase" },
+          },
+        },
+      };
+      const violations = enforceThresholds(thirdDiff, config33_33);
+      expect(violations).toHaveLength(1);
+      // Displayed percentage is formatted to 2 decimals (33.33%) even though exact decision failed
+      expect(violations[0].message).toContain("33.33%");
+      expect(violations[0].message).toContain("limit 33.33%");
+    });
+  });
 });
