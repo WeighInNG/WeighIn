@@ -54875,19 +54875,27 @@ async function buildContracts(fixturesPath, rustToolchain) {
       process.stdout.write(stdout + stderr);
     return stdout.trim();
   }
-  const rustVersion = await command("rustc", ["--version"], fixturesDir);
-  const rust = rustVersion.match(/^rustc (\d+)\.(\d+)\./);
-  if (!rust || Number(rust[1]) < 1 || Number(rust[1]) === 1 && Number(rust[2]) < 84) {
-    throw new Error(
-      `Rust 1.84+ is required for wasm32v1-none; got ${rustVersion}`
-    );
-  }
   const stellarVersion = await command("stellar", ["--version"], fixturesDir);
   const stellar = stellarVersion.match(/stellar (\d+)\.(\d+)\.(\d+)/);
   if (!stellar || Number(stellar[1]) < 28 || Number(stellar[1]) === 28 && Number(stellar[2]) < 1) {
     throw new Error(
       `Stellar CLI 28.1+ with optimization support is required; got ${stellarVersion}`
     );
+  }
+  const packageRustVersions = /* @__PURE__ */ new Map();
+  async function probePackageCompiler(packageDir) {
+    let version2 = packageRustVersions.get(packageDir);
+    if (!version2) {
+      version2 = await command("rustc", ["--version"], packageDir);
+      const rust = version2.match(/^rustc (\d+)\.(\d+)\./);
+      if (!rust || Number(rust[1]) < 1 || Number(rust[1]) === 1 && Number(rust[2]) < 84) {
+        throw new Error(
+          `Rust 1.84+ is required for wasm32v1-none; got ${version2}`
+        );
+      }
+      packageRustVersions.set(packageDir, version2);
+    }
+    return version2;
   }
   const plans = [];
   const metadataCache = /* @__PURE__ */ new Map();
@@ -54921,22 +54929,27 @@ async function buildContracts(fixturesPath, rustToolchain) {
         )
       );
       packages = metadata.packages.filter(
-        (pkg) => metadata.workspace_members.includes(pkg.id) && pkg.targets.some((target) => target.crate_types.includes("cdylib"))
+        (pkg2) => metadata.workspace_members.includes(pkg2.id) && pkg2.targets.some((target) => target.crate_types.includes("cdylib"))
       );
       metadataCache.set(manifest, packages);
     }
     const matches = packages.filter(
-      (pkg) => `${pkg.name.replace(/-/g, "_")}.wasm` === path4.basename(destination)
+      (pkg2) => `${pkg2.name.replace(/-/g, "_")}.wasm` === path4.basename(destination)
     );
     if (matches.length !== 1)
       throw new Error(
         `wasm_path ${contract.wasm_path} must identify exactly one Cargo cdylib package; found ${matches.length}`
       );
-    plans.push({ destination, pkg: matches[0] });
+    const pkg = matches[0];
+    const packageDir = path4.dirname(pkg.manifest_path);
+    await probePackageCompiler(packageDir);
+    plans.push({ destination, pkg });
   }
   const artifacts = /* @__PURE__ */ new Map();
   const results = [];
   for (const { destination, pkg } of plans) {
+    const packageDir = path4.dirname(pkg.manifest_path);
+    const rustVersion = await probePackageCompiler(packageDir);
     let wasm = artifacts.get(pkg.manifest_path);
     if (!wasm) {
       let outputDir;

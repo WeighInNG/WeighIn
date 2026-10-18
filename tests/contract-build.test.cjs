@@ -37,9 +37,9 @@ async function scenario(options, verify) {
     fs.writeFileSync(path.join(directory, destination), 'stale artifact');
   }
   exec.exec = async (command, args, config) => {
-    commands.push({ command, args, env: config.env });
+    commands.push({ command, args, env: config.env, cwd: config.cwd });
     const emit = text => config.listeners.stdout(Buffer.from(text));
-    if (command === 'rustc') emit(options.rust || 'rustc 1.95.0');
+    if (command === 'rustc') emit(typeof options.rust === 'function' ? options.rust(config.cwd, config.env) : (options.rust || 'rustc 1.95.0'));
     else if (command === 'cargo') emit(JSON.stringify({ workspace_members: packages.map(pkg => pkg.id), packages }));
     else if (command === 'stellar' && args[0] === '--version') {
       if (options.missingCli) throw new Error('stellar executable not found');
@@ -143,4 +143,37 @@ test('missing caller temporary-storage directory fails visibly before optimizati
   try { await assert.rejects(buildContracts(fixtures), /Cannot create build temporary storage/); }
   finally { if (previous === undefined) delete process.env.TMPDIR; else process.env.TMPDIR = previous; }
   assert.equal(commands.some(c => c.command === 'stellar' && c.args[0] === 'contract'), false);
+}));
+
+test('probes effective compiler in each distinct package context directory', async () => scenario({ names: ['first', 'second'], paths: ['artifacts/first.wasm', 'artifacts/second.wasm'] }, async ({ fixtures, directory, commands }) => {
+  const results = await buildContracts(fixtures, '1.95.0');
+  assert.equal(results.length, 2);
+  const rustProbes = commands.filter(c => c.command === 'rustc');
+  assert.equal(rustProbes.length, 2);
+  assert.equal(rustProbes[0].cwd, path.join(directory, 'crate0'));
+  assert.equal(rustProbes[1].cwd, path.join(directory, 'crate1'));
+  assert.ok(rustProbes.every(c => c.env.RUSTUP_TOOLCHAIN === '1.95.0'));
+}));
+
+test('rejects unsupported crate-local toolchain before building that package', async () => scenario({
+  rust: (cwd) => cwd.endsWith('crate0') ? 'rustc 1.83.0' : 'rustc 1.95.0',
+}, async ({ fixtures, commands }) => {
+  await assert.rejects(buildContracts(fixtures), /Rust 1.84/);
+  assert.equal(commands.some(c => c.command === 'stellar' && c.args[0] === 'contract'), false);
+}));
+
+test('preserves explicit rust-toolchain override for both crate checks and builds', async () => scenario({
+  rust: (cwd, env) => env.RUSTUP_TOOLCHAIN ? `rustc ${env.RUSTUP_TOOLCHAIN}` : 'rustc 1.83.0',
+}, async ({ fixtures, directory, commands, wasm, destinations }) => {
+  const results = await buildContracts(fixtures, '1.95.0');
+  assert.equal(results.length, 1);
+  assert.equal(results[0].rust_version, 'rustc 1.95.0');
+  assert.deepEqual(fs.readFileSync(path.join(directory, destinations[0])), wasm);
+  const rustProbes = commands.filter(c => c.command === 'rustc');
+  assert.equal(rustProbes.length, 1);
+  assert.equal(rustProbes[0].cwd, path.join(directory, 'crate0'));
+  assert.equal(rustProbes[0].env.RUSTUP_TOOLCHAIN, '1.95.0');
+  const builds = commands.filter(c => c.command === 'stellar' && c.args[0] === 'contract');
+  assert.equal(builds.length, 1);
+  assert.equal(builds[0].env.RUSTUP_TOOLCHAIN, '1.95.0');
 }));

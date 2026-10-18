@@ -24,6 +24,13 @@ Unknown/ambiguous package names, missing manifests and build failures are errors
 All declarations are resolved before builds start; unrelated workspace packages
 are not selected. Multiple declarations of one package share one build.
 
+WeighIn probes compiler compatibility (`rustc --version`) in each distinct package's
+directory context (`path.dirname(pkg.manifest_path)`) rather than once from the fixtures
+directory. This ensures that any crate-local `rust-toolchain` or directory overrides
+satisfy the Rust 1.84+ requirement for `wasm32v1-none` before building that package.
+An explicit `rust-toolchain` Action input supplies `RUSTUP_TOOLCHAIN` across all package
+compiler probes and Stellar build commands.
+
 Each package builds into a fresh temporary output directory:
 
 ```text
