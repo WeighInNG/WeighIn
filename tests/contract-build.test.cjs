@@ -23,7 +23,7 @@ async function scenario(options, verify) {
   const commands = [];
   const wasm = Buffer.from([0, 97, 115, 109, 1, 0, 0, 0, 0, 1, 0]);
   const names = options.names || ['hello-contract'];
-  const packages = names.map((name, index) => {
+  const packages = options.packages ? options.packages(directory) : names.map((name, index) => {
     const manifest_path = path.join(directory, `crate${index}`, 'Cargo.toml');
     fs.mkdirSync(path.dirname(manifest_path)); fs.writeFileSync(manifest_path, '[package]');
     return { id: `pkg${index}`, name, manifest_path, targets: [{ crate_types: ['cdylib'] }] };
@@ -48,7 +48,11 @@ async function scenario(options, verify) {
       if (options.buildFailure) throw new Error('actual build failed');
       if (options.skippedOptimization) config.listeners.stderr(Buffer.from('Optimization skipped'));
       if (!options.missingOutput) {
-        const name = args[args.indexOf('--package') + 1].replaceAll('-', '_');
+        const pkgName = args[args.indexOf('--package') + 1];
+        const pkgObj = packages.find(p => p.name === pkgName);
+        const cdylibs = pkgObj?.targets?.filter(t => t.crate_types.includes('cdylib')) || [];
+        const rawTargetName = cdylibs[0]?.name || pkgName;
+        const name = rawTargetName.replaceAll('-', '_');
         fs.writeFileSync(path.join(args[args.indexOf('--out-dir') + 1], `${name}.wasm`), options.badWasm ? 'invalid' : wasm);
       }
       buildReturned = true;
@@ -144,3 +148,33 @@ test('missing caller temporary-storage directory fails visibly before optimizati
   finally { if (previous === undefined) delete process.env.TMPDIR; else process.env.TMPDIR = previous; }
   assert.equal(commands.some(c => c.command === 'stellar' && c.args[0] === 'contract'), false);
 }));
+
+test('resolves WASM name from Cargo library target name when different from package name', async () => scenario({
+  packages: directory => {
+    const manifest_path = path.join(directory, 'crate0', 'Cargo.toml');
+    fs.mkdirSync(path.dirname(manifest_path)); fs.writeFileSync(manifest_path, '[package]');
+    return [{ id: 'pkg0', name: 'my-custom-package', manifest_path, targets: [{ name: 'custom_soroban_contract', crate_types: ['cdylib'] }] }];
+  },
+  paths: ['target/wasm32v1-none/release/custom_soroban_contract.wasm'],
+}, async ({ fixtures, directory, destinations, wasm }) => {
+  const results = await buildContracts(fixtures, '1.95.0');
+  assert.equal(results.length, 1);
+  assert.equal(results[0].package, 'my-custom-package');
+  assert.deepEqual(fs.readFileSync(path.join(directory, destinations[0])), wasm);
+}));
+
+test('package with multiple cdylib targets is rejected before building', async () => scenario({
+  packages: directory => {
+    const manifest_path = path.join(directory, 'crate0', 'Cargo.toml');
+    fs.mkdirSync(path.dirname(manifest_path)); fs.writeFileSync(manifest_path, '[package]');
+    return [{ id: 'pkg0', name: 'multi-target-pkg', manifest_path, targets: [
+      { name: 'contract_a', crate_types: ['cdylib'] },
+      { name: 'contract_b', crate_types: ['cdylib'] },
+    ] }];
+  },
+  paths: ['artifacts/contract_a.wasm'],
+}, async ({ fixtures, commands }) => {
+  await assert.rejects(buildContracts(fixtures), /Cargo package multi-target-pkg has ambiguous multiple cdylib targets; found 2/);
+  assert.ok(!commands.some(command => command.args[0] === 'contract'));
+}));
+

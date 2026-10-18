@@ -54923,20 +54923,42 @@ async function buildContracts(fixturesPath, rustToolchain) {
       packages = metadata.packages.filter(
         (pkg) => metadata.workspace_members.includes(pkg.id) && pkg.targets.some((target) => target.crate_types.includes("cdylib"))
       );
+      for (const pkg of packages) {
+        const cdylibs = pkg.targets.filter(
+          (target) => target.crate_types.includes("cdylib")
+        );
+        if (cdylibs.length > 1) {
+          throw new Error(
+            `Cargo package ${pkg.name} has ambiguous multiple cdylib targets; found ${cdylibs.length}`
+          );
+        }
+      }
       metadataCache.set(manifest, packages);
     }
-    const matches = packages.filter(
-      (pkg) => `${pkg.name.replace(/-/g, "_")}.wasm` === path4.basename(destination)
-    );
+    const matches = [];
+    for (const pkg of packages) {
+      const cdylibs = pkg.targets.filter(
+        (target) => target.crate_types.includes("cdylib")
+      );
+      const rawName = cdylibs[0]?.name || pkg.name;
+      const targetName = rawName.replace(/-/g, "_");
+      if (`${targetName}.wasm` === path4.basename(destination)) {
+        matches.push({ pkg, targetName });
+      }
+    }
     if (matches.length !== 1)
       throw new Error(
         `wasm_path ${contract.wasm_path} must identify exactly one Cargo cdylib package; found ${matches.length}`
       );
-    plans.push({ destination, pkg: matches[0] });
+    plans.push({
+      destination,
+      pkg: matches[0].pkg,
+      targetName: matches[0].targetName
+    });
   }
   const artifacts = /* @__PURE__ */ new Map();
   const results = [];
-  for (const { destination, pkg } of plans) {
+  for (const { destination, pkg, targetName } of plans) {
     let wasm = artifacts.get(pkg.manifest_path);
     if (!wasm) {
       let outputDir;
@@ -54966,9 +54988,7 @@ async function buildContracts(fixturesPath, rustToolchain) {
           path4.dirname(pkg.manifest_path),
           { ...env, TMPDIR: outputDir, TMP: outputDir, TEMP: outputDir }
         );
-        wasm = fs3.readFileSync(
-          path4.join(outputDir, `${pkg.name.replace(/-/g, "_")}.wasm`)
-        );
+        wasm = fs3.readFileSync(path4.join(outputDir, `${targetName}.wasm`));
         verifyBuildStorage(outputDir, Math.max(1024 * 1024, wasm.length));
         if (!wasm.subarray(0, 8).equals(Buffer.from([0, 97, 115, 109, 1, 0, 0, 0])))
           throw new Error("Stellar build did not produce a valid WASM module");

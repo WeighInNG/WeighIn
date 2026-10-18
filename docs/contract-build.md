@@ -19,8 +19,10 @@ back to plain Cargo or the older target.
 
 For each declared `wasm_path`, WeighIn locates the nearest owning Cargo manifest
 and reads locked Cargo workspace metadata. The WASM basename must identify
-exactly one workspace `cdylib` package (`my-contract` emits `my_contract.wasm`).
-Unknown/ambiguous package names, missing manifests and build failures are errors.
+exactly one workspace `cdylib` library target (`my-contract` emits `my_contract.wasm`,
+or if a library target explicitly defines `[lib] name = "custom_name"`, `custom_name.wasm`).
+Unknown or ambiguous target names, packages with multiple cdylib targets, missing
+manifests and build failures are errors.
 All declarations are resolved before builds start; unrelated workspace packages
 are not selected. Multiple declarations of one package share one build.
 
