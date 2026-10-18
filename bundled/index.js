@@ -53057,6 +53057,31 @@ function redactEndpointSecrets(message, rawUrl) {
   }
   return result;
 }
+var SUPPORTED_NETWORK_PASSPHRASE = "Standalone Network ; February 2017";
+var SUPPORTED_PROTOCOL_VERSION = 28;
+function validateRpcNetworkMetadata(metadataResult) {
+  if (!metadataResult || typeof metadataResult !== "object" || !("passphrase" in metadataResult) || typeof metadataResult.passphrase !== "string" || !metadataResult.passphrase.trim()) {
+    throw new Error(
+      "Invalid RPC network metadata: missing or empty passphrase"
+    );
+  }
+  const passphrase = metadataResult.passphrase.trim();
+  if (passphrase !== SUPPORTED_NETWORK_PASSPHRASE) {
+    throw new Error(
+      `Unsupported network passphrase: "${passphrase}". WeighIn only supports standalone network ("${SUPPORTED_NETWORK_PASSPHRASE}")`
+    );
+  }
+  if (!("protocolVersion" in metadataResult) || typeof metadataResult.protocolVersion !== "number" || !Number.isInteger(metadataResult.protocolVersion)) {
+    throw new Error("Invalid RPC network metadata: missing protocolVersion");
+  }
+  const protocolVersion = metadataResult.protocolVersion;
+  if (protocolVersion !== SUPPORTED_PROTOCOL_VERSION) {
+    throw new Error(
+      `Unsupported protocol version: ${protocolVersion}. WeighIn simulation helper only supports protocol ${SUPPORTED_PROTOCOL_VERSION}`
+    );
+  }
+  return { passphrase, protocolVersion };
+}
 
 // src/account.ts
 var DEADLINE_MS = 12e4;
@@ -55113,16 +55138,24 @@ async function assertRpcHealthy(rpcUrl) {
         `RPC getNetwork method error: ${JSON.stringify(metadata.error)}`
       );
     }
-    const networkResult = metadata.result;
-    if (typeof networkResult?.passphrase !== "string" || !networkResult.passphrase.trim()) {
-      throw new Error("Invalid RPC network metadata");
-    }
-    core3.info(`RPC healthy \u2014 network: ${networkResult.passphrase}`);
-  } catch (err) {
-    core3.setFailed(
-      `Soroban RPC at ${sanitizeEndpoint(rpcUrl)} is not reachable: ${redactEndpointSecrets(String(err?.message ?? err), rpcUrl)}
-Start the network before invoking this action (e.g. via stellar/quickstart or scripts/start-local-network.sh), then pass its URL as the rpc-url input.`
+    const validatedNetwork = validateRpcNetworkMetadata(metadata.result);
+    core3.info(
+      `RPC healthy \u2014 network: ${validatedNetwork.passphrase}, protocol: ${validatedNetwork.protocolVersion}`
     );
+  } catch (err) {
+    const message = redactEndpointSecrets(String(err?.message ?? err), rpcUrl);
+    const isIncompatible = message.includes("Unsupported network passphrase") || message.includes("Unsupported protocol version");
+    if (isIncompatible) {
+      core3.setFailed(
+        `Soroban RPC at ${sanitizeEndpoint(rpcUrl)} is incompatible: ${message}
+Configure a compatible standalone protocol ${SUPPORTED_PROTOCOL_VERSION} network (passphrase: "${SUPPORTED_NETWORK_PASSPHRASE}"). Public networks and other protocols are not supported.`
+      );
+    } else {
+      core3.setFailed(
+        `Soroban RPC at ${sanitizeEndpoint(rpcUrl)} is not reachable: ${message}
+Start the network before invoking this action (e.g. via stellar/quickstart or scripts/start-local-network.sh), then pass its URL as the rpc-url input.`
+      );
+    }
     throw err;
   }
 }

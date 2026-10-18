@@ -1,6 +1,6 @@
-name: 'WeighIn'
-description: 'Measure and diff Soroban contract resource costs on pull requests (Linux x64, protocol 28)'
-author: 'Ijioma Makwochukwu'
+name: "WeighIn"
+description: "Measure and diff Soroban contract resource costs on pull requests (Linux x64, protocol 28)"
+author: "Ijioma Makwochukwu"
 
 inputs:
   fixtures-path:
@@ -13,7 +13,7 @@ inputs:
       Tested versions are Stellar CLI 28.1.0 and Rust 1.95.0. Callers must provision
       these tools, wasm32v1-none, and Rust 1.95.0 for the native helper.
     required: true
-    default: 'weighin-fixtures.json'
+    default: "weighin-fixtures.json"
 
   config-path:
     description: >
@@ -29,44 +29,45 @@ inputs:
       the threshold policy is loaded. Must be paired with trusted-policy-path.
       The resolved commit SHA is recorded in the report.
     required: false
-    default: ''
+    default: ""
 
   trusted-policy-path:
     description: >
       Optional path inside trusted-policy-ref for the threshold policy. When
       supplied, HEAD cannot select or modify the policy used by this run.
     required: false
-    default: ''
+    default: ""
 
   rpc-url:
     description: >
       Soroban RPC endpoint to use for simulation. Defaults to the
-      protocol-28 standalone network provisioned by the caller.
+      protocol-28 standalone network provisioned by the caller. Validated
+      against the standalone network passphrase and protocol 28 before building HEAD.
       Override only for a compatible standalone sidecar; public networks and other
       protocols are not supported by the current measurement path.
     required: false
-    default: 'http://localhost:8000/rpc'
+    default: "http://localhost:8000/rpc"
 
   github-token:
     description: >
       Optional token for posting a benchmark comment directly. Omit it when
       using the separate fork-safe comment workflow.
     required: false
-    default: ''
+    default: ""
 
   metadata-path:
     description: >
       Optional path where the action should write a JSON file containing the PR
       number and HEAD SHA (e.g. pr-metadata.json). Used for split workflows.
     required: false
-    default: ''
+    default: ""
 
   base-ref:
     description: >
       Git ref to use as the baseline for comparison. Defaults to the PR base
       branch (github.base_ref). Override for manual dispatch or scheduled runs.
     required: false
-    default: ''
+    default: ""
 
   rust-toolchain:
     description: >
@@ -76,17 +77,17 @@ inputs:
       This does not change the native simulation helper's pinned toolchain.
       The action does not install toolchains itself.
     required: false
-    default: ''
+    default: ""
 
   report-path:
     description: "Optional path where the generated Markdown benchmark report should be written"
     required: false
-    default: ''
+    default: ""
 
   build-command:
     description: "Optional shell command run in each revision; bypasses default build checks and cannot be combined with skip-build"
     required: false
-    default: ''
+    default: ""
 
   skip-build:
     description: "Skip compilation and use precompiled fixture WASMs in both revisions; bypasses default build checks. Accepts standard YAML 1.2 boolean spellings (true, True, TRUE, false, False, FALSE); defaults to false when omitted. Non-boolean values are rejected."
@@ -107,5 +108,5 @@ outputs:
       that want to process the numbers without parsing the PR comment.
 
 runs:
-  using: 'node24'
-  main: 'bundled/index.js'
+  using: "node24"
+  main: "bundled/index.js"
