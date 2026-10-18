@@ -130,3 +130,57 @@ export function redactEndpointSecrets(message: string, rawUrl: string): string {
   }
   return result;
 }
+
+export const SUPPORTED_NETWORK_PASSPHRASE =
+  "Standalone Network ; February 2017";
+export const SUPPORTED_PROTOCOL_VERSION = 28;
+
+export interface RpcNetworkMetadata {
+  passphrase: string;
+  protocolVersion: number;
+}
+
+/**
+ * Validate network metadata from getNetwork against WeighIn's supported environment:
+ * Linux x64, protocol 28, Standalone Network.
+ * Throws an explicit descriptive error for healthy-but-incompatible endpoints.
+ */
+export function validateRpcNetworkMetadata(
+  metadataResult: unknown,
+): RpcNetworkMetadata {
+  if (
+    !metadataResult ||
+    typeof metadataResult !== "object" ||
+    !("passphrase" in metadataResult) ||
+    typeof (metadataResult as any).passphrase !== "string" ||
+    !(metadataResult as any).passphrase.trim()
+  ) {
+    throw new Error(
+      "Invalid RPC network metadata: missing or empty passphrase",
+    );
+  }
+
+  const passphrase = (metadataResult as any).passphrase.trim();
+  if (passphrase !== SUPPORTED_NETWORK_PASSPHRASE) {
+    throw new Error(
+      `Unsupported network passphrase: "${passphrase}". WeighIn only supports standalone network ("${SUPPORTED_NETWORK_PASSPHRASE}")`,
+    );
+  }
+
+  if (
+    !("protocolVersion" in metadataResult) ||
+    typeof (metadataResult as any).protocolVersion !== "number" ||
+    !Number.isInteger((metadataResult as any).protocolVersion)
+  ) {
+    throw new Error("Invalid RPC network metadata: missing protocolVersion");
+  }
+
+  const protocolVersion = (metadataResult as any).protocolVersion;
+  if (protocolVersion !== SUPPORTED_PROTOCOL_VERSION) {
+    throw new Error(
+      `Unsupported protocol version: ${protocolVersion}. WeighIn simulation helper only supports protocol ${SUPPORTED_PROTOCOL_VERSION}`,
+    );
+  }
+
+  return { passphrase, protocolVersion };
+}

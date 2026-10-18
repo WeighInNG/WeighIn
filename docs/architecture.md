@@ -16,6 +16,10 @@ policy means report-only. `loadConfig` validates known configuration keys/types;
 Fixtures are parsed by `src/identity.ts::parseFixtures`, not the older generic
 fixture schema exported from `src/config.ts`.
 
+RPC health and compatibility are verified first (`assertRpcHealthy`), confirming
+healthy status, the standalone network passphrase (`Standalone Network ; February 2017`),
+and protocol 28 before any key creation or HEAD builds begin. Incompatible networks fail fast.
+
 HEAD is built and measured first. BASE defaults to the PR base branch, otherwise
 `main`, or the supplied `base-ref`. The Action fetches that ref from `origin` with
 depth 1, then creates a detached worktree at `FETCH_HEAD`. This is not a merge-base

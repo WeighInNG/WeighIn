@@ -23,6 +23,9 @@ import {
   parseJsonRpcResponse,
   redactEndpointSecrets,
   sanitizeEndpoint,
+  validateRpcNetworkMetadata,
+  SUPPORTED_NETWORK_PASSPHRASE,
+  SUPPORTED_PROTOCOL_VERSION,
 } from "./endpoint";
 
 // The configured endpoint is tracked only so the terminal failure path can
@@ -72,20 +75,28 @@ async function assertRpcHealthy(rpcUrl: string): Promise<void> {
         `RPC getNetwork method error: ${JSON.stringify(metadata.error)}`,
       );
     }
-    const networkResult = metadata.result as { passphrase?: unknown } | null;
-    if (
-      typeof networkResult?.passphrase !== "string" ||
-      !networkResult.passphrase.trim()
-    ) {
-      throw new Error("Invalid RPC network metadata");
-    }
-    core.info(`RPC healthy — network: ${networkResult.passphrase}`);
-  } catch (err: any) {
-    core.setFailed(
-      `Soroban RPC at ${sanitizeEndpoint(rpcUrl)} is not reachable: ${redactEndpointSecrets(String(err?.message ?? err), rpcUrl)}\n` +
-        `Start the network before invoking this action (e.g. via stellar/quickstart ` +
-        `or scripts/start-local-network.sh), then pass its URL as the rpc-url input.`,
+    const validatedNetwork = validateRpcNetworkMetadata(metadata.result);
+    core.info(
+      `RPC healthy — network: ${validatedNetwork.passphrase}, protocol: ${validatedNetwork.protocolVersion}`,
     );
+  } catch (err: any) {
+    const message = redactEndpointSecrets(String(err?.message ?? err), rpcUrl);
+    const isIncompatible =
+      message.includes("Unsupported network passphrase") ||
+      message.includes("Unsupported protocol version");
+
+    if (isIncompatible) {
+      core.setFailed(
+        `Soroban RPC at ${sanitizeEndpoint(rpcUrl)} is incompatible: ${message}\n` +
+          `Configure a compatible standalone protocol ${SUPPORTED_PROTOCOL_VERSION} network (passphrase: "${SUPPORTED_NETWORK_PASSPHRASE}"). Public networks and other protocols are not supported.`,
+      );
+    } else {
+      core.setFailed(
+        `Soroban RPC at ${sanitizeEndpoint(rpcUrl)} is not reachable: ${message}\n` +
+          `Start the network before invoking this action (e.g. via stellar/quickstart ` +
+          `or scripts/start-local-network.sh), then pass its URL as the rpc-url input.`,
+      );
+    }
     throw err; // halt execution
   }
 }

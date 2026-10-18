@@ -34,8 +34,16 @@ globalThis.fetch = async (url, options) => {
         JSON.stringify({ jsonrpc: "2.0", id: request.id, result: { entries: [], latestLedger: 100 } }),
       );
   }
+  let passphrase = "Standalone Network ; February 2017";
+  let protocolVersion = 28;
+  if (mode === "rpc-unsupported-passphrase")
+    passphrase = "Test SDF Network ; September 2015";
+  if (mode === "rpc-unsupported-protocol") protocolVersion = 27;
+  if (mode === "rpc-missing-metadata") passphrase = "";
+
   const result = {
-    passphrase: "unit-test-network",
+    passphrase,
+    protocolVersion,
     status: mode === "rpc-unhealthy" ? "starting" : "healthy",
   };
   if (mode === "rpc-invalid-envelope" && method === "getHealth") {
@@ -59,9 +67,10 @@ if (mode === "funding-exhausted") {
 }
 
 Module._load = function (name, parent, ...args) {
+  const parentFile = parent?.filename ? parent.filename.replace(/\\/g, "/") : "";
   if (
-    parent?.filename.endsWith("/dist/action.js") ||
-    parent?.filename.endsWith("/dist/build.js")
+    parentFile.endsWith("/dist/action.js") ||
+    parentFile.endsWith("/dist/build.js")
   ) {
     if (name === "@actions/github") return { context: { payload: {} } };
     if (name === "@actions/exec")

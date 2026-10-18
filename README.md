@@ -42,10 +42,10 @@ The baseline is the fetched base ref, not a computed merge base.
 An actual isolated change added one persistent write to `hello` while preserving
 its arguments and return value:
 
-| Metric | BASE | HEAD | Delta |
-|---|---:|---:|---:|
+| Metric                      |    BASE |    HEAD |             Delta |
+| --------------------------- | ------: | ------: | ----------------: |
 | CPU cost-model instructions | 266,842 | 309,171 | +42,329 (+15.86%) |
-| Ledger write bytes | 0 | 88 | +88 |
+| Ledger write bytes          |       0 |      88 |               +88 |
 
 The WASM hash and runtime contract address changed. The logical benchmark still
 paired. Report-only execution passed; `strict_zero_tolerance` on CPU produced
@@ -70,15 +70,19 @@ For a contract whose Cargo package is `contract-test`, `weighin-fixtures.json`:
 ```json
 {
   "id": "greeting-suite",
-  "contracts": [{
-    "id": "greeting",
-    "wasm_path": "contract/target/wasm32v1-none/release/contract_test.wasm",
-    "invocations": [{
-      "id": "world",
-      "function_name": "hello",
-      "args": [{"type": "symbol", "value": "world"}]
-    }]
-  }]
+  "contracts": [
+    {
+      "id": "greeting",
+      "wasm_path": "contract/target/wasm32v1-none/release/contract_test.wasm",
+      "invocations": [
+        {
+          "id": "world",
+          "function_name": "hello",
+          "args": [{ "type": "symbol", "value": "world" }]
+        }
+      ]
+    }
+  ]
 }
 ```
 
@@ -152,20 +156,20 @@ do not repin these examples to an unverified revision.
 
 All supported inputs are declared in [action.yml](action.yml):
 
-| Input | Meaning |
-|---|---|
-| `fixtures-path` | Required fixture path; default `weighin-fixtures.json` |
-| `config-path` | HEAD policy file; default `weighin.toml`. A missing file means report-only |
-| `trusted-policy-ref` | Optional ref fetched from `origin` for an immutable policy source; must be paired with `trusted-policy-path` |
-| `trusted-policy-path` | Repository path read from the resolved trusted policy commit; HEAD cannot replace it |
-| `rpc-url` | Compatible standalone RPC; default `http://localhost:8000/rpc` |
-| `base-ref` | Fetched baseline ref; PR base branch, otherwise `main`, if omitted |
-| `rust-toolchain` | Contract-build Rustup override; does not change pinned native-helper toolchain |
-| `build-command` | Custom shell build command in each revision; replaces default build guarantees |
-| `skip-build` | `true` uses prebuilt fixture WASMs in both revisions; incompatible with `build-command`. Accepts YAML 1.2 boolean spellings (`true`, `True`, `TRUE`, `false`, `False`, `FALSE`); defaults to `false`. Non-boolean values are rejected |
-| `report-path` | Optional Markdown report destination |
-| `metadata-path` | Optional versioned PR-number/HEAD-SHA JSON destination; emitted only in a PR context |
-| `github-token` | Optional direct PR-comment token; omit for the separate comment workflow |
+| Input                 | Meaning                                                                                                                                                                                                                               |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `fixtures-path`       | Required fixture path; default `weighin-fixtures.json`                                                                                                                                                                                |
+| `config-path`         | HEAD policy file; default `weighin.toml`. A missing file means report-only                                                                                                                                                            |
+| `trusted-policy-ref`  | Optional ref fetched from `origin` for an immutable policy source; must be paired with `trusted-policy-path`                                                                                                                          |
+| `trusted-policy-path` | Repository path read from the resolved trusted policy commit; HEAD cannot replace it                                                                                                                                                  |
+| `rpc-url`             | Compatible standalone RPC; default `http://localhost:8000/rpc`. Validated against standalone network passphrase and protocol 28                                                                                                       |
+| `base-ref`            | Fetched baseline ref; PR base branch, otherwise `main`, if omitted                                                                                                                                                                    |
+| `rust-toolchain`      | Contract-build Rustup override; does not change pinned native-helper toolchain                                                                                                                                                        |
+| `build-command`       | Custom shell build command in each revision; replaces default build guarantees                                                                                                                                                        |
+| `skip-build`          | `true` uses prebuilt fixture WASMs in both revisions; incompatible with `build-command`. Accepts YAML 1.2 boolean spellings (`true`, `True`, `TRUE`, `false`, `False`, `FALSE`); defaults to `false`. Non-boolean values are rejected |
+| `report-path`         | Optional Markdown report destination                                                                                                                                                                                                  |
+| `metadata-path`       | Optional versioned PR-number/HEAD-SHA JSON destination; emitted only in a PR context                                                                                                                                                  |
+| `github-token`        | Optional direct PR-comment token; omit for the separate comment workflow                                                                                                                                                              |
 
 Outputs: `result` is `pass` or `fail`; `diff-json` contains the comparison.
 An unsuccessful comparison emits `fail` and `{}`. A valid comparison with policy

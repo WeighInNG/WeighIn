@@ -205,10 +205,13 @@ function action(
           .filter(Boolean)
           .map((line) => JSON.parse(line))
       : [];
-    const reportFilePath = reportPath ? path.join(temporary, "head", reportPath) : null;
-    const reportContent = reportFilePath && fs.existsSync(reportFilePath)
-      ? fs.readFileSync(reportFilePath, "utf8")
+    const reportFilePath = reportPath
+      ? path.join(temporary, "head", reportPath)
       : null;
+    const reportContent =
+      reportFilePath && fs.existsSync(reportFilePath)
+        ? fs.readFileSync(reportFilePath, "utf8")
+        : null;
     return {
       ...processResult,
       output: fs.readFileSync(output, "utf8"),
@@ -226,6 +229,8 @@ for (const [mode, message] of [
   ["funding-exhausted", /Account readiness failed within 120s/],
   ["rpc-invalid-envelope", /response ID does not match request/],
   ["rpc-unhealthy", /RPC has not reported healthy/],
+  ["rpc-unsupported-passphrase", /Unsupported network passphrase/],
+  ["rpc-unsupported-protocol", /Unsupported protocol version/],
   ["checkout", /unit checkout failure/],
   ["worktree", /unit worktree failure/],
   ["build", /unit base build failure/],
@@ -255,6 +260,22 @@ test("Action rejects a mismatched health response before account readiness or bu
   assert.equal(result.keyPaths.length, 0);
 });
 
+test("Action rejects unsupported network passphrase before account readiness or builds", () => {
+  const result = action("rpc-unsupported-passphrase");
+  assert.equal(result.status, 1);
+  assert.match(result.summary, /Unsupported network passphrase/);
+  assert.match(result.stdout + result.stderr, /is incompatible/);
+  assert.equal(result.keyPaths.length, 0);
+});
+
+test("Action rejects unsupported protocol version before account readiness or builds", () => {
+  const result = action("rpc-unsupported-protocol");
+  assert.equal(result.status, 1);
+  assert.match(result.summary, /Unsupported protocol version/);
+  assert.match(result.stdout + result.stderr, /is incompatible/);
+  assert.equal(result.keyPaths.length, 0);
+});
+
 test("Action rejects absolute and escaping fixture paths before measuring HEAD", () => {
   for (const fixturesPath of [
     "/tmp/outside-fixtures.json",
@@ -263,7 +284,10 @@ test("Action rejects absolute and escaping fixture paths before measuring HEAD",
   ]) {
     const result = action("control", policy, null, null, fixturesPath);
     assert.equal(result.status, 1, fixturesPath);
-    assert.match(result.summary, /fixtures-path for HEAD must be a relative path inside the HEAD worktree/);
+    assert.match(
+      result.summary,
+      /fixtures-path for HEAD must be a relative path inside the HEAD worktree/,
+    );
     assert.equal(result.keyPaths.length, 0, fixturesPath);
   }
 });
@@ -279,18 +303,26 @@ test("Action rejects an existing HEAD symlink that points outside its workspace"
       ({ temporary, head }) => {
         const external = path.join(temporary, "outside-fixtures");
         fs.mkdirSync(external);
-        fs.writeFileSync(path.join(external, "fixtures.json"), JSON.stringify({ contracts: [] }));
+        fs.writeFileSync(
+          path.join(external, "fixtures.json"),
+          JSON.stringify({ contracts: [] }),
+        );
         fs.mkdirSync(path.join(head, "nested"));
         if (kind === "directory") fs.rmdirSync(path.join(head, "nested"));
         fs.symlinkSync(
           kind === "file" ? path.join(external, "fixtures.json") : external,
-          kind === "file" ? path.join(head, "nested/fixtures.json") : path.join(head, "nested"),
+          kind === "file"
+            ? path.join(head, "nested/fixtures.json")
+            : path.join(head, "nested"),
           kind === "file" ? "file" : "dir",
         );
       },
     );
     assert.equal(result.status, 1, kind);
-    assert.match(result.summary, /fixtures-path for HEAD must be a relative path inside the HEAD worktree/);
+    assert.match(
+      result.summary,
+      /fixtures-path for HEAD must be a relative path inside the HEAD worktree/,
+    );
     assert.equal(result.keyPaths.length, 0, kind);
   }
 });
@@ -305,7 +337,15 @@ test("Action validates BASE symlinks before BASE measurement and accepts normali
     ({ temporary, head, base }) => {
       fs.mkdirSync(path.join(head, "nested"));
       fs.mkdirSync(path.join(base, "nested"));
-      const fixture = JSON.stringify({ contracts: [{ id: "explicit:contract", wasm_path: "../contract/contract.wasm", invocations: [{ function_name: "hello", args: [] }] }] });
+      const fixture = JSON.stringify({
+        contracts: [
+          {
+            id: "explicit:contract",
+            wasm_path: "../contract/contract.wasm",
+            invocations: [{ function_name: "hello", args: [] }],
+          },
+        ],
+      });
       fs.writeFileSync(path.join(head, "nested/fixtures.json"), fixture);
       const external = path.join(temporary, "outside-fixtures.json");
       fs.writeFileSync(external, fixture);
@@ -313,17 +353,29 @@ test("Action validates BASE symlinks before BASE measurement and accepts normali
     },
   );
   assert.equal(baseEscape.status, 1);
-  assert.match(baseEscape.summary, /fixtures-path for BASE must be a relative path inside the BASE worktree/);
-  assert.equal(baseEscape.keyPaths.length, 1, "HEAD may measure, BASE must fail before measurement");
-  assert.deepEqual(baseEscape.builds.map(({ revision }) => revision), ["HEAD"]);
+  assert.match(
+    baseEscape.summary,
+    /fixtures-path for BASE must be a relative path inside the BASE worktree/,
+  );
+  assert.equal(
+    baseEscape.keyPaths.length,
+    1,
+    "HEAD may measure, BASE must fail before measurement",
+  );
+  assert.deepEqual(
+    baseEscape.builds.map(({ revision }) => revision),
+    ["HEAD"],
+  );
 
   for (const explicitId of [false, true]) {
     const fixture = {
-      contracts: [{
-        ...(explicitId ? { id: "explicit:contract" } : {}),
-        wasm_path: "../contract/contract.wasm",
-        invocations: [{ function_name: "hello", args: [] }],
-      }],
+      contracts: [
+        {
+          ...(explicitId ? { id: "explicit:contract" } : {}),
+          wasm_path: "../contract/contract.wasm",
+          invocations: [{ function_name: "hello", args: [] }],
+        },
+      ],
     };
     const result = action(
       "control",
@@ -334,13 +386,19 @@ test("Action validates BASE symlinks before BASE measurement and accepts normali
       ({ head, base }) => {
         for (const revision of [head, base]) {
           fs.mkdirSync(path.join(revision, "nested"));
-          fs.writeFileSync(path.join(revision, "nested/fixtures.json"), JSON.stringify(fixture));
+          fs.writeFileSync(
+            path.join(revision, "nested/fixtures.json"),
+            JSON.stringify(fixture),
+          );
         }
       },
     );
     assert.equal(result.status, 0);
     assert.equal(result.keyPaths.length, 2);
-    assert.deepEqual(result.keyPaths.map(({ fixtureId }) => fixtureId), ["nested/fixtures.json", "nested/fixtures.json"]);
+    assert.deepEqual(
+      result.keyPaths.map(({ fixtureId }) => fixtureId),
+      ["nested/fixtures.json", "nested/fixtures.json"],
+    );
   }
 });
 for (const config of [
@@ -425,12 +483,22 @@ test("Action unchanged control and optional absent policy still pass; regression
 });
 
 test("Action persists an explicit unsuccessful-comparison report on configuration/fixture/RPC failures when report-path is set", () => {
-  for (const failureMode of ["rpc-unhealthy", "missing-fixtures", "malformed-fixtures"]) {
+  for (const failureMode of [
+    "rpc-unhealthy",
+    "missing-fixtures",
+    "malformed-fixtures",
+  ]) {
     const res = action(failureMode, policy, null, "weighin-report.md");
     assert.equal(res.status, 1);
     assert.match(res.output, /fail/);
-    assert.ok(res.reportContent, `expected report file to exist for ${failureMode}`);
-    assert.match(res.reportContent, /# WeighIn Resource Benchmark: Unsuccessful Comparison/);
+    assert.ok(
+      res.reportContent,
+      `expected report file to exist for ${failureMode}`,
+    );
+    assert.match(
+      res.reportContent,
+      /# WeighIn Resource Benchmark: Unsuccessful Comparison/,
+    );
     assert.match(res.reportContent, /> \*\*Status: FAILED\*\*/);
     assert.match(res.reportContent, /Policies established:\*\* No/);
     assert.match(res.reportContent, /Thresholds evaluated:\*\* None/);
