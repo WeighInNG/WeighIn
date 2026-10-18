@@ -59,7 +59,7 @@ async function replay(t, response) {
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   const keypair = Keypair.random();
   fs.writeFileSync(path.join(dir, 'key'), keypair.secret(), { mode: 0o600 });
-  fs.writeFileSync(path.join(dir, 'contract.wasm'), Buffer.from('test-only-wasm'));
+  fs.writeFileSync(path.join(dir, 'contract.wasm'), Buffer.from([0, 97, 115, 109, 1, 0, 0, 0, ...Buffer.from('test-only-wasm')]));
   fs.writeFileSync(path.join(dir, 'fixtures.json'), JSON.stringify({
     contracts: [{ id: 'greeting', wasm_path: 'contract.wasm', invocations: [{ id: 'world', function_name: 'hello', args: [{ type: 'Symbol', value: 'world' }] }] }],
   }));
@@ -106,4 +106,105 @@ test('simulation errors retain their original failure reason', async t => {
 
 test('a response without transaction data fails before attempting metric extraction', async t => {
   await assert.rejects(replay(t, { _parsed: true, latestLedger: 1, events: [] }), /Simulation did not return transaction data for hello/);
+});
+
+test('preflight rejects before any network writes and prevents earlier contracts from deploying', async t => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'weighin-preflight-test-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const keypair = Keypair.random();
+  fs.writeFileSync(path.join(dir, 'key'), keypair.secret(), { mode: 0o600 });
+  const validWasm = Buffer.from([0, 97, 115, 109, 1, 0, 0, 0, ...Buffer.from('wasm-content')]);
+  fs.writeFileSync(path.join(dir, 'valid.wasm'), validWasm);
+
+  const fixturesPath = path.join(dir, 'fixtures.json');
+  fs.writeFileSync(
+    fixturesPath,
+    JSON.stringify({
+      contracts: [
+        {
+          id: 'contract-1',
+          wasm_path: 'valid.wasm',
+          invocations: [{ function_name: 'hello', args: [{ type: 'Symbol', value: 'world' }] }],
+        },
+        {
+          id: 'contract-2',
+          wasm_path: 'absent.wasm',
+          invocations: [{ function_name: 'hello', args: [{ type: 'Symbol', value: 'world' }] }],
+        },
+      ],
+    }),
+  );
+
+  let prepareCalled = 0;
+  t.mock.method(rpc.Server.prototype, 'prepareTransaction', async () => {
+    prepareCalled++;
+    throw new Error('Should never reach prepareTransaction when preflight fails');
+  });
+
+  await assert.rejects(
+    runMeasurement({
+      fixturesPath,
+      gitCommit: 'test-preflight',
+      sdkVersion: '25.3.1',
+      keyFile: path.join(dir, 'key'),
+    }),
+    /id:contract-2[\s\S]*WASM not found/,
+  );
+  assert.equal(prepareCalled, 0, 'No contract must be uploaded or deployed when any WASM fails preflight');
+});
+
+test('preflight rejects directory paths before network operations with logical context', async t => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'weighin-dir-test-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  fs.mkdirSync(path.join(dir, 'subfolder.wasm'));
+  const fixturesPath = path.join(dir, 'fixtures.json');
+  fs.writeFileSync(
+    fixturesPath,
+    JSON.stringify({
+      contracts: [
+        {
+          id: 'directory-contract',
+          wasm_path: 'subfolder.wasm',
+          invocations: [{ function_name: 'hello', args: [{ type: 'Symbol', value: 'world' }] }],
+        },
+      ],
+    }),
+  );
+
+  await assert.rejects(
+    runMeasurement({
+      fixturesPath,
+      gitCommit: 'test-dir',
+      sdkVersion: '25.3.1',
+    }),
+    /id:directory-contract[\s\S]*WASM path is not a regular file/,
+  );
+});
+
+test('preflight rejects invalid WASM headers before network operations with logical context', async t => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'weighin-bad-wasm-test-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  fs.writeFileSync(path.join(dir, 'invalid.wasm'), Buffer.from('plain text file not wasm'));
+  const fixturesPath = path.join(dir, 'fixtures.json');
+  fs.writeFileSync(
+    fixturesPath,
+    JSON.stringify({
+      contracts: [
+        {
+          id: 'bad-header-contract',
+          wasm_path: 'invalid.wasm',
+          invocations: [{ function_name: 'hello', args: [{ type: 'Symbol', value: 'world' }] }],
+        },
+      ],
+    }),
+  );
+
+  await assert.rejects(
+    runMeasurement({
+      fixturesPath,
+      gitCommit: 'test-bad-wasm',
+      sdkVersion: '25.3.1',
+    }),
+    /id:bad-header-contract[\s\S]*missing or invalid WebAssembly binary header/,
+  );
 });

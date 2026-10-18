@@ -51,6 +51,21 @@ node dist/cli.js weighin-fixtures.json --rpc-url http://localhost:8000/rpc --out
 The CLI writes measurement JSON and exits 1 on measurement failure. It remains a
 measurement command; threshold comparison is performed by the Action.
 
+## Preflight artifact validation
+
+Before initiating network operations (such as deployer account funding via Friendbot
+or contract upload and deployment), WeighIn preflights all contract WASM artifacts
+configured across the fixture suite. Every declared contract artifact must:
+
+1. Exist at the resolved path relative to the fixture directory.
+2. Be a regular file (`stat.isFile()`), rejecting directories or special files.
+3. Contain a valid 8-byte WebAssembly binary header (`\0asm\x01\x00\x00\x00`).
+
+Validation collects and reports every invalid declaration with logical context
+(`${fixtureId} / ${contractId}`). If any artifact fails validation, measurement
+halts immediately before network writes, preventing partial deployment of earlier
+contracts when a later contract is missing or malformed.
+
 ## Source and immutable state
 
 CPU comes directly from `simulated_instructions`; memory from `simulated_memory`.

@@ -83,12 +83,14 @@ export interface InvocationArg {
 
 export interface InvocationSpec {
   id?: string;
+  case_id?: string;
   function_name: string;
   args: InvocationArg[];
 }
 
 export interface ContractSpec {
   id?: string;
+  logical_id?: string;
   wasm_path: string;
   invocations: InvocationSpec[];
 }
@@ -500,6 +502,120 @@ export interface RunMeasurementOptions {
   signal?: AbortSignal;
 }
 
+export interface ValidatedContractArtifact {
+  contractSpec: ContractSpec;
+  wasmPath: string;
+  wasmBytes: Buffer;
+  wasmHash: Buffer;
+  wasmSha256: string;
+}
+
+export const WASM_MAGIC_HEADER = Buffer.from([0, 97, 115, 109, 1, 0, 0, 0]);
+
+export function validateContractArtifact(
+  fixturesDir: string,
+  contractSpec: ContractSpec,
+  fixtureId: string,
+): ValidatedContractArtifact {
+  const contractId =
+    contractSpec.logical_id ??
+    (contractSpec.id !== undefined
+      ? `id:${contractSpec.id}`
+      : `wasm:${contractSpec.wasm_path}`);
+  const logicalContext = `${fixtureId} / ${contractId}`;
+  let wasmPath = path.resolve(fixturesDir, contractSpec.wasm_path);
+
+  if (!fs.existsSync(wasmPath)) {
+    let altPath = "";
+    if (wasmPath.includes("wasm32-unknown-unknown")) {
+      altPath = wasmPath.replace("wasm32-unknown-unknown", "wasm32v1-none");
+    } else if (wasmPath.includes("wasm32v1-none")) {
+      altPath = wasmPath.replace("wasm32v1-none", "wasm32-unknown-unknown");
+    }
+    if (altPath && fs.existsSync(altPath)) {
+      wasmPath = altPath;
+    } else {
+      throw new Error(
+        `Contract ${logicalContext}: WASM not found: ${wasmPath}\nBuild the contract before running measurements.`,
+      );
+    }
+  }
+
+  let stat: fs.Stats;
+  try {
+    stat = fs.statSync(wasmPath);
+  } catch (err: any) {
+    throw new Error(
+      `Contract ${logicalContext}: Unable to access WASM file at ${wasmPath}: ${err.message}`,
+    );
+  }
+
+  if (!stat.isFile()) {
+    throw new Error(
+      `Contract ${logicalContext}: WASM path is not a regular file: ${wasmPath}`,
+    );
+  }
+
+  let wasmBytes: Buffer;
+  try {
+    wasmBytes = fs.readFileSync(wasmPath);
+  } catch (err: any) {
+    throw new Error(
+      `Contract ${logicalContext}: Failed to read WASM file at ${wasmPath}: ${err.message}`,
+    );
+  }
+
+  if (
+    wasmBytes.length < 8 ||
+    !wasmBytes.subarray(0, 8).equals(WASM_MAGIC_HEADER)
+  ) {
+    throw new Error(
+      `Contract ${logicalContext}: Invalid WASM module at ${wasmPath}: missing or invalid WebAssembly binary header`,
+    );
+  }
+
+  const wasmHash = crypto.createHash("sha256").update(wasmBytes).digest();
+  const wasmSha256 = wasmHash.toString("hex");
+
+  return {
+    contractSpec,
+    wasmPath,
+    wasmBytes,
+    wasmHash,
+    wasmSha256,
+  };
+}
+
+export function preflightContractArtifacts(
+  fixturesDir: string,
+  contracts: ContractSpec[],
+  fixtureId: string,
+): ValidatedContractArtifact[] {
+  const errors: string[] = [];
+  const validated: ValidatedContractArtifact[] = [];
+
+  for (const contractSpec of contracts) {
+    try {
+      validated.push(
+        validateContractArtifact(fixturesDir, contractSpec, fixtureId),
+      );
+    } catch (err: any) {
+      errors.push(err.message);
+    }
+  }
+
+  if (errors.length > 0) {
+    if (errors.length === 1) {
+      throw new Error(errors[0]);
+    }
+    throw new Error(
+      `Invalid contract WASM declarations in ${fixtureId}:\n${errors.map((e) => `  - ${e}`).join("\n")}`,
+    );
+  }
+
+  return validated;
+}
+
 export async function runMeasurement(
   fixturesPathOrOptions: string | RunMeasurementOptions,
   gitCommit?: string,
@@ -534,6 +650,14 @@ export async function runMeasurement(
       path.relative(process.cwd(), path.resolve(opts.fixturesPath)),
   );
 
+  // Preflight existence, regular-file status, and WASM headers for every selected contract
+  // before initiating network connections, deployer funding, or deployment writes.
+  const validatedArtifacts = preflightContractArtifacts(
+    fixturesDir,
+    fixturesSpec.contracts,
+    fixturesSpec.fixture_id,
+  );
+
   const server = new rpc.Server(effectiveRpcUrl, { allowHttp: true });
   const deployer = await getOrInitAccount(
     keyFile,
@@ -544,27 +668,9 @@ export async function runMeasurement(
 
   const results: ContractBenchmark[] = [];
 
-  for (const contractSpec of fixturesSpec.contracts) {
-    let wasmPath = path.resolve(fixturesDir, contractSpec.wasm_path);
-    if (!fs.existsSync(wasmPath)) {
-      let altPath = "";
-      if (wasmPath.includes("wasm32-unknown-unknown")) {
-        altPath = wasmPath.replace("wasm32-unknown-unknown", "wasm32v1-none");
-      } else if (wasmPath.includes("wasm32v1-none")) {
-        altPath = wasmPath.replace("wasm32v1-none", "wasm32-unknown-unknown");
-      }
-      if (altPath && fs.existsSync(altPath)) {
-        wasmPath = altPath;
-      } else {
-        throw new Error(
-          `WASM not found: ${wasmPath}\nBuild the contract before running measurements.`,
-        );
-      }
-    }
-
-    const wasmBytes = fs.readFileSync(wasmPath);
-    const wasmHash = crypto.createHash("sha256").update(wasmBytes).digest();
-    const wasmSha256 = wasmHash.toString("hex");
+  for (const artifact of validatedArtifacts) {
+    const { contractSpec, wasmPath, wasmBytes, wasmHash, wasmSha256 } =
+      artifact;
 
     console.log(`WASM: ${wasmPath}`);
     console.log(`WASM SHA256: ${wasmSha256}`);

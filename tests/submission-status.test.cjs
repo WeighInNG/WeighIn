@@ -37,7 +37,10 @@ function scenario(t, options = {}) {
   fs.writeFileSync(path.join(dir, "key"), Keypair.random().secret(), {
     mode: 0o600,
   });
-  fs.writeFileSync(path.join(dir, "contract.wasm"), Buffer.from("test-only-wasm"));
+  fs.writeFileSync(
+    path.join(dir, "contract.wasm"),
+    Buffer.from([0, 97, 115, 109, 1, 0, 0, 0, ...Buffer.from("test-only-wasm")]),
+  );
   fs.writeFileSync(
     path.join(dir, "fixtures.json"),
     JSON.stringify({
