@@ -17,9 +17,12 @@ Fixtures are parsed by `src/identity.ts::parseFixtures`, not the older generic
 fixture schema exported from `src/config.ts`.
 
 HEAD is built and measured first. BASE defaults to the PR base branch, otherwise
-`main`, or the supplied `base-ref`. The Action fetches that ref from `origin` with
-depth 1, then creates a detached worktree at `FETCH_HEAD`. This is not a merge-base
-calculation. BASE reads its own fixture file at the same relative path and builds
+`main`, or the supplied `base-ref`. The `base-ref` argument is strictly validated
+against Git ref syntax rules and security boundaries before any deployer key or HEAD
+work begins: empty-whitespace, option-like flags (e.g. `--upload-pack`), and malformed
+characters are rejected early. The Action fetches that ref from `origin` with
+depth 1 using `--` to prevent argument injection, then creates a detached worktree at `FETCH_HEAD`.
+This is not a merge-base calculation. BASE reads its own fixture file at the same relative path and builds
 and measures its own declarations. HEAD policy governs the resulting diff unless
 the caller opts into `trusted-policy-ref`/`trusted-policy-path`. In that mode
 the action reads the exact resolved commit from `origin`, validates it before

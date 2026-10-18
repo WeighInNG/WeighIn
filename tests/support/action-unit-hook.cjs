@@ -59,9 +59,10 @@ if (mode === "funding-exhausted") {
 }
 
 Module._load = function (name, parent, ...args) {
+  const parentFile = parent?.filename ? parent.filename.replace(/\\/g, "/") : "";
   if (
-    parent?.filename.endsWith("/dist/action.js") ||
-    parent?.filename.endsWith("/dist/build.js")
+    parentFile.endsWith("/dist/action.js") ||
+    parentFile.endsWith("/dist/build.js")
   ) {
     if (name === "@actions/github") return { context: { payload: {} } };
     if (name === "@actions/exec")

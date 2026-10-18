@@ -64,7 +64,9 @@ inputs:
   base-ref:
     description: >
       Git ref to use as the baseline for comparison. Defaults to the PR base
-      branch (github.base_ref). Override for manual dispatch or scheduled runs.
+      branch (github.base_ref) or 'main' if omitted. Validated against Git ref
+      syntax rules before HEAD work; option-like, whitespace-only, and malformed
+      refs are rejected early. Override for manual dispatch or scheduled runs.
     required: false
     default: ''
 
