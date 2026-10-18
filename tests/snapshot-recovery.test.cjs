@@ -5,7 +5,7 @@ const assert=require('node:assert/strict');
 const {EventEmitter}=require('node:events');
 const cp=require('node:child_process');
 const {Transaction,Keypair,xdr}=require('@stellar/stellar-sdk');
-const {measureInvocation}=require('../dist/simulation');
+const {measureInvocation, validateSnapshotEntry}=require('../dist/simulation');
 const calls=require('../docs/experiments/repeatability/completed/run-1-rpc.json');
 const replay=require('../docs/experiments/repeatability/completed/run-1-native.json')[0];
 const saved=calls.find(c=>c.request.method==='simulateTransaction'
@@ -306,4 +306,25 @@ test('diagnostic events and failed-call events are excluded from charged event p
   const result = await run();
   assert.ok(result);
   assert.equal(result.provenance.protocol, 28);
+});
+
+test('absent snapshot entry invariant rejects metadata attached to xdr: null', () => {
+  assert.throws(
+    () => validateSnapshotEntry({ key: 'test', xdr: null, extension_xdr: 'ext' }),
+    /Absent snapshot entry must not include entry metadata/,
+  );
+  assert.throws(
+    () => validateSnapshotEntry({ key: 'test', xdr: null, last_modified: 10 }),
+    /Absent snapshot entry must not include entry metadata/,
+  );
+  assert.throws(
+    () => validateSnapshotEntry({ key: 'test', xdr: null, live_until: 100 }),
+    /Absent snapshot entry must not include entry metadata/,
+  );
+  assert.doesNotThrow(() => {
+    validateSnapshotEntry({ key: 'test', xdr: null });
+  });
+  assert.doesNotThrow(() => {
+    validateSnapshotEntry({ key: 'test', xdr: null, live_until: null });
+  });
 });

@@ -134,6 +134,12 @@ fn run() -> Result<()> {
                 row.live_until,
             ))
         } else {
+            if row.extension_xdr.is_some()
+                || row.last_modified.is_some()
+                || row.live_until.is_some()
+            {
+                bail!("absent ledger entry must not include entry metadata");
+            }
             None
         };
         if map

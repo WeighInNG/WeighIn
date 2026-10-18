@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const { EventEmitter } = require('node:events');
 const childProcess = require('node:child_process');
 const { xdr } = require('@stellar/stellar-sdk');
-const { simulateSnapshot, resolveSimulationHelper } = require('../dist/simulation');
+const { simulateSnapshot, resolveSimulationHelper, validateSnapshotEntry } = require('../dist/simulation');
 const input = require('../docs/experiments/compute-source-spike/base-input.json');
 const captured = require('../docs/experiments/compute-source-spike/base-output.json');
 const valid = () => ({ ...captured, host_features: ['recording_mode', 'testutils'], auth_mode: 'recording(true,true)' });
@@ -54,4 +54,68 @@ test('helper diagnostic events cannot be accepted as charged contract events', a
 });
 test('missing helper is an explicit provisioning failure', async () => {
   await assert.rejects(resolveSimulationHelper('/missing/weighin-helper'), /missing or not executable/);
+});
+
+test('validateSnapshotEntry accepts valid present entries with metadata and valid absent entries', () => {
+  // Valid present entry with all metadata
+  assert.doesNotThrow(() => {
+    validateSnapshotEntry({
+      key: 'testkey',
+      xdr: 'AAAA...',
+      extension_xdr: 'BBBB...',
+      last_modified: 100,
+      live_until: 200,
+    });
+  });
+
+  // Valid absent entry with no metadata
+  assert.doesNotThrow(() => {
+    validateSnapshotEntry({
+      key: 'testkey',
+      xdr: null,
+    });
+  });
+
+  // Valid absent entry with live_until: null
+  assert.doesNotThrow(() => {
+    validateSnapshotEntry({
+      key: 'testkey',
+      xdr: null,
+      live_until: null,
+    });
+  });
+});
+
+test('validateSnapshotEntry rejects absent entries with present metadata', () => {
+  // Contradictory absent entry with extension_xdr
+  assert.throws(
+    () => validateSnapshotEntry({ key: 'k', xdr: null, extension_xdr: 'AAAA' }),
+    /Absent snapshot entry must not include entry metadata/,
+  );
+
+  // Contradictory absent entry with last_modified
+  assert.throws(
+    () => validateSnapshotEntry({ key: 'k', xdr: null, last_modified: 123 }),
+    /Absent snapshot entry must not include entry metadata/,
+  );
+
+  // Contradictory absent entry with live_until
+  assert.throws(
+    () => validateSnapshotEntry({ key: 'k', xdr: null, live_until: 456 }),
+    /Absent snapshot entry must not include entry metadata/,
+  );
+});
+
+test('simulateSnapshot rejects input containing absent entry with metadata before helper execution', async () => {
+  const badInput = {
+    ...input,
+    entries: [
+      ...input.entries,
+      { key: 'absentkey', xdr: null, last_modified: 999 },
+    ],
+  };
+  await assert.rejects(
+    simulateSnapshot(badInput, '/test/helper'),
+    /Absent snapshot entry must not include entry metadata/,
+  );
 });

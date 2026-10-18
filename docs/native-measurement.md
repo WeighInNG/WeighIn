@@ -60,11 +60,14 @@ network configuration. No RPC instruction-budget substitution is used.
 
 The adapter captures all footprint keys plus network config, ledger data,
 extensions, last-modified sequence, TTL metadata and explicitly queried absence.
-Batches must share the simulation's reported ledger. It verifies the matching
-ledger header, retries the entire capture on drift, and expands discovered keys
-when the helper reports an uncaptured read. After 30 attempts, incomplete/drifting
-state is an error. This uses current-state RPC APIs; it is not a historical-state
-reader.
+Explicitly absent snapshot entries (`xdr: null`) must not include present-entry
+metadata (`extension_xdr`, `last_modified`, or `live_until`); contradictory inputs
+with metadata attached to absent entries are rejected fail-closed before simulation
+by both the adapter and the native helper. Batches must share the simulation's
+reported ledger. It verifies the matching ledger header, retries the entire capture
+on drift, and expands discovered keys when the helper reports an uncaptured read.
+After 30 attempts, incomplete/drifting state is an error. This uses current-state
+RPC APIs; it is not a historical-state reader.
 
 For the observed `getLedgerEntries` JSON-RPC error `-32603` with message
 `could not query captive core: http request failed with non-200 status code (404)`,

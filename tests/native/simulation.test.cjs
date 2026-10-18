@@ -34,6 +34,9 @@ test('real helper rejects missing config, uncaptured state, failed calls, protoc
     [{ ...base, host_function_xdr: badFunction.toXDR('base64') }, /host invocation failed/],
     [{ ...base, header_xdr: alteredHeader.toXDR('base64') }, /unsupported protocol/],
     [{ ...base, seed: [0] }, /32 bytes/],
+    [{ ...base, entries: [...base.entries, { key: base.entries[0].key, xdr: null, last_modified: 100 }] }, /Absent snapshot entry must not include entry metadata|absent ledger entry must not include entry metadata/],
+    [{ ...base, entries: [...base.entries, { key: base.entries[0].key, xdr: null, extension_xdr: base.entries[0].extension_xdr }] }, /Absent snapshot entry must not include entry metadata|absent ledger entry must not include entry metadata/],
+    [{ ...base, entries: [...base.entries, { key: base.entries[0].key, xdr: null, live_until: 500 }] }, /Absent snapshot entry must not include entry metadata|absent ledger entry must not include entry metadata/],
   ];
   for (const [input, message] of cases) await assert.rejects(simulateSnapshot(input, helper), message);
 });

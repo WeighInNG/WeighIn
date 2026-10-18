@@ -53409,7 +53409,19 @@ async function resolveSimulationHelper(explicitPath, customBuild) {
   }
   return provisioned;
 }
+function validateSnapshotEntry(entry) {
+  if (entry.xdr === null) {
+    if (entry.extension_xdr !== void 0 || entry.last_modified !== void 0 || entry.live_until !== void 0 && entry.live_until !== null) {
+      throw new Error(
+        "Absent snapshot entry must not include entry metadata (extension_xdr, last_modified, or live_until)"
+      );
+    }
+  }
+}
 async function simulateSnapshot(input, helperPath, signal) {
+  for (const entry of input.entries) {
+    validateSnapshotEntry(entry);
+  }
   const stdout = await execute(
     helperPath,
     [],
@@ -53742,13 +53754,15 @@ async function measureInvocation(rpcUrl, transaction, helperPath, options) {
     const entries = requested.map((key) => {
       const entry = rows.get(key);
       if (entry?.xdr) validateLedgerKeyEntryCorrespondence(key, entry.xdr);
-      return entry ? {
+      const row2 = entry ? {
         key,
         xdr: entry.xdr,
         extension_xdr: entry.extXdr,
         last_modified: entry.lastModifiedLedgerSeq,
         live_until: entry.liveUntilLedgerSeq ?? null
       } : { key, xdr: null };
+      validateSnapshotEntry(row2);
+      return row2;
     });
     const operation = transaction.toEnvelope().v1().tx().operations();
     if (operation.length !== 1 || operation[0].body().switch().name !== "invokeHostFunction")

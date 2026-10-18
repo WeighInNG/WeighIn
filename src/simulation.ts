@@ -419,12 +419,33 @@ export async function resolveSimulationHelper(
   return provisioned;
 }
 
+/**
+ * Absent-row invariant: An absent ledger snapshot entry (xdr === null)
+ * must have no present-entry metadata (extension_xdr, last_modified, or live_until).
+ */
+export function validateSnapshotEntry(entry: SnapshotEntry): void {
+  if (entry.xdr === null) {
+    if (
+      entry.extension_xdr !== undefined ||
+      entry.last_modified !== undefined ||
+      (entry.live_until !== undefined && entry.live_until !== null)
+    ) {
+      throw new Error(
+        "Absent snapshot entry must not include entry metadata (extension_xdr, last_modified, or live_until)",
+      );
+    }
+  }
+}
+
 /** Execute the versioned helper transport; never accept missing/invalid meters. */
 export async function simulateSnapshot(
   input: SimulationInput,
   helperPath: string,
   signal?: AbortSignal,
 ): Promise<SimulationOutput> {
+  for (const entry of input.entries) {
+    validateSnapshotEntry(entry);
+  }
   const stdout = await execute(
     helperPath,
     [],
@@ -842,7 +863,7 @@ export async function measureInvocation(
     const entries: SnapshotEntry[] = requested.map((key) => {
       const entry = rows.get(key);
       if (entry?.xdr) validateLedgerKeyEntryCorrespondence(key, entry.xdr);
-      return entry
+      const row: SnapshotEntry = entry
         ? {
             key,
             xdr: entry.xdr,
@@ -851,6 +872,8 @@ export async function measureInvocation(
             live_until: entry.liveUntilLedgerSeq ?? null,
           }
         : { key, xdr: null };
+      validateSnapshotEntry(row);
+      return row;
     });
     const operation = transaction.toEnvelope().v1().tx().operations();
     if (
