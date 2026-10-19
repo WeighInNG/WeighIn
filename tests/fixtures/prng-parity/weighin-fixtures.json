@@ -1,0 +1,21 @@
+{
+  "id": "prng-parity-suite",
+  "contracts": [
+    {
+      "id": "prng-contract",
+      "wasm_path": "contract/target/wasm32v1-none/release/contract_test.wasm",
+      "invocations": [
+        {
+          "id": "draw",
+          "function_name": "sample_prng",
+          "args": [
+            {
+              "type": "Symbol",
+              "value": "draw"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
