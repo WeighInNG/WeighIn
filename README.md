@@ -190,7 +190,11 @@ other arbitrary text.
 
 Relative rules accept `strict_zero_tolerance`, `allow_X_percent_increase`, a
 nonnegative numeric percentage, or `ignore`. Rules are scoped by function name
-and apply to every matching contract/case with that function. Global CPU/memory
+and apply to every matching contract/case with that function. Percentage boundaries
+are evaluated with exact rational integer/decimal comparison without floating-point
+distortion, covering nonrepresentable thirds and safe-integer magnitudes.
+`allow_X_percent_increase` supports decimal numbers as well as exact rational
+fractions (e.g. `allow_100/3_percent_increase`). Global CPU/memory
 percentage rules and all-metric strict policy are also supported. Absolute caps
 are configured under `[limits.global]` or `[limits.functions.hello]`:
 
