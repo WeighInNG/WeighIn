@@ -381,6 +381,8 @@ public revision now used by consumer pins.
 
 ## Known boundaries
 
-See [Known limitations](KNOWN_LIMITATIONS.md). [Hosted external validation](hosted-soroban-forge.md)
+See [Known limitations](KNOWN_LIMITATIONS.md) and the
+[bounded PRNG-dependent parity boundary proof](prng-parity.md)
+([archived evidence](experiments/prng-parity/)). [Hosted external validation](hosted-soroban-forge.md)
 covers one empty escrow view in the permitted WeighInNG fork; full stateful Forge
 coverage and upstream adoption are not claimed.

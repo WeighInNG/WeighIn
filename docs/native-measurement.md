@@ -79,10 +79,12 @@ See the [recovery tests and live rerun](snapshot-recovery.md).
 
 Host settings match the proven RPC configuration: protocol 28, host features
 `recording_mode` and `testutils`, auth mode `recording(true,true)`, and a fixed
-32-byte zero seed. Entire helper transaction-data XDR, return value and successful
+32-byte zero seed (`FIXED_NATIVE_PRNG_SEED`). Entire helper transaction-data XDR, return value and successful
 non-diagnostic events must match RPC at the captured ledger. This corroborates state/resources; RPC still exposes
 no direct consumed CPU/memory values. Random-dependent or auth-dependent fixtures
-that disagree fail explicitly. Archived state is unsupported. Invocation writes
+that share the 32-byte zero base seed pass parity with genuine nonzero metrics, while
+invocations that disagree fail explicitly without silently overriding the seed
+([bounded PRNG parity proof](prng-parity.md)). Archived state is unsupported. Invocation writes
 are simulated and discarded; upload/deployment transactions are submitted.
 
 BASE and HEAD can be captured at different ledgers. The diff requires matching

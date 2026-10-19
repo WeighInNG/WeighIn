@@ -45,3 +45,16 @@ test('documented Action inputs, outputs and workflow snippets use supported name
   for (const file of mainDocs) for (const match of read(file).matchAll(/npm run ([a-z][a-z0-9:-]*)/g)) assert.ok(scripts[match[1]], `${file}: ${match[1]}`);
   for (const workflow of fs.readdirSync(path.join(root, '.github/workflows'))) yaml.parse(read(`.github/workflows/${workflow}`));
 });
+
+test('bounded PRNG parity boundary proof documentation and evidence links resolve', () => {
+  const doc = read('docs/prng-parity.md');
+  assert.doesNotMatch(doc, /WEIGHIN_PROGRESS|DRIPS_APPEAL_CONTEXT|Drips|appeal preparation/);
+  for (const match of doc.matchAll(/\[[^\]]*\]\(([^)]+)\)/g)) {
+    const target = match[1].split('#')[0];
+    if (!target || /^https?:/.test(target)) continue;
+    assert.ok(fs.existsSync(path.resolve(root, 'docs', target)), `docs/prng-parity.md: ${target}`);
+  }
+  assert.ok(read('docs/KNOWN_LIMITATIONS.md').includes('(prng-parity.md)'));
+  assert.ok(read('docs/native-measurement.md').includes('(prng-parity.md)'));
+  assert.ok(read('docs/EVIDENCE.md').includes('(prng-parity.md)'));
+});

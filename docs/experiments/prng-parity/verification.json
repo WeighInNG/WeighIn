@@ -1,0 +1,53 @@
+{
+  "status": "VERIFIED",
+  "scenario": "prng_parity_boundary",
+  "reviewed_source_sha": "201fdb2b1352344f14a81e7a426f5cf404488547",
+  "source_snapshot_sha256": "e42ce724f3f79286ef564ac12300b2dc5d2f897bbcd1d5a83cb55ac05f57242b",
+  "proof_wasm_sha256": "fafc0efd6f95386ad90be5971adfb1daf6dc63e373c7b166aeaa3336f0056f3e",
+  "explicit_prng_invocation": true,
+  "ledger_branching_used": false,
+  "fixed_zero_seed_enforced": true,
+  "silent_seed_override_used": false,
+  "genuine_nonzero_results_preserved": true,
+  "justified_matching_condition_verified": true,
+  "divergent_prng_parity_rejected": true,
+  "unavailable_metrics_explicit_null": true,
+  "zero_seed_prng_draw": 11,
+  "zero_seed_return_vector": [
+    11,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+  ],
+  "measured_nonzero_metrics": {
+    "cpu_instructions": 342616,
+    "memory_bytes": 1198240,
+    "ledger_read_entries": 3,
+    "ledger_read_bytes": 144,
+    "ledger_write_entries": 1,
+    "ledger_write_bytes": 96,
+    "events_count": 1,
+    "event_data_bytes": 244
+  },
+  "unavailable_metrics": [
+    "historical_data_read_bytes",
+    "contract_data_hard_limit",
+    "tx_size_bytes"
+  ],
+  "rejected_cases_count": 5,
+  "rejected_cases": [
+    "divergent_seed_full_disagreement",
+    "divergent_return_value_only",
+    "divergent_transaction_data_only",
+    "divergent_events_only",
+    "malformed_native_seed_rejected"
+  ]
+}
