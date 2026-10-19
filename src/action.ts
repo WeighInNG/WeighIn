@@ -14,11 +14,14 @@ import {
   enforceThresholds,
   Violation,
   PolicyOrigin,
-
 } from "./threshold";
 
 import { renderComment } from "./comment";
 import { buildForRevision, parseOptionalBooleanInput } from "./build-selection";
+import {
+  validateSupportedInputs,
+  SUPPORTED_MAIN_ACTION_INPUTS,
+} from "./action-contract";
 import { writeReportFile, generateFailureReport } from "./report";
 import { buildPrMetadata } from "./pr-metadata";
 import {
@@ -373,6 +376,8 @@ async function run(): Promise<void> {
   let sharedKeyFile: string | null = null;
 
   try {
+    validateSupportedInputs(SUPPORTED_MAIN_ACTION_INPUTS);
+
     const fixturesPathRel = core.getInput("fixtures-path", { required: true });
     const configPathRel = core.getInput("config-path");
     const trustedPolicyRef = core.getInput("trusted-policy-ref").trim();

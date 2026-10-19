@@ -26206,9 +26206,39 @@ async function upsertPrComment(token, numberOrBody, explicitBody) {
   }
 }
 
+// src/action-contract.ts
+var SUPPORTED_COMMENT_ACTION_INPUTS = [
+  "report-path",
+  "metadata-path",
+  "github-token"
+];
+function validateSupportedInputs(supported, env = process.env) {
+  const supportedSet = new Set(
+    supported.map((s) => s.toLowerCase().replace(/_/g, "-"))
+  );
+  const unsupported = [];
+  for (const [key, value] of Object.entries(env)) {
+    if (value === void 0) continue;
+    if (key.startsWith("INPUT_")) {
+      const rawName = key.slice(6);
+      if (!rawName) continue;
+      const normalized = rawName.toLowerCase().replace(/_/g, "-");
+      if (!supportedSet.has(normalized)) {
+        unsupported.push(rawName);
+      }
+    }
+  }
+  if (unsupported.length > 0) {
+    throw new Error(
+      `Unsupported Action input: ${unsupported.join(", ")}. Supported inputs are: ${supported.join(", ")}`
+    );
+  }
+}
+
 // src/comment-action.ts
 async function run() {
   try {
+    validateSupportedInputs(SUPPORTED_COMMENT_ACTION_INPUTS);
     const reportPath = core.getInput("report-path", { required: true });
     const metadataPath = core.getInput("metadata-path", { required: true });
     const token = core.getInput("github-token", { required: true });

@@ -171,6 +171,16 @@ Outputs: `result` is `pass` or `fail`; `diff-json` contains the comparison.
 An unsuccessful comparison emits `fail` and `{}`. A valid comparison with policy
 violations emits its real diff, writes the report, then fails the Action.
 
+All supported inputs for the comment action are declared in [comment/action.yml](comment/action.yml):
+
+| Input | Meaning |
+|---|---|
+| `report-path` | Required path to the generated Markdown report artifact |
+| `metadata-path` | Required path to the PR metadata JSON artifact |
+| `github-token` | Required GitHub token with pull-requests write permission |
+
+Both Action entry points validate incoming inputs against declared specifications and reject unsupported inputs early to prevent metadata/runtime drift.
+
 See [policy and package provenance](docs/policy-and-package-provenance.md) for
 the trusted-policy boundary, package manifest verification, and signing
 guidance.

@@ -55023,6 +55023,44 @@ async function buildForRevision(fixturesPath, worktreeRoot, rustToolchain, build
   await buildContracts(fixturesPath, rustToolchain);
 }
 
+// src/action-contract.ts
+var SUPPORTED_MAIN_ACTION_INPUTS = [
+  "fixtures-path",
+  "config-path",
+  "trusted-policy-ref",
+  "trusted-policy-path",
+  "rpc-url",
+  "github-token",
+  "metadata-path",
+  "base-ref",
+  "rust-toolchain",
+  "report-path",
+  "build-command",
+  "skip-build"
+];
+function validateSupportedInputs(supported, env = process.env) {
+  const supportedSet = new Set(
+    supported.map((s) => s.toLowerCase().replace(/_/g, "-"))
+  );
+  const unsupported = [];
+  for (const [key, value] of Object.entries(env)) {
+    if (value === void 0) continue;
+    if (key.startsWith("INPUT_")) {
+      const rawName = key.slice(6);
+      if (!rawName) continue;
+      const normalized = rawName.toLowerCase().replace(/_/g, "-");
+      if (!supportedSet.has(normalized)) {
+        unsupported.push(rawName);
+      }
+    }
+  }
+  if (unsupported.length > 0) {
+    throw new Error(
+      `Unsupported Action input: ${unsupported.join(", ")}. Supported inputs are: ${supported.join(", ")}`
+    );
+  }
+}
+
 // src/report.ts
 var fs4 = __toESM(require("fs"));
 var path5 = __toESM(require("path"));
@@ -55319,6 +55357,7 @@ async function run() {
   let keyDir = null;
   let sharedKeyFile = null;
   try {
+    validateSupportedInputs(SUPPORTED_MAIN_ACTION_INPUTS);
     const fixturesPathRel = core3.getInput("fixtures-path", { required: true });
     const configPathRel = core3.getInput("config-path");
     const trustedPolicyRef = core3.getInput("trusted-policy-ref").trim();

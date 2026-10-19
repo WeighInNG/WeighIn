@@ -38,13 +38,43 @@ test('README fixture and policy examples parse with the current public runtime A
 
 test('documented Action inputs, outputs and workflow snippets use supported names', () => {
   const action = yaml.parse(read('action.yml'));
+  const commentAction = yaml.parse(read('comment/action.yml'));
   const markdown = read('README.md');
+
   for (const input of Object.keys(action.inputs)) assert.ok(markdown.includes(`| \`${input}\` |`), input);
   for (const output of Object.keys(action.outputs)) assert.ok(markdown.includes(`\`${output}\``), output);
+  for (const input of Object.keys(commentAction.inputs)) assert.ok(markdown.includes(`| \`${input}\` |`), input);
+
   for (const match of markdown.matchAll(/```yaml\n([\s\S]*?)```/g)) {
-    for (const step of yaml.parse(match[1])) for (const name of Object.keys(step.with || {})) assert.ok(action.inputs[name], name);
+    for (const step of yaml.parse(match[1])) {
+      if (!step.uses) continue;
+      if (step.uses.includes('comment')) {
+        for (const name of Object.keys(step.with || {})) assert.ok(commentAction.inputs[name], name);
+      } else {
+        for (const name of Object.keys(step.with || {})) assert.ok(action.inputs[name], name);
+      }
+    }
   }
+
   const scripts = JSON.parse(read('package.json')).scripts;
   for (const file of mainDocs) for (const match of read(file).matchAll(/npm run ([a-z][a-z0-9:-]*)/g)) assert.ok(scripts[match[1]], `${file}: ${match[1]}`);
-  for (const workflow of fs.readdirSync(path.join(root, '.github/workflows'))) yaml.parse(read(`.github/workflows/${workflow}`));
+
+  for (const workflowFile of fs.readdirSync(path.join(root, '.github/workflows'))) {
+    if (!workflowFile.endsWith('.yml')) continue;
+    const workflow = yaml.parse(read(`.github/workflows/${workflowFile}`));
+    for (const job of Object.values(workflow.jobs || {})) {
+      for (const step of job.steps || []) {
+        if (!step.uses) continue;
+        if (step.uses === './comment' || step.uses.startsWith('WeighInNG/WeighIn/comment@')) {
+          for (const name of Object.keys(step.with || {})) {
+            assert.ok(commentAction.inputs[name], `Unknown comment action input ${name} in ${workflowFile}`);
+          }
+        } else if (step.uses === './' || step.uses.startsWith('WeighInNG/WeighIn@')) {
+          for (const name of Object.keys(step.with || {})) {
+            assert.ok(action.inputs[name], `Unknown action input ${name} in ${workflowFile}`);
+          }
+        }
+      }
+    }
+  }
 });
