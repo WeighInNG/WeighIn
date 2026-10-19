@@ -8,7 +8,7 @@ runs:
         node-version: 24
     - run: rustup toolchain install 1.95.0 --profile minimal
       shell: bash
-    - run:  pm ci
+    - run: env npm ci
       shell: bash
-    - run:  ode scripts/prepare-test-dependencies.cjs
+    - run: env node scripts/prepare-test-dependencies.cjs
       shell: bash
