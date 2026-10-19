@@ -5,7 +5,7 @@ const yaml = require('yaml'), TOML = require('toml');
 const { parseFixtures } = require('../dist/identity');
 const { validateConfig } = require('../dist/threshold');
 const root = path.resolve(__dirname, '..');
-const read = file => fs.readFileSync(path.join(root, file), 'utf8');
+const read = file => fs.readFileSync(path.join(root, file), 'utf8').replace(/\r\n/g, '\n');
 const mainDocs = ['README.md', 'CONTRIBUTING.md', 'docs/EVIDENCE.md', 'docs/KNOWN_LIMITATIONS.md', 'docs/architecture.md', 'docs/DEPENDENCY_SECURITY.md', 'docs/repeatability.md', 'docs/ledger-variation.md'];
 
 test('public reviewer path resolves product documentation and retained evidence without internal notes', () => {
@@ -47,4 +47,27 @@ test('documented Action inputs, outputs and workflow snippets use supported name
   const scripts = JSON.parse(read('package.json')).scripts;
   for (const file of mainDocs) for (const match of read(file).matchAll(/npm run ([a-z][a-z0-9:-]*)/g)) assert.ok(scripts[match[1]], `${file}: ${match[1]}`);
   for (const workflow of fs.readdirSync(path.join(root, '.github/workflows'))) yaml.parse(read(`.github/workflows/${workflow}`));
+});
+
+test('package metadata declares license, repository, and node engine consistent with docs and CI', () => {
+  const pkg = JSON.parse(read('package.json'));
+  assert.equal(pkg.license, 'Apache-2.0');
+  assert.deepEqual(pkg.repository, {
+    type: 'git',
+    url: 'https://github.com/WeighInNG/WeighIn.git',
+  });
+  assert.equal(pkg.engines?.node, '>=24.0.0');
+
+  // Verify LICENSE file
+  const licenseText = read('LICENSE');
+  assert.match(licenseText, /Apache License\s+Version 2.0/);
+
+  // Verify CONTRIBUTING.md documents Node 24 and repo clone URL
+  const contributing = read('CONTRIBUTING.md');
+  assert.match(contributing, /Node 24/);
+  assert.match(contributing, /git clone https:\/\/github\.com\/WeighInNG\/WeighIn\.git/);
+
+  // Verify CI workflows use Node 24
+  const ciWorkflow = read('.github/workflows/ci.yml');
+  assert.match(ciWorkflow, /node-version:\s*24/);
 });
