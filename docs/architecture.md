@@ -177,8 +177,10 @@ warning-only.
 The separate `comment/` Action runs `bundled/comment-action.js`, reads and
 validates downloaded report/PR metadata, and creates or updates the comment
 carrying `<!-- weighin-report -->`. It fails on missing artifacts, invalid
-metadata or API failure. The example consumer runs only after successful PR
-producers, on trusted default-branch workflow code; it does not execute
-downloaded PR code. Failed policy reports remain in producer artifacts and
-summaries. Hosted expected-negative proof jobs separately assert genuine Action
-exit 1, then finish green once verified.
+metadata or API failure. Relative `report-path` and `metadata-path` inputs
+resolve against `GITHUB_WORKSPACE` (falling back to the current working
+directory) when invoked from a foreign Action installation path. The example
+consumer runs only after successful PR producers, on trusted default-branch
+workflow code; it does not execute downloaded PR code. Failed policy reports
+remain in producer artifacts and summaries. Hosted expected-negative proof jobs
+separately assert genuine Action exit 1, then finish green once verified.
