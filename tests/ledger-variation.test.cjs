@@ -177,3 +177,27 @@ test('verifier rejects contracts missing explicit ledger sequence/time dependenc
     );
   }
 });
+
+
+test('archive verifier accepts current presentation without rewriting historical evidence', () => {
+  const b = loadBundle();
+  b.summary = require('../dist/comment').renderComment(b.variationDiff, b.violations, 'ledger-900', 'ledger-1000');
+  assert.ok(verifyLedgerVariation(b));
+});
+
+test('archive verifier rejects altered metrics, violations, provenance and extra content', () => {
+  const changes = [
+    (s) => s.replace('324,384', '324,385'),
+    (s) => s.replace('increased by 52966', 'increased by 0'),
+    (s) => s.replace('Snapshot ledgers: BASE 900', 'Snapshot ledgers: BASE 901'),
+    (s) => s.replace(/(compute config SHA256: `)[a-f0-9]{64}/, '$1' + '0'.repeat(64)),
+    (s) => s + '\nInvented evidence',
+  ];
+  for (const change of changes) {
+    const b = loadBundle();
+    const original = b.summary;
+    b.summary = change(b.summary);
+    assert.notEqual(b.summary, original, 'Mutation must change the archived report');
+    assert.throws(() => verifyLedgerVariation(b), /Archived report content/);
+  }
+});
