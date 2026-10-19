@@ -32,10 +32,13 @@ package share a build. Unknown/ambiguous packages fail before compilation.
 
 `src/build.ts::buildContracts` uses locked optimized `stellar contract build`
 with a fresh output directory, producing the modern `wasm32v1-none` artifact.
-The builder verifies CLI/Rust gates, optimization, pre/post temporary-storage
-write/fsync/read probes and fresh WASM headers before copying to declared paths.
-Actual tool versions/artifact hashes are logged. Per-revision Rustup resolution
-is preserved unless `rust-toolchain` supplies `RUSTUP_TOOLCHAIN`.
+The builder snapshots selected manifests, lockfiles, and package source inputs
+before building and fails if the default build mutates them, while permitting
+generated outputs and preserving preexisting edits. It also verifies CLI/Rust
+gates, optimization, pre/post temporary-storage write/fsync/read probes and
+fresh WASM headers before copying to declared paths. Actual tool
+versions/artifact hashes are logged. Per-revision Rustup resolution is preserved
+unless `rust-toolchain` supplies `RUSTUP_TOOLCHAIN`.
 
 A custom shell command runs in each revision instead, or `skip-build: true`
 consumes prebuilt artifacts. These modes bypass default build guarantees; they

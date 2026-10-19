@@ -53912,6 +53912,126 @@ var path4 = __toESM(require("path"));
 var os = __toESM(require("os"));
 var import_crypto = require("crypto");
 var exec = __toESM(require_exec());
+var IGNORED_INPUT_DIRS = /* @__PURE__ */ new Set([
+  "target",
+  ".git",
+  "node_modules",
+  ".weighin-storage-probe"
+]);
+var TRACKED_MANIFEST_RELATIVES = [
+  "Cargo.toml",
+  "Cargo.lock",
+  "build.rs",
+  "rust-toolchain.toml",
+  "rust-toolchain",
+  path4.join(".cargo", "config.toml"),
+  path4.join(".cargo", "config")
+];
+function hashFileOrNull(filePath) {
+  if (!fs3.existsSync(filePath)) return null;
+  const stat = fs3.statSync(filePath);
+  if (!stat.isFile()) return null;
+  return (0, import_crypto.createHash)("sha256").update(fs3.readFileSync(filePath)).digest("hex");
+}
+function collectPackageDirectoryFiles(rootDir, currentDir, excludedPaths, out) {
+  if (!fs3.existsSync(currentDir)) return;
+  for (const entry of fs3.readdirSync(currentDir, { withFileTypes: true })) {
+    if (IGNORED_INPUT_DIRS.has(entry.name)) continue;
+    const fullPath = path4.resolve(currentDir, entry.name);
+    if (excludedPaths.has(fullPath)) continue;
+    if (entry.isDirectory()) {
+      if (!fs3.existsSync(path4.join(fullPath, "Cargo.toml"))) {
+        collectPackageDirectoryFiles(rootDir, fullPath, excludedPaths, out);
+      }
+      continue;
+    }
+    if (entry.isFile() && !fullPath.endsWith(".wasm")) {
+      out.set(
+        fullPath,
+        (0, import_crypto.createHash)("sha256").update(fs3.readFileSync(fullPath)).digest("hex")
+      );
+    }
+  }
+}
+function recordManifestDirectoryCandidates(dir, files) {
+  const resolvedDir = path4.resolve(dir);
+  for (const rel of TRACKED_MANIFEST_RELATIVES) {
+    const candidate = path4.resolve(resolvedDir, rel);
+    if (!files.has(candidate)) {
+      files.set(candidate, hashFileOrNull(candidate));
+    }
+  }
+}
+function snapshotContractInputs(manifestPaths, packageManifestPaths, destinationPaths, extraFiles = [], preExistingSnapshots) {
+  const files = new Map(preExistingSnapshots ?? []);
+  const excludedPaths = new Set(
+    destinationPaths.map((dest) => path4.resolve(dest))
+  );
+  for (const extra of extraFiles) {
+    const resolved = path4.resolve(extra);
+    if (!files.has(resolved)) {
+      files.set(resolved, hashFileOrNull(resolved));
+    }
+  }
+  const workspaceDirs = manifestPaths.map((m) => path4.dirname(path4.resolve(m)));
+  for (const dir of workspaceDirs) {
+    recordManifestDirectoryCandidates(dir, files);
+  }
+  const packageRoots = [];
+  for (const pkgManifest of packageManifestPaths) {
+    const pkgDir = path4.dirname(path4.resolve(pkgManifest));
+    if (!packageRoots.includes(pkgDir)) packageRoots.push(pkgDir);
+    recordManifestDirectoryCandidates(pkgDir, files);
+    let cursor = pkgDir;
+    while (true) {
+      recordManifestDirectoryCandidates(cursor, files);
+      if (workspaceDirs.includes(cursor)) break;
+      const parent = path4.dirname(cursor);
+      if (parent === cursor) break;
+      cursor = parent;
+    }
+    const discovered = /* @__PURE__ */ new Map();
+    collectPackageDirectoryFiles(pkgDir, pkgDir, excludedPaths, discovered);
+    for (const [filePath, digest] of discovered) {
+      if (!files.has(filePath)) {
+        files.set(filePath, digest);
+      }
+    }
+  }
+  return { files, packageRoots, excludedPaths };
+}
+function assertContractInputsUnchanged(snapshot) {
+  const mutated = /* @__PURE__ */ new Set();
+  for (const [filePath, expectedDigest] of snapshot.files) {
+    if (snapshot.excludedPaths.has(filePath)) continue;
+    const actualDigest = hashFileOrNull(filePath);
+    if (actualDigest !== expectedDigest) {
+      mutated.add(filePath);
+    }
+  }
+  for (const pkgDir of snapshot.packageRoots) {
+    const currentFiles = /* @__PURE__ */ new Map();
+    collectPackageDirectoryFiles(
+      pkgDir,
+      pkgDir,
+      snapshot.excludedPaths,
+      currentFiles
+    );
+    for (const [filePath, digest] of currentFiles) {
+      if (!snapshot.files.has(filePath)) {
+        mutated.add(filePath);
+      } else if (snapshot.files.get(filePath) !== digest) {
+        mutated.add(filePath);
+      }
+    }
+  }
+  if (mutated.size > 0) {
+    const sorted = [...mutated].sort();
+    throw new Error(
+      `Default contract build mutated input file(s): ${sorted.join(", ")}`
+    );
+  }
+}
 function verifyBuildStorage(directory, bytes = 1024 * 1024) {
   const probePath = path4.join(directory, ".weighin-storage-probe");
   const expected = Buffer.alloc(bytes, 165);
@@ -53945,6 +54065,11 @@ async function buildContracts(fixturesPath, rustToolchain) {
     ...process.env,
     ...rustToolchain ? { RUSTUP_TOOLCHAIN: rustToolchain } : {}
   };
+  const resolvedFixturesPath = path4.resolve(fixturesPath);
+  const preBuildSnapshots = /* @__PURE__ */ new Map([
+    [resolvedFixturesPath, hashFileOrNull(resolvedFixturesPath)]
+  ]);
+  let inputSnapshot;
   async function command(tool, args, cwd, commandEnv = env) {
     let stdout = "", stderr = "";
     try {
@@ -53970,8 +54095,10 @@ async function buildContracts(fixturesPath, rustToolchain) {
       throw new Error(
         "Stellar CLI lacks optimization support; install the official release binary"
       );
-    if (tool === "stellar" && args[0] === "contract")
+    if (tool === "stellar" && args[0] === "contract") {
       process.stdout.write(stdout + stderr);
+      if (inputSnapshot) assertContractInputsUnchanged(inputSnapshot);
+    }
     return stdout.trim();
   }
   const rustVersion = await command("rustc", ["--version"], fixturesDir);
@@ -54002,6 +54129,7 @@ async function buildContracts(fixturesPath, rustToolchain) {
       dir = parent;
     }
     const manifest = path4.join(dir, "Cargo.toml");
+    recordManifestDirectoryCandidates(dir, preBuildSnapshots);
     let packages = metadataCache.get(manifest);
     if (!packages) {
       const metadata = JSON.parse(
@@ -54047,6 +54175,16 @@ async function buildContracts(fixturesPath, rustToolchain) {
         );
       }
       try {
+        if (!inputSnapshot) {
+          inputSnapshot = snapshotContractInputs(
+            Array.from(metadataCache.keys()),
+            plans.map((plan) => plan.pkg.manifest_path),
+            plans.map((plan) => plan.destination),
+            [resolvedFixturesPath],
+            preBuildSnapshots
+          );
+        }
+        assertContractInputsUnchanged(inputSnapshot);
         verifyBuildStorage(outputDir);
         await command(
           "stellar",

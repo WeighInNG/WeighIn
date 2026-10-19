@@ -144,3 +144,105 @@ test('missing caller temporary-storage directory fails visibly before optimizati
   finally { if (previous === undefined) delete process.env.TMPDIR; else process.env.TMPDIR = previous; }
   assert.equal(commands.some(c => c.command === 'stellar' && c.args[0] === 'contract'), false);
 }));
+
+async function mutationScenario(options, verify) {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'weighin-build-mut-'));
+  const original = exec.exec;
+  const commands = [];
+  const wasm = Buffer.from([0, 97, 115, 109, 1, 0, 0, 0, 0, 1, 0]);
+  const names = options.names || ['hello-contract'];
+  const packages = names.map((name, index) => {
+    const manifest_path = path.join(directory, `crate${index}`, 'Cargo.toml');
+    const crateDir = path.dirname(manifest_path);
+    fs.mkdirSync(path.join(crateDir, 'src'), { recursive: true });
+    fs.writeFileSync(manifest_path, '[package]');
+    fs.writeFileSync(path.join(crateDir, 'src', 'lib.rs'), '#![no_std]\n');
+    return { id: `pkg${index}`, name, manifest_path, targets: [{ name, crate_types: ['cdylib'] }] };
+  });
+  fs.writeFileSync(path.join(directory, 'Cargo.toml'), '[workspace]');
+  fs.writeFileSync(path.join(directory, 'Cargo.lock'), '# locked workspace\n');
+  const fixtures = path.join(directory, 'fixtures.json');
+  const destinations = options.paths || names.map(name => `target/wasm32v1-none/release/${name.replaceAll('-', '_')}.wasm`);
+  fs.writeFileSync(fixtures, JSON.stringify({ contracts: destinations.map((wasm_path, i) => ({ id: `contract${i}`, wasm_path, invocations: [{ function_name: 'hello', args: [] }] })) }));
+  for (const destination of destinations) {
+    fs.mkdirSync(path.dirname(path.join(directory, destination)), { recursive: true });
+    fs.writeFileSync(path.join(directory, destination), 'stale artifact');
+  }
+  exec.exec = async (command, args, config) => {
+    commands.push({ command, args, env: config.env });
+    const emit = text => config.listeners.stdout(Buffer.from(text));
+    if (command === 'rustc') emit('rustc 1.95.0');
+    else if (command === 'cargo') {
+      if (options.onMetadata) options.onMetadata({ directory, packages });
+      emit(JSON.stringify({ workspace_members: packages.map(pkg => pkg.id), packages }));
+    } else if (command === 'stellar' && args[0] === '--version') {
+      emit('stellar 28.1.0');
+    } else if (command === 'stellar') {
+      if (options.onBuild) options.onBuild({ directory, packages, args });
+      const packageName = args[args.indexOf('--package') + 1];
+      fs.writeFileSync(path.join(args[args.indexOf('--out-dir') + 1], `${packageName.replaceAll('-', '_')}.wasm`), wasm);
+    } else throw new Error('Unexpected command');
+    return 0;
+  };
+  try { await verify({ fixtures, directory, commands, wasm, destinations, packages }); }
+  finally { exec.exec = original; fs.rmSync(directory, { recursive: true, force: true }); }
+}
+
+for (const [label, mutate, expectedPattern] of [
+  [
+    'workspace Cargo.lock modified during build',
+    ({ directory }) => fs.appendFileSync(path.join(directory, 'Cargo.lock'), '# mutated\n'),
+    /Default contract build mutated input file\(s\).*Cargo\.lock/,
+  ],
+  [
+    'crate Cargo.lock created during build',
+    ({ packages }) => fs.writeFileSync(path.join(path.dirname(packages[0].manifest_path), 'Cargo.lock'), '# created\n'),
+    /Default contract build mutated input file\(s\).*Cargo\.lock/,
+  ],
+  [
+    'selected crate Cargo.toml mutated during build',
+    ({ packages }) => fs.appendFileSync(packages[0].manifest_path, '\n# mutated\n'),
+    /Default contract build mutated input file\(s\).*Cargo\.toml/,
+  ],
+  [
+    'contract source file mutated during build',
+    ({ packages }) => fs.appendFileSync(path.join(path.dirname(packages[0].manifest_path), 'src', 'lib.rs'), '// mutated\n'),
+    /Default contract build mutated input file\(s\).*lib\.rs/,
+  ],
+  [
+    'new source file generated inside contract crate during build',
+    ({ packages }) => fs.writeFileSync(path.join(path.dirname(packages[0].manifest_path), 'src', 'generated.rs'), '// unexpected\n'),
+    /Default contract build mutated input file\(s\).*generated\.rs/,
+  ],
+]) {
+  test(`default build fails when ${label}`, async () => mutationScenario({ onBuild: mutate }, async ({ fixtures, directory, destinations }) => {
+    await assert.rejects(buildContracts(fixtures, '1.95.0'), expectedPattern);
+    assert.equal(fs.readFileSync(path.join(directory, destinations[0]), 'utf8'), 'stale artifact');
+  }));
+}
+
+test('default build fails when cargo metadata mutates workspace Cargo.lock', async () => mutationScenario({
+  onMetadata: ({ directory }) => fs.appendFileSync(path.join(directory, 'Cargo.lock'), '# mutated during metadata\n'),
+}, async ({ fixtures, directory, commands, destinations }) => {
+  await assert.rejects(buildContracts(fixtures, '1.95.0'), /Default contract build mutated input file\(s\).*Cargo\.lock/);
+  assert.equal(commands.some(c => c.command === 'stellar' && c.args[0] === 'contract'), false);
+  assert.equal(fs.readFileSync(path.join(directory, destinations[0]), 'utf8'), 'stale artifact');
+}));
+
+test('default build permits generated target outputs and preserves preexisting edits', async () => mutationScenario({
+  onBuild: ({ directory, packages }) => {
+    const crateTarget = path.join(path.dirname(packages[0].manifest_path), 'target', 'release-fingerprint');
+    fs.mkdirSync(path.dirname(crateTarget), { recursive: true });
+    fs.writeFileSync(crateTarget, 'generated cargo target metadata');
+    const unrelatedNote = path.join(directory, 'UNRELATED_NOTES.md');
+    fs.appendFileSync(unrelatedNote, 'updated outside selected crate\n');
+  },
+}, async ({ fixtures, directory, packages, wasm, destinations }) => {
+  const preexistingSource = '#![no_std]\n// preexisting local edit before build\n';
+  fs.writeFileSync(path.join(path.dirname(packages[0].manifest_path), 'src', 'lib.rs'), preexistingSource);
+  fs.writeFileSync(path.join(directory, 'UNRELATED_NOTES.md'), 'initial note\n');
+  const results = await buildContracts(fixtures, '1.95.0');
+  assert.equal(results.length, 1);
+  assert.deepEqual(fs.readFileSync(path.join(directory, destinations[0])), wasm);
+  assert.equal(fs.readFileSync(path.join(path.dirname(packages[0].manifest_path), 'src', 'lib.rs'), 'utf8'), preexistingSource);
+}));

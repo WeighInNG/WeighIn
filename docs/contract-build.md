@@ -50,7 +50,19 @@ cold-build determinism guarantee is implied.
 
 WeighIn verifies the fresh output's WASM header, then copies it to the configured
 fixture path. An old artifact at that path cannot substitute for absent or failed
-build output. Build result records retain each manifest/package; logs record the
+build output. Before running `cargo metadata` and `stellar contract build`, the
+default builder snapshots the selected workspace and package `Cargo.toml`
+manifests, `Cargo.lock` lockfiles (including their initial presence or absence),
+toolchain/Cargo config files, and tracked contract source inputs under each
+selected package directory. If the default build mutates, adds, or removes any
+of those snapshotted inputs, the build fails before accepting or copying any
+WASM output. Generated outputs under `target/`, the temporary `--out-dir`, and
+the declared fixture `wasm_path` destinations are permitted, and unrelated or
+preexisting edits present before the build started are preserved. `--locked`
+alone does not guarantee that build scripts or proc-macros leave every source
+file untouched, so this explicit before/after input check enforces input
+immutability for the default builder (custom `build-command` executions are not
+sandboxed). Build result records retain each manifest/package; logs record the
 artifact path, package, SHA256 and actual Rust/Stellar versions. Cargo caches may still be used; this is not a claim
 of clean-build reproducibility.
 

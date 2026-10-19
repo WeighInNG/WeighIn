@@ -14,6 +14,163 @@ export interface BuiltContract {
   rust_version: string;
 }
 
+export interface BuildInputSnapshot {
+  files: Map<string, string | null>;
+  packageRoots: string[];
+  excludedPaths: Set<string>;
+}
+
+const IGNORED_INPUT_DIRS = new Set([
+  "target",
+  ".git",
+  "node_modules",
+  ".weighin-storage-probe",
+]);
+
+const TRACKED_MANIFEST_RELATIVES = [
+  "Cargo.toml",
+  "Cargo.lock",
+  "build.rs",
+  "rust-toolchain.toml",
+  "rust-toolchain",
+  path.join(".cargo", "config.toml"),
+  path.join(".cargo", "config"),
+];
+
+function hashFileOrNull(filePath: string): string | null {
+  if (!fs.existsSync(filePath)) return null;
+  const stat = fs.statSync(filePath);
+  if (!stat.isFile()) return null;
+  return createHash("sha256").update(fs.readFileSync(filePath)).digest("hex");
+}
+
+function collectPackageDirectoryFiles(
+  rootDir: string,
+  currentDir: string,
+  excludedPaths: Set<string>,
+  out: Map<string, string>,
+): void {
+  if (!fs.existsSync(currentDir)) return;
+  for (const entry of fs.readdirSync(currentDir, { withFileTypes: true })) {
+    if (IGNORED_INPUT_DIRS.has(entry.name)) continue;
+    const fullPath = path.resolve(currentDir, entry.name);
+    if (excludedPaths.has(fullPath)) continue;
+    if (entry.isDirectory()) {
+      // Do not descend into nested sub-crates that own their own Cargo.toml
+      // unless that sub-crate is itself a selected package root.
+      if (!fs.existsSync(path.join(fullPath, "Cargo.toml"))) {
+        collectPackageDirectoryFiles(rootDir, fullPath, excludedPaths, out);
+      }
+      continue;
+    }
+    if (entry.isFile() && !fullPath.endsWith(".wasm")) {
+      out.set(
+        fullPath,
+        createHash("sha256").update(fs.readFileSync(fullPath)).digest("hex"),
+      );
+    }
+  }
+}
+
+function recordManifestDirectoryCandidates(
+  dir: string,
+  files: Map<string, string | null>,
+): void {
+  const resolvedDir = path.resolve(dir);
+  for (const rel of TRACKED_MANIFEST_RELATIVES) {
+    const candidate = path.resolve(resolvedDir, rel);
+    if (!files.has(candidate)) {
+      files.set(candidate, hashFileOrNull(candidate));
+    }
+  }
+}
+
+/** Snapshot selected manifests, lockfiles, and tracked contract inputs before building. */
+export function snapshotContractInputs(
+  manifestPaths: string[],
+  packageManifestPaths: string[],
+  destinationPaths: string[],
+  extraFiles: string[] = [],
+  preExistingSnapshots?: Map<string, string | null>,
+): BuildInputSnapshot {
+  const files = new Map<string, string | null>(preExistingSnapshots ?? []);
+  const excludedPaths = new Set(
+    destinationPaths.map((dest) => path.resolve(dest)),
+  );
+  for (const extra of extraFiles) {
+    const resolved = path.resolve(extra);
+    if (!files.has(resolved)) {
+      files.set(resolved, hashFileOrNull(resolved));
+    }
+  }
+  const workspaceDirs = manifestPaths.map((m) => path.dirname(path.resolve(m)));
+  for (const dir of workspaceDirs) {
+    recordManifestDirectoryCandidates(dir, files);
+  }
+  const packageRoots: string[] = [];
+  for (const pkgManifest of packageManifestPaths) {
+    const pkgDir = path.dirname(path.resolve(pkgManifest));
+    if (!packageRoots.includes(pkgDir)) packageRoots.push(pkgDir);
+    recordManifestDirectoryCandidates(pkgDir, files);
+
+    // Also snapshot Cargo.toml / Cargo.lock on any ancestor directories up to
+    // the discovered owning manifest directory.
+    let cursor = pkgDir;
+    while (true) {
+      recordManifestDirectoryCandidates(cursor, files);
+      if (workspaceDirs.includes(cursor)) break;
+      const parent = path.dirname(cursor);
+      if (parent === cursor) break;
+      cursor = parent;
+    }
+
+    const discovered = new Map<string, string>();
+    collectPackageDirectoryFiles(pkgDir, pkgDir, excludedPaths, discovered);
+    for (const [filePath, digest] of discovered) {
+      if (!files.has(filePath)) {
+        files.set(filePath, digest);
+      }
+    }
+  }
+  return { files, packageRoots, excludedPaths };
+}
+
+/** Fail if any snapshotted manifest, lockfile, or contract input was mutated, added, or removed. */
+export function assertContractInputsUnchanged(
+  snapshot: BuildInputSnapshot,
+): void {
+  const mutated = new Set<string>();
+  for (const [filePath, expectedDigest] of snapshot.files) {
+    if (snapshot.excludedPaths.has(filePath)) continue;
+    const actualDigest = hashFileOrNull(filePath);
+    if (actualDigest !== expectedDigest) {
+      mutated.add(filePath);
+    }
+  }
+  for (const pkgDir of snapshot.packageRoots) {
+    const currentFiles = new Map<string, string>();
+    collectPackageDirectoryFiles(
+      pkgDir,
+      pkgDir,
+      snapshot.excludedPaths,
+      currentFiles,
+    );
+    for (const [filePath, digest] of currentFiles) {
+      if (!snapshot.files.has(filePath)) {
+        mutated.add(filePath);
+      } else if (snapshot.files.get(filePath) !== digest) {
+        mutated.add(filePath);
+      }
+    }
+  }
+  if (mutated.size > 0) {
+    const sorted = [...mutated].sort();
+    throw new Error(
+      `Default contract build mutated input file(s): ${sorted.join(", ")}`,
+    );
+  }
+}
+
 interface CargoPackage {
   id: string;
   name: string;
@@ -61,6 +218,11 @@ export async function buildContracts(
     ...process.env,
     ...(rustToolchain ? { RUSTUP_TOOLCHAIN: rustToolchain } : {}),
   } as Record<string, string>;
+  const resolvedFixturesPath = path.resolve(fixturesPath);
+  const preBuildSnapshots = new Map<string, string | null>([
+    [resolvedFixturesPath, hashFileOrNull(resolvedFixturesPath)],
+  ]);
+  let inputSnapshot: BuildInputSnapshot | undefined;
   async function command(
     tool: string,
     args: string[],
@@ -92,8 +254,10 @@ export async function buildContracts(
       throw new Error(
         "Stellar CLI lacks optimization support; install the official release binary",
       );
-    if (tool === "stellar" && args[0] === "contract")
+    if (tool === "stellar" && args[0] === "contract") {
       process.stdout.write(stdout + stderr);
+      if (inputSnapshot) assertContractInputsUnchanged(inputSnapshot);
+    }
     return stdout.trim();
   }
   const rustVersion = await command("rustc", ["--version"], fixturesDir);
@@ -133,6 +297,7 @@ export async function buildContracts(
       dir = parent;
     }
     const manifest = path.join(dir, "Cargo.toml");
+    recordManifestDirectoryCandidates(dir, preBuildSnapshots);
     let packages = metadataCache.get(manifest);
     if (!packages) {
       const metadata = JSON.parse(
@@ -182,6 +347,16 @@ export async function buildContracts(
         );
       }
       try {
+        if (!inputSnapshot) {
+          inputSnapshot = snapshotContractInputs(
+            Array.from(metadataCache.keys()),
+            plans.map((plan) => plan.pkg.manifest_path),
+            plans.map((plan) => plan.destination),
+            [resolvedFixturesPath],
+            preBuildSnapshots,
+          );
+        }
+        assertContractInputsUnchanged(inputSnapshot);
         verifyBuildStorage(outputDir);
         await command(
           "stellar",
