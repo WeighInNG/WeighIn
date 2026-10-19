@@ -16,11 +16,13 @@ policy means report-only. `loadConfig` validates known configuration keys/types;
 Fixtures are parsed by `src/identity.ts::parseFixtures`, not the older generic
 fixture schema exported from `src/config.ts`.
 
-HEAD is built and measured first. BASE defaults to the PR base branch, otherwise
-`main`, or the supplied `base-ref`. The Action fetches that ref from `origin` with
-depth 1, then creates a detached worktree at `FETCH_HEAD`. This is not a merge-base
-calculation. BASE reads its own fixture file at the same relative path and builds
-and measures its own declarations. HEAD policy governs the resulting diff unless
+The Action validates `base-ref` as a branch, tag, or commit SHA before network
+checks, builds, or deployment. Empty, whitespace-padded, option-like and invalid
+Git ref values fail with an input diagnostic. HEAD is built and measured first.
+BASE defaults to the PR base branch, otherwise `main`, or the supplied `base-ref`.
+The Action fetches that ref from `origin` with depth 1, then creates a detached
+worktree at `FETCH_HEAD`. This is not a merge-base calculation. BASE reads its own
+fixture file at the same relative path and builds and measures its own declarations. HEAD policy governs the resulting diff unless
 the caller opts into `trusted-policy-ref`/`trusted-policy-path`. In that mode
 the action reads the exact resolved commit from `origin`, validates it before
 measurement, and reports its revision and content hash; HEAD cannot replace it.
@@ -166,9 +168,11 @@ unversioned metadata is explicitly rejected rather than inferred, so producer an
 consumer versions must be paired.
 
 The Action emits `result` and `diff-json` before failing a valid policy violation.
-Comparison/build/measurement/configuration errors emit `fail` and `{}`, an error
-summary, and unsuccessful execution. There is no successful no-baseline fallback.
-Optional direct-comment failure is warning-only.
+It retains a validated diff if a later report-file or job-summary write fails,
+while preserving the delivery error as the failure diagnostic. Failures before a
+valid comparison emit `fail` and `{}`; they never reuse a diff from another run.
+There is no successful no-baseline fallback. Optional direct-comment failure is
+warning-only.
 
 The separate `comment/` Action runs `bundled/comment-action.js`, reads and
 validates downloaded report/PR metadata, and creates or updates the comment

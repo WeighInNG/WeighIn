@@ -53206,6 +53206,10 @@ async function ensureAccountReady(rpcUrl, publicKey, signal) {
   );
 }
 
+// src/network.ts
+var SUPPORTED_NETWORK_PASSPHRASE = "Standalone Network ; February 2017";
+var SUPPORTED_PROTOCOL_VERSION = 28;
+
 // src/simulation.ts
 var fs = __toESM(require("fs"));
 var path2 = __toESM(require("path"));
@@ -53642,9 +53646,9 @@ async function measureInvocation(rpcUrl, transaction, helperPath, options) {
     throw signal.reason || new Error("Measurement cancelled");
   }
   const network = external_exports.object({ passphrase: encoded, protocolVersion: integer }).parse(await callRpc(rpcUrl, "getNetwork", {}, signal));
-  if (network.protocolVersion !== 28)
+  if (network.protocolVersion !== SUPPORTED_PROTOCOL_VERSION)
     throw new Error(
-      `Unsupported protocol ${network.protocolVersion}: simulation helper supports 28`
+      `Unsupported protocol ${network.protocolVersion}: simulation helper supports ${SUPPORTED_PROTOCOL_VERSION}`
     );
   if (transaction.networkPassphrase !== network.passphrase) {
     throw new Error(
@@ -53988,7 +53992,6 @@ async function measureInvocation(rpcUrl, transaction, helperPath, options) {
 
 // src/measurement.ts
 var DEFAULT_RPC_URL = "http://localhost:8000/rpc";
-var NETWORK_PASSPHRASE = "Standalone Network ; February 2017";
 function metricsFromSimulation(output, limits) {
   const measured = (consumed, limit, source, limit_source) => ({
     availability: "measured",
@@ -54156,7 +54159,7 @@ function calculateContractId(deployerAddress, salt) {
       salt
     })
   );
-  const networkId = hash(Buffer.from(NETWORK_PASSPHRASE));
+  const networkId = hash(Buffer.from(SUPPORTED_NETWORK_PASSPHRASE));
   const hashIdPreimage = types.HashIdPreimage.envelopeTypeContractId(
     new types.HashIdPreimageContractId({
       networkId,
@@ -54352,7 +54355,7 @@ Build the contract before running measurements.`
       let account = await server.getAccount(deployer.publicKey());
       const uploadTx = new TransactionBuilder(account, {
         fee: "1000000",
-        networkPassphrase: NETWORK_PASSPHRASE
+        networkPassphrase: SUPPORTED_NETWORK_PASSPHRASE
       }).addOperation(Operation.uploadContractWasm({ wasm: wasmBytes })).setTimeout(30).build();
       let preparedUpload;
       try {
@@ -54375,7 +54378,7 @@ Build the contract before running measurements.`
       account = await server.getAccount(deployer.publicKey());
       const createTx = new TransactionBuilder(account, {
         fee: "1000000",
-        networkPassphrase: NETWORK_PASSPHRASE
+        networkPassphrase: SUPPORTED_NETWORK_PASSPHRASE
       }).addOperation(
         Operation.createCustomContract({
           wasmHash,
@@ -54406,7 +54409,7 @@ Build the contract before running measurements.`
       const argsSc = invokeSpec.args.map(toScVal);
       const invokeTx = new TransactionBuilder(account, {
         fee: "1000000",
-        networkPassphrase: NETWORK_PASSPHRASE
+        networkPassphrase: SUPPORTED_NETWORK_PASSPHRASE
       }).addOperation(
         Operation.invokeContractFunction({
           contract: contractId,
@@ -55012,22 +55015,41 @@ async function buildContracts(fixturesPath, rustToolchain) {
         )
       );
       packages = metadata.packages.filter(
-        (pkg) => metadata.workspace_members.includes(pkg.id) && pkg.targets.some((target) => target.crate_types.includes("cdylib"))
+        (pkg2) => metadata.workspace_members.includes(pkg2.id) && pkg2.targets.some((target) => target.crate_types.includes("cdylib"))
       );
       metadataCache.set(manifest, packages);
     }
-    const matches = packages.filter(
-      (pkg) => `${pkg.name.replace(/-/g, "_")}.wasm` === path4.basename(destination)
-    );
+    const destinationName = path4.basename(destination);
+    const matches = [];
+    for (const pkg2 of packages) {
+      const cdylibTargets = pkg2.targets.filter(
+        (target) => target.crate_types.includes("cdylib")
+      );
+      const targetNames = cdylibTargets.map(
+        (target) => target.name ?? pkg2.name
+      );
+      if (!targetNames.some(
+        (name) => `${name.replace(/-/g, "_")}.wasm` === destinationName
+      )) {
+        continue;
+      }
+      if (cdylibTargets.length > 1) {
+        throw new Error(
+          `Cargo package ${pkg2.name} has ambiguous multiple cdylib targets; found ${cdylibTargets.length}`
+        );
+      }
+      matches.push({ pkg: pkg2, targetName: targetNames[0] });
+    }
     if (matches.length !== 1)
       throw new Error(
         `wasm_path ${contract.wasm_path} must identify exactly one Cargo cdylib package; found ${matches.length}`
       );
-    plans.push({ destination, pkg: matches[0] });
+    const { pkg, targetName } = matches[0];
+    plans.push({ destination, pkg, targetName });
   }
   const artifacts = /* @__PURE__ */ new Map();
   const results = [];
-  for (const { destination, pkg } of plans) {
+  for (const { destination, pkg, targetName } of plans) {
     let wasm = artifacts.get(pkg.manifest_path);
     if (!wasm) {
       let outputDir;
@@ -55058,7 +55080,7 @@ async function buildContracts(fixturesPath, rustToolchain) {
           { ...env, TMPDIR: outputDir, TMP: outputDir, TEMP: outputDir }
         );
         wasm = fs3.readFileSync(
-          path4.join(outputDir, `${pkg.name.replace(/-/g, "_")}.wasm`)
+          path4.join(outputDir, `${targetName.replace(/-/g, "_")}.wasm`)
         );
         verifyBuildStorage(outputDir, Math.max(1024 * 1024, wasm.length));
         if (!wasm.subarray(0, 8).equals(Buffer.from([0, 97, 115, 109, 1, 0, 0, 0])))
@@ -55170,6 +55192,9 @@ function buildPrMetadata(repository, prNumber, headSha) {
 
 // src/action.ts
 var configuredRpcUrl = "";
+var validatedDiffJson = null;
+var RpcCompatibilityError = class extends Error {
+};
 async function assertRpcHealthy(rpcUrl) {
   core3.info(`Checking RPC health at ${sanitizeEndpoint(rpcUrl)} ...`);
   try {
@@ -55205,16 +55230,48 @@ async function assertRpcHealthy(rpcUrl) {
       );
     }
     const networkResult = metadata.result;
-    if (typeof networkResult?.passphrase !== "string" || !networkResult.passphrase.trim()) {
-      throw new Error("Invalid RPC network metadata");
+    if (typeof networkResult?.passphrase !== "string" || !networkResult.passphrase.trim() || !Number.isInteger(networkResult.protocolVersion)) {
+      throw new RpcCompatibilityError(
+        "RPC is healthy but incompatible: invalid network metadata (a passphrase and integer protocolVersion are required)"
+      );
     }
+    if (networkResult.passphrase !== SUPPORTED_NETWORK_PASSPHRASE)
+      throw new RpcCompatibilityError(
+        `RPC is healthy but incompatible: unsupported network passphrase (expected "${SUPPORTED_NETWORK_PASSPHRASE}")`
+      );
+    if (networkResult.protocolVersion !== SUPPORTED_PROTOCOL_VERSION)
+      throw new RpcCompatibilityError(
+        `RPC is healthy but incompatible: unsupported protocol ${networkResult.protocolVersion} (only protocol ${SUPPORTED_PROTOCOL_VERSION} is supported)`
+      );
     core3.info(`RPC healthy \u2014 network: ${networkResult.passphrase}`);
   } catch (err) {
-    core3.setFailed(
-      `Soroban RPC at ${sanitizeEndpoint(rpcUrl)} is not reachable: ${redactEndpointSecrets(String(err?.message ?? err), rpcUrl)}
-Start the network before invoking this action (e.g. via stellar/quickstart or scripts/start-local-network.sh), then pass its URL as the rpc-url input.`
-    );
+    const diagnostic = err instanceof RpcCompatibilityError ? err.message : `Soroban RPC at ${sanitizeEndpoint(rpcUrl)} is not reachable: ${redactEndpointSecrets(String(err?.message ?? err), rpcUrl)}
+Start the network before invoking this action (e.g. via stellar/quickstart or scripts/start-local-network.sh), then pass its URL as the rpc-url input.`;
+    core3.setFailed(diagnostic);
     throw err;
+  }
+}
+async function validateBaseRef(repoRoot, ref) {
+  if (!ref.trim() || ref !== ref.trim() || ref.startsWith("-")) {
+    throw new Error(
+      "Invalid base-ref: provide a non-empty branch, tag, or commit SHA without surrounding whitespace or option prefixes"
+    );
+  }
+  if (/^[0-9a-fA-F]{7,40}$/.test(ref)) return;
+  const branchRef = await exec5.exec(
+    "git",
+    ["check-ref-format", `refs/heads/${ref}`],
+    { cwd: repoRoot, ignoreReturnCode: true, silent: true }
+  );
+  const tagRef = await exec5.exec(
+    "git",
+    ["check-ref-format", `refs/tags/${ref}`],
+    { cwd: repoRoot, ignoreReturnCode: true, silent: true }
+  );
+  if (branchRef !== 0 && tagRef !== 0) {
+    throw new Error(
+      `Invalid base-ref "${ref}": expected a valid branch, tag, or commit SHA`
+    );
   }
 }
 function isPathWithin(root, candidate) {
@@ -55407,6 +55464,7 @@ async function upsertPrComment(token, body) {
   }
 }
 async function run() {
+  validatedDiffJson = null;
   let keyDir = null;
   let sharedKeyFile = null;
   try {
@@ -55417,7 +55475,7 @@ async function run() {
     const rpcUrl = core3.getInput("rpc-url") || "http://localhost:8000/rpc";
     configuredRpcUrl = rpcUrl;
     const githubToken = core3.getInput("github-token");
-    const baseRefInput = core3.getInput("base-ref");
+    const baseRefInput = core3.getInput("base-ref", { trimWhitespace: false });
     const rustToolchain = core3.getInput("rust-toolchain");
     const reportPathInput = core3.getInput("report-path");
     const metadataPathInput = core3.getInput("metadata-path");
@@ -55427,7 +55485,13 @@ async function run() {
       throw new Error("build-command and skip-build cannot be used together");
     }
     const headWorkspace = process.env["GITHUB_WORKSPACE"] ?? process.cwd();
-    const baseRef = baseRefInput || context2.payload.pull_request?.base?.ref || "main";
+    if (baseRefInput.length > 0 && baseRefInput !== baseRefInput.trim()) {
+      throw new Error(
+        "Invalid base-ref: empty or surrounding whitespace is not allowed"
+      );
+    }
+    const baseRef = baseRefInput.trim() || context2.payload.pull_request?.base?.ref || "main";
+    await validateBaseRef(headWorkspace, baseRef);
     keyDir = fs5.mkdtempSync(path6.join(os2.tmpdir(), "weighin-key-"));
     fs5.chmodSync(keyDir, 448);
     sharedKeyFile = path6.join(keyDir, "weighin-deployer.key");
@@ -55551,6 +55615,7 @@ async function run() {
       core3.info("No weighin.toml found \u2014 no thresholds enforced");
     }
     const violations = enforceThresholds(diff, config2);
+    validatedDiffJson = JSON.stringify(diff);
     core3.info(`Violations: ${violations.length}`);
     for (const v of violations) {
       core3.error(
@@ -55560,7 +55625,7 @@ async function run() {
     core3.endGroup();
     const result = violations.length > 0 ? "fail" : "pass";
     core3.setOutput("result", result);
-    core3.setOutput("diff-json", JSON.stringify(diff));
+    core3.setOutput("diff-json", validatedDiffJson);
     const body = renderComment(
       diff,
       violations,
@@ -55616,7 +55681,7 @@ run().catch(async (error2) => {
     configuredRpcUrl
   );
   core3.setOutput("result", "fail");
-  core3.setOutput("diff-json", "{}");
+  core3.setOutput("diff-json", validatedDiffJson ?? "{}");
   core3.setFailed(message);
   const reportPathInput = core3.getInput("report-path");
   const headWorkspace = process.env["GITHUB_WORKSPACE"] ?? process.cwd();

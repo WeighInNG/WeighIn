@@ -1,9 +1,11 @@
 # Standalone network and deployer readiness
 
 `getNetwork` returns metadata; it does not establish that RPC can serve ledger
-reads or that Friendbot can fund accounts. The Action now requires `getHealth`
-status `healthy` and valid network metadata before builds. Account initialization
-then confirms the deployer's account through raw `getLedgerEntries` before any
+reads or that Friendbot can fund accounts. Before builds, funding, or deployment,
+the Action requires `getHealth` status `healthy`, the standalone network
+passphrase, and protocol 28. A healthy endpoint with a different passphrase or
+protocol is reported as incompatible explicitly. Account initialization then
+confirms the deployer's account through raw `getLedgerEntries` before any
 contract deployment or benchmark measurement.
 
 Every owned raw JSON-RPC request validates a `2.0` response envelope, the exact
