@@ -137,16 +137,22 @@ and a reason. New/removed contracts/cases are listed separately. The Action
 requires at least one matched benchmark, even with no thresholds.
 
 `src/threshold.ts::enforceThresholds` applies HEAD's validated per-function and
-global relative rules and absolute HEAD caps. Per-function rules affect every
-matching case of that function. Requiring an unavailable metric, exceeding a
-cap/relative rule, or configuring a nonignored unmatched function is a failure.
-Explicit `ignore` opts out. Numeric caps equal to HEAD consumption pass.
+global relative rules and absolute HEAD caps, and attaches `diff.policy`
+(`resolveEffectivePolicy`) recording the policy status (`absent`, `empty`, or
+`configured`), evaluation mode (`report_only` or `enforced`), policy source
+metadata, configured global/function rules, and resolved per-function/per-metric
+rules and sources (`default`, `global`, `function`) without exposing environment
+variables or tokens. Per-function rules affect every matching case of that
+function. Requiring an unavailable metric, exceeding a cap/relative rule, or
+configuring a nonignored unmatched function is a failure. Explicit `ignore` opts
+out. Numeric caps equal to HEAD consumption pass.
 
 ## Reporting and Action outcome
 
 `src/comment.ts::renderComment` renders logical identities, both runtime addresses,
-metric sources/caps, both revisions' provenance, deltas, additions/removals and
-violations. `src/report.ts` writes optional Markdown and PR metadata; metadata
+metric sources/caps, both revisions' provenance, deltas, additions/removals,
+violations, and the `### Effective Policy` summary and resolved per-function/per-metric
+rule table. `src/report.ts` writes optional Markdown and PR metadata; metadata
 is written only for PR events. The same report goes to `GITHUB_STEP_SUMMARY`.
 
 The PR metadata artifact is versioned (`src/pr-metadata.ts`). The producer writes

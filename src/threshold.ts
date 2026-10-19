@@ -215,6 +215,334 @@ const GLOBAL_RULE_MAP: Array<{
   },
 ];
 
+export type PolicyStatus = "absent" | "empty" | "configured";
+export type PolicyEvaluationMode = "report_only" | "enforced";
+export type RuleSource = "default" | "global" | "function";
+export type LimitSource = "none" | "global" | "function";
+
+export interface PolicySourceSummary {
+  mode: "head" | "trusted" | "inline" | "none";
+  path: string | null;
+  revision?: string;
+  content_sha256?: string;
+  present: boolean;
+}
+
+export interface ResolvedMetricPolicy {
+  metric: MetricKey;
+  regression_rule: string;
+  regression_rule_source: RuleSource;
+  absolute_limit: number | null;
+  absolute_limit_source: LimitSource;
+  effective_mode: "report_only" | "ignored" | "enforced";
+}
+
+export interface ResolvedFunctionPolicy {
+  fixture_id?: string;
+  logical_id?: string;
+  contract_id: string;
+  function_name: string;
+  case_id?: string;
+  metrics: Record<MetricKey, ResolvedMetricPolicy>;
+}
+
+export interface EffectivePolicyReport {
+  status: PolicyStatus;
+  evaluation_mode: PolicyEvaluationMode;
+  source: PolicySourceSummary;
+  configured: {
+    global_thresholds: {
+      fail_on_any_regression: boolean;
+      max_allowed_cpu_increase_pct: number | null;
+      max_allowed_memory_increase_pct: number | null;
+    };
+    global_limits: Partial<Record<MetricKey, number>>;
+    function_thresholds: Record<string, Partial<Record<MetricKey, string>>>;
+    function_limits: Record<string, Partial<Record<MetricKey, number>>>;
+  };
+  functions: ResolvedFunctionPolicy[];
+}
+
+declare module "./diff" {
+  interface DiffResult {
+    policy?: EffectivePolicyReport;
+  }
+}
+
+function normalizeRuleName(rule: RuleValue): string {
+  return typeof rule === "number" ? `allow_${rule}_percent_increase` : rule;
+}
+
+function comparePolicyStrings(a?: string, b?: string): number {
+  const sa = a ?? "";
+  const sb = b ?? "";
+  if (sa < sb) return -1;
+  if (sa > sb) return 1;
+  return 0;
+}
+
+function resolvePolicySource(
+  diff: DiffResult,
+  config: WeighinConfig | null,
+  origin?: Partial<PolicyOrigin> & {
+    mode?: "head" | "trusted" | "inline" | "none";
+    path?: string | null;
+    present?: boolean;
+  },
+): PolicySourceSummary {
+  if (origin) {
+    const present =
+      typeof origin.present === "boolean" ? origin.present : config !== null;
+    const mode =
+      origin.mode ?? (present ? ("inline" as const) : ("none" as const));
+    return {
+      mode,
+      path: origin.path ?? null,
+      ...(origin.revision ? { revision: origin.revision } : {}),
+      ...(origin.content_sha256
+        ? { content_sha256: origin.content_sha256 }
+        : {}),
+      present,
+    };
+  }
+  const inActionRun =
+    /\bat run \(/.test(new Error().stack ?? "") &&
+    Boolean(process.env["GITHUB_WORKSPACE"]);
+  if (inActionRun) {
+    const trustedRef = process.env["INPUT_TRUSTED-POLICY-REF"]?.trim() || "";
+    const trustedPath = process.env["INPUT_TRUSTED-POLICY-PATH"]?.trim() || "";
+    const configPathRel = (
+      process.env["INPUT_CONFIG-PATH"]?.trim() || "weighin.toml"
+    )
+      .replace(/\\/g, "/")
+      .replace(/^\.\/+/, "");
+    const headCommit = diff.contracts[0]?.head_commit;
+    if (trustedRef && trustedPath) {
+      return {
+        mode: "trusted",
+        path: trustedPath,
+        ...(headCommit ? { revision: headCommit } : {}),
+        present: config !== null,
+      };
+    }
+    return {
+      mode: "head",
+      path: configPathRel,
+      ...(headCommit ? { revision: headCommit } : {}),
+      present: config !== null,
+    };
+  }
+  if (config === null) {
+    return {
+      mode: "none",
+      path: null,
+      present: false,
+    };
+  }
+  return {
+    mode: "inline",
+    path: null,
+    present: true,
+  };
+}
+
+/**
+ * Resolve the effective policy summary and per-function/per-metric rules for a comparison report.
+ */
+export function resolveEffectivePolicy(
+  diff: DiffResult,
+  config: WeighinConfig | null,
+  origin?: Partial<PolicyOrigin> & {
+    mode?: "head" | "trusted" | "inline" | "none";
+    path?: string | null;
+    present?: boolean;
+  },
+): EffectivePolicyReport {
+  const validated = config !== null ? validateConfig(config) : null;
+  const global = validated?.thresholds?.global ?? {};
+  const perFunction = validated?.thresholds?.functions ?? {};
+  const globalLimits = validated?.limits?.global ?? {};
+  const functionLimits = validated?.limits?.functions ?? {};
+
+  const source = resolvePolicySource(diff, validated, origin);
+
+  const normalizedFunctionThresholds: Record<
+    string,
+    Partial<Record<MetricKey, string>>
+  > = {};
+  for (const fnName of Object.keys(perFunction).sort(comparePolicyStrings)) {
+    const fnRules = perFunction[fnName] ?? {};
+    const entry: Partial<Record<MetricKey, string>> = {};
+    for (const key of METRIC_KEYS) {
+      const ruleVal = fnRules[key];
+      if (ruleVal !== undefined) {
+        entry[key] = normalizeRuleName(ruleVal);
+      }
+    }
+    if (Object.keys(entry).length > 0) {
+      normalizedFunctionThresholds[fnName] = entry;
+    }
+  }
+
+  const normalizedGlobalLimits: Partial<Record<MetricKey, number>> = {};
+  for (const key of METRIC_KEYS) {
+    if (globalLimits[key] !== undefined) {
+      normalizedGlobalLimits[key] = globalLimits[key];
+    }
+  }
+
+  const normalizedFunctionLimits: Record<
+    string,
+    Partial<Record<MetricKey, number>>
+  > = {};
+  for (const fnName of Object.keys(functionLimits).sort(comparePolicyStrings)) {
+    const fnLims = functionLimits[fnName] ?? {};
+    const entry: Partial<Record<MetricKey, number>> = {};
+    for (const key of METRIC_KEYS) {
+      if (fnLims[key] !== undefined) {
+        entry[key] = fnLims[key];
+      }
+    }
+    if (Object.keys(entry).length > 0) {
+      normalizedFunctionLimits[fnName] = entry;
+    }
+  }
+
+  const hasConfiguredRules =
+    Boolean(global.fail_on_any_regression) ||
+    global.max_allowed_cpu_increase_pct !== undefined ||
+    global.max_allowed_memory_increase_pct !== undefined ||
+    Object.keys(normalizedFunctionThresholds).length > 0 ||
+    Object.keys(normalizedGlobalLimits).length > 0 ||
+    Object.keys(normalizedFunctionLimits).length > 0;
+
+  const status: PolicyStatus = !source.present
+    ? "absent"
+    : hasConfiguredRules
+      ? "configured"
+      : "empty";
+
+  const sortedContracts = [...diff.contracts].sort(
+    (a, b) =>
+      comparePolicyStrings(a.fixture_id, b.fixture_id) ||
+      comparePolicyStrings(a.logical_id, b.logical_id) ||
+      comparePolicyStrings(a.contract_id, b.contract_id),
+  );
+
+  const functions: ResolvedFunctionPolicy[] = [];
+  for (const contract of sortedContracts) {
+    const sortedFns = [...contract.functions].sort(
+      (a, b) =>
+        comparePolicyStrings(a.function_name, b.function_name) ||
+        comparePolicyStrings(a.case_id, b.case_id),
+    );
+    for (const fn of sortedFns) {
+      const fnOverrides = perFunction[fn.function_name];
+      const fnLimitOverrides = functionLimits[fn.function_name];
+      const metricsMap = {} as Record<MetricKey, ResolvedMetricPolicy>;
+
+      for (const metricKey of METRIC_KEYS) {
+        let regressionRule = "report_only";
+        let regressionRuleSource: RuleSource = "default";
+
+        const fnRule = fnOverrides?.[metricKey];
+        if (fnRule !== undefined) {
+          regressionRule = normalizeRuleName(fnRule);
+          regressionRuleSource = "function";
+        } else if (global.fail_on_any_regression) {
+          regressionRule = "fail_on_any_regression";
+          regressionRuleSource = "global";
+        } else {
+          for (const { field, metric, toRule } of GLOBAL_RULE_MAP) {
+            if (metricKey === metric && global[field] !== undefined) {
+              regressionRule = normalizeRuleName(
+                toRule(global[field] as number),
+              );
+              regressionRuleSource = "global";
+              break;
+            }
+          }
+        }
+
+        let absoluteLimit: number | null = null;
+        let absoluteLimitSource: LimitSource = "none";
+        if (fnLimitOverrides?.[metricKey] !== undefined) {
+          absoluteLimit = fnLimitOverrides[metricKey]!;
+          absoluteLimitSource = "function";
+        } else if (globalLimits[metricKey] !== undefined) {
+          absoluteLimit = globalLimits[metricKey]!;
+          absoluteLimitSource = "global";
+        }
+
+        const effectiveMode: "report_only" | "ignored" | "enforced" =
+          (regressionRule !== "report_only" && regressionRule !== "ignore") ||
+          absoluteLimit !== null
+            ? "enforced"
+            : regressionRule === "ignore"
+              ? "ignored"
+              : "report_only";
+
+        metricsMap[metricKey] = {
+          metric: metricKey,
+          regression_rule: regressionRule,
+          regression_rule_source: regressionRuleSource,
+          absolute_limit: absoluteLimit,
+          absolute_limit_source: absoluteLimitSource,
+          effective_mode: effectiveMode,
+        };
+      }
+
+      functions.push({
+        ...(contract.fixture_id !== undefined
+          ? { fixture_id: contract.fixture_id }
+          : {}),
+        ...(contract.logical_id !== undefined
+          ? { logical_id: contract.logical_id }
+          : {}),
+        contract_id: contract.contract_id,
+        function_name: fn.function_name,
+        ...(fn.case_id !== undefined ? { case_id: fn.case_id } : {}),
+        metrics: metricsMap,
+      });
+    }
+  }
+
+  const hasEnforcedRule =
+    Boolean(global.fail_on_any_regression) ||
+    global.max_allowed_cpu_increase_pct !== undefined ||
+    global.max_allowed_memory_increase_pct !== undefined ||
+    Object.keys(normalizedGlobalLimits).length > 0 ||
+    Object.keys(normalizedFunctionLimits).length > 0 ||
+    Object.values(normalizedFunctionThresholds).some((rules) =>
+      Object.values(rules).some((r) => r !== undefined && r !== "ignore"),
+    ) ||
+    functions.some((fn) =>
+      Object.values(fn.metrics).some((m) => m.effective_mode === "enforced"),
+    );
+
+  const evaluationMode: PolicyEvaluationMode =
+    status === "configured" && hasEnforcedRule ? "enforced" : "report_only";
+
+  return {
+    status,
+    evaluation_mode: evaluationMode,
+    source,
+    configured: {
+      global_thresholds: {
+        fail_on_any_regression: Boolean(global.fail_on_any_regression),
+        max_allowed_cpu_increase_pct:
+          global.max_allowed_cpu_increase_pct ?? null,
+        max_allowed_memory_increase_pct:
+          global.max_allowed_memory_increase_pct ?? null,
+      },
+      global_limits: normalizedGlobalLimits,
+      function_thresholds: normalizedFunctionThresholds,
+      function_limits: normalizedFunctionLimits,
+    },
+    functions,
+  };
+}
+
 /**
  * Enforce all threshold rules against a DiffResult.
  * Returns the list of violations (empty = pass).
@@ -222,9 +550,17 @@ const GLOBAL_RULE_MAP: Array<{
 export function enforceThresholds(
   diff: DiffResult,
   config: WeighinConfig | null,
+  origin?: Partial<PolicyOrigin> & {
+    mode?: "head" | "trusted" | "inline" | "none";
+    path?: string | null;
+    present?: boolean;
+  },
 ): Violation[] {
   if (config !== null) config = validateConfig(config);
-  if (!config?.thresholds && !config?.limits) return [];
+  if (!config?.thresholds && !config?.limits) {
+    diff.policy = resolveEffectivePolicy(diff, config, origin);
+    return [];
+  }
 
   const global = config?.thresholds?.global ?? {};
   const perFunction = config?.thresholds?.functions ?? {};
@@ -263,6 +599,8 @@ export function enforceThresholds(
       "Cannot evaluate global policy: no matched BASE/HEAD benchmarks",
     );
   }
+
+  diff.policy = resolveEffectivePolicy(diff, config, origin);
 
   for (const contract of diff.contracts) {
     for (const fn of contract.functions) {

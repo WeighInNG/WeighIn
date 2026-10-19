@@ -41,3 +41,53 @@ test('per-function absolute limits require a matched function', () => {
   assert.throws(() => enforceThresholds({ contracts: [], hasRegression: false, newContracts: [], removedContracts: [] },
     { limits: { functions: { missing: { cpu_instructions: 50 } } } }), /no matched BASE\/HEAD benchmark/);
 });
+
+test('comparison reports record effective policy source, distinguish absent vs loaded empty policy, and resolve per-function/per-metric rules', () => {
+  const { renderComment } = require('../dist/comment');
+
+  const absentDiff = diff(51);
+  assert.deepEqual(enforceThresholds(absentDiff, null, { mode: 'head', path: 'weighin.toml', revision: 'head', present: false }), []);
+  assert.equal(absentDiff.policy.status, 'absent');
+  assert.equal(absentDiff.policy.evaluation_mode, 'report_only');
+  assert.equal(absentDiff.policy.source.present, false);
+  assert.equal(absentDiff.policy.functions[0].metrics.cpu_instructions.regression_rule, 'report_only');
+  assert.equal(absentDiff.policy.functions[0].metrics.cpu_instructions.regression_rule_source, 'default');
+
+  const emptyDiff = diff(51);
+  assert.deepEqual(enforceThresholds(emptyDiff, {}, { mode: 'head', path: 'weighin.toml', revision: 'head', content_sha256: 'abc123', present: true }), []);
+  assert.equal(emptyDiff.policy.status, 'empty');
+  assert.equal(emptyDiff.policy.evaluation_mode, 'report_only');
+  assert.equal(emptyDiff.policy.source.present, true);
+
+  const configuredDiff = diff(51);
+  const violations = enforceThresholds(
+    configuredDiff,
+    {
+      limits: { global: { cpu_instructions: 50 }, functions: { run: { memory_bytes: 100 } } },
+      thresholds: {
+        global: { fail_on_any_regression: true },
+        functions: { run: { cpu_instructions: 'ignore', events_count: 5 } },
+      },
+    },
+    { mode: 'trusted', path: 'ci/weighin.toml', revision: 'base', content_sha256: 'def456' },
+  );
+  assert.equal(violations.length, 4);
+  assert.equal(configuredDiff.policy.status, 'configured');
+  assert.equal(configuredDiff.policy.evaluation_mode, 'enforced');
+  assert.equal(configuredDiff.policy.functions[0].metrics.cpu_instructions.regression_rule, 'ignore');
+  assert.equal(configuredDiff.policy.functions[0].metrics.cpu_instructions.regression_rule_source, 'function');
+  assert.equal(configuredDiff.policy.functions[0].metrics.cpu_instructions.absolute_limit, 50);
+  assert.equal(configuredDiff.policy.functions[0].metrics.cpu_instructions.absolute_limit_source, 'global');
+  assert.equal(configuredDiff.policy.functions[0].metrics.memory_bytes.regression_rule, 'fail_on_any_regression');
+  assert.equal(configuredDiff.policy.functions[0].metrics.memory_bytes.regression_rule_source, 'global');
+  assert.equal(configuredDiff.policy.functions[0].metrics.memory_bytes.absolute_limit, 100);
+  assert.equal(configuredDiff.policy.functions[0].metrics.memory_bytes.absolute_limit_source, 'function');
+  assert.equal(configuredDiff.policy.functions[0].metrics.events_count.regression_rule, 'allow_5_percent_increase');
+  assert.equal(configuredDiff.policy.functions[0].metrics.events_count.regression_rule_source, 'function');
+
+  const md = renderComment(configuredDiff, violations, 'base', 'head');
+  assert.match(md, /### Effective Policy/);
+  assert.match(md, /Policy status\*\*: `configured` \(evaluation mode: `enforced`\)/);
+  assert.match(md, /Policy source\*\*: mode `trusted`, path `ci\/weighin\.toml` at `base`, SHA256 `def456` \(present\)/);
+  assert.match(md, /\| `cpu_instructions` \| `ignore` \| `function` \| `50` \| `global` \| `enforced` \|/);
+});

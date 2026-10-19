@@ -53625,9 +53625,195 @@ var GLOBAL_RULE_MAP = [
     toRule: (v) => v
   }
 ];
-function enforceThresholds(diff, config2) {
+function normalizeRuleName(rule) {
+  return typeof rule === "number" ? `allow_${rule}_percent_increase` : rule;
+}
+function comparePolicyStrings(a, b) {
+  const sa = a ?? "";
+  const sb = b ?? "";
+  if (sa < sb) return -1;
+  if (sa > sb) return 1;
+  return 0;
+}
+function resolvePolicySource(diff, config2, origin) {
+  if (origin) {
+    const present = typeof origin.present === "boolean" ? origin.present : config2 !== null;
+    const mode = origin.mode ?? (present ? "inline" : "none");
+    return {
+      mode,
+      path: origin.path ?? null,
+      ...origin.revision ? { revision: origin.revision } : {},
+      ...origin.content_sha256 ? { content_sha256: origin.content_sha256 } : {},
+      present
+    };
+  }
+  const inActionRun = /\bat run \(/.test(new Error().stack ?? "") && Boolean(process.env["GITHUB_WORKSPACE"]);
+  if (inActionRun) {
+    const trustedRef = process.env["INPUT_TRUSTED-POLICY-REF"]?.trim() || "";
+    const trustedPath = process.env["INPUT_TRUSTED-POLICY-PATH"]?.trim() || "";
+    const configPathRel = (process.env["INPUT_CONFIG-PATH"]?.trim() || "weighin.toml").replace(/\\/g, "/").replace(/^\.\/+/, "");
+    const headCommit = diff.contracts[0]?.head_commit;
+    if (trustedRef && trustedPath) {
+      return {
+        mode: "trusted",
+        path: trustedPath,
+        ...headCommit ? { revision: headCommit } : {},
+        present: config2 !== null
+      };
+    }
+    return {
+      mode: "head",
+      path: configPathRel,
+      ...headCommit ? { revision: headCommit } : {},
+      present: config2 !== null
+    };
+  }
+  if (config2 === null) {
+    return {
+      mode: "none",
+      path: null,
+      present: false
+    };
+  }
+  return {
+    mode: "inline",
+    path: null,
+    present: true
+  };
+}
+function resolveEffectivePolicy(diff, config2, origin) {
+  const validated = config2 !== null ? validateConfig(config2) : null;
+  const global2 = validated?.thresholds?.global ?? {};
+  const perFunction = validated?.thresholds?.functions ?? {};
+  const globalLimits = validated?.limits?.global ?? {};
+  const functionLimits = validated?.limits?.functions ?? {};
+  const source = resolvePolicySource(diff, validated, origin);
+  const normalizedFunctionThresholds = {};
+  for (const fnName of Object.keys(perFunction).sort(comparePolicyStrings)) {
+    const fnRules = perFunction[fnName] ?? {};
+    const entry = {};
+    for (const key of METRIC_KEYS) {
+      const ruleVal = fnRules[key];
+      if (ruleVal !== void 0) {
+        entry[key] = normalizeRuleName(ruleVal);
+      }
+    }
+    if (Object.keys(entry).length > 0) {
+      normalizedFunctionThresholds[fnName] = entry;
+    }
+  }
+  const normalizedGlobalLimits = {};
+  for (const key of METRIC_KEYS) {
+    if (globalLimits[key] !== void 0) {
+      normalizedGlobalLimits[key] = globalLimits[key];
+    }
+  }
+  const normalizedFunctionLimits = {};
+  for (const fnName of Object.keys(functionLimits).sort(comparePolicyStrings)) {
+    const fnLims = functionLimits[fnName] ?? {};
+    const entry = {};
+    for (const key of METRIC_KEYS) {
+      if (fnLims[key] !== void 0) {
+        entry[key] = fnLims[key];
+      }
+    }
+    if (Object.keys(entry).length > 0) {
+      normalizedFunctionLimits[fnName] = entry;
+    }
+  }
+  const hasConfiguredRules = Boolean(global2.fail_on_any_regression) || global2.max_allowed_cpu_increase_pct !== void 0 || global2.max_allowed_memory_increase_pct !== void 0 || Object.keys(normalizedFunctionThresholds).length > 0 || Object.keys(normalizedGlobalLimits).length > 0 || Object.keys(normalizedFunctionLimits).length > 0;
+  const status = !source.present ? "absent" : hasConfiguredRules ? "configured" : "empty";
+  const sortedContracts = [...diff.contracts].sort(
+    (a, b) => comparePolicyStrings(a.fixture_id, b.fixture_id) || comparePolicyStrings(a.logical_id, b.logical_id) || comparePolicyStrings(a.contract_id, b.contract_id)
+  );
+  const functions = [];
+  for (const contract of sortedContracts) {
+    const sortedFns = [...contract.functions].sort(
+      (a, b) => comparePolicyStrings(a.function_name, b.function_name) || comparePolicyStrings(a.case_id, b.case_id)
+    );
+    for (const fn of sortedFns) {
+      const fnOverrides = perFunction[fn.function_name];
+      const fnLimitOverrides = functionLimits[fn.function_name];
+      const metricsMap = {};
+      for (const metricKey of METRIC_KEYS) {
+        let regressionRule = "report_only";
+        let regressionRuleSource = "default";
+        const fnRule = fnOverrides?.[metricKey];
+        if (fnRule !== void 0) {
+          regressionRule = normalizeRuleName(fnRule);
+          regressionRuleSource = "function";
+        } else if (global2.fail_on_any_regression) {
+          regressionRule = "fail_on_any_regression";
+          regressionRuleSource = "global";
+        } else {
+          for (const { field, metric, toRule } of GLOBAL_RULE_MAP) {
+            if (metricKey === metric && global2[field] !== void 0) {
+              regressionRule = normalizeRuleName(
+                toRule(global2[field])
+              );
+              regressionRuleSource = "global";
+              break;
+            }
+          }
+        }
+        let absoluteLimit = null;
+        let absoluteLimitSource = "none";
+        if (fnLimitOverrides?.[metricKey] !== void 0) {
+          absoluteLimit = fnLimitOverrides[metricKey];
+          absoluteLimitSource = "function";
+        } else if (globalLimits[metricKey] !== void 0) {
+          absoluteLimit = globalLimits[metricKey];
+          absoluteLimitSource = "global";
+        }
+        const effectiveMode = regressionRule !== "report_only" && regressionRule !== "ignore" || absoluteLimit !== null ? "enforced" : regressionRule === "ignore" ? "ignored" : "report_only";
+        metricsMap[metricKey] = {
+          metric: metricKey,
+          regression_rule: regressionRule,
+          regression_rule_source: regressionRuleSource,
+          absolute_limit: absoluteLimit,
+          absolute_limit_source: absoluteLimitSource,
+          effective_mode: effectiveMode
+        };
+      }
+      functions.push({
+        ...contract.fixture_id !== void 0 ? { fixture_id: contract.fixture_id } : {},
+        ...contract.logical_id !== void 0 ? { logical_id: contract.logical_id } : {},
+        contract_id: contract.contract_id,
+        function_name: fn.function_name,
+        ...fn.case_id !== void 0 ? { case_id: fn.case_id } : {},
+        metrics: metricsMap
+      });
+    }
+  }
+  const hasEnforcedRule = Boolean(global2.fail_on_any_regression) || global2.max_allowed_cpu_increase_pct !== void 0 || global2.max_allowed_memory_increase_pct !== void 0 || Object.keys(normalizedGlobalLimits).length > 0 || Object.keys(normalizedFunctionLimits).length > 0 || Object.values(normalizedFunctionThresholds).some(
+    (rules) => Object.values(rules).some((r) => r !== void 0 && r !== "ignore")
+  ) || functions.some(
+    (fn) => Object.values(fn.metrics).some((m) => m.effective_mode === "enforced")
+  );
+  const evaluationMode = status === "configured" && hasEnforcedRule ? "enforced" : "report_only";
+  return {
+    status,
+    evaluation_mode: evaluationMode,
+    source,
+    configured: {
+      global_thresholds: {
+        fail_on_any_regression: Boolean(global2.fail_on_any_regression),
+        max_allowed_cpu_increase_pct: global2.max_allowed_cpu_increase_pct ?? null,
+        max_allowed_memory_increase_pct: global2.max_allowed_memory_increase_pct ?? null
+      },
+      global_limits: normalizedGlobalLimits,
+      function_thresholds: normalizedFunctionThresholds,
+      function_limits: normalizedFunctionLimits
+    },
+    functions
+  };
+}
+function enforceThresholds(diff, config2, origin) {
   if (config2 !== null) config2 = validateConfig(config2);
-  if (!config2?.thresholds && !config2?.limits) return [];
+  if (!config2?.thresholds && !config2?.limits) {
+    diff.policy = resolveEffectivePolicy(diff, config2, origin);
+    return [];
+  }
   const global2 = config2?.thresholds?.global ?? {};
   const perFunction = config2?.thresholds?.functions ?? {};
   const globalLimits = config2?.limits?.global ?? {};
@@ -53657,6 +53843,7 @@ function enforceThresholds(diff, config2) {
       "Cannot evaluate global policy: no matched BASE/HEAD benchmarks"
     );
   }
+  diff.policy = resolveEffectivePolicy(diff, config2, origin);
   for (const contract of diff.contracts) {
     for (const fn of contract.functions) {
       const identity = {
@@ -53784,6 +53971,148 @@ function trend(delta) {
 function benchmarkLabel(fn) {
   return fn.case_id === void 0 ? fn.function_name : `${fn.function_name} / ${fn.case_id}`;
 }
+function comparePolicyStringsInComment(a, b) {
+  const sa = a ?? "";
+  const sb = b ?? "";
+  if (sa < sb) return -1;
+  if (sa > sb) return 1;
+  return 0;
+}
+function appendEffectivePolicySection(lines, diff, policyOrigin) {
+  const existing = diff.policy;
+  const status = existing?.status ?? "absent";
+  const evaluationMode = existing?.evaluation_mode ?? "report_only";
+  const present = existing ? existing.source.present : false;
+  const mode = policyOrigin?.mode ?? existing?.source.mode ?? "none";
+  const sourcePath = policyOrigin?.path ?? existing?.source.path ?? null;
+  const revision = policyOrigin?.revision ?? existing?.source.revision;
+  const contentSha = policyOrigin?.content_sha256 ?? existing?.source.content_sha256;
+  lines.push("### Effective Policy");
+  lines.push("");
+  if (status === "absent") {
+    lines.push(
+      "- **Policy status**: `absent` (no policy file loaded \u2014 **default report-only mode**, no thresholds or limits enforced)"
+    );
+  } else if (status === "empty") {
+    lines.push(
+      "- **Policy status**: `empty` (loaded policy contains no active rules or limits \u2014 **default report-only mode**, no thresholds or limits enforced)"
+    );
+  } else {
+    lines.push(
+      `- **Policy status**: \`configured\` (evaluation mode: \`${evaluationMode}\`)`
+    );
+  }
+  lines.push(
+    `- **Evaluation mode**: \`${evaluationMode}\`${evaluationMode === "report_only" ? " (default report-only \u2014 regressions are reported without failing the check)" : " (configured rules and limits are enforced)"}`
+  );
+  if (mode === "head" || mode === "trusted") {
+    lines.push(
+      `- **Policy source**: mode \`${mode}\`, path \`${sourcePath}\`${revision ? ` at \`${revision}\`` : ""}${contentSha ? `, SHA256 \`${contentSha}\`` : ""} (${present ? "present" : "absent"})`
+    );
+  } else if (mode === "inline") {
+    lines.push(
+      `- **Policy source**: mode \`inline\`${sourcePath ? `, path \`${sourcePath}\`` : ""} (present)`
+    );
+  } else {
+    lines.push(
+      "- **Policy source**: `none` (absent \u2014 default report-only mode)"
+    );
+  }
+  const globalThresholds = existing?.configured.global_thresholds ?? {
+    fail_on_any_regression: false,
+    max_allowed_cpu_increase_pct: null,
+    max_allowed_memory_increase_pct: null
+  };
+  lines.push(
+    `- **Global thresholds**: \`fail_on_any_regression=${globalThresholds.fail_on_any_regression}\`, \`max_allowed_cpu_increase_pct=${globalThresholds.max_allowed_cpu_increase_pct === null ? "none" : `${globalThresholds.max_allowed_cpu_increase_pct}%`}\`, \`max_allowed_memory_increase_pct=${globalThresholds.max_allowed_memory_increase_pct === null ? "none" : `${globalThresholds.max_allowed_memory_increase_pct}%`}\``
+  );
+  const globalLimits = existing?.configured.global_limits ?? {};
+  const globalLimitEntries = METRIC_KEYS.filter(
+    (k) => globalLimits[k] !== void 0
+  ).map((k) => `\`${k} <= ${globalLimits[k]}\``);
+  lines.push(
+    `- **Global limits**: ${globalLimitEntries.length > 0 ? globalLimitEntries.join(", ") : "`none`"}`
+  );
+  const fnThresholds = existing?.configured.function_thresholds ?? {};
+  const fnLimits = existing?.configured.function_limits ?? {};
+  const overrideParts = [];
+  for (const fnName of Object.keys(fnThresholds).sort(
+    comparePolicyStringsInComment
+  )) {
+    const rules = fnThresholds[fnName] ?? {};
+    for (const k of METRIC_KEYS) {
+      if (rules[k] !== void 0) {
+        overrideParts.push(`\`${fnName}.${k} = ${rules[k]}\``);
+      }
+    }
+  }
+  for (const fnName of Object.keys(fnLimits).sort(
+    comparePolicyStringsInComment
+  )) {
+    const lims = fnLimits[fnName] ?? {};
+    for (const k of METRIC_KEYS) {
+      if (lims[k] !== void 0) {
+        overrideParts.push(`\`${fnName}.${k} <= ${lims[k]} (absolute_limit)\``);
+      }
+    }
+  }
+  lines.push(
+    `- **Function overrides**: ${overrideParts.length > 0 ? overrideParts.join(", ") : "`none`"}`
+  );
+  lines.push("");
+  const resolvedFunctions = existing?.functions ?? [...diff.contracts].sort(
+    (a, b) => comparePolicyStringsInComment(a.fixture_id, b.fixture_id) || comparePolicyStringsInComment(a.logical_id, b.logical_id) || comparePolicyStringsInComment(a.contract_id, b.contract_id)
+  ).flatMap(
+    (contract) => [...contract.functions].sort(
+      (a, b) => comparePolicyStringsInComment(a.function_name, b.function_name) || comparePolicyStringsInComment(a.case_id, b.case_id)
+    ).map((fn) => ({
+      fixture_id: contract.fixture_id,
+      logical_id: contract.logical_id,
+      contract_id: contract.contract_id,
+      function_name: fn.function_name,
+      case_id: fn.case_id,
+      metrics: Object.fromEntries(
+        METRIC_KEYS.map((key) => [
+          key,
+          {
+            metric: key,
+            regression_rule: "report_only",
+            regression_rule_source: "default",
+            absolute_limit: null,
+            absolute_limit_source: "none",
+            effective_mode: "report_only"
+          }
+        ])
+      )
+    }))
+  );
+  if (resolvedFunctions.length > 0) {
+    lines.push(
+      "<details><summary>Resolved per-function and per-metric policy rules</summary>"
+    );
+    lines.push("");
+    for (const fn of resolvedFunctions) {
+      lines.push(`#### \`${contractLabel(fn)} / ${benchmarkLabel(fn)}\``);
+      lines.push("");
+      lines.push(
+        "| Metric | Regression Rule | Rule Source | Absolute Limit | Limit Source | Effective Mode |"
+      );
+      lines.push("|---|---|---|---|---|---|");
+      for (const key of METRIC_KEYS) {
+        const m = fn.metrics[key];
+        if (!m) continue;
+        lines.push(
+          `| \`${key}\` | \`${m.regression_rule}\` | \`${m.regression_rule_source}\` | \`${m.absolute_limit === null ? "none" : m.absolute_limit}\` | \`${m.absolute_limit_source}\` | \`${m.effective_mode}\` |`
+        );
+      }
+      lines.push("");
+    }
+    lines.push("</details>");
+    lines.push("");
+  }
+  lines.push("---");
+  lines.push("");
+}
 function renderFunctionTable(fn) {
   const rows = fn.metrics.map((m) => {
     if (m.availability === "unavailable") {
@@ -53881,6 +54210,11 @@ function renderComment(diff, violations, baseRef, headSha) {
   }
   lines.push("---");
   lines.push("");
+  appendEffectivePolicySection(
+    lines,
+    diff,
+    arguments[4]
+  );
   lines.push("<details><summary>Known measurement gaps</summary>");
   lines.push("");
   lines.push(

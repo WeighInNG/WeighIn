@@ -129,6 +129,185 @@ function benchmarkLabel(fn: BenchmarkIdentity): string {
     : `${fn.function_name} / ${fn.case_id}`;
 }
 
+function comparePolicyStringsInComment(a?: string, b?: string): number {
+  const sa = a ?? "";
+  const sb = b ?? "";
+  if (sa < sb) return -1;
+  if (sa > sb) return 1;
+  return 0;
+}
+
+function appendEffectivePolicySection(
+  lines: string[],
+  diff: DiffResult,
+  policyOrigin?: PolicyOrigin,
+): void {
+  const existing = diff.policy;
+  const status = existing?.status ?? "absent";
+  const evaluationMode = existing?.evaluation_mode ?? "report_only";
+  const present = existing ? existing.source.present : false;
+  const mode = policyOrigin?.mode ?? existing?.source.mode ?? "none";
+  const sourcePath = policyOrigin?.path ?? existing?.source.path ?? null;
+  const revision = policyOrigin?.revision ?? existing?.source.revision;
+  const contentSha =
+    policyOrigin?.content_sha256 ?? existing?.source.content_sha256;
+
+  lines.push("### Effective Policy");
+  lines.push("");
+  if (status === "absent") {
+    lines.push(
+      "- **Policy status**: `absent` (no policy file loaded — **default report-only mode**, no thresholds or limits enforced)",
+    );
+  } else if (status === "empty") {
+    lines.push(
+      "- **Policy status**: `empty` (loaded policy contains no active rules or limits — **default report-only mode**, no thresholds or limits enforced)",
+    );
+  } else {
+    lines.push(
+      `- **Policy status**: \`configured\` (evaluation mode: \`${evaluationMode}\`)`,
+    );
+  }
+
+  lines.push(
+    `- **Evaluation mode**: \`${evaluationMode}\`${evaluationMode === "report_only" ? " (default report-only — regressions are reported without failing the check)" : " (configured rules and limits are enforced)"}`,
+  );
+
+  if (mode === "head" || mode === "trusted") {
+    lines.push(
+      `- **Policy source**: mode \`${mode}\`, path \`${sourcePath}\`${revision ? ` at \`${revision}\`` : ""}${contentSha ? `, SHA256 \`${contentSha}\`` : ""} (${present ? "present" : "absent"})`,
+    );
+  } else if (mode === "inline") {
+    lines.push(
+      `- **Policy source**: mode \`inline\`${sourcePath ? `, path \`${sourcePath}\`` : ""} (present)`,
+    );
+  } else {
+    lines.push(
+      "- **Policy source**: `none` (absent — default report-only mode)",
+    );
+  }
+
+  const globalThresholds = existing?.configured.global_thresholds ?? {
+    fail_on_any_regression: false,
+    max_allowed_cpu_increase_pct: null,
+    max_allowed_memory_increase_pct: null,
+  };
+  lines.push(
+    `- **Global thresholds**: \`fail_on_any_regression=${globalThresholds.fail_on_any_regression}\`, \`max_allowed_cpu_increase_pct=${globalThresholds.max_allowed_cpu_increase_pct === null ? "none" : `${globalThresholds.max_allowed_cpu_increase_pct}%`}\`, \`max_allowed_memory_increase_pct=${globalThresholds.max_allowed_memory_increase_pct === null ? "none" : `${globalThresholds.max_allowed_memory_increase_pct}%`}\``,
+  );
+
+  const globalLimits = existing?.configured.global_limits ?? {};
+  const globalLimitEntries = METRIC_KEYS.filter(
+    (k) => globalLimits[k] !== undefined,
+  ).map((k) => `\`${k} <= ${globalLimits[k]}\``);
+  lines.push(
+    `- **Global limits**: ${globalLimitEntries.length > 0 ? globalLimitEntries.join(", ") : "`none`"}`,
+  );
+
+  const fnThresholds = existing?.configured.function_thresholds ?? {};
+  const fnLimits = existing?.configured.function_limits ?? {};
+  const overrideParts: string[] = [];
+  for (const fnName of Object.keys(fnThresholds).sort(
+    comparePolicyStringsInComment,
+  )) {
+    const rules = fnThresholds[fnName] ?? {};
+    for (const k of METRIC_KEYS) {
+      if (rules[k] !== undefined) {
+        overrideParts.push(`\`${fnName}.${k} = ${rules[k]}\``);
+      }
+    }
+  }
+  for (const fnName of Object.keys(fnLimits).sort(
+    comparePolicyStringsInComment,
+  )) {
+    const lims = fnLimits[fnName] ?? {};
+    for (const k of METRIC_KEYS) {
+      if (lims[k] !== undefined) {
+        overrideParts.push(`\`${fnName}.${k} <= ${lims[k]} (absolute_limit)\``);
+      }
+    }
+  }
+  lines.push(
+    `- **Function overrides**: ${overrideParts.length > 0 ? overrideParts.join(", ") : "`none`"}`,
+  );
+  lines.push("");
+
+  const resolvedFunctions =
+    existing?.functions ??
+    [...diff.contracts]
+      .sort(
+        (a, b) =>
+          comparePolicyStringsInComment(a.fixture_id, b.fixture_id) ||
+          comparePolicyStringsInComment(a.logical_id, b.logical_id) ||
+          comparePolicyStringsInComment(a.contract_id, b.contract_id),
+      )
+      .flatMap((contract) =>
+        [...contract.functions]
+          .sort(
+            (a, b) =>
+              comparePolicyStringsInComment(a.function_name, b.function_name) ||
+              comparePolicyStringsInComment(a.case_id, b.case_id),
+          )
+          .map((fn) => ({
+            fixture_id: contract.fixture_id,
+            logical_id: contract.logical_id,
+            contract_id: contract.contract_id,
+            function_name: fn.function_name,
+            case_id: fn.case_id,
+            metrics: Object.fromEntries(
+              METRIC_KEYS.map((key) => [
+                key,
+                {
+                  metric: key,
+                  regression_rule: "report_only",
+                  regression_rule_source: "default" as const,
+                  absolute_limit: null,
+                  absolute_limit_source: "none" as const,
+                  effective_mode: "report_only" as const,
+                },
+              ]),
+            ) as Record<
+              MetricKey,
+              {
+                metric: MetricKey;
+                regression_rule: string;
+                regression_rule_source: string;
+                absolute_limit: number | null;
+                absolute_limit_source: string;
+                effective_mode: string;
+              }
+            >,
+          })),
+      );
+
+  if (resolvedFunctions.length > 0) {
+    lines.push(
+      "<details><summary>Resolved per-function and per-metric policy rules</summary>",
+    );
+    lines.push("");
+    for (const fn of resolvedFunctions) {
+      lines.push(`#### \`${contractLabel(fn)} / ${benchmarkLabel(fn)}\``);
+      lines.push("");
+      lines.push(
+        "| Metric | Regression Rule | Rule Source | Absolute Limit | Limit Source | Effective Mode |",
+      );
+      lines.push("|---|---|---|---|---|---|");
+      for (const key of METRIC_KEYS) {
+        const m = fn.metrics[key];
+        if (!m) continue;
+        lines.push(
+          `| \`${key}\` | \`${m.regression_rule}\` | \`${m.regression_rule_source}\` | \`${m.absolute_limit === null ? "none" : m.absolute_limit}\` | \`${m.absolute_limit_source}\` | \`${m.effective_mode}\` |`,
+        );
+      }
+      lines.push("");
+    }
+    lines.push("</details>");
+    lines.push("");
+  }
+
+  lines.push("---");
+  lines.push("");
+}
+
 function renderFunctionTable(fn: FunctionDiff): string {
   const rows = fn.metrics.map((m) => {
     if (m.availability === "unavailable") {
@@ -267,6 +446,11 @@ export function renderComment(
   // Known limitations footer
   lines.push("---");
   lines.push("");
+  appendEffectivePolicySection(
+    lines,
+    diff,
+    arguments[4] as PolicyOrigin | undefined,
+  );
   lines.push("<details><summary>Known measurement gaps</summary>");
   lines.push("");
   lines.push(
