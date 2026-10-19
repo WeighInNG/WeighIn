@@ -113,6 +113,7 @@ function action(
   reportPath = null,
   fixturesPath = "fixtures.json",
   setupFiles,
+  baseRefInput = "main",
 ) {
   const temporary =
     tmpRoot ?? fs.mkdtempSync(path.join(os.tmpdir(), "weighin-action-unit-"));
@@ -181,7 +182,7 @@ function action(
           "INPUT_FIXTURES-PATH": fixturesPath,
           "INPUT_CONFIG-PATH": "weighin.toml",
           "INPUT_GITHUB-TOKEN": "",
-          "INPUT_BASE-REF": "main",
+          "INPUT_BASE-REF": baseRefInput,
           "INPUT_REPORT-PATH": reportPath || "",
         },
       },
@@ -222,6 +223,19 @@ function action(
     fs.rmSync(temporary, { recursive: true, force: true });
   }
 }
+function outputValue(output, name) {
+  const lines = output.split(/\r?\n/);
+  let found = null;
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].startsWith(`${name}=`)) found = lines[i].slice(name.length + 1);
+    else if (lines[i].startsWith(`${name}<<`)) {
+      const delimiter = lines[i].slice(name.length + 2);
+      const end = lines.indexOf(delimiter, i + 1);
+      found = lines.slice(i + 1, end < 0 ? lines.length : end).join("\n");
+    }
+  }
+  return found;
+}
 for (const [mode, message] of [
   ["funding-exhausted", /Account readiness failed within 120s/],
   ["rpc-invalid-envelope", /response ID does not match request/],
@@ -253,6 +267,37 @@ test("Action rejects a mismatched health response before account readiness or bu
   assert.equal(result.status, 1);
   assert.match(result.summary, /response ID does not match request/);
   assert.equal(result.keyPaths.length, 0);
+});
+
+test("Action rejects a healthy but unsupported RPC network before builds or funding", () => {
+  for (const [mode, diagnostic] of [
+    ["rpc-wrong-passphrase", /RPC is healthy but incompatible: unsupported network passphrase/],
+    ["rpc-wrong-protocol", /RPC is healthy but incompatible: unsupported protocol 27/],
+    ["rpc-missing-protocol", /RPC is healthy but incompatible: invalid network metadata/],
+  ]) {
+    const result = action(mode);
+    assert.equal(result.status, 1);
+    assert.match(result.summary, diagnostic);
+    assert.equal(result.keyPaths.length, 0);
+    assert.deepEqual(result.builds, []);
+  }
+});
+
+test("Action validates supported baseline branch, tag, and SHA forms", () => {
+  for (const ref of ["feature/topic", "v1.2.3", "0123456789abcdef0123456789abcdef01234567"]) {
+    const result = action("control", policy, null, null, "fixtures.json", undefined, ref);
+    assert.equal(result.status, 0, ref + result.stdout + result.stderr);
+  }
+});
+
+test("Action rejects invalid baseline refs before RPC checks, builds, or funding", () => {
+  for (const ref of ["   ", "--upload-pack=evil", "broken..ref", "trailing/"]) {
+    const result = action("control", policy, null, null, "fixtures.json", undefined, ref);
+    assert.equal(result.status, 1, ref);
+    assert.match(result.summary, /Invalid base-ref/);
+    assert.equal(result.keyPaths.length, 0, ref);
+    assert.deepEqual(result.builds, [], ref);
+  }
 });
 
 test("Action rejects absolute and escaping fixture paths before measuring HEAD", () => {
@@ -439,6 +484,37 @@ test("Action persists an explicit unsuccessful-comparison report on configuratio
   }
 });
 
+test("Action preserves a validated diff and delivery diagnostic when report writing fails", () => {
+  const result = action(
+    "control",
+    policy,
+    null,
+    "blocked/report.md",
+    "fixtures.json",
+    ({ head }) => fs.writeFileSync(path.join(head, "blocked"), "not a directory"),
+  );
+  assert.equal(result.status, 1);
+  assert.equal(outputValue(result.output, "result"), "fail");
+  assert.match(result.summary, /Failed to write WeighIn report/);
+  const diff = JSON.parse(outputValue(result.output, "diff-json"));
+  assert.ok(diff.contracts.length > 0);
+});
+
+test("Action preserves a validated diff and delivery diagnostic when summary writing fails", () => {
+  const result = action("summary-delivery-failure");
+  assert.equal(result.status, 1);
+  assert.equal(outputValue(result.output, "result"), "fail");
+  assert.match(result.summary, /unit summary delivery failure/);
+  const diff = JSON.parse(outputValue(result.output, "diff-json"));
+  assert.ok(diff.contracts.length > 0);
+});
+
+test("Action does not invent a diff when failure occurs before comparison", () => {
+  const result = action("rpc-unhealthy");
+  assert.equal(result.status, 1);
+  assert.deepEqual(JSON.parse(outputValue(result.output, "diff-json")), {});
+});
+
 test("Action preserves primary error when writing report-path fails due to invalid output path", () => {
   // Pass an invalid path that cannot be created as a file
   const res = action("rpc-unhealthy", policy, null, "fixtures.json"); // fixtures.json already exists as a file, but let's test a directory path as file
@@ -447,20 +523,6 @@ test("Action preserves primary error when writing report-path fails due to inval
   assert.match(res.summary, /RPC has not reported healthy/);
 });
 
-function lastActionOutput(output, name) {
-  const lines = output.split(/\r?\n/);
-  let value;
-  for (let index = 0; index < lines.length; index += 1) {
-    if (!lines[index].startsWith(`${name}<<`)) continue;
-    const delimiter = lines[index].slice(name.length + 2);
-    const content = [];
-    while (++index < lines.length && lines[index] !== delimiter)
-      content.push(lines[index]);
-    value = content.join("\n");
-  }
-  assert.notEqual(value, undefined, `missing ${name} output`);
-  return value;
-}
 
 for (const mode of ["control", "regression"]) {
   test(`Action retains the ${mode} diff after report-file delivery fails`, () => {
@@ -468,10 +530,10 @@ for (const mode of ["control", "regression"]) {
     // fixtures.json is a file, so it cannot be a report's parent directory.
     const result = action(mode, policy, null, "fixtures.json/report.md");
     assert.equal(result.status, 1, result.stdout + result.stderr);
-    assert.equal(lastActionOutput(result.output, "result"), "fail");
+    assert.equal(outputValue(result.output, "result"), "fail");
     assert.deepEqual(
-      JSON.parse(lastActionOutput(result.output, "diff-json")),
-      JSON.parse(lastActionOutput(expected.output, "diff-json")),
+      JSON.parse(outputValue(result.output, "diff-json")),
+      JSON.parse(outputValue(expected.output, "diff-json")),
     );
     assert.match(result.stdout, /Failed to write WeighIn report/);
     assert.match(result.summary, /WeighIn report delivery failed/);
@@ -484,10 +546,10 @@ for (const mode of ["summary-write-once", "summary-write-always"]) {
     const expected = action("control");
     const result = action(mode, policy, null, "weighin-report.md");
     assert.equal(result.status, 1, result.stdout + result.stderr);
-    assert.equal(lastActionOutput(result.output, "result"), "fail");
+    assert.equal(outputValue(result.output, "result"), "fail");
     assert.deepEqual(
-      JSON.parse(lastActionOutput(result.output, "diff-json")),
-      JSON.parse(lastActionOutput(expected.output, "diff-json")),
+      JSON.parse(outputValue(result.output, "diff-json")),
+      JSON.parse(outputValue(expected.output, "diff-json")),
     );
     assert.match(result.stdout, /unit summary delivery failure/);
     assert.match(result.reportContent, /WeighIn report delivery failed/);
@@ -501,8 +563,8 @@ test("Action emits an empty diff when comparison fails before delivery", () => {
   for (const mode of ["rpc-unhealthy", "schema", "empty", "unmatched"]) {
     const result = action(mode, policy, null, "fixtures.json/report.md");
     assert.equal(result.status, 1);
-    assert.equal(lastActionOutput(result.output, "result"), "fail");
-    assert.deepEqual(JSON.parse(lastActionOutput(result.output, "diff-json")), {});
+    assert.equal(outputValue(result.output, "result"), "fail");
+    assert.deepEqual(JSON.parse(outputValue(result.output, "diff-json")), {});
     assert.match(result.summary, /No passing comparison/);
     assert.doesNotMatch(result.summary, /WeighIn report delivery failed/);
   }

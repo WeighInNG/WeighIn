@@ -3,6 +3,7 @@
 const Module = require("node:module");
 const fs = require("node:fs");
 const path = require("node:path");
+const { spawnSync } = require("node:child_process");
 const load = Module._load;
 const mode = process.env.WEIGHIN_UNIT_MODE;
 const logDir = process.env.WEIGHIN_UNIT_LOG_DIR;
@@ -34,10 +35,18 @@ globalThis.fetch = async (url, options) => {
         JSON.stringify({ jsonrpc: "2.0", id: request.id, result: { entries: [], latestLedger: 100 } }),
       );
   }
-  const result = {
-    passphrase: "unit-test-network",
-    status: mode === "rpc-unhealthy" ? "starting" : "healthy",
-  };
+  const result =
+    method === "getNetwork"
+      ? {
+          passphrase:
+            mode === "rpc-wrong-passphrase"
+              ? "Test SDF Network ; September 2015"
+              : "Standalone Network ; February 2017",
+          ...(mode === "rpc-missing-protocol"
+            ? {}
+            : { protocolVersion: mode === "rpc-wrong-protocol" ? 27 : 28 }),
+        }
+      : { status: mode === "rpc-unhealthy" ? "starting" : "healthy" };
   if (mode === "rpc-invalid-envelope" && method === "getHealth") {
     return new Response(JSON.stringify({ jsonrpc: "2.0", id: request.id + 1, result }));
   }
@@ -65,7 +74,7 @@ Module._load = function (name, parent, ...args) {
   ) {
     if (
       name === "@actions/core" &&
-      (mode === "summary-write-once" || mode === "summary-write-always")
+      (mode === "summary-write-once" || mode === "summary-write-always" || mode === "summary-delivery-failure")
     ) {
       const core = load.call(this, name, parent, ...args);
       const originalWrite = core.summary.write.bind(core.summary);
@@ -82,6 +91,10 @@ Module._load = function (name, parent, ...args) {
     if (name === "@actions/exec")
       return {
         exec: async (command, argv, options = {}) => {
+          if (command === "git" && argv[0] === "check-ref-format") {
+            const result = spawnSync("git", argv, { encoding: "utf8" });
+            return result.status ?? 1;
+          }
           const isBase = !(
             options.cwd === process.env.GITHUB_WORKSPACE ||
             options.cwd?.startsWith(process.env.GITHUB_WORKSPACE + path.sep)

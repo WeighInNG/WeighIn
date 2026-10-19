@@ -159,7 +159,7 @@ All supported inputs are declared in [action.yml](action.yml):
 | `trusted-policy-ref` | Optional ref fetched from `origin` for an immutable policy source; must be paired with `trusted-policy-path` |
 | `trusted-policy-path` | Repository path read from the resolved trusted policy commit; HEAD cannot replace it |
 | `rpc-url` | Compatible standalone RPC; default `http://localhost:8000/rpc` |
-| `base-ref` | Fetched baseline ref; PR base branch, otherwise `main`, if omitted |
+| `base-ref` | Baseline branch, tag, or commit SHA; PR base branch, otherwise `main`, if omitted. Invalid refs are rejected before builds or deployment. |
 | `rust-toolchain` | Contract-build Rustup override; does not change pinned native-helper toolchain |
 | `build-command` | Custom shell build command in each revision; replaces default build guarantees |
 | `skip-build` | `true` uses prebuilt fixture WASMs in both revisions; incompatible with `build-command`. Accepts YAML 1.2 boolean spellings (`true`, `True`, `TRUE`, `false`, `False`, `FALSE`); defaults to `false`. Non-boolean values are rejected |
@@ -172,8 +172,8 @@ If report-file, metadata-file, or job-summary delivery fails after comparison
 and threshold evaluation, `result` is `fail` and `diff-json` retains that run's
 validated comparison. Failures before evaluation completes emit `{}`. A retained
 diff does not imply that the Action or its policies passed.
-An unsuccessful comparison emits `fail` and `{}`. A valid comparison with policy
-violations emits its real diff, writes the report, then fails the Action.
+A valid comparison with policy violations emits its real diff, writes the
+report, then fails the Action.
 
 See [policy and package provenance](docs/policy-and-package-provenance.md) for
 the trusted-policy boundary, package manifest verification, and signing

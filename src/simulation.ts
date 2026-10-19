@@ -9,6 +9,7 @@ import {
 import { execFile } from "child_process";
 import { Keypair, Transaction, xdr } from "@stellar/stellar-sdk";
 import { z } from "zod";
+import { SUPPORTED_PROTOCOL_VERSION } from "./network";
 
 export const sha256 = (value: string | Buffer): string =>
   crypto.createHash("sha256").update(value).digest("hex");
@@ -722,9 +723,9 @@ export async function measureInvocation(
   const network = z
     .object({ passphrase: encoded, protocolVersion: integer })
     .parse(await callRpc(rpcUrl, "getNetwork", {}, signal));
-  if (network.protocolVersion !== 28)
+  if (network.protocolVersion !== SUPPORTED_PROTOCOL_VERSION)
     throw new Error(
-      `Unsupported protocol ${network.protocolVersion}: simulation helper supports 28`,
+      `Unsupported protocol ${network.protocolVersion}: simulation helper supports ${SUPPORTED_PROTOCOL_VERSION}`,
     );
   if (transaction.networkPassphrase !== network.passphrase) {
     throw new Error(

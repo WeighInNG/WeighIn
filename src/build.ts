@@ -18,7 +18,7 @@ interface CargoPackage {
   id: string;
   name: string;
   manifest_path: string;
-  targets: Array<{ crate_types: string[] }>;
+  targets: Array<{ name?: string; crate_types: string[] }>;
 }
 
 /** Detect storage errors that the optimizer's temporary-file writer may hide. */
@@ -119,7 +119,11 @@ export async function buildContracts(
     );
   }
 
-  const plans: Array<{ destination: string; pkg: CargoPackage }> = [];
+  const plans: Array<{
+    destination: string;
+    pkg: CargoPackage;
+    targetName: string;
+  }> = [];
   const metadataCache = new Map<string, CargoPackage[]>();
   for (const contract of fixtures.contracts) {
     const destination = path.resolve(fixturesDir, contract.wasm_path);
@@ -157,20 +161,40 @@ export async function buildContracts(
       );
       metadataCache.set(manifest, packages);
     }
-    const matches = packages.filter(
-      (pkg) =>
-        `${pkg.name.replace(/-/g, "_")}.wasm` === path.basename(destination),
-    );
+    const destinationName = path.basename(destination);
+    const matches: Array<{ pkg: CargoPackage; targetName: string }> = [];
+    for (const pkg of packages) {
+      const cdylibTargets = pkg.targets.filter((target) =>
+        target.crate_types.includes("cdylib"),
+      );
+      const targetNames = cdylibTargets.map(
+        (target) => target.name ?? pkg.name,
+      );
+      if (
+        !targetNames.some(
+          (name) => `${name.replace(/-/g, "_")}.wasm` === destinationName,
+        )
+      ) {
+        continue;
+      }
+      if (cdylibTargets.length > 1) {
+        throw new Error(
+          `Cargo package ${pkg.name} has ambiguous multiple cdylib targets; found ${cdylibTargets.length}`,
+        );
+      }
+      matches.push({ pkg, targetName: targetNames[0] });
+    }
     if (matches.length !== 1)
       throw new Error(
         `wasm_path ${contract.wasm_path} must identify exactly one Cargo cdylib package; found ${matches.length}`,
       );
-    plans.push({ destination, pkg: matches[0] });
+    const { pkg, targetName } = matches[0];
+    plans.push({ destination, pkg, targetName });
   }
 
   const artifacts = new Map<string, Buffer>();
   const results: BuiltContract[] = [];
-  for (const { destination, pkg } of plans) {
+  for (const { destination, pkg, targetName } of plans) {
     let wasm = artifacts.get(pkg.manifest_path);
     if (!wasm) {
       let outputDir: string;
@@ -201,7 +225,7 @@ export async function buildContracts(
           { ...env, TMPDIR: outputDir, TMP: outputDir, TEMP: outputDir },
         );
         wasm = fs.readFileSync(
-          path.join(outputDir, `${pkg.name.replace(/-/g, "_")}.wasm`),
+          path.join(outputDir, `${targetName.replace(/-/g, "_")}.wasm`),
         );
         verifyBuildStorage(outputDir, Math.max(1024 * 1024, wasm.length));
         if (

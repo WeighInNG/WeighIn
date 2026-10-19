@@ -26,7 +26,11 @@ async function scenario(options, verify) {
   const packages = names.map((name, index) => {
     const manifest_path = path.join(directory, `crate${index}`, 'Cargo.toml');
     fs.mkdirSync(path.dirname(manifest_path)); fs.writeFileSync(manifest_path, '[package]');
-    return { id: `pkg${index}`, name, manifest_path, targets: [{ crate_types: ['cdylib'] }] };
+    const targetName = options.targetNames?.[index] || name;
+    const targets = [{ name: targetName, crate_types: ['cdylib'] }];
+    if (options.multipleCdylibTargets)
+      targets.push({ name: `${targetName}-other`, crate_types: ['cdylib'] });
+    return { id: `pkg${index}`, name, manifest_path, targets };
   });
   fs.writeFileSync(path.join(directory, 'Cargo.toml'), '[workspace]');
   const fixtures = path.join(directory, 'fixtures.json');
@@ -48,8 +52,10 @@ async function scenario(options, verify) {
       if (options.buildFailure) throw new Error('actual build failed');
       if (options.skippedOptimization) config.listeners.stderr(Buffer.from('Optimization skipped'));
       if (!options.missingOutput) {
-        const name = args[args.indexOf('--package') + 1].replaceAll('-', '_');
-        fs.writeFileSync(path.join(args[args.indexOf('--out-dir') + 1], `${name}.wasm`), options.badWasm ? 'invalid' : wasm);
+        const packageName = args[args.indexOf('--package') + 1];
+        const pkg = packages.find(candidate => candidate.name === packageName);
+        const targetName = pkg.targets.find(target => target.crate_types.includes('cdylib')).name;
+        fs.writeFileSync(path.join(args[args.indexOf('--out-dir') + 1], `${targetName.replaceAll('-', '_')}.wasm`), options.badWasm ? 'invalid' : wasm);
       }
       buildReturned = true;
     } else throw new Error('Unexpected command');
@@ -67,6 +73,23 @@ test('modern optimized build replaces stale configured WASM with fresh selected-
   assert.ok(build.args.includes('--locked')); assert.ok(build.args.includes('--optimize=true'));
   assert.ok(commands.every(command => command.env.RUSTUP_TOOLCHAIN === '1.95.0'));
   assert.equal(commands.some(command => command.args.includes('wasm32-unknown-unknown')), false);
+}));
+test('Cargo cdylib target name selects and reads WASM independently of package name', async () => scenario({
+  names: ['cargo-package-name'],
+  targetNames: ['library-target-name'],
+  paths: ['artifacts/library_target_name.wasm'],
+}, async ({ fixtures, directory, commands, destinations, wasm }) => {
+  const results = await buildContracts(fixtures);
+  assert.deepEqual(fs.readFileSync(path.join(directory, destinations[0])), wasm);
+  assert.equal(results[0].package, 'cargo-package-name');
+  const build = commands.find(command => command.command === 'stellar' && command.args[0] === 'contract');
+  assert.equal(build.args[build.args.indexOf('--package') + 1], 'cargo-package-name');
+}));
+test('multiple cdylib targets in one package fail before compilation', async () => scenario({
+  multipleCdylibTargets: true,
+}, async ({ fixtures, commands }) => {
+  await assert.rejects(buildContracts(fixtures), /ambiguous multiple cdylib targets/);
+  assert.ok(!commands.some(command => command.command === 'stellar' && command.args[0] === 'contract'));
 }));
 test('multiple workspace contracts select independent packages; repeated package aliases build once', async () => scenario({ names: ['first', 'second'], paths: ['artifacts/first.wasm', 'artifacts/second.wasm', 'other/first.wasm'] }, async ({ fixtures, commands }) => {
   const results = await buildContracts(fixtures);

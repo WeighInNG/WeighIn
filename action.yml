@@ -63,8 +63,9 @@ inputs:
 
   base-ref:
     description: >
-      Git ref to use as the baseline for comparison. Defaults to the PR base
-      branch (github.base_ref). Override for manual dispatch or scheduled runs.
+      Branch, tag, or commit SHA to use as the baseline for comparison. Defaults
+      to the PR base branch (github.base_ref). Invalid refs are rejected before
+      builds or network deployment. Override for manual dispatch or scheduled runs.
     required: false
     default: ''
 
