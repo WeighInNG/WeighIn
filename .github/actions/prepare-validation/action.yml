@@ -1,0 +1,14 @@
+name: Prepare validation dependencies
+description: Install the pinned test toolchains and prepare offline package caches.
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 24
+    - run: rustup toolchain install 1.95.0 --profile minimal
+      shell: bash
+    - run:  pm ci
+      shell: bash
+    - run:  ode scripts/prepare-test-dependencies.cjs
+      shell: bash
