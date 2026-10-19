@@ -168,6 +168,10 @@ All supported inputs are declared in [action.yml](action.yml):
 | `github-token` | Optional direct PR-comment token; omit for the separate comment workflow |
 
 Outputs: `result` is `pass` or `fail`; `diff-json` contains the comparison.
+If report-file, metadata-file, or job-summary delivery fails after comparison
+and threshold evaluation, `result` is `fail` and `diff-json` retains that run's
+validated comparison. Failures before evaluation completes emit `{}`. A retained
+diff does not imply that the Action or its policies passed.
 An unsuccessful comparison emits `fail` and `{}`. A valid comparison with policy
 violations emits its real diff, writes the report, then fails the Action.
 

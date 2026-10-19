@@ -446,3 +446,64 @@ test("Action preserves primary error when writing report-path fails due to inval
   assert.match(res.output, /fail/);
   assert.match(res.summary, /RPC has not reported healthy/);
 });
+
+function lastActionOutput(output, name) {
+  const lines = output.split(/\r?\n/);
+  let value;
+  for (let index = 0; index < lines.length; index += 1) {
+    if (!lines[index].startsWith(`${name}<<`)) continue;
+    const delimiter = lines[index].slice(name.length + 2);
+    const content = [];
+    while (++index < lines.length && lines[index] !== delimiter)
+      content.push(lines[index]);
+    value = content.join("\n");
+  }
+  assert.notEqual(value, undefined, `missing ${name} output`);
+  return value;
+}
+
+for (const mode of ["control", "regression"]) {
+  test(`Action retains the ${mode} diff after report-file delivery fails`, () => {
+    const expected = action(mode);
+    // fixtures.json is a file, so it cannot be a report's parent directory.
+    const result = action(mode, policy, null, "fixtures.json/report.md");
+    assert.equal(result.status, 1, result.stdout + result.stderr);
+    assert.equal(lastActionOutput(result.output, "result"), "fail");
+    assert.deepEqual(
+      JSON.parse(lastActionOutput(result.output, "diff-json")),
+      JSON.parse(lastActionOutput(expected.output, "diff-json")),
+    );
+    assert.match(result.stdout, /Failed to write WeighIn report/);
+    assert.match(result.summary, /WeighIn report delivery failed/);
+    assert.doesNotMatch(result.summary, /No passing comparison/);
+  });
+}
+
+for (const mode of ["summary-write-once", "summary-write-always"]) {
+  test(`Action retains its diff and primary diagnostic for ${mode}`, () => {
+    const expected = action("control");
+    const result = action(mode, policy, null, "weighin-report.md");
+    assert.equal(result.status, 1, result.stdout + result.stderr);
+    assert.equal(lastActionOutput(result.output, "result"), "fail");
+    assert.deepEqual(
+      JSON.parse(lastActionOutput(result.output, "diff-json")),
+      JSON.parse(lastActionOutput(expected.output, "diff-json")),
+    );
+    assert.match(result.stdout, /unit summary delivery failure/);
+    assert.match(result.reportContent, /WeighIn report delivery failed/);
+    assert.doesNotMatch(result.reportContent, /Policies established:\*\* No/);
+    if (mode === "summary-write-always")
+      assert.match(result.stdout, /Failed to write failure summary/);
+  });
+}
+
+test("Action emits an empty diff when comparison fails before delivery", () => {
+  for (const mode of ["rpc-unhealthy", "schema", "empty", "unmatched"]) {
+    const result = action(mode, policy, null, "fixtures.json/report.md");
+    assert.equal(result.status, 1);
+    assert.equal(lastActionOutput(result.output, "result"), "fail");
+    assert.deepEqual(JSON.parse(lastActionOutput(result.output, "diff-json")), {});
+    assert.match(result.summary, /No passing comparison/);
+    assert.doesNotMatch(result.summary, /WeighIn report delivery failed/);
+  }
+});

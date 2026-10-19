@@ -63,6 +63,21 @@ Module._load = function (name, parent, ...args) {
     parent?.filename.endsWith("/dist/action.js") ||
     parent?.filename.endsWith("/dist/build.js")
   ) {
+    if (
+      name === "@actions/core" &&
+      (mode === "summary-write-once" || mode === "summary-write-always")
+    ) {
+      const core = load.call(this, name, parent, ...args);
+      const originalWrite = core.summary.write.bind(core.summary);
+      let attempts = 0;
+      core.summary.write = async (...writeArgs) => {
+        attempts += 1;
+        if (attempts === 1 || mode === "summary-write-always")
+          throw new Error("unit summary delivery failure");
+        return originalWrite(...writeArgs);
+      };
+      return core;
+    }
     if (name === "@actions/github") return { context: { payload: {} } };
     if (name === "@actions/exec")
       return {
