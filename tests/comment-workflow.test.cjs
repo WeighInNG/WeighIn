@@ -177,3 +177,200 @@ test('a successful fork PR uses the same comment delivery path', async () => {
   assert.equal(result.status, 0, result.stdout + result.stderr);
   assert.equal(result.calls[1].body.body, report);
 });
+
+const foreignValidMetadata = {
+  schemaVersion: 1,
+  repository: 'external-org/soroban-consumer',
+  prNumber: 19,
+  headSha: 'a'.repeat(40),
+};
+const foreignReport = '<!-- weighin-report -->\n## WeighIn Benchmark Report\nCPU Instructions: 266,842\n';
+
+async function executeForeignCommentAction({
+  reportContent = foreignReport,
+  metadataContent = foreignValidMetadata,
+  reportInput = 'artifacts/weighin-report.md',
+  metadataInput = 'artifacts/pr-metadata.json',
+  trustedRepository = 'external-org/soroban-consumer',
+  existingComments = [],
+  apiStatusOverride = null,
+  useUnrelatedCwd = true,
+} = {}) {
+  const temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'weighin-foreign-comment-'));
+  const actionInstallDir = path.join(temporary, 'runner/_actions/WeighInNG/WeighIn/foreign-sha');
+  const callerWorkspace = path.join(temporary, 'caller-workspace/external-org/soroban-consumer');
+  const unrelatedCwd = path.join(temporary, 'unrelated-execution-cwd');
+  const calls = [];
+
+  const server = http.createServer((request, response) => {
+    let raw = '';
+    request.on('data', data => (raw += data));
+    request.on('end', () => {
+      const body = raw ? JSON.parse(raw) : undefined;
+      calls.push({ method: request.method, url: request.url, body });
+      if (apiStatusOverride && request.method !== 'GET') {
+        response.writeHead(apiStatusOverride, { 'content-type': 'application/json' });
+        response.end(JSON.stringify({ message: 'Simulated GitHub API failure' }));
+        return;
+      }
+      if (request.method === 'GET' && request.url === '/repos/external-org/soroban-consumer/issues/19/comments') {
+        response.writeHead(200, { 'content-type': 'application/json' });
+        response.end(JSON.stringify(existingComments));
+        return;
+      }
+      if (request.method === 'POST' && request.url === '/repos/external-org/soroban-consumer/issues/19/comments') {
+        response.writeHead(201, { 'content-type': 'application/json' });
+        response.end(JSON.stringify({ id: 77, body: body.body }));
+        return;
+      }
+      if (request.method === 'PATCH' && request.url === '/repos/external-org/soroban-consumer/issues/comments/99') {
+        response.writeHead(200, { 'content-type': 'application/json' });
+        response.end(JSON.stringify({ id: 99, body: body.body }));
+        return;
+      }
+      response.writeHead(400);
+      response.end(`Unexpected test API request: ${request.method} ${request.url}`);
+    });
+  });
+
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  const apiUrl = `http://127.0.0.1:${server.address().port}`;
+
+  try {
+    fs.mkdirSync(actionInstallDir, { recursive: true });
+    fs.mkdirSync(callerWorkspace, { recursive: true });
+    fs.mkdirSync(unrelatedCwd, { recursive: true });
+
+    // Populate ONLY the foreign Action installation directory with comment/action.yml and bundled/comment-action.js
+    for (const file of ['comment/action.yml', 'bundled/comment-action.js']) {
+      const destination = path.join(actionInstallDir, file);
+      fs.mkdirSync(path.dirname(destination), { recursive: true });
+      fs.copyFileSync(path.join(root, file), destination);
+    }
+
+    // Verify foreign Action installation has no node_modules, dist, or src, and caller has no action files
+    assert.equal(fs.existsSync(path.join(actionInstallDir, 'node_modules')), false);
+    assert.equal(fs.existsSync(path.join(actionInstallDir, 'dist')), false);
+    assert.equal(fs.existsSync(path.join(callerWorkspace, 'comment')), false);
+    assert.equal(fs.existsSync(path.join(callerWorkspace, 'bundled')), false);
+
+    if (reportContent !== null) {
+      const reportFile = path.join(callerWorkspace, reportInput);
+      fs.mkdirSync(path.dirname(reportFile), { recursive: true });
+      fs.writeFileSync(reportFile, reportContent);
+    }
+    if (metadataContent !== null) {
+      const metadataFile = path.join(callerWorkspace, metadataInput);
+      fs.mkdirSync(path.dirname(metadataFile), { recursive: true });
+      const text = typeof metadataContent === 'string' ? metadataContent : JSON.stringify(metadataContent);
+      fs.writeFileSync(metadataFile, text);
+    }
+
+    const actionYmlPath = path.join(actionInstallDir, 'comment/action.yml');
+    const actionDef = YAML.parse(fs.readFileSync(actionYmlPath, 'utf8'));
+    assert.equal(actionDef.runs.using, 'node24');
+    const resolvedBundle = path.resolve(path.dirname(actionYmlPath), actionDef.runs.main);
+    assert.equal(resolvedBundle, path.join(actionInstallDir, 'bundled/comment-action.js'));
+    assert.equal(resolvedBundle.startsWith(root), false, 'Bundle must resolve inside foreign installation directory, not this repository');
+
+    const childCwd = useUnrelatedCwd ? unrelatedCwd : callerWorkspace;
+    assert.notEqual(childCwd, root, 'Execution cwd must not be this repository');
+    assert.notEqual(childCwd, actionInstallDir, 'Execution cwd must not be the action install dir');
+
+    const result = await new Promise((resolve, reject) => {
+      const child = spawn(
+        process.execPath,
+        ['--require', path.join(root, 'tests/support/comment-transport-hook.cjs'), resolvedBundle],
+        {
+          cwd: childCwd,
+          timeout: 15000,
+          env: {
+            ...process.env,
+            GITHUB_WORKSPACE: callerWorkspace,
+            GITHUB_REPOSITORY: trustedRepository,
+            GITHUB_EVENT_PATH: '',
+            GITHUB_API_URL: apiUrl,
+            HTTP_PROXY: '',
+            HTTPS_PROXY: '',
+            ALL_PROXY: '',
+            http_proxy: '',
+            https_proxy: '',
+            all_proxy: '',
+            NO_PROXY: '127.0.0.1',
+            no_proxy: '127.0.0.1',
+            'INPUT_REPORT-PATH': reportInput,
+            'INPUT_METADATA-PATH': metadataInput,
+            'INPUT_GITHUB-TOKEN': 'foreign-install-test-token',
+          },
+        },
+      );
+      let stdout = '';
+      let stderr = '';
+      child.stdout.on('data', data => (stdout += data));
+      child.stderr.on('data', data => (stderr += data));
+      child.on('error', reject);
+      child.on('close', status => resolve({ status, stdout, stderr }));
+    });
+
+    return { ...result, calls, resolvedBundle, actionInstallDir, callerWorkspace, childCwd };
+  } finally {
+    await new Promise(resolve => server.close(resolve));
+    fs.rmSync(temporary, { recursive: true, force: true });
+  }
+}
+
+test('foreign installation path resolves bundled comment Action and creates or updates PR comments without relying on repository cwd', async () => {
+  // 1. Create new PR comment when invoked from an unrelated cwd with relative caller workspace paths
+  const created = await executeForeignCommentAction({ useUnrelatedCwd: true });
+  assert.equal(created.status, 0, created.stdout + created.stderr);
+  assert.deepEqual(created.calls.map(c => c.method), ['GET', 'POST']);
+  assert.equal(created.calls[1].url, '/repos/external-org/soroban-consumer/issues/19/comments');
+  assert.equal(created.calls[1].body.body, foreignReport);
+
+  // 2. Update existing PR comment when marker is already present
+  const updated = await executeForeignCommentAction({
+    existingComments: [{ id: 99, body: '<!-- weighin-report -->\nOld report' }],
+    useUnrelatedCwd: true,
+  });
+  assert.equal(updated.status, 0, updated.stdout + updated.stderr);
+  assert.deepEqual(updated.calls.map(c => c.method), ['GET', 'PATCH']);
+  assert.equal(updated.calls[1].url, '/repos/external-org/soroban-consumer/issues/comments/99');
+  assert.equal(updated.calls[1].body.body, foreignReport);
+
+  // 3. Case-insensitive repository match from foreign installation path
+  const caseInsensitive = await executeForeignCommentAction({
+    metadataContent: { ...foreignValidMetadata, repository: 'External-Org/Soroban-Consumer' },
+  });
+  assert.equal(caseInsensitive.status, 0, caseInsensitive.stdout + caseInsensitive.stderr);
+  assert.deepEqual(caseInsensitive.calls.map(c => c.method), ['GET', 'POST']);
+});
+
+test('foreign installation path fails closed on missing files, invalid metadata, and API errors with zero unauthorized mutations', async () => {
+  const missingReport = await executeForeignCommentAction({ reportContent: null });
+  assert.equal(missingReport.status, 1);
+  assert.match(missingReport.stdout + missingReport.stderr, /Report file not found/);
+  assert.deepEqual(missingReport.calls, []);
+
+  const missingMetadata = await executeForeignCommentAction({ metadataContent: null });
+  assert.equal(missingMetadata.status, 1);
+  assert.match(missingMetadata.stdout + missingMetadata.stderr, /Metadata file not found/);
+  assert.deepEqual(missingMetadata.calls, []);
+
+  for (const [label, invalidMeta, pattern] of [
+    ['malformed JSON', '{broken', /not valid JSON/],
+    ['legacy unversioned metadata', { prNumber: 19, headSha: 'a'.repeat(40) }, /Legacy unversioned/],
+    ['unsupported schemaVersion', { ...foreignValidMetadata, schemaVersion: 2 }, /Unsupported PR metadata schemaVersion/],
+    ['cross-repository mismatch', { ...foreignValidMetadata, repository: 'attacker-org/other-repo' }, /does not match trusted repository/],
+    ['non-positive prNumber', { ...foreignValidMetadata, prNumber: 0 }, /prNumber must be a positive integer/],
+    ['malformed headSha', { ...foreignValidMetadata, headSha: '12345' }, /headSha must be a 40-character hexadecimal SHA/],
+  ]) {
+    const failed = await executeForeignCommentAction({ metadataContent: invalidMeta });
+    assert.equal(failed.status, 1, `Expected foreign install failure for ${label}`);
+    assert.match(failed.stdout + failed.stderr, pattern);
+    assert.deepEqual(failed.calls, [], `Expected zero API calls for ${label}`);
+  }
+
+  const apiFailure = await executeForeignCommentAction({ apiStatusOverride: 500 });
+  assert.equal(apiFailure.status, 1);
+  assert.deepEqual(apiFailure.calls.map(c => c.method), ['GET', 'POST']);
+});
