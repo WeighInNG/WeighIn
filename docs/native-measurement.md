@@ -39,6 +39,15 @@ diagnostic, rather than the helper's generic stderr. Uncaptured state reports
 The original structured stdout stays attached for bounded snapshot recapture,
 without placing ledger keys or arbitrary envelope messages in that diagnostic.
 
+Helper executable identity is strictly bound to actual execution: the executable
+file's content SHA256 is captured before invocation, re-verified immediately after
+process termination, validated across retry attempts, and checked before emitting
+provenance. If the binary is replaced, mutated, or modified during or across execution,
+measurement fails fast with an explicit error. Remaining filesystem trust assumptions:
+WeighIn relies on standard OS filesystem access controls and assumes the host storage
+hosting the binary is not subject to in-flight inode replacement or unauthorized write
+mutation by concurrent untrusted local processes outside Node's process space.
+
 The local network script and workflow example pin the exact protocol-28 image
 used in the proof. The Action's modern contract build now uses the
 [Stellar build path](contract-build.md), with its own verified reference and
@@ -63,14 +72,22 @@ CPU comes directly from `simulated_instructions`; memory from `simulated_memory`
 They are consumed Soroban cost-model units, not submission budgets, hardware
 instruction counts or process RSS. Compute limits come from the same captured
 network configuration. No RPC instruction-budget substitution is used.
+Measured transactions must match the captured RPC endpoint's network passphrase;
+mismatched networks fail immediately before any simulation or helper execution.
 
 The adapter captures all footprint keys plus network config, ledger data,
 extensions, last-modified sequence, TTL metadata and explicitly queried absence.
-Batches must share the simulation's reported ledger. It verifies the matching
-ledger header, retries the entire capture on drift, and expands discovered keys
-when the helper reports an uncaptured read. After 30 attempts, incomplete/drifting
-state is an error. This uses current-state RPC APIs; it is not a historical-state
-reader.
+Every required network configuration setting is identified and verified before
+native helper execution; missing configuration entries fail immediately with a
+bounded list of missing setting names and are not retried as ordinary ledger drift.
+Batches must share the simulation's reported ledger. Header retrieval requires
+exactly one matching sequence row for the captured ledger with a well-formed
+history entry; ambiguous duplicate headers or malformed entry XDR are rejected,
+while unrelated valid page rows are accepted according to the RPC contract.
+It verifies the matching ledger header, retries the entire capture on drift,
+and expands discovered keys when the helper reports an uncaptured read. After 30
+attempts, incomplete/drifting state is an error. This uses current-state RPC APIs;
+it is not a historical-state reader.
 
 For the observed `getLedgerEntries` JSON-RPC error `-32603` with message
 `could not query captive core: http request failed with non-200 status code (404)`,
