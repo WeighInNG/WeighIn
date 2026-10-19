@@ -35,6 +35,17 @@ jobs:
         run: cargo +1.95.0 fetch --locked --manifest-path native/simulation/Cargo.toml --target x86_64-unknown-linux-gnu
 
       - run: npm ci
+      - name: npm audit (moderate+ advisory gate)
+        run: |
+          npm audit --audit-level=moderate --json > npm-audit.json
+          EXIT=$?
+          exit $EXIT
+      - name: Upload audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-audit-report
+          path: npm-audit.json
       - run: npm run build
       - name: Prime npm cache for offline packed-consumer tests
         run: bash scripts/prime-npm-consumer-cache.sh

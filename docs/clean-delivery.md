@@ -49,7 +49,8 @@ The historical migration experiment explicitly selects commit
 
 ## Verification experiment
 
-With the prerequisites on PATH and no existing `stellar-quickstart` sidecar:
+With the prerequisites on PATH and no existing `stellar-quickstart` container
+(the startup script preserves unowned name collisions):
 
 ```bash
 node tests/experiments/verify-clean-delivery.cjs /tmp/weighin-clean-delivery-proof

@@ -88,6 +88,36 @@ test('protocol mismatch and missing extension metadata fail explicitly', async t
   capturedRpc(t, (body, result) => body.method === 'getLedgerEntries' ? { ...result, entries: result.entries.map(({ extXdr, ...entry }) => entry) } : result);
   await assert.rejects(measureInvocation('http://captured/rpc', transaction(), helper));
 });
+test('missing required configuration entries fail explicitly before helper execution', async t => {
+  capturedRpc(t, (body, result) => {
+    if (body.method === 'getLedgerEntries') {
+      return {
+        ...result,
+        entries: result.entries.filter(e => {
+          const k = xdr.LedgerKey.fromXDR(e.key, 'base64');
+          return k.switch().name !== 'configSetting';
+        }),
+      };
+    }
+    return result;
+  });
+  await assert.rejects(
+    measureInvocation('http://captured/rpc', transaction(), helper),
+    /Missing required configuration entries/,
+  );
+});
+test('ambiguous duplicate ledger headers for sequence are rejected before helper execution', async t => {
+  capturedRpc(t, (body, result) => {
+    if (body.method === 'getLedgers') {
+      return { ...result, ledgers: [...result.ledgers, ...result.ledgers] };
+    }
+    return result;
+  });
+  await assert.rejects(
+    measureInvocation('http://captured/rpc', transaction(), helper),
+    /Ambiguous duplicate ledger headers returned for sequence/,
+  );
+});
 test('captured-state/local result disagreement is rejected rather than blended with RPC values', async t => {
   capturedRpc(t, (body, result) => body.method === 'simulateTransaction' ? { ...result, results: [{ ...result.results[0], xdr: xdr.ScVal.scvVoid().toXDR('base64') }] } : result);
   await assert.rejects(measureInvocation('http://captured/rpc', transaction(), helper), /disagrees with RPC/);

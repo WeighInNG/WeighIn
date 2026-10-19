@@ -34,7 +34,13 @@ The private deployer key remains in the existing private runner file.
 The repository startup script checks RPC health for up to 120 seconds, then uses
 the same account readiness path to fund a disposable account and confirm its RPC
 inclusion. These sequential phases can take up to 240 seconds, excluding Docker
-startup. Install Node dependencies and build TypeScript before running:
+startup. It labels its disposable `stellar-quickstart` container with
+`io.weighin.managed-by=weighin-start-local-network` and only replaces a matching
+container carrying that ownership label. An unowned name collision is preserved
+and causes an actionable error. To explicitly authorize replacing an unowned
+container, set `WEIGHIN_REPLACE_UNOWNED_CONTAINER=1` for that invocation. Docker
+ownership-inspection failures also stop startup without modifying the container.
+Install Node dependencies and build TypeScript before running:
 
 ```bash
 npm ci
@@ -68,7 +74,10 @@ node tests/experiments/verify-network-readiness.cjs /tmp/weighin-network-readine
 ```
 
 Docker access, official Stellar CLI 28.1.0, Rust 1.95.0/wasm32v1-none and native
-helper are required. The harness currently uses the locally verified CLI under
+helper are required. The startup script owns and cleans up only containers with
+its ownership label; the experiment still refuses to start when any container
+already uses the fixed name. The harness currently uses the locally verified CLI
+under
 `/tmp/weighin-stage3-stellar`; provision that path before rerunning. Cargo cache
 reuse is optional via `WEIGHIN_EXPERIMENT_CARGO_TARGET_DIR`. Fresh containers do
 not imply clean Cargo/helper builds. The experiment refuses to replace an existing
