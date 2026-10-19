@@ -28,14 +28,30 @@ for (const [label, input] of [['base', base], ['head', head]]) {
 test('real helper rejects missing config, uncaptured state, failed calls, protocol mismatch and malformed seed', async () => {
   const alteredHeader = xdr.LedgerHeader.fromXDR(base.header_xdr, 'base64'); alteredHeader.ledgerVersion(27);
   const badFunction = xdr.HostFunction.fromXDR(base.host_function_xdr, 'base64'); badFunction.invokeContract().functionName('missing');
+  const contractState = new Set(['contractCode', 'contractData']);
+  const keyType = key => xdr.LedgerKey.fromXDR(key, 'base64').switch().name;
+  // Uncaptured state and host failures use the helper's protocol-v1 failure
+  // envelope on stdout (the form measureInvocation consumes); stderr only says
+  // that the helper failed.
+  const envelope = (status, check) => error => {
+    assert.match(error.message, /Simulation helper failed: native helper failure/);
+    const failure = JSON.parse(error.stdout);
+    assert.equal(failure.protocol_version, 1);
+    assert.equal(failure.status, status);
+    check(failure);
+    return true;
+  };
   const cases = [
     [{ ...base, entries: [] }, /network configuration/],
-    [{ ...base, entries: base.entries.filter(row => !['contractCode', 'contractData'].includes(xdr.LedgerKey.fromXDR(row.key, 'base64').switch().name)) }, /UNCAPTURED_KEY/],
-    [{ ...base, host_function_xdr: badFunction.toXDR('base64') }, /host invocation failed/],
+    [{ ...base, entries: base.entries.filter(row => !contractState.has(keyType(row.key))) }, envelope('uncaptured', ({ keys }) => {
+      assert.ok(keys.length > 0);
+      for (const key of keys) assert.ok(contractState.has(keyType(key)), `${key} is not removed contract state`);
+    })],
+    [{ ...base, host_function_xdr: badFunction.toXDR('base64') }, envelope('host_failure', ({ message }) => assert.match(message, /host invocation failed/))],
     [{ ...base, header_xdr: alteredHeader.toXDR('base64') }, /unsupported protocol/],
     [{ ...base, seed: [0] }, /32 bytes/],
   ];
-  for (const [input, message] of cases) await assert.rejects(simulateSnapshot(input, helper), message);
+  for (const [input, expected] of cases) await assert.rejects(simulateSnapshot(input, helper), expected);
 });
 
 function capturedRpc(t, mutate) {

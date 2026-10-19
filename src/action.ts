@@ -14,7 +14,6 @@ import {
   enforceThresholds,
   Violation,
   PolicyOrigin,
-
 } from "./threshold";
 
 import { renderComment } from "./comment";

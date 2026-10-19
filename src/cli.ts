@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import * as fs from "fs";
+import * as path from "path";
 import { execSync } from "child_process";
 import { runMeasurement } from "./measurement";
 import { redactEndpointSecrets, sanitizeEndpoint } from "./endpoint";
@@ -12,11 +13,50 @@ function getGitCommit(): string {
   }
 }
 
+export const DEFAULT_FIXTURES_PATH = "weighin-fixtures.json";
+export const DEFAULT_OUTPUT_PATH = "weighin-results.json";
+export const DEFAULT_RPC_URL = "http://localhost:8000/rpc";
+
 export interface CliOptions {
+  /** `help` and `version` print and exit before any measurement work. */
+  command: "measure" | "help" | "version";
   fixturesPath: string;
   outputPath: string | null;
   rpcUrl: string;
   jsonStdout: boolean;
+}
+
+export function helpText(): string {
+  return `Usage: weighin [fixtures.json] [results.json | -] [options]
+
+Measures the Soroban resources used by the invocations in a fixtures file,
+against prebuilt contract WASMs, and writes the results as JSON. The CLI only
+measures: it does not build contracts, compare revisions, enforce thresholds
+or post pull request comments.
+
+Arguments:
+  fixtures.json            Fixtures file (default: ${DEFAULT_FIXTURES_PATH})
+  results.json | -         Results file, or - for JSON on stdout
+                           (default: ${DEFAULT_OUTPUT_PATH})
+
+Options:
+  --rpc-url <url>          Soroban RPC endpoint (default: ${DEFAULT_RPC_URL})
+  --output <file | ->      Results file, or - for JSON on stdout
+                           (default: ${DEFAULT_OUTPUT_PATH})
+  --stdout, --json-stdout  Write the JSON results to stdout and logs to stderr
+  -h, --help               Show this help and exit
+  --version                Show the installed WeighIn version and exit
+`;
+}
+
+/** Version from the package.json next to the installed dist/ folder. */
+export function packageVersion(): string {
+  const manifest = path.join(__dirname, "..", "package.json");
+  const { version } = JSON.parse(fs.readFileSync(manifest, "utf8"));
+  if (typeof version !== "string" || version === "") {
+    throw new Error(`No version in ${manifest}`);
+  }
+  return version;
 }
 
 export function parseArgs(
@@ -25,10 +65,19 @@ export function parseArgs(
   let fixturesPath: string | null = null;
   let explicitOutputFile: string | null = null;
   let jsonStdout = false;
-  let rpcUrl = "http://localhost:8000/rpc";
+  let rpcUrl = DEFAULT_RPC_URL;
 
   for (let i = 0; i < rawArgs.length; i++) {
     const arg = rawArgs[i];
+    if (arg === "--help" || arg === "-h" || arg === "--version") {
+      return {
+        command: arg === "--version" ? "version" : "help",
+        fixturesPath: DEFAULT_FIXTURES_PATH,
+        outputPath: null,
+        rpcUrl,
+        jsonStdout: false,
+      };
+    }
     if (arg === "--rpc-url" && rawArgs[i + 1]) {
       rpcUrl = rawArgs[++i];
     } else if (arg === "--output" && rawArgs[i + 1]) {
@@ -66,10 +115,9 @@ export function parseArgs(
   }
 
   return {
-    fixturesPath: fixturesPath || "weighin-fixtures.json",
-    outputPath: jsonStdout
-      ? null
-      : explicitOutputFile || "weighin-results.json",
+    command: "measure",
+    fixturesPath: fixturesPath || DEFAULT_FIXTURES_PATH,
+    outputPath: jsonStdout ? null : explicitOutputFile || DEFAULT_OUTPUT_PATH,
     rpcUrl,
     jsonStdout,
   };
@@ -82,6 +130,16 @@ async function main() {
   } catch (err: any) {
     console.error(err.message);
     process.exit(1);
+  }
+
+  // Before any Git probe, fixture read, RPC request or helper provisioning.
+  if (options.command === "help") {
+    process.stdout.write(helpText());
+    return;
+  }
+  if (options.command === "version") {
+    process.stdout.write(`${packageVersion()}\n`);
+    return;
   }
 
   const { fixturesPath, outputPath, rpcUrl, jsonStdout } = options;
