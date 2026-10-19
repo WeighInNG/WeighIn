@@ -30,11 +30,6 @@ import {
   SUPPORTED_PROTOCOL_VERSION,
 } from "./network";
 
-// The configured endpoint is tracked only so the terminal failure path can
-// redact any credential it may contain before reporting.
-let configuredRpcUrl = "";
-let validatedDiffJson: string | null = null;
-
 class RpcCompatibilityError extends Error {}
 
 // ---------------------------------------------------------------------------
@@ -416,9 +411,12 @@ async function upsertPrComment(token: string, body: string): Promise<void> {
 // ---------------------------------------------------------------------------
 
 async function run(): Promise<void> {
-  validatedDiffJson = null;
   let keyDir: string | null = null;
   let sharedKeyFile: string | null = null;
+  // Keep endpoint redaction and comparison state local to this invocation.
+  let configuredRpcUrl = "";
+  // This run owns the diff only after comparison and policy evaluation succeed.
+  let comparisonDiffJson: string | null = null;
 
   try {
     const fixturesPathRel = core.getInput("fixtures-path", { required: true });
@@ -602,7 +600,6 @@ async function run(): Promise<void> {
       core.info("No weighin.toml found — no thresholds enforced");
     }
     const violations: Violation[] = enforceThresholds(diff, config);
-    validatedDiffJson = JSON.stringify(diff);
     core.info(`Violations: ${violations.length}`);
     for (const v of violations) {
       core.error(
@@ -613,8 +610,9 @@ async function run(): Promise<void> {
 
     // 8. Outputs
     const result = violations.length > 0 ? "fail" : "pass";
+    comparisonDiffJson = JSON.stringify(diff);
     core.setOutput("result", result);
-    core.setOutput("diff-json", validatedDiffJson);
+    core.setOutput("diff-json", comparisonDiffJson);
 
     // Report is available in the job summary even without permission to post a PR comment.
     const body = renderComment(
@@ -657,6 +655,48 @@ async function run(): Promise<void> {
     if (violations.length > 0) {
       core.setFailed(`${violations.length} threshold violation(s) detected`);
     }
+  } catch (error: unknown) {
+    const message = redactEndpointSecrets(
+      error instanceof Error ? error.message : String(error),
+      configuredRpcUrl,
+    );
+    core.setOutput("result", "fail");
+    core.setOutput("diff-json", comparisonDiffJson ?? "{}");
+    core.setFailed(message);
+
+    const failureReport =
+      comparisonDiffJson === null
+        ? generateFailureReport(message)
+        : `## WeighIn report delivery failed\n\n${message}\n\nComparison and threshold evaluation completed. The validated comparison remains available in diff-json. The Action failed because report delivery did not complete.\n`;
+    const reportPathInput = core.getInput("report-path");
+    const headWorkspace = process.env["GITHUB_WORKSPACE"] ?? process.cwd();
+    if (reportPathInput) {
+      try {
+        writeReportFile(reportPathInput, headWorkspace, failureReport);
+      } catch (writeErr: unknown) {
+        const detail = redactEndpointSecrets(
+          writeErr instanceof Error ? writeErr.message : String(writeErr),
+          configuredRpcUrl,
+        );
+        core.warning(`Failed to write failure report: ${detail}`);
+      }
+    }
+
+    if (process.env.GITHUB_STEP_SUMMARY) {
+      try {
+        const failureSummary =
+          comparisonDiffJson === null
+            ? `## WeighIn comparison failed\n\n${message}\n\nNo passing comparison or policy result was established.\n`
+            : failureReport;
+        await core.summary.addRaw(failureSummary).write();
+      } catch (summaryErr: unknown) {
+        const detail = redactEndpointSecrets(
+          summaryErr instanceof Error ? summaryErr.message : String(summaryErr),
+          configuredRpcUrl,
+        );
+        core.warning(`Failed to write failure summary: ${detail}`);
+      }
+    }
   } finally {
     if (keyDir) {
       try {
@@ -671,33 +711,4 @@ async function run(): Promise<void> {
   }
 }
 
-run().catch(async (error: Error) => {
-  const message = redactEndpointSecrets(
-    String(error?.message ?? error),
-    configuredRpcUrl,
-  );
-  core.setOutput("result", "fail");
-  core.setOutput("diff-json", validatedDiffJson ?? "{}");
-  core.setFailed(message);
-
-  const reportPathInput = core.getInput("report-path");
-  const headWorkspace = process.env["GITHUB_WORKSPACE"] ?? process.cwd();
-  if (reportPathInput) {
-    try {
-      const failureReport = generateFailureReport(message);
-      writeReportFile(reportPathInput, headWorkspace, failureReport);
-    } catch (writeErr: any) {
-      core.warning(
-        `Failed to write unsuccessful-comparison report: ${writeErr.message}`,
-      );
-    }
-  }
-
-  if (process.env.GITHUB_STEP_SUMMARY) {
-    await core.summary
-      .addRaw(
-        `## WeighIn comparison failed\n\n${message}\n\nNo passing comparison or policy result was established.\n`,
-      )
-      .write();
-  }
-});
+void run();

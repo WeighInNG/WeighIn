@@ -264,7 +264,30 @@ function verifyLedgerVariation({
   );
 
   const rendered = renderComment(variationDiff, violations, 'ledger-900', 'ledger-1000');
-  assert.equal(rendered, summary);
+  // This archive predates the collapsible provenance section. Compare report
+  // content while allowing only its known presentation changes; the archive's
+  // byte-for-byte integrity remains checked against sha256.json by the caller.
+  const fn = variationDiff.contracts[0].functions[0];
+  const helperLine = `Helper SHA256: BASE \`${fn.base_provenance?.helper_sha256 ?? 'Unavailable'}\` → HEAD \`${fn.head_provenance?.helper_sha256 ?? 'Unavailable'}\`.`;
+  function reportContent(report) {
+    return report
+      .replace(
+        /^Snapshot ledgers: BASE (\d+) → HEAD (\d+); compute config SHA256: `([a-f0-9]{64})`\.$/gm,
+        'Snapshot ledgers: BASE $1 → HEAD $2.\nCompute config SHA256: BASE `$3` → HEAD `$3`.',
+      )
+      .replace(
+        /^Resource limits SHA256: `([a-f0-9]{64})`\.$/gm,
+        'Resource limits SHA256: BASE `$1` → HEAD `$1`.',
+      )
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line && line !== helperLine &&
+        line !== '<details><summary>Snapshot and metric provenance</summary>' &&
+        line !== '</details>')
+      .sort();
+  }
+  assert.deepEqual(reportContent(summary), reportContent(rendered),
+    'Archived report content must match the recomputed metrics, violations and provenance');
   assert.match(summary, /threshold violation/);
   assert.match(summary, /cpu_instructions increased by .*strict zero tolerance/);
 

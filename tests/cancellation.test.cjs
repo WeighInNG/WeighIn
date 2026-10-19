@@ -110,6 +110,8 @@ test("measureInvocation rejects immediately when signal is pre-aborted", async (
 test("measureInvocation interrupts captive-core transient read backoff delay promptly", async () => {
   const controller = new AbortController();
   const originalFetch = globalThis.fetch;
+  let ledgerReads = 0;
+  let abortTimer;
 
   globalThis.fetch = async (url, options) => {
     const body = options?.body ? JSON.parse(options.body) : {};
@@ -127,6 +129,14 @@ test("measureInvocation interrupts captive-core transient read backoff delay pro
       return new Response(JSON.stringify({ ...saved.raw, jsonrpc: "2.0", id: body.id }));
     }
     if (body.method === "getLedgerEntries") {
+      // Schedule cancellation only after reaching the retry path.
+      ledgerReads++;
+      if (ledgerReads === 1) {
+        abortTimer = setTimeout(
+          () => controller.abort(new Error("cancelled during ledger read backoff")),
+          40,
+        );
+      }
       // Simulate transient captive-core 404 error
       return new Response(
         JSON.stringify({
@@ -166,14 +176,13 @@ test("measureInvocation interrupts captive-core transient read backoff delay pro
       signal: controller.signal,
     });
 
-    // Abort during the transient read backoff delay (normally 250ms+)
-    setTimeout(() => controller.abort(new Error("cancelled during ledger read backoff")), 40);
-
     const start = Date.now();
     await assert.rejects(measurePromise, /cancelled during ledger read backoff/);
     const elapsed = Date.now() - start;
+    assert.equal(ledgerReads, 1, "Cancellation must interrupt the first backoff before retrying");
     assert.ok(elapsed < 500, `Expected prompt abort of delay, took ${elapsed}ms`);
   } finally {
+    clearTimeout(abortTimer);
     globalThis.fetch = originalFetch;
   }
 });

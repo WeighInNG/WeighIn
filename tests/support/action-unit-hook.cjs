@@ -72,32 +72,19 @@ Module._load = function (name, parent, ...args) {
     parent?.filename.endsWith("/dist/action.js") ||
     parent?.filename.endsWith("/dist/build.js")
   ) {
-    if (name === "@actions/core" && parent?.filename.endsWith("/dist/action.js")) {
+    if (
+      name === "@actions/core" &&
+      (mode === "summary-write-once" || mode === "summary-write-always" || mode === "summary-delivery-failure")
+    ) {
       const core = load.call(this, name, parent, ...args);
-      if (mode === "summary-delivery-failure") {
-        let failedFirstWrite = false;
-        return new Proxy(core, {
-          get(target, property, receiver) {
-            if (property === "summary") {
-              return {
-                addRaw(content) {
-                  target.summary.addRaw(content);
-                  return {
-                    async write() {
-                      if (!failedFirstWrite) {
-                        failedFirstWrite = true;
-                        throw new Error("unit summary delivery failure");
-                      }
-                      return target.summary.write();
-                    },
-                  };
-                },
-              };
-            }
-            return Reflect.get(target, property, receiver);
-          },
-        });
-      }
+      const originalWrite = core.summary.write.bind(core.summary);
+      let attempts = 0;
+      core.summary.write = async (...writeArgs) => {
+        attempts += 1;
+        if (attempts === 1 || mode === "summary-write-always")
+          throw new Error("unit summary delivery failure");
+        return originalWrite(...writeArgs);
+      };
       return core;
     }
     if (name === "@actions/github") return { context: { payload: {} } };

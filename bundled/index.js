@@ -55179,8 +55179,6 @@ function buildPrMetadata(repository, prNumber, headSha) {
 }
 
 // src/action.ts
-var configuredRpcUrl = "";
-var validatedDiffJson = null;
 var RpcCompatibilityError = class extends Error {
 };
 async function assertRpcHealthy(rpcUrl) {
@@ -55452,9 +55450,10 @@ async function upsertPrComment(token, body) {
   }
 }
 async function run() {
-  validatedDiffJson = null;
   let keyDir = null;
   let sharedKeyFile = null;
+  let configuredRpcUrl = "";
+  let comparisonDiffJson = null;
   try {
     const fixturesPathRel = core3.getInput("fixtures-path", { required: true });
     const configPathRel = core3.getInput("config-path");
@@ -55603,7 +55602,6 @@ async function run() {
       core3.info("No weighin.toml found \u2014 no thresholds enforced");
     }
     const violations = enforceThresholds(diff, config2);
-    validatedDiffJson = JSON.stringify(diff);
     core3.info(`Violations: ${violations.length}`);
     for (const v of violations) {
       core3.error(
@@ -55612,8 +55610,9 @@ async function run() {
     }
     core3.endGroup();
     const result = violations.length > 0 ? "fail" : "pass";
+    comparisonDiffJson = JSON.stringify(diff);
     core3.setOutput("result", result);
-    core3.setOutput("diff-json", validatedDiffJson);
+    core3.setOutput("diff-json", comparisonDiffJson);
     const body = renderComment(
       diff,
       violations,
@@ -55650,6 +55649,50 @@ async function run() {
     if (violations.length > 0) {
       core3.setFailed(`${violations.length} threshold violation(s) detected`);
     }
+  } catch (error2) {
+    const message = redactEndpointSecrets(
+      error2 instanceof Error ? error2.message : String(error2),
+      configuredRpcUrl
+    );
+    core3.setOutput("result", "fail");
+    core3.setOutput("diff-json", comparisonDiffJson ?? "{}");
+    core3.setFailed(message);
+    const failureReport = comparisonDiffJson === null ? generateFailureReport(message) : `## WeighIn report delivery failed
+
+${message}
+
+Comparison and threshold evaluation completed. The validated comparison remains available in diff-json. The Action failed because report delivery did not complete.
+`;
+    const reportPathInput = core3.getInput("report-path");
+    const headWorkspace = process.env["GITHUB_WORKSPACE"] ?? process.cwd();
+    if (reportPathInput) {
+      try {
+        writeReportFile(reportPathInput, headWorkspace, failureReport);
+      } catch (writeErr) {
+        const detail = redactEndpointSecrets(
+          writeErr instanceof Error ? writeErr.message : String(writeErr),
+          configuredRpcUrl
+        );
+        core3.warning(`Failed to write failure report: ${detail}`);
+      }
+    }
+    if (process.env.GITHUB_STEP_SUMMARY) {
+      try {
+        const failureSummary = comparisonDiffJson === null ? `## WeighIn comparison failed
+
+${message}
+
+No passing comparison or policy result was established.
+` : failureReport;
+        await core3.summary.addRaw(failureSummary).write();
+      } catch (summaryErr) {
+        const detail = redactEndpointSecrets(
+          summaryErr instanceof Error ? summaryErr.message : String(summaryErr),
+          configuredRpcUrl
+        );
+        core3.warning(`Failed to write failure summary: ${detail}`);
+      }
+    }
   } finally {
     if (keyDir) {
       try {
@@ -55663,37 +55706,7 @@ async function run() {
     }
   }
 }
-run().catch(async (error2) => {
-  const message = redactEndpointSecrets(
-    String(error2?.message ?? error2),
-    configuredRpcUrl
-  );
-  core3.setOutput("result", "fail");
-  core3.setOutput("diff-json", validatedDiffJson ?? "{}");
-  core3.setFailed(message);
-  const reportPathInput = core3.getInput("report-path");
-  const headWorkspace = process.env["GITHUB_WORKSPACE"] ?? process.cwd();
-  if (reportPathInput) {
-    try {
-      const failureReport = generateFailureReport(message);
-      writeReportFile(reportPathInput, headWorkspace, failureReport);
-    } catch (writeErr) {
-      core3.warning(
-        `Failed to write unsuccessful-comparison report: ${writeErr.message}`
-      );
-    }
-  }
-  if (process.env.GITHUB_STEP_SUMMARY) {
-    await core3.summary.addRaw(
-      `## WeighIn comparison failed
-
-${message}
-
-No passing comparison or policy result was established.
-`
-    ).write();
-  }
-});
+void run();
 /*! Bundled license information:
 
 undici/lib/web/fetch/body.js:

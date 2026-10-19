@@ -30,12 +30,38 @@ test('real helper rejects missing config, uncaptured state, failed calls, protoc
   const badFunction = xdr.HostFunction.fromXDR(base.host_function_xdr, 'base64'); badFunction.invokeContract().functionName('missing');
   const cases = [
     [{ ...base, entries: [] }, /network configuration/],
-    [{ ...base, entries: base.entries.filter(row => !['contractCode', 'contractData'].includes(xdr.LedgerKey.fromXDR(row.key, 'base64').switch().name)) }, /UNCAPTURED_KEY/],
-    [{ ...base, host_function_xdr: badFunction.toXDR('base64') }, /host invocation failed/],
+    [{ ...base, entries: base.entries.filter(row => !['contractCode', 'contractData'].includes(xdr.LedgerKey.fromXDR(row.key, 'base64').switch().name)) }, /snapshot is missing ledger keys/, 'uncaptured'],
+    [{ ...base, host_function_xdr: badFunction.toXDR('base64') }, /host invocation failed/, 'host_failure'],
     [{ ...base, header_xdr: alteredHeader.toXDR('base64') }, /unsupported protocol/],
     [{ ...base, seed: [0] }, /32 bytes/],
   ];
-  for (const [input, message] of cases) await assert.rejects(simulateSnapshot(input, helper), message);
+  for (const [input, message, status] of cases) {
+    await assert.rejects(simulateSnapshot(input, helper), error => {
+      assert.equal(error.exitCode, 1);
+      if (!status) {
+        assert.match(error.message, message);
+        return true;
+      }
+      const envelope = JSON.parse(error.stdout);
+      assert.equal(envelope.protocol_version, 1);
+      assert.equal(envelope.status, status);
+      assert.match(envelope.message, message);
+      if (status === 'uncaptured') {
+        assert.ok(Array.isArray(envelope.keys));
+        assert.ok(envelope.keys.length > 0);
+        const capturedKeys = new Set(input.entries.map(row => row.key));
+        const expectedKeys = new Set(base.entries.map(row => row.key));
+        for (const key of envelope.keys) {
+          xdr.LedgerKey.fromXDR(key, 'base64');
+          assert.ok(expectedKeys.has(key), 'reported key belongs to the retained snapshot');
+          assert.ok(!capturedKeys.has(key), 'reported key is absent from the supplied snapshot');
+        }
+      } else {
+        assert.equal(envelope.keys, undefined);
+      }
+      return true;
+    });
+  }
 });
 
 function capturedRpc(t, mutate) {

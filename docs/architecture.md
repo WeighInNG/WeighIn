@@ -174,6 +174,15 @@ valid comparison emit `fail` and `{}`; they never reuse a diff from another run.
 There is no successful no-baseline fallback. Optional direct-comment failure is
 warning-only.
 
+Once comparison and threshold evaluation finish, their serialized diff belongs
+to that invocation and survives subsequent report-file, metadata-file, or
+job-summary delivery failures. Those failures still emit `result: fail` and
+fail the Action with the delivery diagnostic. Failure reports distinguish this
+case from a comparison that never completed. A secondary failure while writing
+the failure report or summary is a warning; it does not replace the original
+diagnostic. Earlier failures continue to emit `{}`, and no diff is shared
+between invocations.
+
 The separate `comment/` Action runs `bundled/comment-action.js`, reads and
 validates downloaded report/PR metadata, and creates or updates the comment
 carrying `<!-- weighin-report -->`. It fails on missing artifacts, invalid
