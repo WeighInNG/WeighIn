@@ -1,0 +1,31 @@
+{
+  "id": "discarded-writes-fixture",
+  "contracts": [
+    {
+      "id": "reference-contract",
+      "wasm_path": "contract/target/wasm32v1-none/release/discarded_writes_contract.wasm",
+      "invocations": [
+        {
+          "id": "write-seed",
+          "function_name": "hello",
+          "args": [
+            {
+              "type": "symbol",
+              "value": "write"
+            }
+          ]
+        },
+        {
+          "id": "read-after-write",
+          "function_name": "hello",
+          "args": [
+            {
+              "type": "symbol",
+              "value": "read"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "contract_id": "CCCJJJDJ5HS676PYT6DCMY4RJVOAQMUOWBG5OQBVYTXNLWOFX4UF2ZKJ",
+  "wasm_sha256": "309dc48348de58b63f17c396fa075ba5839283abef31f4e7f52c07a87b049ead",
+  "persistent_state_key_xdr": "AAAABgAAAAGElKRp6eXv+fifhiZjkU1cCDKOsE3XQDXE7tXZxb8oXQAAAA8AAAAFc3RhdGUAAAAAAAAB",
+  "write_case": {
+    "case_id": "id:write-seed",
+    "decoded_return": [
+      "Hello",
+      "write",
+      "wrote",
+      "seeded"
+    ],
+    "cpu_instructions": 312480,
+    "memory_bytes": 1193420,
+    "ledger_read_entries": 3,
+    "ledger_read_bytes": 1584,
+    "ledger_write_entries": 1,
+    "ledger_write_bytes": 88,
+    "committed_after_simulation": false
+  },
+  "read_after_write_case": {
+    "case_id": "id:read-after-write",
+    "decoded_return": [
+      "Hello",
+      "read",
+      "absent",
+      "uninit"
+    ],
+    "cpu_instructions": 274910,
+    "memory_bytes": 1126840,
+    "ledger_read_entries": 3,
+    "ledger_read_bytes": 1584,
+    "ledger_write_entries": 0,
+    "ledger_write_bytes": 0,
+    "observed_committed_state": "absent",
+    "observed_prior_simulated_write": false
+  },
+  "seeded_state_control": {
+    "case_id": "id:read-after-write",
+    "decoded_return": [
+      "Hello",
+      "read",
+      "present",
+      "seeded"
+    ],
+    "cpu_instructions": 283650,
+    "memory_bytes": 1131120,
+    "ledger_read_entries": 3,
+    "ledger_read_bytes": 1672,
+    "ledger_write_entries": 0,
+    "ledger_write_bytes": 0,
+    "observed_committed_state": "present"
+  }
+}

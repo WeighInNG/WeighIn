@@ -1,0 +1,38 @@
+[
+  {
+    "contract_id": "CCCJJJDJ5HS676PYT6DCMY4RJVOAQMUOWBG5OQBVYTXNLWOFX4UF2ZKJ",
+    "function_name": "hello",
+    "metric": "cpu_instructions",
+    "delta": 8740,
+    "pct": 3.1792222909315777,
+    "rule": "strict_zero_tolerance",
+    "message": "cpu_instructions increased by 8740 (strict zero tolerance)",
+    "fixture_id": "id:discarded-writes-fixture",
+    "logical_id": "id:reference-contract",
+    "case_id": "id:read-after-write"
+  },
+  {
+    "contract_id": "CCCJJJDJ5HS676PYT6DCMY4RJVOAQMUOWBG5OQBVYTXNLWOFX4UF2ZKJ",
+    "function_name": "hello",
+    "metric": "memory_bytes",
+    "delta": 4280,
+    "pct": 0.37982322246281636,
+    "rule": "strict_zero_tolerance",
+    "message": "memory_bytes increased by 4280 (strict zero tolerance)",
+    "fixture_id": "id:discarded-writes-fixture",
+    "logical_id": "id:reference-contract",
+    "case_id": "id:read-after-write"
+  },
+  {
+    "contract_id": "CCCJJJDJ5HS676PYT6DCMY4RJVOAQMUOWBG5OQBVYTXNLWOFX4UF2ZKJ",
+    "function_name": "hello",
+    "metric": "ledger_read_bytes",
+    "delta": 88,
+    "pct": 5.555555555555555,
+    "rule": "strict_zero_tolerance",
+    "message": "ledger_read_bytes increased by 88 (strict zero tolerance)",
+    "fixture_id": "id:discarded-writes-fixture",
+    "logical_id": "id:reference-contract",
+    "case_id": "id:read-after-write"
+  }
+]

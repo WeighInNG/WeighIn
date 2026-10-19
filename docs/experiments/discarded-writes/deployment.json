@@ -1,0 +1,31 @@
+{
+  "fixture_id": "id:discarded-writes-fixture",
+  "logical_id": "id:reference-contract",
+  "contract_id": "CCCJJJDJ5HS676PYT6DCMY4RJVOAQMUOWBG5OQBVYTXNLWOFX4UF2ZKJ",
+  "deployer_public_key": "GBBM6BKZPEHWYO3E3YKREDPQXMS4VK35YLNU7NFBRI26RAN7GI5POFBB",
+  "wasm_sha256": "309dc48348de58b63f17c396fa075ba5839283abef31f4e7f52c07a87b049ead",
+  "was_already_deployed_before_run": false,
+  "deployment_ledger": 1100,
+  "submitted_transactions": [
+    {
+      "phase": "wasm_upload",
+      "operation": "uploadContractWasm",
+      "submitted": true,
+      "status": "SUCCESS",
+      "inclusion_ledger": 1099,
+      "tx_hash": "58a13a387c18d1b8257cdfadd676c548b8bc804024617531e5d6bc6511fb5825"
+    },
+    {
+      "phase": "contract_creation",
+      "operation": "createCustomContract",
+      "submitted": true,
+      "status": "SUCCESS",
+      "inclusion_ledger": 1100,
+      "tx_hash": "cba923ea0e4045d766dee4d349d3871749917fb506f78c69b1c4b1b07c76b8e5"
+    }
+  ],
+  "submitted_invocation_transactions": 0,
+  "pre_invocation_state_key_present": false,
+  "post_write_simulation_state_key_present": false,
+  "post_suite_state_key_present": false
+}
