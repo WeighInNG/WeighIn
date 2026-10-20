@@ -2,10 +2,14 @@
 // Injected failures and altered ledgers are not live network evidence.
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const os=require('node:os');
+const path=require('node:path');
+const crypto=require('node:crypto');
 const {EventEmitter}=require('node:events');
 const cp=require('node:child_process');
 const {Transaction,Keypair,xdr}=require('@stellar/stellar-sdk');
-const {measureInvocation}=require('../dist/simulation');
+const {measureInvocation,captureHelperIdentity}=require('../dist/simulation');
 const calls=require('../docs/experiments/repeatability/completed/run-1-rpc.json');
 const replay=require('../docs/experiments/repeatability/completed/run-1-native.json')[0];
 const saved=calls.find(c=>c.request.method==='simulateTransaction'
@@ -25,9 +29,21 @@ function scenario(t,options={}){
     simulation.transactionData=data.toXDR('base64');output.transaction_data_xdr=simulation.transactionData;
     output.read_only_keys=data.resources().footprint().readOnly().map(k=>k.toXDR('base64'));
   }
-  const transaction=new Transaction(saved.request.params.transaction,replay.input.network_passphrase);
+  const txNetworkPassphrase = options.txNetworkPassphrase ?? replay.input.network_passphrase;
+  const transaction=new Transaction(saved.request.params.transaction,txNetworkPassphrase);
   const baseLedger=saved.raw.result.latestLedger;
-  const entries=replay.input.entries.filter(row=>row.xdr);
+  let entries=replay.input.entries.filter(row=>row.xdr);
+  if(options.omitConfigs){
+    entries = entries.filter(row => {
+      try {
+        const k = xdr.LedgerKey.fromXDR(row.key, 'base64');
+        if (k.switch().name === 'configSetting') {
+          return !options.omitConfigs.includes(k.configSetting().configSettingId().name);
+        }
+      } catch {}
+      return true;
+    });
+  }
   t.mock.method(console,'warn',message=>state.warnings.push(message));
   t.mock.method(globalThis,'setTimeout',(callback,delay)=>{state.delays.push(delay);return setImmediate(callback);});
   t.mock.method(globalThis,'fetch',async(url,fetchOptions)=>{
@@ -53,7 +69,19 @@ function scenario(t,options={}){
       const header=xdr.LedgerHeader.fromXDR(replay.input.header_xdr,'base64');
       header.ledgerSeq(baseLedger+state.simulations-1+(options.headerMismatch?1:0));
       const history=new xdr.LedgerHeaderHistoryEntry({hash:Buffer.alloc(32),header,ext:new xdr.LedgerHeaderHistoryEntryExt(0)});
-      result={ledgers:[{sequence:baseLedger+state.simulations-1,headerXdr:history.toXDR('base64')}]};
+      const seq = baseLedger+state.simulations-1;
+      const headerXdr = options.malformedHeaderXdr ? 'invalid-header-xdr' : history.toXDR('base64');
+      if (options.duplicateHeaders) {
+        result={ledgers:[{sequence:seq,headerXdr},{sequence:seq,headerXdr}]};
+      } else if (options.extraPageHeaders) {
+        result={ledgers:[
+          {sequence:seq - 1, headerXdr},
+          {sequence:seq, headerXdr},
+          {sequence:seq + 1, headerXdr},
+        ]};
+      } else {
+        result={ledgers:[{sequence:seq,headerXdr}]};
+      }
     }
     const error=options.error?.(request.method,state);
     let envelope=error?{jsonrpc:'2.0',id:request.id,error}:{jsonrpc:'2.0',id:request.id,result};
@@ -62,12 +90,19 @@ function scenario(t,options={}){
     if(options.badEnvelope==='wrong-version'&&request.method==='getNetwork')envelope={...envelope,jsonrpc:'1.0'};
     return new Response(JSON.stringify(envelope),{status:options.httpFailure?404:200});
   });
+  const helperFile = options.helperPath ?? __filename;
   t.mock.method(cp,'execFile',(file,args,childOptions,callback)=>{
-    assert.equal(file,__filename);
+    assert.equal(file, helperFile);
     const stdin=new EventEmitter();stdin.end=data=>{
       state.helpers.push(JSON.parse(data));
+      if(options.mutateHelperDuringExecution){
+        fs.appendFileSync(helperFile, ' // mutated during execution');
+      }
       if(options.helperFailure)return setImmediate(()=>callback(new Error(options.helperFailure)));
       if(options.uncapturedKeys){
+        if(options.mutateHelperAcrossAttempts){
+          fs.appendFileSync(helperFile, ' // mutated across attempts');
+        }
         const seed=Buffer.alloc(32);seed.writeUInt32BE(state.helpers.length+1000,28);
         const k=xdr.LedgerKey.account(new xdr.LedgerKeyAccount({accountId:Keypair.fromRawEd25519Seed(seed).xdrPublicKey()})).toXDR('base64');
         return setImmediate(()=>callback(new Error(`Simulation failed: UNCAPTURED_KEY:${k}`)));
@@ -95,7 +130,7 @@ function scenario(t,options={}){
       setImmediate(()=>callback(null,JSON.stringify(actual),''));
     };return {stdin};
   });
-  return {state,run:()=>measureInvocation('http://controlled.invalid/rpc',transaction,__filename),baseLedger};
+  return {state,run:()=>measureInvocation('http://controlled.invalid/rpc',transaction,helperFile),baseLedger};
 }
 
 test('observed ledger-read failure recovers by re-simulating and returning only the new snapshot',async t=>{
@@ -306,4 +341,187 @@ test('diagnostic events and failed-call events are excluded from charged event p
   const result = await run();
   assert.ok(result);
   assert.equal(result.provenance.protocol, 28);
+});
+
+// Issue #123: Missing required configuration entries
+test('missing single required configuration setting fails fast with setting name before helper execution', async t => {
+  const { state, run } = scenario(t, { omitConfigs: ['configSettingStateArchival'] });
+  await assert.rejects(
+    run(),
+    /Missing required configuration entries: \[configSettingStateArchival\]/,
+  );
+  assert.equal(state.helpers.length, 0);
+  assert.equal(state.delays.length, 0);
+  assert.equal(state.simulations, 1);
+});
+
+test('multiple missing required configuration settings report all missing names and do not retry as drift', async t => {
+  const { state, run } = scenario(t, {
+    omitConfigs: ['configSettingStateArchival', 'configSettingContractComputeV0'],
+  });
+  await assert.rejects(
+    run(),
+    /Missing required configuration entries: \[configSettingContractComputeV0, configSettingStateArchival\]/,
+  );
+  assert.equal(state.helpers.length, 0);
+  assert.equal(state.delays.length, 0);
+  assert.equal(state.simulations, 1);
+});
+
+// Issue #124: Reject ambiguous duplicate ledger headers
+test('ambiguous duplicate ledger headers for the captured sequence are rejected before helper execution', async t => {
+  const { state, run } = scenario(t, { duplicateHeaders: true });
+  await assert.rejects(
+    run(),
+    /Ambiguous duplicate ledger headers returned for sequence/,
+  );
+  assert.equal(state.helpers.length, 0);
+});
+
+test('malformed ledger header history entry XDR fails explicitly before helper execution', async t => {
+  const { state, run } = scenario(t, { malformedHeaderXdr: true });
+  await assert.rejects(
+    run(),
+    /Malformed ledger header history entry XDR/,
+  );
+  assert.equal(state.helpers.length, 0);
+});
+
+test('unrelated valid page rows alongside the captured ledger header are accepted', async t => {
+  const { state, run } = scenario(t, { extraPageHeaders: true });
+  const result = await run();
+  assert.ok(result);
+  assert.equal(result.provenance.protocol, 28);
+  assert.equal(state.helpers.length, 1);
+});
+
+// Issue #125: Bind transaction network identity
+test('transaction prepared for another network is rejected before native measurement without metrics', async t => {
+  const { state, run } = scenario(t, {
+    txNetworkPassphrase: 'Test SDF Future Network ; October 2022',
+  });
+  await assert.rejects(
+    run(),
+    /Transaction network passphrase "Test SDF Future Network ; October 2022" does not match RPC network passphrase/,
+  );
+  assert.equal(state.helpers.length, 0);
+  assert.equal(state.simulations, 0);
+});
+
+// Issue #126: Bind helper provenance to executable actually used
+test('captureHelperIdentity reads and hashes valid files and rejects non-files or missing paths', t => {
+  const tmpDir = os.tmpdir();
+  const tmpFile = path.join(tmpDir, `weighin-helper-test-${Date.now()}-${Math.random().toString(36).slice(2)}.bin`);
+  const content = 'mock-executable-binary-contents-12345';
+  fs.writeFileSync(tmpFile, content);
+  t.after(() => {
+    try { fs.unlinkSync(tmpFile); } catch {}
+  });
+
+  const expectedHash = crypto.createHash('sha256').update(content).digest('hex');
+  const actualHash = captureHelperIdentity(tmpFile);
+  assert.equal(actualHash, expectedHash);
+
+  assert.throws(
+    () => captureHelperIdentity(path.join(tmpDir, 'nonexistent-helper-file-path-xyz')),
+    /Failed to capture simulation helper identity/,
+  );
+
+  assert.throws(
+    () => captureHelperIdentity(tmpDir),
+    /is not a regular file/,
+  );
+});
+
+test('helper executable modified during execution is rejected before emitting provenance', async t => {
+  const tmpDir = os.tmpdir();
+  const tmpFile = path.join(tmpDir, `weighin-helper-mutate-${Date.now()}-${Math.random().toString(36).slice(2)}.bin`);
+  fs.writeFileSync(tmpFile, 'initial-helper-bytes');
+  t.after(() => {
+    try { fs.unlinkSync(tmpFile); } catch {}
+  });
+
+  const { state, run } = scenario(t, {
+    helperPath: tmpFile,
+    mutateHelperDuringExecution: true,
+  });
+
+  await assert.rejects(
+    run(),
+    /Simulation helper executable was modified during execution/,
+  );
+  assert.equal(state.helpers.length, 1);
+});
+
+test('helper executable modified across retry attempts is rejected before re-execution', async t => {
+  const tmpDir = os.tmpdir();
+  const tmpFile = path.join(tmpDir, `weighin-helper-retry-${Date.now()}-${Math.random().toString(36).slice(2)}.bin`);
+  fs.writeFileSync(tmpFile, 'initial-retry-helper-bytes');
+  t.after(() => {
+    try { fs.unlinkSync(tmpFile); } catch {}
+  });
+
+  let mutated = false;
+  const { state, run } = scenario(t, {
+    helperPath: tmpFile,
+    uncapturedKeys: true,
+    error: (method, s) => {
+      if (s.helpers.length === 1 && !mutated) {
+        mutated = true;
+        fs.appendFileSync(tmpFile, ' // mutated between attempt 1 and 2');
+      }
+      return null;
+    },
+  });
+
+  await assert.rejects(
+    run(),
+    /Simulation helper executable was modified across attempts/,
+  );
+  assert.equal(state.helpers.length, 1);
+});
+
+test('helper executable modified before emitting provenance is rejected', async t => {
+  const tmpDir = os.tmpdir();
+  const tmpFile = path.join(tmpDir, `weighin-helper-prov-${Date.now()}-${Math.random().toString(36).slice(2)}.bin`);
+  fs.writeFileSync(tmpFile, 'initial-prov-helper-bytes');
+  t.after(() => {
+    try { fs.unlinkSync(tmpFile); } catch {}
+  });
+
+  let readCount = 0;
+  const originalReadFileSync = fs.readFileSync;
+  t.mock.method(fs, 'readFileSync', (p, opts) => {
+    if (p === tmpFile) {
+      readCount++;
+      if (readCount === 3) {
+        return Buffer.from('tampered-bytes-before-provenance');
+      }
+    }
+    return originalReadFileSync(p, opts);
+  });
+
+  const { state, run } = scenario(t, { helperPath: tmpFile });
+
+  await assert.rejects(
+    run(),
+    /Simulation helper executable was modified before emitting provenance/,
+  );
+  assert.equal(state.helpers.length, 1);
+});
+
+test('unchanged helper executable records verified helper_sha256 in provenance', async t => {
+  const tmpDir = os.tmpdir();
+  const tmpFile = path.join(tmpDir, `weighin-helper-clean-${Date.now()}-${Math.random().toString(36).slice(2)}.bin`);
+  const content = 'clean-verified-helper-binary';
+  fs.writeFileSync(tmpFile, content);
+  t.after(() => {
+    try { fs.unlinkSync(tmpFile); } catch {}
+  });
+
+  const expectedHash = crypto.createHash('sha256').update(content).digest('hex');
+  const { run } = scenario(t, { helperPath: tmpFile });
+  const result = await run();
+
+  assert.equal(result.provenance.helper_sha256, expectedHash);
 });

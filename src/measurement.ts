@@ -5,6 +5,7 @@ import { parseFixtures } from "./identity";
 import { ensureAccountReady } from "./account";
 import { redactEndpointSecrets, sanitizeEndpoint } from "./endpoint";
 import { validateLargeInt } from "./config";
+import { SUPPORTED_NETWORK_PASSPHRASE } from "./network";
 import {
   measureInvocation,
   resolveSimulationHelper,
@@ -27,7 +28,6 @@ import {
 } from "@stellar/stellar-sdk";
 
 const DEFAULT_RPC_URL = "http://localhost:8000/rpc";
-const NETWORK_PASSPHRASE = "Standalone Network ; February 2017";
 
 /** Schema 4 adds audited consumption and per-metric limit provenance. */
 export interface MetricValue {
@@ -288,7 +288,7 @@ function calculateContractId(deployerAddress: string, salt: Buffer): string {
     }),
   );
 
-  const networkId = hash(Buffer.from(NETWORK_PASSPHRASE));
+  const networkId = hash(Buffer.from(SUPPORTED_NETWORK_PASSPHRASE));
   const hashIdPreimage = xdr.HashIdPreimage.envelopeTypeContractId(
     new xdr.HashIdPreimageContractId({
       networkId: networkId,
@@ -583,7 +583,7 @@ export async function runMeasurement(
       // 1. Upload WASM
       const uploadTx = new TransactionBuilder(account, {
         fee: "1000000",
-        networkPassphrase: NETWORK_PASSPHRASE,
+        networkPassphrase: SUPPORTED_NETWORK_PASSPHRASE,
       })
         .addOperation(Operation.uploadContractWasm({ wasm: wasmBytes }))
         .setTimeout(30)
@@ -613,7 +613,7 @@ export async function runMeasurement(
       // 2. Create contract instance
       const createTx = new TransactionBuilder(account, {
         fee: "1000000",
-        networkPassphrase: NETWORK_PASSPHRASE,
+        networkPassphrase: SUPPORTED_NETWORK_PASSPHRASE,
       })
         .addOperation(
           Operation.createCustomContract({
@@ -654,7 +654,7 @@ export async function runMeasurement(
 
       const invokeTx = new TransactionBuilder(account, {
         fee: "1000000",
-        networkPassphrase: NETWORK_PASSPHRASE,
+        networkPassphrase: SUPPORTED_NETWORK_PASSPHRASE,
       })
         .addOperation(
           Operation.invokeContractFunction({

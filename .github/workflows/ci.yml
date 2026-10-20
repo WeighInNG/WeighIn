@@ -18,6 +18,17 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      - name: npm audit (moderate+ advisory gate)
+        run: |
+          npm audit --audit-level=moderate --json > npm-audit.json
+          EXIT=$?
+          exit $EXIT
+      - name: Upload audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-audit-report
+          path: npm-audit.json
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run test
