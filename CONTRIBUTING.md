@@ -94,7 +94,7 @@ upgrading libraries; do not apply forced blanket upgrades.
 | `src/measurement.ts`, `src/simulation.ts` | Deployment, snapshot capture, resource extraction and parity |
 | `native/simulation` | Official native Soroban simulation helper |
 | `src/diff.ts`, `src/threshold.ts` | Comparable resource differences and policies |
-| `src/comment.ts`, `src/report.ts`, `src/comment-action.ts` | Markdown/artifacts and comment delivery |
+| `src/comment.ts`, `src/report.ts`, `src/comment-action.ts` | Markdown/artifacts (atomic same-directory temp-and-rename report writes) and comment delivery |
 | `src/cli.ts` | Prebuilt-WASM measurement JSON command |
 
 ## Pull requests

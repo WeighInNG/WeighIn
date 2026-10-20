@@ -47,7 +47,76 @@ describe("writeReportFile", () => {
     fs.mkdirSync(path.join(tempDir, dirAsFile));
 
     expect(() => writeReportFile(dirAsFile, tempDir, "body")).toThrow(
-      /Failed to write WeighIn report to .*dir-as-file: EISDIR/,
+      /Failed to write WeighIn report to .*dir-as-file: (?:EISDIR|EPERM)/,
+    );
+  });
+
+  it("writes via an owned same-directory temporary file and leaves no temporary files behind on success", () => {
+    const reportPath = "atomic-report.md";
+    const body = "# Atomic WeighIn Report\n\nComplete payload";
+    const renameCalls: Array<[string, string]> = [];
+    writeReportFile(reportPath, tempDir, body, {
+      renameSync: (oldPath, newPath) => {
+        renameCalls.push([String(oldPath), String(newPath)]);
+        fs.renameSync(oldPath, newPath);
+      },
+    });
+    expect(renameCalls.length).toBe(1);
+    const [srcTmp, destTarget] = renameCalls[0];
+    expect(path.dirname(srcTmp)).toBe(tempDir);
+    expect(path.basename(srcTmp)).toMatch(
+      /^\.atomic-report\.md\.weighin-.*\.tmp$/,
+    );
+    expect(destTarget).toBe(path.join(tempDir, reportPath));
+
+    const entries = fs.readdirSync(tempDir);
+    expect(entries).toEqual([reportPath]);
+    expect(fs.readFileSync(path.join(tempDir, reportPath), "utf8")).toBe(body);
+  });
+
+  it("preserves an existing report and cleans only its owned temporary file when write or rename fails", () => {
+    const reportPath = "existing-report.md";
+    const fullPath = path.join(tempDir, reportPath);
+    const previousContent = "# Previous Valid Report\n\nKeep me intact";
+    fs.writeFileSync(fullPath, previousContent, "utf8");
+
+    // Simulate a concurrent writer's temporary file in the same directory
+    const concurrentTmp = path.join(
+      tempDir,
+      ".existing-report.md.weighin-concurrent-99999.tmp",
+    );
+    fs.writeFileSync(concurrentTmp, "in-flight concurrent write", "utf8");
+
+    expect(() =>
+      writeReportFile(reportPath, tempDir, "# Replacement Report", {
+        renameSync: () => {
+          throw new Error("simulated rename failure");
+        },
+      }),
+    ).toThrow(/Failed to write WeighIn report.*simulated rename failure/);
+
+    // Also test write failure after temp file creation
+    expect(() =>
+      writeReportFile(reportPath, tempDir, "# Replacement Report 2", {
+        writeFileSync: (file) => {
+          fs.writeFileSync(file, "partial content", "utf8");
+          throw new Error("simulated partial write failure");
+        },
+      }),
+    ).toThrow(
+      /Failed to write WeighIn report.*simulated partial write failure/,
+    );
+
+    // Previous valid report is preserved untouched
+    expect(fs.readFileSync(fullPath, "utf8")).toBe(previousContent);
+    // Concurrent writer's temporary file is untouched, while our owned temporary files were cleaned up
+    expect(fs.existsSync(concurrentTmp)).toBe(true);
+    expect(fs.readFileSync(concurrentTmp, "utf8")).toBe(
+      "in-flight concurrent write",
+    );
+    const remainingFiles = fs.readdirSync(tempDir).sort();
+    expect(remainingFiles).toEqual(
+      [path.basename(concurrentTmp), reportPath].sort(),
     );
   });
 });
