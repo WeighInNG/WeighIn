@@ -28,12 +28,23 @@ for (const [label, input] of [['base', base], ['head', head]]) {
 test('real helper rejects missing config, uncaptured state, failed calls, protocol mismatch and malformed seed', async () => {
   const alteredHeader = xdr.LedgerHeader.fromXDR(base.header_xdr, 'base64'); alteredHeader.ledgerVersion(27);
   const badFunction = xdr.HostFunction.fromXDR(base.host_function_xdr, 'base64'); badFunction.invokeContract().functionName('missing');
+  const absentKey = xdr.LedgerKey.account(
+    new xdr.LedgerKeyAccount({ accountId: xdr.PublicKey.publicKeyTypeEd25519(Buffer.alloc(32, 9)) })
+  ).toXDR('base64');
+  const withValidAbsent = await simulateSnapshot(
+    { ...base, entries: [...base.entries, { key: absentKey, xdr: null }] },
+    helper
+  );
+  assert.equal(withValidAbsent.cpu_instructions_consumed, 270219);
   const cases = [
     [{ ...base, entries: [] }, /network configuration/],
     [{ ...base, entries: base.entries.filter(row => !['contractCode', 'contractData'].includes(xdr.LedgerKey.fromXDR(row.key, 'base64').switch().name)) }, /UNCAPTURED_KEY/],
     [{ ...base, host_function_xdr: badFunction.toXDR('base64') }, /host invocation failed/],
     [{ ...base, header_xdr: alteredHeader.toXDR('base64') }, /unsupported protocol/],
     [{ ...base, seed: [0] }, /32 bytes/],
+    [{ ...base, entries: [...base.entries, { key: absentKey, xdr: null, extension_xdr: base.entries[0].extension_xdr }] }, /absent snapshot entry must not include extension, last-modified, or live-until metadata/],
+    [{ ...base, entries: [...base.entries, { key: absentKey, xdr: null, last_modified: 229 }] }, /absent snapshot entry must not include extension, last-modified, or live-until metadata/],
+    [{ ...base, entries: [...base.entries, { key: absentKey, xdr: null, live_until: 500 }] }, /absent snapshot entry must not include extension, last-modified, or live-until metadata/],
   ];
   for (const [input, message] of cases) await assert.rejects(simulateSnapshot(input, helper), message);
 });

@@ -82,7 +82,9 @@ Host settings match the proven RPC configuration: protocol 28, host features
 32-byte zero seed. Entire helper transaction-data XDR, return value and successful
 non-diagnostic events must match RPC at the captured ledger. This corroborates state/resources; RPC still exposes
 no direct consumed CPU/memory values. Random-dependent or auth-dependent fixtures
-that disagree fail explicitly. Archived state is unsupported. Invocation writes
+that disagree fail explicitly. Archived state is unsupported, and explicitly absent
+snapshot entries (`xdr: null`) must not include `extension_xdr`, `last_modified` or
+`live_until` metadata. Invocation writes
 are simulated and discarded; upload/deployment transactions are submitted.
 
 BASE and HEAD can be captured at different ledgers. The diff requires matching

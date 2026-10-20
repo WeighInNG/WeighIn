@@ -97,6 +97,9 @@ fn run() -> Result<()> {
                 row.live_until,
             ))
         } else {
+            if row.extension_xdr.is_some() || row.last_modified.is_some() || row.live_until.is_some() {
+                bail!("absent snapshot entry must not include extension, last-modified, or live-until metadata");
+            }
             None
         };
         if map

@@ -37,12 +37,33 @@ const outputSchema = z
   })
   .strict();
 export type SimulationOutput = z.infer<typeof outputSchema>;
-export interface SnapshotEntry {
-  key: string;
-  xdr: string | null;
-  extension_xdr?: string;
-  last_modified?: number;
-  live_until?: number | null;
+export type SnapshotEntry =
+  | {
+      key: string;
+      xdr: string;
+      extension_xdr?: string;
+      last_modified?: number;
+      live_until?: number | null;
+    }
+  | {
+      key: string;
+      xdr: null;
+      extension_xdr?: undefined;
+      last_modified?: undefined;
+      live_until?: undefined;
+    };
+
+export function validateSnapshotEntry(entry: SnapshotEntry): void {
+  if (
+    entry.xdr === null &&
+    (entry.extension_xdr !== undefined ||
+      entry.last_modified !== undefined ||
+      entry.live_until !== undefined)
+  ) {
+    throw new Error(
+      "Absent snapshot entry must not include extension, last-modified, or live-until metadata",
+    );
+  }
 }
 export interface SimulationInput {
   schema_version: 1;
