@@ -79,7 +79,7 @@ describe("renderComment", () => {
     expect(comment).toContain("Fail msg");
   });
 
-  it("keeps primary evidence visible and folds verbose provenance into details", () => {
+  it("keeps primary evidence visible inline with source details in the report body", () => {
     const diff = createMockDiff(true);
     const fn = diff.contracts[0].functions[0];
     fn.case_id = "args:[]";
@@ -146,30 +146,22 @@ describe("renderComment", () => {
       "main",
       "abcdef123",
     );
-    const detailsStart = report.indexOf(
-      "<details><summary>Snapshot and metric provenance</summary>",
-    );
-    const detailsEnd = report.indexOf("</details>", detailsStart);
-    const beforeDetails = report.slice(0, detailsStart);
-    const details = report.slice(detailsStart, detailsEnd);
 
-    expect(detailsStart).toBeGreaterThan(0);
-    expect(detailsEnd).toBeGreaterThan(detailsStart);
-    expect(beforeDetails).toContain(
+    expect(report).toContain(
       "Compute source: soroban-simulation 28.0.1; protocol 28.",
     );
-    expect(beforeDetails).toContain("CPU policy breach");
-    expect(beforeDetails).toContain(
+    expect(report).toContain("CPU policy breach");
+    expect(report).toContain(
       "| 🔴 | CPU Instructions | 100 | 110 | +10 | +10.0% | 1,000 |",
     );
-    expect(beforeDetails).toContain("Unsupported by this simulator");
-    expect(details).toContain("Snapshot ledgers: BASE 229 → HEAD 230.");
-    expect(details).toContain("No independent cap");
-    expect(details).toContain(
-      `Helper SHA256: BASE \`${"a".repeat(64)}\` → HEAD \`${"2".repeat(64)}\`.`,
+    expect(report).toContain("Unsupported by this simulator");
+    expect(report).toContain(
+      "Snapshot ledgers: BASE 229 → HEAD 230; compute config SHA256:",
     );
-    expect(details).toContain("simulated_instructions");
-    expect(details).toContain("native-memory-meter");
+    expect(report).toContain("No independent cap");
+    expect(report).toContain("simulated_instructions");
+    expect(report).toContain("native-memory-meter");
+    expect(report).not.toContain("<details><summary>Snapshot and metric provenance</summary>");
   });
 
   it("renders legacy records without provenance as a normal Markdown table", () => {
