@@ -490,6 +490,43 @@ function componentFromCargoGroup(ref: string, group: CargoGroup): Component {
   };
 }
 
+/**
+ * Resolve the target-filtered Cargo graph for the pinned toolchain.
+ *
+ * The hermetic `--offline` resolution is preferred: it can only read lockfile
+ * inputs that are already present locally. A checkout whose registry cache is
+ * empty or stale cannot satisfy it, so the same `--locked` metadata resolution
+ * is retried with registry access before the failure is reported. Both modes
+ * are pinned to `Cargo.lock` by `--locked`, so they produce the same inventory.
+ */
+function resolveCargoResolution(manifestPath: string): CargoResolution {
+  const metadataArgs = (offline: boolean) => [
+    "+1.95.0",
+    "metadata",
+    "--locked",
+    ...(offline ? ["--offline"] : []),
+    "--format-version",
+    "1",
+    "--manifest-path",
+    manifestPath,
+    "--filter-platform",
+    NATIVE_TARGET,
+  ];
+  const run = (offline: boolean): string =>
+    offline
+      ? execFileSync("cargo", metadataArgs(true), {
+          encoding: "utf8",
+          // Keep a rejected offline attempt from looking like the real failure.
+          stdio: ["ignore", "pipe", "pipe"],
+        })
+      : execFileSync("cargo", metadataArgs(false), { encoding: "utf8" });
+  try {
+    return JSON.parse(run(true)) as CargoResolution;
+  } catch {
+    return JSON.parse(run(false)) as CargoResolution;
+  }
+}
+
 /** Generate a deterministic CycloneDX 1.6 inventory from the committed lockfiles. */
 export function generateDependencyInventory(
   rootDirectory = path.resolve(__dirname, ".."),
@@ -629,24 +666,7 @@ export function generateDependencyInventory(
   if (!cargoRoot) throw new Error("Cargo.lock is missing weighin-simulation");
   const resolution =
     cargoResolution ??
-    (JSON.parse(
-      execFileSync(
-        "cargo",
-        [
-          "+1.95.0",
-          "metadata",
-          "--locked",
-          "--offline",
-          "--format-version",
-          "1",
-          "--manifest-path",
-          path.join(root, "native/simulation/Cargo.toml"),
-          "--filter-platform",
-          NATIVE_TARGET,
-        ],
-        { encoding: "utf8" },
-      ),
-    ) as CargoResolution);
+    resolveCargoResolution(path.join(root, "native/simulation/Cargo.toml"));
   const selectedIdentities = new Set(
     resolution.packages.map((pkg) => `${pkg.name}@${pkg.version}`),
   );

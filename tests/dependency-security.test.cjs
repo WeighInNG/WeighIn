@@ -42,7 +42,10 @@ test("a clean packed consumer receives the inventory, bundles, native locks, and
     const tarball = path.join(temporary, packed.filename);
     execFileSync(
       "npm",
-      ["install", "--offline", "--ignore-scripts", "--no-audit", "--no-fund", "--prefix", consumer, tarball],
+      // `npm ci` writes tarballs into the cache without the registry metadata
+      // a tarball install resolves, so a hard `--offline` install can fail with
+      // ENOTCACHED on a clean runner; prefer the cache and allow a fetch.
+      ["install", "--prefer-offline", "--ignore-scripts", "--no-audit", "--no-fund", "--prefix", consumer, tarball],
       { cwd: temporary, stdio: "pipe" },
     );
     execFileSync(process.execPath, ["-e", "require('weighin')"], {

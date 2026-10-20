@@ -8,6 +8,8 @@ const root = path.resolve(__dirname, '..');
 const workflow = YAML.parse(fs.readFileSync(path.join(root, '.github/workflows/comment.yml'), 'utf8'));
 const commentJob = workflow.jobs['post-comment'];
 const steps = commentJob.steps;
+// Only a reviewed full commit SHA may stand in for a third-party Action here.
+const pinned = action => new RegExp(`^${action}@[0-9a-f]{40}$`);
 const report = '<!-- weighin-comment -->\n# Resource report\nCPU instructions: 565371\n';
 function git(directory, ...args) {
   const result = spawnSync('git', args, { cwd: directory, encoding: 'utf8' });
@@ -55,10 +57,10 @@ async function execute(order, metadata = true, run = successfulPr, condition = c
     git(workspace, 'add', 'comment', 'bundled'); git(workspace, 'commit', '--quiet', '-m', 'Disposable workflow test');
     let result;
     for (const step of order) {
-      if (step.uses === 'actions/checkout@v4') {
+      if (pinned('actions/checkout').test(step.uses)) {
         // Real cleanup performed by checkout's default clean policy.
         git(workspace, 'clean', '-ffdx'); git(workspace, 'reset', '--hard', 'HEAD');
-      } else if (step.uses === 'actions/download-artifact@v4') {
+      } else if (pinned('actions/download-artifact').test(step.uses)) {
         assert.equal(step.with.name, 'weighin-artifacts');
         assert.equal(step.with['run-id'], '${{ github.event.workflow_run.id }}');
         const post = order.find(step => step.uses === './comment');
@@ -125,7 +127,7 @@ for (const [label, metadata, pattern] of [
   });
 }
 test('the historical download-before-checkout order deletes the report and fails before any posting request', async () => {
-  const historical = [steps.find(step => step.uses === 'actions/download-artifact@v4'), steps.find(step => step.uses === 'actions/checkout@v4'), steps.find(step => step.uses === './comment')];
+  const historical = [steps.find(step => pinned('actions/download-artifact').test(step.uses)), steps.find(step => pinned('actions/checkout').test(step.uses)), steps.find(step => step.uses === './comment')];
   const result = await execute(historical);
   assert.equal(result.status, 1); assert.match(result.stdout + result.stderr, /Report file not found/);
   assert.deepEqual(result.calls, []);
@@ -138,7 +140,8 @@ test('missing downloaded metadata fails before any posting request', async () =>
 test('comment delivery retains trusted checkout and triggering-run artifact selection', () => {
   assert.deepEqual(workflow.on.workflow_run.workflows, ['WeighIn CI']);
   assert.deepEqual(workflow.jobs['post-comment'].permissions, { 'pull-requests': 'write', actions: 'read' });
-  const checkout = steps.find(step => step.uses === 'actions/checkout@v4');
+  const checkout = steps.find(step => pinned('actions/checkout').test(step.uses));
+  assert.ok(checkout, 'comment workflow still checks out its own trusted revision');
   assert.equal(checkout.with?.ref, undefined, 'Do not execute triggering PR code with comment permissions');
 });
 
