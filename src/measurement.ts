@@ -353,13 +353,76 @@ export async function getOrInitAccount(
   return keypair;
 }
 
-// Poll transaction completion
-async function waitForTransaction(
-  server: rpc.Server,
+export const DEFAULT_CONFIRMATION_DEADLINE_MS = 30_000;
+export const MIN_CONFIRMATION_DEADLINE_MS = 1_000;
+export const MAX_CONFIRMATION_DEADLINE_MS = 300_000;
+export const DEFAULT_CONFIRMATION_POLL_INTERVAL_MS = 1_000;
+
+export interface WaitForTransactionOptions {
+  deadlineMs?: number;
+  pollIntervalMs?: number;
+  phase?: string;
+  now?: () => number;
+  sleep?: (ms: number, signal?: AbortSignal) => Promise<void>;
+}
+
+export function validateConfirmationDeadlineMs(
+  deadlineMs: number = DEFAULT_CONFIRMATION_DEADLINE_MS,
+): number {
+  if (
+    typeof deadlineMs !== "number" ||
+    !Number.isInteger(deadlineMs) ||
+    deadlineMs < MIN_CONFIRMATION_DEADLINE_MS ||
+    deadlineMs > MAX_CONFIRMATION_DEADLINE_MS
+  ) {
+    throw new Error(
+      `Invalid confirmationDeadlineMs (${String(deadlineMs)}): must be an integer between ${MIN_CONFIRMATION_DEADLINE_MS} and ${MAX_CONFIRMATION_DEADLINE_MS} ms`,
+    );
+  }
+  return deadlineMs;
+}
+
+// Poll transaction completion with bounded, configurable deadline (#237)
+export async function waitForTransaction(
+  server: Pick<rpc.Server, "getTransaction">,
   txHash: string,
   signal?: AbortSignal,
+  options: WaitForTransactionOptions = {},
 ): Promise<rpc.Api.GetTransactionResponse> {
-  for (let i = 0; i < 30; i++) {
+  const deadlineMs = validateConfirmationDeadlineMs(
+    options.deadlineMs ?? DEFAULT_CONFIRMATION_DEADLINE_MS,
+  );
+  const pollIntervalMs =
+    options.pollIntervalMs ?? DEFAULT_CONFIRMATION_POLL_INTERVAL_MS;
+  const nowFn = options.now ?? (() => Date.now());
+  const defaultSleep = (ms: number, abortSig?: AbortSignal) =>
+    new Promise<void>((resolve, reject) => {
+      const timer = setTimeout(resolve, ms);
+      if (abortSig) {
+        const onAbort = () => {
+          clearTimeout(timer);
+          reject(
+            abortSig.reason || new Error("Transaction confirmation cancelled"),
+          );
+        };
+        if (abortSig.aborted) {
+          clearTimeout(timer);
+          return reject(
+            abortSig.reason || new Error("Transaction confirmation cancelled"),
+          );
+        }
+        abortSig.addEventListener("abort", onAbort, { once: true });
+      }
+    });
+  const sleepFn = options.sleep ?? defaultSleep;
+
+  const startMs = nowFn();
+  const deadlineAt = startMs + deadlineMs;
+  const phasePrefix = options.phase
+    ? `${options.phase} transaction`
+    : "Transaction";
+
+  for (;;) {
     if (signal?.aborted) {
       throw signal.reason || new Error("Transaction confirmation cancelled");
     }
@@ -367,26 +430,15 @@ async function waitForTransaction(
     if (tx.status !== "NOT_FOUND") {
       return tx;
     }
-    await new Promise<void>((resolve, reject) => {
-      const timer = setTimeout(resolve, 1000);
-      if (signal) {
-        const onAbort = () => {
-          clearTimeout(timer);
-          reject(
-            signal.reason || new Error("Transaction confirmation cancelled"),
-          );
-        };
-        if (signal.aborted) {
-          clearTimeout(timer);
-          return reject(
-            signal.reason || new Error("Transaction confirmation cancelled"),
-          );
-        }
-        signal.addEventListener("abort", onAbort, { once: true });
-      }
-    });
+    const elapsedMs = nowFn() - startMs;
+    const remainingMs = deadlineAt - nowFn();
+    if (remainingMs <= 0) {
+      throw new Error(
+        `${phasePrefix} ${txHash} not found after ${Math.round(elapsedMs / 1000)} seconds (elapsed=${elapsedMs}ms, deadline=${deadlineMs}ms)`,
+      );
+    }
+    await sleepFn(Math.min(pollIntervalMs, remainingMs), signal);
   }
-  throw new Error(`Transaction ${txHash} not found after 30 seconds`);
 }
 
 // A transaction hash is 32 hex-encoded bytes.
@@ -469,7 +521,9 @@ async function submitAndConfirm(
       `${phase} submission returned an invalid response (status=${status}): missing or invalid transaction hash`,
     );
   }
-  const confirmed = await waitForTransaction(server, submission.hash, signal);
+  const confirmed = await waitForTransaction(server, submission.hash, signal, {
+    phase,
+  });
   if (confirmed.status !== rpc.Api.GetTransactionStatus.SUCCESS) {
     throw new Error(
       `${phase} transaction ${submission.hash} did not succeed (status=${confirmed.status})`,
