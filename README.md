@@ -32,8 +32,9 @@ HEAD checkout + fetched BASE worktree
 
 The default builder uses `stellar contract build --locked --optimize=true` and
 `wasm32v1-none`. It builds the Cargo packages selected by fixture WASM paths.
-The Action requires at least one matched benchmark; missing baselines, invalid
-policies, incompatible provenance and required unavailable metrics fail.
+The Action requires at least one matched benchmark, and each contract record must
+contain at least one benchmark case; missing baselines, invalid policies,
+incompatible provenance, empty suites and required unavailable metrics fail.
 The baseline is the fetched base ref, not a computed merge base.
 [Architecture](docs/architecture.md) explains the implementation.
 
