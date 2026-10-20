@@ -35,11 +35,11 @@ if [ -n "${existing_container}" ]; then
 fi
 
 echo "Starting ${IMAGE} in local standalone mode..."
-docker run --rm -d \
+created_container_id="$(docker run --rm -d \
   --name "${CONTAINER_NAME}" \
     --label "${OWNER_LABEL}=${OWNER_VALUE}" \
   -p "${PORT}:8000" \
-  ${IMAGE} --local
+  ${IMAGE} --local)"
 
 echo "Waiting for RPC health, Friendbot funding and RPC account inclusion at ${RPC_URL}..."
 if node "$(dirname "$0")/wait-for-local-network.cjs" "${RPC_URL}"; then
@@ -47,5 +47,9 @@ if node "$(dirname "$0")/wait-for-local-network.cjs" "${RPC_URL}"; then
 fi
 
 echo "Error: Stellar Quickstart account/network readiness failed." >&2
-docker logs "${CONTAINER_NAME}" || true
+docker logs "${created_container_id:-${CONTAINER_NAME}}" || true
+if [ -n "${created_container_id:-}" ]; then
+    echo "Cleaning up owned container '${CONTAINER_NAME}' (${created_container_id}) after failed readiness..." >&2
+    docker rm -f "${created_container_id}" >/dev/null 2>&1 || true
+fi
 exit 1
