@@ -5,6 +5,7 @@ import { createHash } from "crypto";
 import * as exec from "@actions/exec";
 import { z } from "zod";
 import { parseFixtures } from "./identity";
+import { sanitizeEndpoint, redactEndpointSecrets } from "./endpoint";
 
 export interface BuiltContract {
   wasm_path: string;
@@ -645,4 +646,159 @@ export async function buildContracts(
     results.push(record);
   }
   return results;
+}
+
+export interface DoctorCheckResult {
+  name: string;
+  ok: boolean;
+  detail: string;
+  action?: string;
+}
+
+export interface EnvironmentDoctorReport {
+  ok: boolean;
+  platform: string;
+  arch: string;
+  node_version: string;
+  rpc_endpoint?: string;
+  checks: DoctorCheckResult[];
+}
+
+export interface EnvironmentDoctorOptions {
+  rpcUrl?: string;
+  tmpDir?: string;
+  probeTool?: (
+    tool: string,
+    args: string[],
+  ) => Promise<{ ok: boolean; output: string }>;
+}
+
+/**
+ * Read-only diagnostic check of installed tools, wasm32v1-none target, writable
+ * temporary storage, and sanitized RPC endpoint metadata without deploying or
+ * auto-installing (#236).
+ */
+export async function runEnvironmentDoctor(
+  options: EnvironmentDoctorOptions = {},
+): Promise<EnvironmentDoctorReport> {
+  const defaultProbe = async (
+    tool: string,
+    args: string[],
+  ): Promise<{ ok: boolean; output: string }> => {
+    let stdout = "";
+    let stderr = "";
+    try {
+      await exec.exec(tool, args, {
+        silent: true,
+        listeners: {
+          stdout: (d) => {
+            stdout += d.toString();
+          },
+          stderr: (d) => {
+            stderr += d.toString();
+          },
+        },
+      });
+      return { ok: true, output: (stdout || stderr).trim() };
+    } catch (err: any) {
+      return {
+        ok: false,
+        output: (stderr || err?.message || String(err)).trim(),
+      };
+    }
+  };
+
+  const probe = options.probeTool ?? defaultProbe;
+  const checks: DoctorCheckResult[] = [];
+
+  const rustc = await probe("rustc", ["--version"]);
+  const rustMatch = rustc.output.match(/^rustc (\d+)\.(\d+)\./);
+  const rustOk =
+    rustc.ok &&
+    Boolean(
+      rustMatch &&
+      (Number(rustMatch[1]) > 1 ||
+        (Number(rustMatch[1]) === 1 && Number(rustMatch[2]) >= 84)),
+    );
+  checks.push({
+    name: "rustc",
+    ok: rustOk,
+    detail: rustc.output || "rustc not found",
+    ...(rustOk
+      ? {}
+      : { action: "Install Rust 1.84+ via rustup without auto-installation." }),
+  });
+
+  const targetList = await probe("rustc", ["--print", "target-list"]);
+  const targetOk =
+    targetList.ok && targetList.output.split(/\r?\n/).includes("wasm32v1-none");
+  checks.push({
+    name: "wasm32v1-none",
+    ok: targetOk,
+    detail: targetOk
+      ? "wasm32v1-none target supported"
+      : "wasm32v1-none target unavailable",
+    ...(targetOk ? {} : { action: "Run: rustup target add wasm32v1-none" }),
+  });
+
+  const stellar = await probe("stellar", ["--version"]);
+  const stellarMatch = stellar.output.match(/stellar (\d+)\.(\d+)\.(\d+)/);
+  const stellarOk =
+    stellar.ok &&
+    Boolean(
+      stellarMatch &&
+      (Number(stellarMatch[1]) > 28 ||
+        (Number(stellarMatch[1]) === 28 && Number(stellarMatch[2]) >= 1)),
+    );
+  checks.push({
+    name: "stellar-cli",
+    ok: stellarOk,
+    detail: stellar.output || "stellar CLI not found",
+    ...(stellarOk
+      ? {}
+      : { action: "Install official Stellar CLI 28.1+ release binary." }),
+  });
+
+  const tmpRoot = options.tmpDir ?? os.tmpdir();
+  let storageOk = false;
+  let storageDetail = tmpRoot;
+  try {
+    verifyBuildStorage(tmpRoot, 4096);
+    storageOk = true;
+  } catch (err: any) {
+    storageDetail = String(err?.message ?? err);
+  }
+  checks.push({
+    name: "writable-storage",
+    ok: storageOk,
+    detail: storageDetail,
+    ...(storageOk
+      ? {}
+      : {
+          action: "Set TMPDIR to a writable local filesystem with free space.",
+        }),
+  });
+
+  let sanitizedRpc: string | undefined;
+  if (options.rpcUrl !== undefined) {
+    sanitizedRpc = sanitizeEndpoint(options.rpcUrl);
+    const validRpc = sanitizedRpc !== "[invalid endpoint]";
+    checks.push({
+      name: "rpc-endpoint",
+      ok: validRpc,
+      detail: redactEndpointSecrets(sanitizedRpc, options.rpcUrl),
+      ...(validRpc
+        ? {}
+        : { action: "Provide a valid http(s) Soroban RPC URL." }),
+    });
+  }
+
+  return {
+    ok: checks.every((c) => c.ok),
+    platform: process.platform,
+    arch: process.arch,
+    node_version: process.version,
+    ...(sanitizedRpc !== undefined ? { rpc_endpoint: sanitizedRpc } : {}),
+    checks,
+  };
 }
