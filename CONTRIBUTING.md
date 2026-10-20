@@ -34,7 +34,9 @@ npm audit
 ```
 
 `lint` checks Prettier formatting in `src` and `test`; `typecheck` checks TypeScript.
-`npm test` builds TypeScript, runs Node behavior/evidence tests under `tests`, and
+`npm test` builds TypeScript, runs Node behavior/evidence tests under `tests`
+(including offline validation of local Markdown links and heading anchors across all
+active product/technical docs while excluding frozen experiment archives), and
 runs Vitest tests under `test`. `npm run test:watch` starts Vitest watch mode.
 Use `npm run format` for intentional formatting changes.
 
