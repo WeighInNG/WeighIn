@@ -4,6 +4,8 @@ set -euo pipefail
 
 CONTAINER_NAME="stellar-quickstart"
 IMAGE="stellar/quickstart@sha256:4c8bad1ef7341205b898f83d9489321da80c7bd74183100fc8e2a39a5938c7d5"
+OWNER_LABEL="io.weighin.managed-by"
+OWNER_VALUE="weighin-start-local-network"
 PORT=8000
 RPC_URL="http://localhost:${PORT}/rpc"
 
@@ -11,19 +13,31 @@ RPC_URL="http://localhost:${PORT}/rpc"
 node -e "require('./dist/account'); require('@stellar/stellar-sdk')"
 
 echo "Checking if container '${CONTAINER_NAME}' is already running..."
-if [ "$(docker ps -q -f name=^/${CONTAINER_NAME}$)" ]; then
-    echo "Container '${CONTAINER_NAME}' is already running. Stopping it..."
-    docker stop "${CONTAINER_NAME}"
-fi
+existing_container="$(docker ps -a -q -f "name=^/${CONTAINER_NAME}$")"
+if [ -n "${existing_container}" ]; then
+    if ! owner="$(docker inspect --format "{{ index .Config.Labels \"${OWNER_LABEL}\" }}" "${CONTAINER_NAME}")"; then
+        echo "Error: Could not verify ownership of '${CONTAINER_NAME}'; leaving it untouched." >&2
+        exit 1
+    fi
 
-if [ "$(docker ps -a -q -f name=^/${CONTAINER_NAME}$)" ]; then
-    echo "Removing existing container '${CONTAINER_NAME}'..."
-    docker rm -f "${CONTAINER_NAME}" || true
+    if [ "${owner}" != "${OWNER_VALUE}" ] && [ "${WEIGHIN_REPLACE_UNOWNED_CONTAINER:-}" != "1" ]; then
+        echo "Error: Container '${CONTAINER_NAME}' is not owned by this startup script and was left untouched." >&2
+        echo "Set WEIGHIN_REPLACE_UNOWNED_CONTAINER=1 to explicitly authorize replacing it." >&2
+        exit 1
+    fi
+
+    if [ "${owner}" = "${OWNER_VALUE}" ]; then
+        echo "Removing owned container '${CONTAINER_NAME}'..."
+    else
+        echo "Explicit replacement authorized; removing '${CONTAINER_NAME}'..."
+    fi
+    docker rm -f "${CONTAINER_NAME}"
 fi
 
 echo "Starting ${IMAGE} in local standalone mode..."
 docker run --rm -d \
   --name "${CONTAINER_NAME}" \
+    --label "${OWNER_LABEL}=${OWNER_VALUE}" \
   -p "${PORT}:8000" \
   ${IMAGE} --local
 

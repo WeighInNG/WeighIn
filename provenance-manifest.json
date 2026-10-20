@@ -53,7 +53,7 @@
     },
     {
       "path": "src/build.ts",
-      "sha256": "2ddf88a78668f695ef618ba904efe3a1c1bf1dbb0c1d540c8e6160a624fb576a"
+      "sha256": "5260d945a696bb64d951a3fdbd3fad8c7e819b1debe4ade62c8e0318361312df"
     },
     {
       "path": "src/cli.ts",
@@ -89,7 +89,11 @@
     },
     {
       "path": "src/measurement.ts",
-      "sha256": "37ecd44887170522acf8218735e5cb1d19f5e738aec9be24a20061ecdf1c2fb2"
+      "sha256": "a63ea58a01c7a0d7023213d2f034ab9a25f90c6e7ea4fd75c2b869380d83241f"
+    },
+    {
+      "path": "src/network.ts",
+      "sha256": "a79ec668430348b6c694b40dfe9a0dcc1b5de5495d3934b80c76bc814ee8e44f"
     },
     {
       "path": "src/pr-metadata.ts",

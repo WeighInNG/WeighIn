@@ -15,6 +15,7 @@ import {
   Violation,
   PolicyOrigin,
 } from "./threshold";
+
 import { renderComment } from "./comment";
 import { buildForRevision, parseOptionalBooleanInput } from "./build-selection";
 import { writeReportFile, generateFailureReport } from "./report";
@@ -24,10 +25,17 @@ import {
   redactEndpointSecrets,
   sanitizeEndpoint,
 } from "./endpoint";
+import {
+  SUPPORTED_NETWORK_PASSPHRASE,
+  SUPPORTED_PROTOCOL_VERSION,
+} from "./network";
 
 // The configured endpoint is tracked only so the terminal failure path can
 // redact any credential it may contain before reporting.
 let configuredRpcUrl = "";
+let validatedDiffJson: string | null = null;
+
+class RpcCompatibilityError extends Error {}
 
 // ---------------------------------------------------------------------------
 // RPC health check
@@ -72,21 +80,62 @@ async function assertRpcHealthy(rpcUrl: string): Promise<void> {
         `RPC getNetwork method error: ${JSON.stringify(metadata.error)}`,
       );
     }
-    const networkResult = metadata.result as { passphrase?: unknown } | null;
+    const networkResult = metadata.result as {
+      passphrase?: unknown;
+      protocolVersion?: unknown;
+    } | null;
     if (
       typeof networkResult?.passphrase !== "string" ||
-      !networkResult.passphrase.trim()
+      !networkResult.passphrase.trim() ||
+      !Number.isInteger(networkResult.protocolVersion)
     ) {
-      throw new Error("Invalid RPC network metadata");
+      throw new RpcCompatibilityError(
+        "RPC is healthy but incompatible: invalid network metadata (a passphrase and integer protocolVersion are required)",
+      );
     }
+    if (networkResult.passphrase !== SUPPORTED_NETWORK_PASSPHRASE)
+      throw new RpcCompatibilityError(
+        `RPC is healthy but incompatible: unsupported network passphrase (expected "${SUPPORTED_NETWORK_PASSPHRASE}")`,
+      );
+    if (networkResult.protocolVersion !== SUPPORTED_PROTOCOL_VERSION)
+      throw new RpcCompatibilityError(
+        `RPC is healthy but incompatible: unsupported protocol ${networkResult.protocolVersion} (only protocol ${SUPPORTED_PROTOCOL_VERSION} is supported)`,
+      );
     core.info(`RPC healthy — network: ${networkResult.passphrase}`);
   } catch (err: any) {
-    core.setFailed(
-      `Soroban RPC at ${sanitizeEndpoint(rpcUrl)} is not reachable: ${redactEndpointSecrets(String(err?.message ?? err), rpcUrl)}\n` +
-        `Start the network before invoking this action (e.g. via stellar/quickstart ` +
-        `or scripts/start-local-network.sh), then pass its URL as the rpc-url input.`,
-    );
+    const diagnostic =
+      err instanceof RpcCompatibilityError
+        ? err.message
+        : `Soroban RPC at ${sanitizeEndpoint(rpcUrl)} is not reachable: ${redactEndpointSecrets(String(err?.message ?? err), rpcUrl)}\n` +
+          `Start the network before invoking this action (e.g. via stellar/quickstart ` +
+          `or scripts/start-local-network.sh), then pass its URL as the rpc-url input.`;
+    core.setFailed(diagnostic);
     throw err; // halt execution
+  }
+}
+
+async function validateBaseRef(repoRoot: string, ref: string): Promise<void> {
+  if (!ref.trim() || ref !== ref.trim() || ref.startsWith("-")) {
+    throw new Error(
+      "Invalid base-ref: provide a non-empty branch, tag, or commit SHA without surrounding whitespace or option prefixes",
+    );
+  }
+  if (/^[0-9a-fA-F]{7,40}$/.test(ref)) return;
+
+  const branchRef = await exec.exec(
+    "git",
+    ["check-ref-format", `refs/heads/${ref}`],
+    { cwd: repoRoot, ignoreReturnCode: true, silent: true },
+  );
+  const tagRef = await exec.exec(
+    "git",
+    ["check-ref-format", `refs/tags/${ref}`],
+    { cwd: repoRoot, ignoreReturnCode: true, silent: true },
+  );
+  if (branchRef !== 0 && tagRef !== 0) {
+    throw new Error(
+      `Invalid base-ref "${ref}": expected a valid branch, tag, or commit SHA`,
+    );
   }
 }
 
@@ -367,6 +416,7 @@ async function upsertPrComment(token: string, body: string): Promise<void> {
 // ---------------------------------------------------------------------------
 
 async function run(): Promise<void> {
+  validatedDiffJson = null;
   let keyDir: string | null = null;
   let sharedKeyFile: string | null = null;
 
@@ -378,7 +428,7 @@ async function run(): Promise<void> {
     const rpcUrl = core.getInput("rpc-url") || "http://localhost:8000/rpc";
     configuredRpcUrl = rpcUrl;
     const githubToken = core.getInput("github-token");
-    const baseRefInput = core.getInput("base-ref");
+    const baseRefInput = core.getInput("base-ref", { trimWhitespace: false });
     const rustToolchain = core.getInput("rust-toolchain");
     const reportPathInput = core.getInput("report-path");
     const metadataPathInput = core.getInput("metadata-path");
@@ -392,8 +442,16 @@ async function run(): Promise<void> {
     // The runner's checkout of the PR head is at GITHUB_WORKSPACE
     const headWorkspace = process.env["GITHUB_WORKSPACE"] ?? process.cwd();
 
+    if (baseRefInput.length > 0 && baseRefInput !== baseRefInput.trim()) {
+      throw new Error(
+        "Invalid base-ref: empty or surrounding whitespace is not allowed",
+      );
+    }
     const baseRef =
-      baseRefInput || github.context.payload.pull_request?.base?.ref || "main";
+      baseRefInput.trim() ||
+      github.context.payload.pull_request?.base?.ref ||
+      "main";
+    await validateBaseRef(headWorkspace, baseRef);
 
     keyDir = fs.mkdtempSync(path.join(os.tmpdir(), "weighin-key-"));
     fs.chmodSync(keyDir, 0o700);
@@ -544,6 +602,7 @@ async function run(): Promise<void> {
       core.info("No weighin.toml found — no thresholds enforced");
     }
     const violations: Violation[] = enforceThresholds(diff, config);
+    validatedDiffJson = JSON.stringify(diff);
     core.info(`Violations: ${violations.length}`);
     for (const v of violations) {
       core.error(
@@ -555,7 +614,7 @@ async function run(): Promise<void> {
     // 8. Outputs
     const result = violations.length > 0 ? "fail" : "pass";
     core.setOutput("result", result);
-    core.setOutput("diff-json", JSON.stringify(diff));
+    core.setOutput("diff-json", validatedDiffJson);
 
     // Report is available in the job summary even without permission to post a PR comment.
     const body = renderComment(
@@ -618,7 +677,7 @@ run().catch(async (error: Error) => {
     configuredRpcUrl,
   );
   core.setOutput("result", "fail");
-  core.setOutput("diff-json", "{}");
+  core.setOutput("diff-json", validatedDiffJson ?? "{}");
   core.setFailed(message);
 
   const reportPathInput = core.getInput("report-path");
