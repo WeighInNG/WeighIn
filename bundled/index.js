@@ -107,11 +107,11 @@ var require_command = __commonJS({
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.issueCommand = issueCommand;
     exports2.issue = issue;
-    var os3 = __importStar(require("os"));
+    var os4 = __importStar(require("os"));
     var utils_1 = require_utils();
     function issueCommand(command, properties, message) {
       const cmd = new Command(command, properties, message);
-      process.stdout.write(cmd.toString() + os3.EOL);
+      process.stdout.write(cmd.toString() + os4.EOL);
     }
     function issue(name, message = "") {
       issueCommand(name, {}, message);
@@ -204,7 +204,7 @@ var require_file_command = __commonJS({
     exports2.prepareKeyValueMessage = prepareKeyValueMessage;
     var crypto6 = __importStar(require("crypto"));
     var fs7 = __importStar(require("fs"));
-    var os3 = __importStar(require("os"));
+    var os4 = __importStar(require("os"));
     var utils_1 = require_utils();
     function issueFileCommand(command, message) {
       const filePath = process.env[`GITHUB_${command}`];
@@ -214,7 +214,7 @@ var require_file_command = __commonJS({
       if (!fs7.existsSync(filePath)) {
         throw new Error(`Missing file at path: ${filePath}`);
       }
-      fs7.appendFileSync(filePath, `${(0, utils_1.toCommandValue)(message)}${os3.EOL}`, {
+      fs7.appendFileSync(filePath, `${(0, utils_1.toCommandValue)(message)}${os4.EOL}`, {
         encoding: "utf8"
       });
     }
@@ -227,7 +227,7 @@ var require_file_command = __commonJS({
       if (convertedValue.includes(delimiter)) {
         throw new Error(`Unexpected input: value should not contain the delimiter "${delimiter}"`);
       }
-      return `${key}<<${delimiter}${os3.EOL}${convertedValue}${os3.EOL}${delimiter}`;
+      return `${key}<<${delimiter}${os4.EOL}${convertedValue}${os4.EOL}${delimiter}`;
     }
   }
 });
@@ -20966,7 +20966,7 @@ var require_toolrunner = __commonJS({
     };
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.argStringToArray = exports2.ToolRunner = void 0;
-    var os3 = __importStar(require("os"));
+    var os4 = __importStar(require("os"));
     var events = __importStar(require("events"));
     var child = __importStar(require("child_process"));
     var path8 = __importStar(require("path"));
@@ -21021,12 +21021,12 @@ var require_toolrunner = __commonJS({
       _processLineBuffer(data, strBuffer, onLine) {
         try {
           let s = strBuffer + data.toString();
-          let n = s.indexOf(os3.EOL);
+          let n = s.indexOf(os4.EOL);
           while (n > -1) {
             const line = s.substring(0, n);
             onLine(line);
-            s = s.substring(n + os3.EOL.length);
-            n = s.indexOf(os3.EOL);
+            s = s.substring(n + os4.EOL.length);
+            n = s.indexOf(os4.EOL);
           }
           return s;
         } catch (err) {
@@ -21195,7 +21195,7 @@ var require_toolrunner = __commonJS({
             }
             const optionsNonNull = this._cloneExecOptions(this.options);
             if (!optionsNonNull.silent && optionsNonNull.outStream) {
-              optionsNonNull.outStream.write(this._getCommandString(optionsNonNull) + os3.EOL);
+              optionsNonNull.outStream.write(this._getCommandString(optionsNonNull) + os4.EOL);
             }
             const state = new ExecState(optionsNonNull, this.toolPath);
             state.on("debug", (message) => {
@@ -21724,7 +21724,7 @@ var require_core = __commonJS({
     var command_1 = require_command();
     var file_command_1 = require_file_command();
     var utils_1 = require_utils();
-    var os3 = __importStar(require("os"));
+    var os4 = __importStar(require("os"));
     var path8 = __importStar(require("path"));
     var oidc_utils_1 = require_oidc_utils();
     var ExitCode;
@@ -21786,7 +21786,7 @@ Support boolean input list: \`true | True | TRUE | false | False | FALSE\``);
       if (filePath) {
         return (0, file_command_1.issueFileCommand)("OUTPUT", (0, file_command_1.prepareKeyValueMessage)(name, value));
       }
-      process.stdout.write(os3.EOL);
+      process.stdout.write(os4.EOL);
       (0, command_1.issueCommand)("set-output", { name }, (0, utils_1.toCommandValue)(value));
     }
     function setCommandEcho(enabled) {
@@ -21812,7 +21812,7 @@ Support boolean input list: \`true | True | TRUE | false | False | FALSE\``);
       (0, command_1.issueCommand)("notice", (0, utils_1.toCommandProperties)(properties), message instanceof Error ? message.toString() : message);
     }
     function info4(message) {
-      process.stdout.write(message + os3.EOL);
+      process.stdout.write(message + os4.EOL);
     }
     function startGroup2(name) {
       (0, command_1.issue)("group", name);
@@ -26632,16 +26632,16 @@ var require_parser = __commonJS({
         return (sign3 || "") + digits;
       }
       function peg$f42(digits) {
-        return integerNode(16, digits, offset());
+        return node("Integer", parseInt(stripUnderscores(digits), 16), offset());
       }
       function peg$f43(digits) {
-        return integerNode(8, digits, offset());
+        return node("Integer", parseInt(stripUnderscores(digits), 8), offset());
       }
       function peg$f44(digits) {
-        return integerNode(2, digits, offset());
+        return node("Integer", parseInt(stripUnderscores(digits), 2), offset());
       }
       function peg$f45(text2) {
-        return integerNode(10, text2, offset());
+        return node("Integer", parseInt(stripUnderscores(text2), 10), offset());
       }
       function peg$f46(sign3) {
         return (sign3 || "") + "0";
@@ -26701,10 +26701,7 @@ var require_parser = __commonJS({
         validateDate(d, off);
         validateTime(t, off);
         validateOffset(o, off);
-        var n = node("Date", /* @__PURE__ */ new Date(d + "T" + t + o), off);
-        n.raw = d + "T" + t;
-        n.tz = o;
-        return n;
+        return node("Date", /* @__PURE__ */ new Date(d + "T" + t + o), off);
       }
       function peg$f64(d, t) {
         var off = offset();
@@ -30826,16 +30823,6 @@ var require_parser = __commonJS({
       function stripUnderscores(str) {
         return str.indexOf("_") === -1 ? str : str.replace(/_/g, "");
       }
-      var MAX_INT64_DIGITS = { 2: 63, 8: 21, 10: 19, 16: 16 };
-      var RADIX_PREFIX = { 2: "0b", 8: "0o", 10: "", 16: "0x" };
-      function integerNode(radix, text2, off) {
-        var digits = stripUnderscores(text2);
-        var significant = digits.replace(/^[+-]?0*/, "");
-        if (significant.length > MAX_INT64_DIGITS[radix]) {
-          genError("Integer literal is outside the 64-bit signed integer range required by TOML.", off);
-        }
-        return node("Integer", BigInt(RADIX_PREFIX[radix] + digits), off);
-      }
       function convertCodePoint(str) {
         var num = parseInt(str, 16);
         if (num !== num || num < 0 || num > 1114111 || num > 55295 && num < 57344) {
@@ -30888,30 +30875,14 @@ var require_parser = __commonJS({
 var require_compiler = __commonJS({
   "node_modules/toml/lib/compiler.js"(exports2, module2) {
     "use strict";
-    var INT64_MIN = -(2n ** 63n);
-    var INT64_MAX = 2n ** 63n - 1n;
-    var MAX_SAFE = BigInt(Number.MAX_SAFE_INTEGER);
-    var MIN_SAFE = BigInt(Number.MIN_SAFE_INTEGER);
-    var HEADER_TABLE = "header";
-    var IMPLICIT_TABLE = "implicit";
-    var DOTTED_TABLE = "dotted";
-    var INLINE_TABLE = "inline";
-    var TABLE_ARRAY = "table-array";
-    function compile(nodes, inputText, options) {
-      options = options || {};
-      var temporal = null;
-      if (options.useTemporal) {
-        temporal = options.temporal || (typeof Temporal !== "undefined" ? Temporal : null);
-        if (!temporal) {
-          throw new Error(
-            "The `useTemporal` option was set, but no Temporal implementation is available. Use a runtime with global `Temporal` support, or provide an implementation (e.g. from the `@js-temporal/polyfill` package) via the `temporal` option."
-          );
-        }
-      }
-      var containerKinds = /* @__PURE__ */ new WeakMap();
-      var data = createTable(HEADER_TABLE);
-      var context3 = data;
+    function compile(nodes, inputText) {
+      var assignedPaths = /* @__PURE__ */ new Set();
+      var valueAssignments = /* @__PURE__ */ new Set();
+      var explicitTablePaths = /* @__PURE__ */ new Set();
       var currentPath = [];
+      var ownedContainers = /* @__PURE__ */ new WeakSet();
+      var data = createTable();
+      var context3 = data;
       return reduce(nodes);
       function reduce(nodes2) {
         var node;
@@ -30951,163 +30922,148 @@ var require_compiler = __commonJS({
         throw ex;
       }
       function assign(node) {
-        var keys = Array.isArray(node.key) ? node.key : [node.key];
-        assignDotted(context3, keys, reduceValueNode(node.value), node.offset, currentPath);
-      }
-      function assignDotted(table, keys, value, off, prefix) {
+        var keys = node.key;
+        var value = node.value;
+        var off = node.offset;
+        if (!Array.isArray(keys)) keys = [keys];
+        var reduced = reduceValueNode(value);
+        var target = context3;
         for (var i = 0; i < keys.length - 1; i++) {
-          var key = keys[i];
-          var next = table[key];
-          if (next === void 0) {
-            next = createTable(DOTTED_TABLE);
-            table[key] = next;
-          } else {
-            var kind = containerKinds.get(next);
-            if (kind !== DOTTED_TABLE && kind !== IMPLICIT_TABLE) {
-              var path8 = pathKey(prefix.concat(keys.slice(0, i + 1)));
-              if (kind === HEADER_TABLE) {
-                genError("Cannot use dotted keys to extend table '" + path8 + "' defined elsewhere.", off);
-              }
-              if (kind === INLINE_TABLE) {
-                genError("Cannot extend inline table '" + path8 + "'.", off);
-              }
-              genError("Cannot redefine existing key '" + path8 + "'.", off);
-            }
+          var k = keys[i];
+          var intermediatePath = makeFullPath(keys.slice(0, i + 1));
+          if (typeof target[k] === "undefined") {
+            target[k] = createTable();
+            assignedPaths.add(intermediatePath);
+          } else if (typeof target[k] !== "object" || target[k] === null || Array.isArray(target[k])) {
+            genError("Cannot redefine existing key '" + intermediatePath + "'.", off);
+          } else if (valueAssignments.has(intermediatePath)) {
+            genError("Cannot redefine existing key '" + intermediatePath + "'.", off);
+          } else if (explicitTablePaths.has(intermediatePath) && intermediatePath !== pathKey(currentPath)) {
+            genError("Cannot use dotted keys to extend table '" + intermediatePath + "' defined elsewhere.", off);
           }
-          table = next;
+          target = target[k];
         }
         var lastKey = keys[keys.length - 1];
-        if (table[lastKey] !== void 0) {
-          genError("Cannot redefine existing key '" + pathKey(prefix.concat(keys)) + "'.", off);
+        var fullPath = makeFullPath(keys);
+        if (typeof target[lastKey] !== "undefined") {
+          genError("Cannot redefine existing key '" + fullPath + "'.", off);
         }
-        table[lastKey] = value;
+        target[lastKey] = reduced;
+        assignedPaths.add(fullPath);
+        valueAssignments.add(fullPath);
       }
       function reduceValueNode(node) {
-        if (node.type === "Integer") {
-          return reduceInteger(node);
-        } else if (node.type === "Array") {
+        if (node.type === "Array") {
           return reduceArray(node.value);
         } else if (node.type === "InlineTable") {
           return reduceInlineTableNode(node.value);
-        } else if (temporal) {
-          switch (node.type) {
-            case "Date":
-              return temporal.ZonedDateTime.from(
-                truncateFractionalSeconds(node.raw) + node.tz + "[" + (node.tz === "Z" ? "UTC" : node.tz) + "]"
-              );
-            case "LocalDateTime":
-              return temporal.PlainDateTime.from(truncateFractionalSeconds(node.value));
-            case "LocalDate":
-              return temporal.PlainDate.from(node.value);
-            case "LocalTime":
-              return temporal.PlainTime.from(truncateFractionalSeconds(node.value));
-          }
+        } else {
+          return node.value;
         }
-        return node.value;
-      }
-      function truncateFractionalSeconds(str) {
-        return str.replace(/\.(\d{9})\d+/, ".$1");
-      }
-      function reduceInteger(node) {
-        var value = node.value;
-        if (value < INT64_MIN || value > INT64_MAX) {
-          genError(
-            "Integer " + value + " is outside the 64-bit signed integer range required by TOML.",
-            node.offset
-          );
-        }
-        if (options.bigint) {
-          return value;
-        }
-        if (value < MIN_SAFE || value > MAX_SAFE) {
-          genError(
-            "Integer " + value + " cannot be represented losslessly as a JavaScript number. Use the `bigint` option to parse integers as BigInt values.",
-            node.offset
-          );
-        }
-        return Number(value);
       }
       function reduceInlineTableNode(values) {
-        var table = createTable(INLINE_TABLE);
+        var obj = createTable();
+        var definedKeys = /* @__PURE__ */ new Set();
         for (var i = 0; i < values.length; i++) {
           var val = values[i];
           if (val.type !== "InlineTableValue") continue;
-          var keys = Array.isArray(val.key) ? val.key : [val.key];
-          assignDotted(table, keys, reduceValueNode(val.value), val.offset, []);
+          var keys = val.key;
+          if (!Array.isArray(keys)) keys = [keys];
+          var reduced = reduceValueNode(val.value);
+          setNestedKey(obj, keys, reduced, val.offset, definedKeys);
+          definedKeys.add(pathKey(keys));
         }
-        return table;
+        return obj;
+      }
+      function setNestedKey(obj, keys, value, off, definedKeys) {
+        for (var i = 0; i < keys.length - 1; i++) {
+          var k = keys[i];
+          var intermediatePath = pathKey(keys.slice(0, i + 1));
+          if (typeof obj[k] === "undefined") {
+            obj[k] = createTable();
+          } else if (typeof obj[k] !== "object" || obj[k] === null || Array.isArray(obj[k])) {
+            genError("Cannot redefine existing key '" + intermediatePath + "'.", off);
+          } else if (definedKeys && definedKeys.has(intermediatePath)) {
+            genError("Cannot extend inline table '" + intermediatePath + "'.", off);
+          }
+          obj = obj[k];
+        }
+        var lastKey = keys[keys.length - 1];
+        if (typeof obj[lastKey] !== "undefined") {
+          genError("Cannot redefine existing key '" + pathKey(keys) + "'.", off);
+        }
+        obj[lastKey] = value;
       }
       function setPath(node) {
         var path8 = node.value;
+        var quotedPath = path8.map(quoteDottedString).join(".");
         var off = node.offset;
-        var parent = resolveParentTable(path8, off);
-        var name = path8[path8.length - 1];
-        var table = parent[name];
-        if (table === void 0) {
-          table = createTable(HEADER_TABLE);
-          parent[name] = table;
-        } else if (containerKinds.get(table) === IMPLICIT_TABLE) {
-          containerKinds.set(table, HEADER_TABLE);
-        } else {
-          genError("Cannot redefine existing key '" + pathKey(path8) + "'.", off);
+        if (assignedPaths.has(quotedPath)) {
+          genError("Cannot redefine existing key '" + path8 + "'.", off);
         }
-        context3 = table;
+        assignedPaths.add(quotedPath);
+        explicitTablePaths.add(quotedPath);
+        context3 = deepRef(data, path8, createTable(), off);
         currentPath = path8;
       }
       function addTableArray(node) {
         var path8 = node.value;
+        var quotedPath = path8.map(quoteDottedString).join(".");
         var off = node.offset;
-        var parent = resolveParentTable(path8, off);
-        var name = path8[path8.length - 1];
-        var tableArray = parent[name];
-        if (tableArray === void 0) {
-          tableArray = createTableArray();
-          parent[name] = tableArray;
-        } else if (containerKinds.get(tableArray) !== TABLE_ARRAY) {
-          if (Array.isArray(tableArray)) {
-            genError("Cannot append to statically defined array '" + pathKey(path8) + "'.", off);
-          }
-          genError("Cannot redefine existing key '" + pathKey(path8) + "'.", off);
+        if (valueAssignments.has(quotedPath)) {
+          genError("Cannot append to statically defined array '" + quotedPath + "'.", off);
         }
-        var table = createTable(HEADER_TABLE);
-        tableArray.push(table);
-        context3 = table;
+        assignedPaths.forEach(function(p) {
+          if (isSameOrSubPath(p, quotedPath)) assignedPaths.delete(p);
+        });
+        valueAssignments.forEach(function(p) {
+          if (isSameOrSubPath(p, quotedPath)) valueAssignments.delete(p);
+        });
+        assignedPaths.add(quotedPath);
+        context3 = deepRef(data, path8, createTableArray(), off);
         currentPath = path8;
-      }
-      function resolveParentTable(path8, off) {
-        var table = data;
-        for (var i = 0; i < path8.length - 1; i++) {
-          var key = path8[i];
-          var next = table[key];
-          if (next === void 0) {
-            next = createTable(IMPLICIT_TABLE);
-            table[key] = next;
-          }
-          var kind = containerKinds.get(next);
-          if (kind === TABLE_ARRAY) {
-            next = next[next.length - 1];
-          } else if (kind === void 0 || kind === INLINE_TABLE) {
-            genError("Cannot redefine existing key '" + pathKey(path8.slice(0, i + 1)) + "'.", off);
-          }
-          table = next;
+        if (context3 instanceof Array) {
+          var newObj = createTable();
+          context3.push(newObj);
+          context3 = newObj;
+        } else {
+          genError("Cannot redefine existing key '" + path8 + "'.", off);
         }
-        return table;
+      }
+      function deepRef(start, keys, value, off) {
+        var ctx = start;
+        for (var i = 0; i < keys.length; i++) {
+          var key = keys[i];
+          var traversedPath = pathKey(keys.slice(0, i + 1));
+          if (typeof ctx[key] === "undefined") {
+            if (i === keys.length - 1) {
+              ctx[key] = value;
+            } else {
+              ctx[key] = createTable();
+            }
+          } else if (i !== keys.length - 1 && valueAssignments.has(traversedPath)) {
+            genError("Cannot redefine existing key '" + traversedPath + "'.", off);
+          }
+          ctx = ctx[key];
+          if (i < keys.length - 1) {
+            if (!isOwnedContainer(ctx)) {
+              genError("Cannot redefine existing key '" + traversedPath + "'.", off);
+            }
+            if (ctx instanceof Array) {
+              if (!ctx.length) {
+                genError("Cannot redefine existing key '" + traversedPath + "'.", off);
+              }
+              ctx = ctx[ctx.length - 1];
+              if (!isOwnedContainer(ctx)) {
+                genError("Cannot redefine existing key '" + traversedPath + "'.", off);
+              }
+            }
+          }
+        }
+        return ctx;
       }
       function reduceArray(array) {
         return array.map(reduceValueNode);
-      }
-      function createTable(kind) {
-        var table = /* @__PURE__ */ Object.create(null);
-        containerKinds.set(table, kind);
-        return table;
-      }
-      function createTableArray() {
-        var tableArray = [];
-        containerKinds.set(tableArray, TABLE_ARRAY);
-        return tableArray;
-      }
-      function pathKey(keys) {
-        return keys.map(quoteDottedString).join(".");
       }
       function quoteDottedString(str) {
         if (str.indexOf(".") > -1) {
@@ -31115,6 +31071,28 @@ var require_compiler = __commonJS({
         } else {
           return str;
         }
+      }
+      function createTable() {
+        var table = /* @__PURE__ */ Object.create(null);
+        ownedContainers.add(table);
+        return table;
+      }
+      function createTableArray() {
+        var tableArray = [];
+        ownedContainers.add(tableArray);
+        return tableArray;
+      }
+      function isOwnedContainer(value) {
+        return value !== null && typeof value === "object" && ownedContainers.has(value);
+      }
+      function pathKey(keys) {
+        return keys.map(quoteDottedString).join(".");
+      }
+      function makeFullPath(keys) {
+        return pathKey(currentPath.concat(keys));
+      }
+      function isSameOrSubPath(path8, prefix) {
+        return path8 === prefix || path8.indexOf(prefix + ".") === 0;
       }
     }
     module2.exports = {
@@ -31132,7 +31110,7 @@ var require_toml = __commonJS({
       parse: function(input, options) {
         var str = input.toString();
         var nodes = parser.parse(str, options);
-        return compiler.compile(nodes, str, options);
+        return compiler.compile(nodes, str);
       }
     };
   }
@@ -31144,10 +31122,11 @@ var exec7 = __toESM(require_exec());
 init_github();
 var fs6 = __toESM(require("fs"));
 var path7 = __toESM(require("path"));
-var os2 = __toESM(require("os"));
+var os3 = __toESM(require("os"));
 
 // src/measurement.ts
 var fs3 = __toESM(require("fs"));
+var os = __toESM(require("os"));
 var path4 = __toESM(require("path"));
 var crypto3 = __toESM(require("crypto"));
 
@@ -54507,18 +54486,6 @@ function metricsFromSimulation(output, limits) {
     )
   };
 }
-function normalizeSourceAccount(publicKey) {
-  if (typeof publicKey !== "string" || !publicKey.trim()) {
-    throw new Error("Invalid invocation source account: expected a public key");
-  }
-  const trimmed = publicKey.trim();
-  if (!StrKey.isValidEd25519PublicKey(trimmed)) {
-    throw new Error(
-      "Invalid invocation source account: expected an Ed25519 account public key (G...)"
-    );
-  }
-  return trimmed;
-}
 function toScVal(arg) {
   const type = arg.type.toLowerCase();
   const val = arg.value;
@@ -54804,84 +54771,6 @@ async function isContractDeployed(server, contractId) {
     );
   }
 }
-async function ensureContractDeployed(options) {
-  const { server, deployer, deployerAddress, wasmBytes, wasmHash, salt } = options;
-  const deployed = await isContractDeployed(server, options.contractId);
-  if (deployed) {
-    console.log(`Already deployed at ${options.contractId}`);
-    return;
-  }
-  console.log(`Installing WASM...`);
-  let account = await server.getAccount(deployer.publicKey());
-  const uploadTx = new TransactionBuilder(account, {
-    fee: "1000000",
-    networkPassphrase: SUPPORTED_NETWORK_PASSPHRASE
-  }).addOperation(Operation.uploadContractWasm({ wasm: wasmBytes })).setTimeout(30).build();
-  let preparedUpload;
-  try {
-    preparedUpload = await server.prepareTransaction(uploadTx);
-  } catch (err) {
-    console.error(
-      `WASM upload preparation failed at ${sanitizeEndpoint(options.rpcUrl)}: ${redactEndpointSecrets(String(err?.message ?? err), options.rpcUrl)}`
-    );
-    throw err;
-  }
-  preparedUpload.sign(deployer);
-  await submitAndConfirm(
-    server,
-    preparedUpload,
-    "WASM upload",
-    options.rpcUrl,
-    options.signal
-  );
-  console.log(`WASM installed. Deploying contract instance...`);
-  account = await server.getAccount(deployer.publicKey());
-  const createTx = new TransactionBuilder(account, {
-    fee: "1000000",
-    networkPassphrase: SUPPORTED_NETWORK_PASSPHRASE
-  }).addOperation(
-    Operation.createCustomContract({
-      wasmHash,
-      address: deployerAddress,
-      salt
-    })
-  ).setTimeout(30).build();
-  const preparedCreate = await server.prepareTransaction(createTx);
-  preparedCreate.sign(deployer);
-  await submitAndConfirm(
-    server,
-    preparedCreate,
-    "contract creation",
-    options.rpcUrl,
-    options.signal
-  );
-  console.log(`Deployed at ${options.contractId}`);
-}
-async function buildInvocationTransaction(options) {
-  const { server, sourceAccount, contractId, invocation } = options;
-  if (options.signal?.aborted) {
-    throw options.signal.reason || new Error("Measurement cancelled");
-  }
-  let account;
-  try {
-    account = await server.getAccount(sourceAccount);
-  } catch (err) {
-    throw new Error(
-      `Invocation source account is not available on the network: ${sourceAccount} (${redactEndpointSecrets(String(err?.message ?? err), options.rpcUrl)})`
-    );
-  }
-  const argsSc = invocation.args.map(toScVal);
-  return new TransactionBuilder(account, {
-    fee: "1000000",
-    networkPassphrase: SUPPORTED_NETWORK_PASSPHRASE
-  }).addOperation(
-    Operation.invokeContractFunction({
-      contract: contractId,
-      function: invocation.function_name,
-      args: argsSc
-    })
-  ).setTimeout(30).build();
-}
 var WASM_MAGIC = Buffer.from([
   0,
   97,
@@ -54892,83 +54781,6 @@ var WASM_MAGIC = Buffer.from([
   0,
   0
 ]);
-function resolveWasmPath(fixturesDir, declaredWasmPath, options) {
-  const wasmPath = path4.resolve(fixturesDir, declaredWasmPath);
-  if (fs3.existsSync(wasmPath)) {
-    return wasmPath;
-  }
-  const allowOptIn = options?.allowCrossTargetSubstitution ?? (process.env.WEIGHIN_ALLOW_CROSS_TARGET_SUBSTITUTION === "true" || process.env.WEIGHIN_ALLOW_CROSS_TARGET_SUBSTITUTION === "1");
-  if (allowOptIn) {
-    let altPath = "";
-    if (wasmPath.includes("wasm32-unknown-unknown")) {
-      altPath = wasmPath.replace("wasm32-unknown-unknown", "wasm32v1-none");
-    } else if (wasmPath.includes("wasm32v1-none")) {
-      altPath = wasmPath.replace("wasm32v1-none", "wasm32-unknown-unknown");
-    }
-    if (altPath && fs3.existsSync(altPath)) {
-      console.warn(
-        `Warning: declared WASM artifact not found at ${wasmPath}; substituting alternate target artifact at ${altPath}`
-      );
-      return altPath;
-    }
-  }
-  throw new Error(
-    `WASM not found: ${wasmPath}
-Build the contract before running measurements.`
-  );
-}
-function validateWasmArtifact(fixturesDir, declaredWasmPath, options) {
-  const resolvedPath = resolveWasmPath(fixturesDir, declaredWasmPath, options);
-  let stat;
-  try {
-    stat = fs3.statSync(resolvedPath);
-  } catch (err) {
-    throw new Error(
-      `WASM artifact inaccessible at ${resolvedPath}: ${err.message}`
-    );
-  }
-  if (!stat.isFile()) {
-    throw new Error(`WASM artifact at ${resolvedPath} is not a regular file`);
-  }
-  const fd = fs3.openSync(resolvedPath, "r");
-  try {
-    const buffer = Buffer.alloc(8);
-    const bytesRead = fs3.readSync(fd, buffer, 0, 8, 0);
-    if (bytesRead < 8 || !buffer.equals(WASM_MAGIC)) {
-      throw new Error(
-        `Invalid WASM header at ${resolvedPath}: expected magic header \\0asm\\x01\\x00\\x00\\x00`
-      );
-    }
-  } finally {
-    fs3.closeSync(fd);
-  }
-  return { resolvedPath };
-}
-function preflightContractArtifacts(fixturesDir, contracts, fixtureId, options) {
-  const resolvedPaths = /* @__PURE__ */ new Map();
-  const errors = [];
-  for (const contract of contracts) {
-    const contractLabel2 = contract.logical_id ?? (contract.id ? `id:${contract.id}` : `wasm:${contract.wasm_path}`);
-    const context3 = `${fixtureId} / ${contractLabel2}`;
-    try {
-      const { resolvedPath } = validateWasmArtifact(
-        fixturesDir,
-        contract.wasm_path,
-        options
-      );
-      resolvedPaths.set(contract.wasm_path, resolvedPath);
-    } catch (err) {
-      errors.push(`[${context3}] ${err.message}`);
-    }
-  }
-  if (errors.length > 0) {
-    throw new Error(
-      `Preflight validation failed for configured contract WASM artifacts:
-${errors.join("\n")}`
-    );
-  }
-  return resolvedPaths;
-}
 async function runMeasurement(fixturesPathOrOptions, gitCommit, sdkVersion, rpcUrl) {
   let opts;
   if (typeof fixturesPathOrOptions === "string") {
@@ -54986,110 +54798,167 @@ async function runMeasurement(fixturesPathOrOptions, gitCommit, sdkVersion, rpcU
   }
   const effectiveRpcUrl = opts.rpcUrl ?? DEFAULT_RPC_URL;
   const fixturesDir = path4.dirname(path4.resolve(opts.fixturesPath));
-  const keyFile = opts.keyFile ?? path4.join(fixturesDir, ".weighin-temp-key");
-  const rawFixtures = fs3.readFileSync(opts.fixturesPath, "utf8");
-  const fixturesSpec = parseFixtures(
-    rawFixtures,
-    opts.fixtureId ?? path4.relative(process.cwd(), path4.resolve(opts.fixturesPath))
-  );
-  const resolvedWasmPaths = preflightContractArtifacts(
-    fixturesDir,
-    fixturesSpec.contracts,
-    fixturesSpec.fixture_id,
-    { allowCrossTargetSubstitution: opts.allowCrossTargetSubstitution }
-  );
-  const server = new rpc_exports.Server(effectiveRpcUrl, { allowHttp: true });
-  const deployer = await getOrInitAccount(
-    keyFile,
-    effectiveRpcUrl,
-    opts.signal
-  );
-  const deployerAddress = Address.fromString(deployer.publicKey());
-  let invocationSourceAccount = deployer.publicKey();
-  if (opts.invocationSourceAccount !== void 0) {
-    invocationSourceAccount = normalizeSourceAccount(
-      opts.invocationSourceAccount
+  const ownedTempKeyDir = opts.keyFile === void 0 ? fs3.mkdtempSync(path4.join(os.tmpdir(), "weighin-deployer-key-")) : null;
+  if (ownedTempKeyDir) {
+    fs3.chmodSync(ownedTempKeyDir, 448);
+  }
+  const keyFile = opts.keyFile ?? path4.join(ownedTempKeyDir, ".weighin-temp-key");
+  try {
+    const rawFixtures = fs3.readFileSync(opts.fixturesPath, "utf8");
+    const fixturesSpec = parseFixtures(
+      rawFixtures,
+      opts.fixtureId ?? path4.relative(process.cwd(), path4.resolve(opts.fixturesPath))
     );
-    if (invocationSourceAccount !== deployer.publicKey()) {
-      console.log(`Invocation source account: ${invocationSourceAccount}`);
+    const server = new rpc_exports.Server(effectiveRpcUrl, { allowHttp: true });
+    const deployer = await getOrInitAccount(
+      keyFile,
+      effectiveRpcUrl,
+      opts.signal
+    );
+    const deployerAddress = Address.fromString(deployer.publicKey());
+    const results = [];
+    for (const contractSpec of fixturesSpec.contracts) {
+      let wasmPath = path4.resolve(fixturesDir, contractSpec.wasm_path);
+      if (!fs3.existsSync(wasmPath)) {
+        let altPath = "";
+        if (wasmPath.includes("wasm32-unknown-unknown")) {
+          altPath = wasmPath.replace("wasm32-unknown-unknown", "wasm32v1-none");
+        } else if (wasmPath.includes("wasm32v1-none")) {
+          altPath = wasmPath.replace("wasm32v1-none", "wasm32-unknown-unknown");
+        }
+        if (altPath && fs3.existsSync(altPath)) {
+          wasmPath = altPath;
+        } else {
+          throw new Error(
+            `WASM not found: ${wasmPath}
+Build the contract before running measurements.`
+          );
+        }
+      }
+      const wasmBytes = fs3.readFileSync(wasmPath);
+      const wasmHash = crypto3.createHash("sha256").update(wasmBytes).digest();
+      const wasmSha256 = wasmHash.toString("hex");
+      console.log(`WASM: ${wasmPath}`);
+      console.log(`WASM SHA256: ${wasmSha256}`);
+      const salt = crypto3.createHash("sha256").update(wasmHash).digest();
+      const contractId = calculateContractId(deployer.publicKey(), salt);
+      console.log(`Contract ID: ${contractId}`);
+      const deployed = await isContractDeployed(server, contractId);
+      if (!deployed) {
+        console.log(`Installing WASM...`);
+        let account = await server.getAccount(deployer.publicKey());
+        const uploadTx = new TransactionBuilder(account, {
+          fee: "1000000",
+          networkPassphrase: SUPPORTED_NETWORK_PASSPHRASE
+        }).addOperation(Operation.uploadContractWasm({ wasm: wasmBytes })).setTimeout(30).build();
+        let preparedUpload;
+        try {
+          preparedUpload = await server.prepareTransaction(uploadTx);
+        } catch (err) {
+          console.error(
+            `WASM upload preparation failed at ${sanitizeEndpoint(effectiveRpcUrl)}: ${redactEndpointSecrets(String(err?.message ?? err), effectiveRpcUrl)}`
+          );
+          throw err;
+        }
+        preparedUpload.sign(deployer);
+        await submitAndConfirm(
+          server,
+          preparedUpload,
+          "WASM upload",
+          effectiveRpcUrl,
+          opts.signal
+        );
+        console.log(`WASM installed. Deploying contract instance...`);
+        account = await server.getAccount(deployer.publicKey());
+        const createTx = new TransactionBuilder(account, {
+          fee: "1000000",
+          networkPassphrase: SUPPORTED_NETWORK_PASSPHRASE
+        }).addOperation(
+          Operation.createCustomContract({
+            wasmHash,
+            address: deployerAddress,
+            salt
+          })
+        ).setTimeout(30).build();
+        const preparedCreate = await server.prepareTransaction(createTx);
+        preparedCreate.sign(deployer);
+        await submitAndConfirm(
+          server,
+          preparedCreate,
+          "contract creation",
+          effectiveRpcUrl,
+          opts.signal
+        );
+        console.log(`Deployed at ${contractId}`);
+      } else {
+        console.log(`Already deployed at ${contractId}`);
+      }
+      const benchmarks = [];
+      for (const invokeSpec of contractSpec.invocations) {
+        if (opts.signal?.aborted) {
+          throw opts.signal.reason || new Error("Measurement cancelled by caller");
+        }
+        console.log(`Simulating ${invokeSpec.function_name}...`);
+        const account = await server.getAccount(deployer.publicKey());
+        const argsSc = invokeSpec.args.map(toScVal);
+        const invokeTx = new TransactionBuilder(account, {
+          fee: "1000000",
+          networkPassphrase: SUPPORTED_NETWORK_PASSPHRASE
+        }).addOperation(
+          Operation.invokeContractFunction({
+            contract: contractId,
+            function: invokeSpec.function_name,
+            args: argsSc
+          })
+        ).setTimeout(30).build();
+        const simRes = await server.simulateTransaction(invokeTx);
+        if (rpc_exports.Api.isSimulationError(simRes)) {
+          throw new Error(
+            `Simulation failed for ${invokeSpec.function_name}: ${simRes.error}`
+          );
+        }
+        if (!rpc_exports.Api.isSimulationSuccess(simRes)) {
+          throw new Error(
+            `Simulation did not return transaction data for ${invokeSpec.function_name}`
+          );
+        }
+        const helperPath = await resolveSimulationHelper(opts.helperPath);
+        const { output, provenance, limits } = await measureInvocation(
+          effectiveRpcUrl,
+          invokeTx,
+          helperPath,
+          { signal: opts.signal }
+        );
+        const metrics = metricsFromSimulation(output, limits);
+        benchmarks.push({
+          function_name: invokeSpec.function_name,
+          case_id: invokeSpec.case_id,
+          metrics,
+          provenance,
+          wasm_sha256: wasmSha256
+        });
+      }
+      const sorobanSdkVersion = opts.sdkVersion !== void 0 ? opts.sdkVersion : discoverSdkVersion(wasmPath);
+      results.push({
+        schema_version: 4,
+        fixture_id: fixturesSpec.fixture_id,
+        logical_id: contractSpec.logical_id,
+        contract_id: contractId,
+        git_commit: opts.gitCommit,
+        soroban_sdk_version: sorobanSdkVersion,
+        timestamp: Math.floor(Date.now() / 1e3),
+        benchmarks
+      });
+    }
+    return results;
+  } finally {
+    if (ownedTempKeyDir) {
+      try {
+        fs3.rmSync(ownedTempKeyDir, { recursive: true, force: true });
+      } catch {
+      }
     }
   }
-  const results = [];
-  for (const contractSpec of fixturesSpec.contracts) {
-    const wasmPath = resolvedWasmPaths.get(contractSpec.wasm_path);
-    const wasmBytes = fs3.readFileSync(wasmPath);
-    const wasmHash = crypto3.createHash("sha256").update(wasmBytes).digest();
-    const wasmSha256 = wasmHash.toString("hex");
-    console.log(`WASM: ${wasmPath}`);
-    console.log(`WASM SHA256: ${wasmSha256}`);
-    const salt = crypto3.createHash("sha256").update(wasmHash).digest();
-    const contractId = calculateContractId(deployer.publicKey(), salt);
-    console.log(`Contract ID: ${contractId}`);
-    await ensureContractDeployed({
-      server,
-      deployer,
-      deployerAddress,
-      wasmBytes,
-      wasmHash,
-      salt,
-      contractId,
-      rpcUrl: effectiveRpcUrl,
-      signal: opts.signal
-    });
-    const benchmarks = [];
-    for (const invokeSpec of contractSpec.invocations) {
-      if (opts.signal?.aborted) {
-        throw opts.signal.reason || new Error("Measurement cancelled by caller");
-      }
-      console.log(`Simulating ${invokeSpec.function_name}...`);
-      const invokeTx = await buildInvocationTransaction({
-        server,
-        sourceAccount: invocationSourceAccount,
-        contractId,
-        invocation: invokeSpec,
-        rpcUrl: effectiveRpcUrl,
-        signal: opts.signal
-      });
-      const simRes = await server.simulateTransaction(invokeTx);
-      if (rpc_exports.Api.isSimulationError(simRes)) {
-        throw new Error(
-          `Simulation failed for ${invokeSpec.function_name}: ${simRes.error}`
-        );
-      }
-      if (!rpc_exports.Api.isSimulationSuccess(simRes)) {
-        throw new Error(
-          `Simulation did not return transaction data for ${invokeSpec.function_name}`
-        );
-      }
-      const helperPath = await resolveSimulationHelper(opts.helperPath);
-      const { output, provenance, limits } = await measureInvocation(
-        effectiveRpcUrl,
-        invokeTx,
-        helperPath,
-        { signal: opts.signal }
-      );
-      const metrics = metricsFromSimulation(output, limits);
-      benchmarks.push({
-        function_name: invokeSpec.function_name,
-        case_id: invokeSpec.case_id,
-        metrics,
-        provenance,
-        wasm_sha256: wasmSha256
-      });
-    }
-    const sorobanSdkVersion = opts.sdkVersion !== void 0 ? opts.sdkVersion : discoverSdkVersion(wasmPath);
-    results.push({
-      schema_version: 4,
-      fixture_id: fixturesSpec.fixture_id,
-      logical_id: contractSpec.logical_id,
-      contract_id: contractId,
-      git_commit: opts.gitCommit,
-      soroban_sdk_version: sorobanSdkVersion,
-      timestamp: Math.floor(Date.now() / 1e3),
-      benchmarks
-    });
-  }
-  return results;
 }
 
 // src/threshold.ts
@@ -55938,7 +55807,7 @@ var exec3 = __toESM(require_exec());
 // src/build.ts
 var fs4 = __toESM(require("fs"));
 var path5 = __toESM(require("path"));
-var os = __toESM(require("os"));
+var os2 = __toESM(require("os"));
 var import_crypto = require("crypto");
 var exec = __toESM(require_exec());
 var CargoTargetSchema = external_exports.object({
@@ -56362,7 +56231,7 @@ async function buildContracts(fixturesPathOrOptions, workspaceRoot, rustToolchai
     if (!wasm) {
       let outputDir;
       try {
-        outputDir = fs4.mkdtempSync(path5.join(os.tmpdir(), "weighin-build-"));
+        outputDir = fs4.mkdtempSync(path5.join(os2.tmpdir(), "weighin-build-"));
       } catch (error2) {
         throw new Error(
           `Cannot create build temporary storage: ${error2.message}`
@@ -56814,7 +56683,7 @@ async function checkoutRef(repoRoot, ref, label) {
   await exec7.exec("git", ["fetch", "--depth=1", "origin", ref], {
     cwd: repoRoot
   });
-  const dir = fs6.mkdtempSync(path7.join(os2.tmpdir(), `weighin-${label}-`));
+  const dir = fs6.mkdtempSync(path7.join(os3.tmpdir(), `weighin-${label}-`));
   core3.info(`Checking out ${ref} into ${dir}`);
   try {
     await exec7.exec("git", ["worktree", "add", "--detach", dir, "FETCH_HEAD"], {
@@ -56877,7 +56746,7 @@ async function run() {
     }
     const baseRef = baseRefInput.trim() || context2.payload.pull_request?.base?.ref || "main";
     await validateBaseRef(headWorkspace, baseRef);
-    keyDir = fs6.mkdtempSync(path7.join(os2.tmpdir(), "weighin-key-"));
+    keyDir = fs6.mkdtempSync(path7.join(os3.tmpdir(), "weighin-key-"));
     fs6.chmodSync(keyDir, 448);
     sharedKeyFile = path7.join(keyDir, "weighin-deployer.key");
     core3.info(`Base ref:   ${baseRef}`);
