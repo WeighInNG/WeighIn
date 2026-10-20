@@ -177,3 +177,48 @@ test('a successful fork PR uses the same comment delivery path', async () => {
   assert.equal(result.status, 0, result.stdout + result.stderr);
   assert.equal(result.calls[1].body.body, report);
 });
+test('the bundled consumer rejects colliding report-path and metadata-path with zero mutation calls', async () => {
+  const collidingSteps = steps.map(step => step.uses === './comment'
+    ? { ...step, with: { ...step.with, 'report-path': 'shared.out', 'metadata-path': './sub/../shared.out' } }
+    : step);
+  const result = await execute(collidingSteps);
+  assert.equal(result.status, 1);
+  assert.match(result.stdout + result.stderr, /Colliding output path: report-path .* and metadata-path .* resolve to the same destination/);
+  assert.deepEqual(result.calls, []);
+});
+test('the bundled producer preflights and rejects colliding or symlinked output paths before RPC checks', () => {
+  const temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'weighin-producer-paths-'));
+  try {
+    const fixturesFile = path.join(temporary, 'weighin-fixtures.json');
+    const configFile = path.join(temporary, 'weighin.toml');
+    fs.writeFileSync(fixturesFile, '{"fixture_id":"id:orig"}');
+    fs.writeFileSync(configFile, '[thresholds]\n');
+
+    for (const [envOverrides, pattern] of [
+      [{ 'INPUT_REPORT-PATH': './nested/../weighin-fixtures.json' }, /Colliding output path: report-path .* and fixtures-path .* resolve to the same destination/],
+      [{ 'INPUT_METADATA-PATH': './weighin.toml' }, /Colliding output path: metadata-path .* and config-path .* resolve to the same destination/],
+      [{ 'INPUT_REPORT-PATH': 'out/shared.txt', 'INPUT_METADATA-PATH': 'out/./shared.txt' }, /Colliding output path: report-path .* and metadata-path .* resolve to the same destination/],
+    ]) {
+      const result = spawnSync(process.execPath, [path.join(root, 'bundled/index.js')], {
+        cwd: temporary,
+        encoding: 'utf8',
+        env: {
+          ...process.env,
+          GITHUB_WORKSPACE: temporary,
+          'INPUT_FIXTURES-PATH': 'weighin-fixtures.json',
+          'INPUT_CONFIG-PATH': 'weighin.toml',
+          'INPUT_RPC-URL': 'http://127.0.0.1:1/unreachable-rpc',
+          ...envOverrides,
+        },
+      });
+      assert.equal(result.status, 1);
+      assert.match(result.stdout + result.stderr, pattern);
+      assert.doesNotMatch(result.stdout + result.stderr, /Checking RPC health/);
+    }
+    assert.equal(fs.readFileSync(fixturesFile, 'utf8'), '{"fixture_id":"id:orig"}');
+    assert.equal(fs.readFileSync(configFile, 'utf8'), '[thresholds]\n');
+  } finally {
+    fs.rmSync(temporary, { recursive: true, force: true });
+  }
+});
+
