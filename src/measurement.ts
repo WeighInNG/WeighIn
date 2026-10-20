@@ -426,13 +426,38 @@ function hashLabel(hash: unknown): string {
 // rejections (ERROR) and temporary rejections (TRY_AGAIN_LATER) fail before any
 // confirmation polling; PENDING/DUPLICATE with a valid hash use the existing
 // confirmation path; any other response fails closed.
+export function verifyCreatedContractReceipt(
+  confirmed: rpc.Api.GetTransactionResponse,
+  expectedContractId: string,
+): void {
+  const anyConfirmed = confirmed as any;
+  if (
+    anyConfirmed?.returnValue !== undefined &&
+    anyConfirmed?.returnValue !== null
+  ) {
+    let observedAddress: string;
+    try {
+      observedAddress = Address.fromScVal(anyConfirmed.returnValue).toString();
+    } catch (err: any) {
+      throw new Error(
+        `Contract creation receipt returned an unreadable contract address (expected=${expectedContractId}, observed=unreadable: ${String(err?.message ?? err)})`,
+      );
+    }
+    if (observedAddress !== expectedContractId) {
+      throw new Error(
+        `Contract creation receipt address mismatch (expected=${expectedContractId}, observed=${observedAddress})`,
+      );
+    }
+  }
+}
+
 async function submitAndConfirm(
   server: rpc.Server,
   prepared: Transaction,
   phase: string,
   rpcUrl: string,
   signal?: AbortSignal,
-): Promise<void> {
+): Promise<rpc.Api.GetTransactionResponse> {
   if (signal?.aborted) {
     throw signal.reason || new Error(`${phase} cancelled`);
   }
@@ -474,6 +499,7 @@ async function submitAndConfirm(
       `${phase} transaction ${submission.hash} did not succeed (status=${confirmed.status})`,
     );
   }
+  return confirmed;
 }
 
 // Check if contract is already deployed
@@ -985,17 +1011,71 @@ export async function runMeasurement(
     const contractId = calculateContractId(deployer.publicKey(), salt);
 
     console.log(`Contract ID: ${contractId}`);
-    await ensureContractDeployed({
-      server,
-      deployer,
-      deployerAddress,
-      wasmBytes,
-      wasmHash,
-      salt,
-      contractId,
-      rpcUrl: effectiveRpcUrl,
-      signal: opts.signal,
-    });
+    const deployed = await isContractDeployed(server, contractId);
+
+    if (!deployed) {
+      console.log(`Installing WASM...`);
+      let account = await server.getAccount(deployer.publicKey());
+
+      // 1. Upload WASM
+      const uploadTx = new TransactionBuilder(account, {
+        fee: "1000000",
+        networkPassphrase: SUPPORTED_NETWORK_PASSPHRASE,
+      })
+        .addOperation(Operation.uploadContractWasm({ wasm: wasmBytes }))
+        .setTimeout(30)
+        .build();
+
+      let preparedUpload;
+      try {
+        preparedUpload = await server.prepareTransaction(uploadTx);
+      } catch (err: any) {
+        console.error(
+          `WASM upload preparation failed at ${sanitizeEndpoint(effectiveRpcUrl)}: ${redactEndpointSecrets(String(err?.message ?? err), effectiveRpcUrl)}`,
+        );
+        throw err;
+      }
+      preparedUpload.sign(deployer);
+      await submitAndConfirm(
+        server,
+        preparedUpload,
+        "WASM upload",
+        effectiveRpcUrl,
+        opts.signal,
+      );
+
+      console.log(`WASM installed. Deploying contract instance...`);
+      account = await server.getAccount(deployer.publicKey());
+
+      // 2. Create contract instance
+      const createTx = new TransactionBuilder(account, {
+        fee: "1000000",
+        networkPassphrase: SUPPORTED_NETWORK_PASSPHRASE,
+      })
+        .addOperation(
+          Operation.createCustomContract({
+            wasmHash,
+            address: deployerAddress,
+            salt,
+          }),
+        )
+        .setTimeout(30)
+        .build();
+
+      const preparedCreate = await server.prepareTransaction(createTx);
+      preparedCreate.sign(deployer);
+      const confirmedCreate = await submitAndConfirm(
+        server,
+        preparedCreate,
+        "contract creation",
+        effectiveRpcUrl,
+        opts.signal,
+      );
+      verifyCreatedContractReceipt(confirmedCreate, contractId);
+      console.log(`Deployed at ${contractId}`);
+    } else {
+      console.log(`Already deployed at ${contractId}`);
+    }
 
     const benchmarks: BenchmarkResult[] = [];
 
