@@ -55128,9 +55128,202 @@ async function buildForRevision(fixturesPath, worktreeRoot, rustToolchain, build
 var fs4 = __toESM(require("fs"));
 var path5 = __toESM(require("path"));
 var core2 = __toESM(require_core());
-function writeReportFile(reportPathInput, headWorkspace, body) {
+function lstatOrNull(targetPath) {
+  try {
+    return fs5.lstatSync(targetPath);
+  } catch {
+    return null;
+  }
+}
+function normalizeForComparison(filePath) {
+  const normalized = path5.normalize(filePath);
+  return process.platform === "win32" ? normalized.toLowerCase() : normalized;
+}
+function isSameOrParentPath(pathA, pathB) {
+  const normA = normalizeForComparison(pathA);
+  const normB = normalizeForComparison(pathB);
+  if (normA === normB) return "same";
+  const prefixA = normA.endsWith(path5.sep) ? normA : normA + path5.sep;
+  const prefixB = normB.endsWith(path5.sep) ? normB : normB + path5.sep;
+  if (normB.startsWith(prefixA) || normA.startsWith(prefixB)) {
+    return "parent";
+  }
+  return null;
+}
+function findSymlinkAlongPath(resolvedWorkspace, lexicalPath) {
+  const normWorkspace = normalizeForComparison(resolvedWorkspace);
+  const normLexical = normalizeForComparison(lexicalPath);
+  const workspacePrefix = normWorkspace.endsWith(path5.sep) ? normWorkspace : normWorkspace + path5.sep;
+  if (normLexical === normWorkspace || normLexical.startsWith(workspacePrefix)) {
+    const rel = path5.relative(resolvedWorkspace, lexicalPath);
+    const parts = rel.split(path5.sep).filter(Boolean);
+    let current2 = resolvedWorkspace;
+    for (const part of parts) {
+      current2 = path5.join(current2, part);
+      const stat = lstatOrNull(current2);
+      if (stat?.isSymbolicLink()) {
+        return current2;
+      }
+    }
+    return null;
+  }
+  let current = lexicalPath;
+  while (true) {
+    const stat = lstatOrNull(current);
+    if (stat?.isSymbolicLink()) {
+      return current;
+    }
+    if (stat) {
+      break;
+    }
+    const parent = path5.dirname(current);
+    if (parent === current) break;
+    current = parent;
+  }
+  return null;
+}
+function resolveCanonicalTargetPath(targetPath, visited = /* @__PURE__ */ new Set()) {
+  const missingSuffix = [];
+  let current = path5.resolve(targetPath);
+  while (true) {
+    const stat = lstatOrNull(current);
+    if (stat) {
+      if (stat.isSymbolicLink()) {
+        const visitKey = normalizeForComparison(current);
+        if (visited.has(visitKey)) {
+          throw new Error(
+            `Invalid output path: symlink loop detected while resolving ${targetPath}`
+          );
+        }
+        visited.add(visitKey);
+        const linkTarget = fs5.readlinkSync(current);
+        const resolvedLink = path5.resolve(path5.dirname(current), linkTarget);
+        const nextTarget = missingSuffix.length > 0 ? path5.join(resolvedLink, ...missingSuffix) : resolvedLink;
+        return resolveCanonicalTargetPath(nextTarget, visited);
+      }
+      const realExisting = fs5.realpathSync(current);
+      return missingSuffix.length > 0 ? path5.join(realExisting, ...missingSuffix) : realExisting;
+    }
+    const parent = path5.dirname(current);
+    if (parent === current) {
+      return missingSuffix.length > 0 ? path5.join(current, ...missingSuffix) : current;
+    }
+    missingSuffix.unshift(path5.basename(current));
+    current = parent;
+  }
+}
+function inspectWorkspacePath(headWorkspace, rawPath) {
+  const resolvedWorkspace = path5.resolve(headWorkspace);
+  const lexicalPath = path5.resolve(resolvedWorkspace, rawPath);
+  const symlinkPath = findSymlinkAlongPath(resolvedWorkspace, lexicalPath);
+  const canonicalPath = resolveCanonicalTargetPath(lexicalPath);
+  return {
+    rawPath,
+    lexicalPath,
+    canonicalPath,
+    symlinkPath
+  };
+}
+function checkPairCollision(outputLabel, outputInfo, otherLabel, otherInfo) {
+  const lexicalRelation = isSameOrParentPath(
+    outputInfo.lexicalPath,
+    otherInfo.lexicalPath
+  );
+  const canonicalRelation = isSameOrParentPath(
+    outputInfo.canonicalPath,
+    otherInfo.canonicalPath
+  );
+  const relation = canonicalRelation ?? lexicalRelation;
+  if (!relation) return;
+  const viaSymlink = outputInfo.symlinkPath || otherInfo.symlinkPath ? ` via existing symlink (${outputInfo.symlinkPath ?? otherInfo.symlinkPath})` : "";
+  if (relation === "same") {
+    throw new Error(
+      `Colliding output path: ${outputLabel} (${outputInfo.rawPath}) and ${otherLabel} (${otherInfo.rawPath}) resolve to the same destination (${outputInfo.canonicalPath})${viaSymlink}`
+    );
+  }
+  throw new Error(
+    `Colliding output path: ${outputLabel} (${outputInfo.rawPath}) and ${otherLabel} (${otherInfo.rawPath}) conflict as parent/child paths (${outputInfo.canonicalPath} vs ${otherInfo.canonicalPath})${viaSymlink}`
+  );
+}
+function validateOutputPaths(options) {
+  const resolvedWorkspace = path5.resolve(options.headWorkspace);
+  const canonicalWorkspace = resolveCanonicalTargetPath(resolvedWorkspace);
+  const reportRaw = options.reportPath ?? "";
+  const metadataRaw = options.metadataPath ?? "";
+  if (reportRaw.length > 0 && reportRaw.trim() === "") {
+    throw new Error(
+      "Invalid output path: report-path must not be blank or whitespace-only"
+    );
+  }
+  if (metadataRaw.length > 0 && metadataRaw.trim() === "") {
+    throw new Error(
+      "Invalid output path: metadata-path must not be blank or whitespace-only"
+    );
+  }
+  const reportInfo = reportRaw ? inspectWorkspacePath(resolvedWorkspace, reportRaw) : null;
+  const metadataInfo = metadataRaw ? inspectWorkspacePath(resolvedWorkspace, metadataRaw) : null;
+  const fixturesRaw = options.fixturesPath || core2.getInput("fixtures-path") || "weighin-fixtures.json";
+  const configRaw = options.configPath || core2.getInput("config-path") || "weighin.toml";
+  const trustedPolicyRaw = options.trustedPolicyPath || core2.getInput("trusted-policy-path") || "";
+  const inputSpecs = [
+    {
+      label: "fixtures-path",
+      info: inspectWorkspacePath(resolvedWorkspace, fixturesRaw)
+    },
+    {
+      label: "config-path",
+      info: inspectWorkspacePath(resolvedWorkspace, configRaw)
+    }
+  ];
+  if (trustedPolicyRaw.trim()) {
+    inputSpecs.push({
+      label: "trusted-policy-path",
+      info: inspectWorkspacePath(resolvedWorkspace, trustedPolicyRaw.trim())
+    });
+  }
+  if (reportInfo && metadataInfo) {
+    checkPairCollision(
+      "report-path",
+      reportInfo,
+      "metadata-path",
+      metadataInfo
+    );
+  }
+  for (const [outputLabel, outputInfo] of [
+    ["report-path", reportInfo],
+    ["metadata-path", metadataInfo]
+  ]) {
+    if (!outputInfo) continue;
+    if (normalizeForComparison(outputInfo.canonicalPath) === normalizeForComparison(canonicalWorkspace) || normalizeForComparison(outputInfo.lexicalPath) === normalizeForComparison(resolvedWorkspace)) {
+      throw new Error(
+        `Invalid output path: ${outputLabel} (${outputInfo.rawPath}) resolves to the workspace root directory (${outputInfo.canonicalPath})`
+      );
+    }
+    for (const inputSpec of inputSpecs) {
+      checkPairCollision(
+        outputLabel,
+        outputInfo,
+        inputSpec.label,
+        inputSpec.info
+      );
+    }
+    if (outputInfo.symlinkPath) {
+      throw new Error(
+        `Invalid output path: ${outputLabel} (${outputInfo.rawPath}) aliases or traverses an existing symlink (${outputInfo.symlinkPath} -> ${outputInfo.canonicalPath})`
+      );
+    }
+  }
+  return { report: reportInfo, metadata: metadataInfo };
+}
+function writeReportFile(reportPathInput, headWorkspace, body, options) {
   if (!reportPathInput) return;
-  const targetPath = path5.resolve(headWorkspace, reportPathInput);
+  const { report } = validateOutputPaths({
+    headWorkspace,
+    reportPath: reportPathInput,
+    metadataPath: options?.metadataPath ?? core2.getInput("metadata-path"),
+    ...options
+  });
+  const targetPath = report.lexicalPath;
   try {
     const parentDir = path5.dirname(targetPath);
     if (!fs4.existsSync(parentDir)) {
@@ -55487,6 +55680,14 @@ async function run() {
     core3.info(`RPC URL:    ${sanitizeEndpoint(rpcUrl)}`);
     core3.info(`Fixtures:   ${fixturesPathRel}`);
     core3.info(`Key file:   ${sharedKeyFile}`);
+    validateOutputPaths({
+      headWorkspace,
+      reportPath: reportPathInput,
+      metadataPath: metadataPathInput,
+      fixturesPath: fixturesPathRel,
+      configPath: configPathRel || "weighin.toml",
+      trustedPolicyPath: core3.getInput("trusted-policy-path")
+    });
     await assertRpcHealthy(rpcUrl);
     const headFixturesPath = resolveRevisionFixturesPath(
       headWorkspace,

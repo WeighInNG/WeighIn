@@ -40,6 +40,7 @@ class RpcCompatibilityError extends Error {}
 // ---------------------------------------------------------------------------
 // RPC health check
 // ---------------------------------------------------------------------------
+import { validateOutputPaths } from "./report";
 
 /**
  * Verify that the RPC endpoint is reachable and responding to getHealth and getNetwork.
@@ -461,6 +462,15 @@ async function run(): Promise<void> {
     core.info(`RPC URL:    ${sanitizeEndpoint(rpcUrl)}`);
     core.info(`Fixtures:   ${fixturesPathRel}`);
     core.info(`Key file:   ${sharedKeyFile}`);
+
+    validateOutputPaths({
+      headWorkspace,
+      reportPath: reportPathInput,
+      metadataPath: metadataPathInput,
+      fixturesPath: fixturesPathRel,
+      configPath: configPathRel || "weighin.toml",
+      trustedPolicyPath: core.getInput("trusted-policy-path"),
+    });
 
     // 1. RPC health check — fail fast with a clear message
     await assertRpcHealthy(rpcUrl);
