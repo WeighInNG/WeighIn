@@ -481,6 +481,15 @@ export function inspectMeasurementRecord(
     return { valid: false, version, diagnostics };
   }
 
+  if (benchmarksArray.length === 0) {
+    diagnostics.push({
+      path: `${basePath}.benchmarks`,
+      version,
+      code: "EMPTY_BENCHMARKS_ARRAY",
+      message: "Contract benchmarks must not be empty",
+    });
+  }
+
   const seenBenchmarks = new Set<string>();
 
   benchmarksArray.forEach((benchmark: unknown, bIdx: number) => {
