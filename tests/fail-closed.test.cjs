@@ -460,13 +460,16 @@ test("Concurrent action invocations receive different private key directories", 
   fs.rmSync(sharedRoot, { recursive: true, force: true });
 });
 test("Action unchanged control and optional absent policy still pass; regression fails", () => {
-  assert.equal(action("control").status, 0);
+  const ctrl = action("control");
+  assert.equal(ctrl.status, 0);
+  assert.match(ctrl.summary, /comparing `main` \(`unit-sha`\) → `unit-sha`/);
   const absent = action("control", null);
   assert.equal(absent.status, 0);
   assert.equal(absent.missingConfig, null);
   const regression = action("regression");
   assert.equal(regression.status, 1);
   assert.match(regression.summary, /increased/);
+  assert.match(regression.summary, /comparing `main` \(`unit-sha`\) → `unit-sha`/);
 });
 
 test("Action persists an explicit unsuccessful-comparison report on configuration/fixture/RPC failures when report-path is set", () => {

@@ -337,4 +337,98 @@ describe("renderComment", () => {
     expect(diff1.contracts[0].contract_id).toBe("CBBB");
     expect(violations1[0].function_name).toBe("beta_fn");
   });
+
+  it("renders full authoritative BASE and HEAD SHAs alongside friendly base ref from context", () => {
+    const diff = createMockDiff(false);
+    const fullBaseSha = "1111222233334444555566667777888899990000";
+    const fullHeadSha = "aaaabbbbccccddddeeeeffff0000111122223333";
+    const comment = renderComment(diff, [], "main", fullHeadSha, undefined, {
+      baseSha: fullBaseSha,
+      headSha: fullHeadSha,
+    });
+    expect(comment).toContain(
+      `**All thresholds passed** — comparing \`main\` (\`${fullBaseSha}\`) → \`${fullHeadSha}\``,
+    );
+    // Explicitly assert full 40-character revision is present, not just an 8-char prefix
+    expect(comment).not.toContain(`\`${fullHeadSha.slice(0, 8)}\`\n`);
+    expect(comment).toContain(fullBaseSha);
+    expect(comment).toContain(fullHeadSha);
+  });
+
+  it("derives unique BASE revision from diff records for legacy 4-argument callers", () => {
+    const diff = createMockDiff(false);
+    diff.contracts[0].base_commit = "deadbeef12345678deadbeef12345678deadbeef";
+    const fullHeadSha = "cafebabe12345678cafebabe12345678cafebabe";
+    const comment = renderComment(diff, [], "release-v1", fullHeadSha);
+    expect(comment).toContain(
+      `**All thresholds passed** — comparing \`release-v1\` (\`deadbeef12345678deadbeef12345678deadbeef\`) → \`${fullHeadSha}\``,
+    );
+  });
+
+  it("labels missing base revision as unknown for legacy callers without guessing from branch name", () => {
+    const diff = createMockDiff(false);
+    delete (diff.contracts[0] as any).base_commit;
+    const fullHeadSha = "cafebabe12345678cafebabe12345678cafebabe";
+    const comment = renderComment(diff, [], "feature-branch", fullHeadSha);
+    expect(comment).toContain(
+      `**All thresholds passed** — comparing \`feature-branch\` (\`unknown\`) → \`${fullHeadSha}\``,
+    );
+  });
+
+  it("labels empty diff contracts as unknown base revision", () => {
+    const emptyDiff: DiffResult = {
+      contracts: [],
+      hasRegression: false,
+      newContracts: [],
+      removedContracts: [],
+    };
+    const fullHeadSha = "cafebabe12345678cafebabe12345678cafebabe";
+    const comment = renderComment(emptyDiff, [], "main", fullHeadSha);
+    expect(comment).toContain(
+      `**All thresholds passed** — comparing \`main\` (\`unknown\`) → \`${fullHeadSha}\``,
+    );
+  });
+
+  it("labels mixed base revisions explicitly when contracts have inconsistent revisions", () => {
+    const diff = createMockDiff(false);
+    const contract2 = {
+      ...diff.contracts[0],
+      contract_id: "contract-b",
+      base_commit: "differentcommit1111111111111111111111111",
+    };
+    diff.contracts.push(contract2);
+    const fullHeadSha = "cafebabe12345678cafebabe12345678cafebabe";
+    const comment = renderComment(diff, [], "main", fullHeadSha);
+    expect(comment).toContain(
+      `**All thresholds passed** — comparing \`main\` (\`mixed\`) → \`${fullHeadSha}\``,
+    );
+  });
+
+  it("does not duplicate SHA when baseRef is already the exact commit SHA", () => {
+    const diff = createMockDiff(false);
+    const exactSha = "4f266c5e8d5a98de7e83e80ebe4a1475ec1bbe0f";
+    const fullHeadSha = "cafebabe12345678cafebabe12345678cafebabe";
+    const comment = renderComment(diff, [], exactSha, fullHeadSha, undefined, {
+      baseSha: exactSha,
+      headSha: fullHeadSha,
+    });
+    expect(comment).toContain(
+      `**All thresholds passed** — comparing \`${exactSha}\` → \`${fullHeadSha}\``,
+    );
+    expect(comment).not.toContain(`\`${exactSha}\` (\`${exactSha}\`)`);
+  });
+
+  it("preserves recorded SHA even if baseRef branch moves after measurement", () => {
+    const diff = createMockDiff(false);
+    const recordedSha = "measured-base-sha-12345678901234567890";
+    const headSha = "head-sha-123456789012345678901234567890";
+    // baseRef name is "main", but recordedSha was bound during measurement
+    const comment = renderComment(diff, [], "main", headSha, undefined, {
+      baseSha: recordedSha,
+      headSha,
+    });
+    expect(comment).toContain(
+      `**All thresholds passed** — comparing \`main\` (\`${recordedSha}\`) → \`${headSha}\``,
+    );
+  });
 });
