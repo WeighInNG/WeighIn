@@ -35216,6 +35216,41 @@ function canonical(value) {
   }
   return value;
 }
+function canonicalArg(arg) {
+  const type = arg.type.toLowerCase();
+  const val = arg.value;
+  if (type === "vec" && Array.isArray(val)) {
+    return {
+      type,
+      value: val.map(
+        (item) => item !== null && typeof item === "object" && !Array.isArray(item) && typeof item.type === "string" && "value" in item ? canonicalArg(item) : canonical(item)
+      )
+    };
+  }
+  if (type === "map" && Array.isArray(val)) {
+    return {
+      type,
+      value: val.map((entry) => {
+        if (entry !== null && typeof entry === "object" && !Array.isArray(entry)) {
+          return Object.fromEntries(
+            Object.keys(entry).sort().map((k) => {
+              const v = entry[k];
+              if ((k === "key" || k === "value") && v !== null && typeof v === "object" && !Array.isArray(v) && typeof v.type === "string" && "value" in v) {
+                return [k, canonicalArg(v)];
+              }
+              return [k, canonical(v)];
+            })
+          );
+        }
+        return canonical(entry);
+      })
+    };
+  }
+  return {
+    type,
+    value: canonical(val)
+  };
+}
 function parseFixtures(raw, fixturePath) {
   const fixtures = fixturesSchema.parse(JSON.parse(raw));
   const fixture_id = fixtures.id === void 0 ? `path:${relativePath(fixturePath)}` : `id:${fixtures.id}`;
@@ -35230,10 +35265,7 @@ function parseFixtures(raw, fixturePath) {
     contractIds.add(logical_id);
     const caseIds = /* @__PURE__ */ new Set();
     const invocations = contract.invocations.map((invocation) => {
-      const args = invocation.args.map((arg) => ({
-        type: arg.type.toLowerCase(),
-        value: canonical(arg.value)
-      }));
+      const args = invocation.args.map((arg) => canonicalArg(arg));
       const case_id = invocation.id === void 0 ? `args:${JSON.stringify(args)}` : `id:${invocation.id}`;
       const key = JSON.stringify([invocation.function_name, case_id]);
       if (caseIds.has(key)) {
