@@ -32,7 +32,11 @@ globalThis.fetch = async (url, options) => {
     if (!method) return new Response("still warming", { status: 502 });
     if (method === "getLedgerEntries")
       return new Response(
-        JSON.stringify({ jsonrpc: "2.0", id: request.id, result: { entries: [], latestLedger: 100 } }),
+        JSON.stringify({
+          jsonrpc: "2.0",
+          id: request.id,
+          result: { entries: [], latestLedger: 100 },
+        }),
       );
   }
   const result =
@@ -48,7 +52,9 @@ globalThis.fetch = async (url, options) => {
         }
       : { status: mode === "rpc-unhealthy" ? "starting" : "healthy" };
   if (mode === "rpc-invalid-envelope" && method === "getHealth") {
-    return new Response(JSON.stringify({ jsonrpc: "2.0", id: request.id + 1, result }));
+    return new Response(
+      JSON.stringify({ jsonrpc: "2.0", id: request.id + 1, result }),
+    );
   }
   return new Response(
     JSON.stringify({
@@ -72,7 +78,10 @@ Module._load = function (name, parent, ...args) {
     parent?.filename.endsWith("/dist/action.js") ||
     parent?.filename.endsWith("/dist/build.js")
   ) {
-    if (name === "@actions/core" && parent?.filename.endsWith("/dist/action.js")) {
+    if (
+      name === "@actions/core" &&
+      parent?.filename.endsWith("/dist/action.js")
+    ) {
       const core = load.call(this, name, parent, ...args);
       if (mode === "summary-delivery-failure") {
         let failedFirstWrite = false;

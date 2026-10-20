@@ -17,7 +17,9 @@ test("committed CycloneDX inventory matches the current locked inputs", () => {
 });
 
 test("a clean packed consumer receives the inventory, bundles, native locks, and loadable API", () => {
-  const temporary = fs.mkdtempSync(path.join(os.tmpdir(), "weighin-packed-consumer-"));
+  const temporary = fs.mkdtempSync(
+    path.join(os.tmpdir(), "weighin-packed-consumer-"),
+  );
   try {
     const packed = JSON.parse(
       execFileSync(
@@ -26,7 +28,9 @@ test("a clean packed consumer receives the inventory, bundles, native locks, and
         { cwd: root, encoding: "utf8" },
       ),
     )[0];
-    const packagedPaths = new Set(packed.files.map(({ path: filePath }) => filePath));
+    const packagedPaths = new Set(
+      packed.files.map(({ path: filePath }) => filePath),
+    );
     for (const filePath of [
       "docs/dependency-inventory.json",
       "docs/DEPENDENCY_SECURITY.md",
@@ -42,7 +46,16 @@ test("a clean packed consumer receives the inventory, bundles, native locks, and
     const tarball = path.join(temporary, packed.filename);
     execFileSync(
       "npm",
-      ["install", "--offline", "--ignore-scripts", "--no-audit", "--no-fund", "--prefix", consumer, tarball],
+      [
+        "install",
+        "--prefer-offline",
+        "--ignore-scripts",
+        "--no-audit",
+        "--no-fund",
+        "--prefix",
+        consumer,
+        tarball,
+      ],
       { cwd: temporary, stdio: "pipe" },
     );
     execFileSync(process.execPath, ["-e", "require('weighin')"], {
@@ -51,12 +64,18 @@ test("a clean packed consumer receives the inventory, bundles, native locks, and
     });
     const installedInventory = JSON.parse(
       fs.readFileSync(
-        path.join(consumer, "node_modules/weighin/docs/dependency-inventory.json"),
+        path.join(
+          consumer,
+          "node_modules/weighin/docs/dependency-inventory.json",
+        ),
         "utf8",
       ),
     );
     const sourceInventory = JSON.parse(
-      fs.readFileSync(path.join(root, "docs/dependency-inventory.json"), "utf8"),
+      fs.readFileSync(
+        path.join(root, "docs/dependency-inventory.json"),
+        "utf8",
+      ),
     );
     assert.deepEqual(installedInventory, sourceInventory);
   } finally {

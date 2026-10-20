@@ -223,8 +223,21 @@ function execute(
                 new Error("Simulation helper execution cancelled"),
             );
           } else {
+            let detail = stderr || error.message;
+            try {
+              const envelope = parseHelperFailure({ stdout });
+              if (envelope) {
+                const keyDetail =
+                  envelope.status === "uncaptured" && envelope.keys?.length
+                    ? ` (UNCAPTURED_KEY:${envelope.keys.join(",")})`
+                    : "";
+                detail = `${detail.trim()} (${envelope.status}: ${envelope.message}${keyDetail})`;
+              }
+            } catch {
+              // Preserve raw stderr/stdout for callers that inspect parseHelperFailure directly
+            }
             const failure = new Error(
-              `Simulation helper failed: ${stderr || error.message}`,
+              `Simulation helper failed: ${detail}`,
             ) as Error & { stdout?: string; exitCode?: number };
             failure.stdout = stdout;
             failure.exitCode =

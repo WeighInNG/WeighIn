@@ -254,12 +254,12 @@ test("validator rejects unknown versions, missing metrics, unavailable-as-zero, 
     delete mutated[0].benchmarks[0].metrics[key];
     const res = rootApi.inspectMeasurementRecords(mutated);
     assert.equal(res.valid, false);
-    assert.equal(
-      res.diagnostics[0].path,
-      `$[0].benchmarks[0].metrics.${key}`,
-    );
+    assert.equal(res.diagnostics[0].path, `$[0].benchmarks[0].metrics.${key}`);
     assert.equal(res.diagnostics[0].code, "MISSING_METRIC");
-    assert.match(res.diagnostics[0].message, new RegExp(`Missing metric ${key}`));
+    assert.match(
+      res.diagnostics[0].message,
+      new RegExp(`Missing metric ${key}`),
+    );
   }
 
   // 3. Unavailable-as-zero and missing unavailable reason
@@ -273,7 +273,10 @@ test("validator rejects unknown versions, missing metrics, unavailable-as-zero, 
       "$[0].benchmarks[0].metrics.tx_size_bytes.consumed",
     );
     assert.equal(res.diagnostics[0].code, "INVALID_UNAVAILABLE_METRIC");
-    assert.match(res.diagnostics[0].message, /Invalid unavailable metric tx_size_bytes/);
+    assert.match(
+      res.diagnostics[0].message,
+      /Invalid unavailable metric tx_size_bytes/,
+    );
 
     const unavailableBlankReason = structuredClone(archivedS4);
     unavailableBlankReason[0].benchmarks[0].metrics.tx_size_bytes.reason = "  ";
@@ -302,8 +305,9 @@ test("validator rejects unknown versions, missing metrics, unavailable-as-zero, 
     );
 
     const upperDigest = structuredClone(archivedS4);
-    upperDigest[0].benchmarks[0].provenance.resource_limits_sha256 =
-      "A".repeat(64);
+    upperDigest[0].benchmarks[0].provenance.resource_limits_sha256 = "A".repeat(
+      64,
+    );
     const resUpper = rootApi.inspectMeasurementRecords(upperDigest);
     assert.equal(resUpper.valid, false);
     assert.equal(
@@ -319,7 +323,10 @@ test("validator rejects unknown versions, missing metrics, unavailable-as-zero, 
       resSeed.diagnostics[0].path,
       "$[0].benchmarks[0].provenance.seed",
     );
-    assert.match(resSeed.diagnostics[0].message, /Invalid compute provenance: seed/);
+    assert.match(
+      resSeed.diagnostics[0].message,
+      /Invalid compute provenance: seed/,
+    );
 
     const badLedger = structuredClone(archivedS4);
     badLedger[0].benchmarks[0].provenance.ledger = -1;

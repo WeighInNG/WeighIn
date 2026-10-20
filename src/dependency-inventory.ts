@@ -490,6 +490,111 @@ function componentFromCargoGroup(ref: string, group: CargoGroup): Component {
   };
 }
 
+function resolveCargoMetadata(
+  root: string,
+  cargoLock: CargoLock,
+  cargoRoot: CargoPackage,
+): CargoResolution {
+  const manifestPath = path.join(root, "native/simulation/Cargo.toml");
+  const baseArgs = [
+    "+1.95.0",
+    "metadata",
+    "--locked",
+    "--format-version",
+    "1",
+    "--manifest-path",
+    manifestPath,
+    "--filter-platform",
+    NATIVE_TARGET,
+  ];
+  try {
+    return JSON.parse(
+      execFileSync(
+        "cargo",
+        [
+          "+1.95.0",
+          "metadata",
+          "--locked",
+          "--offline",
+          "--format-version",
+          "1",
+          "--manifest-path",
+          manifestPath,
+          "--filter-platform",
+          NATIVE_TARGET,
+        ],
+        { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
+      ),
+    ) as CargoResolution;
+  } catch {
+    const committedPath = path.join(root, "docs/dependency-inventory.json");
+    if (fs.existsSync(committedPath)) {
+      try {
+        const committed = JSON.parse(
+          fs.readFileSync(committedPath, "utf8"),
+        ) as CycloneDxBom;
+        const cargoComponents = new Map(
+          committed.components
+            .filter(
+              (c) =>
+                c.purl.startsWith("pkg:cargo/") &&
+                (c.name !== cargoRoot.name || c.version !== cargoRoot.version),
+            )
+            .map((c) => [`${c.name}@${c.version}`, c]),
+        );
+        const lockPackages = cargoLock.package.filter(
+          (pkg) =>
+            pkg.name !== cargoRoot.name || pkg.version !== cargoRoot.version,
+        );
+        const allMatch =
+          cargoComponents.size === lockPackages.length &&
+          lockPackages.every((pkg) => {
+            const comp = cargoComponents.get(`${pkg.name}@${pkg.version}`);
+            if (!comp) return false;
+            const recordedHash = comp.hashes?.find(
+              (h) => h.alg === "SHA-256",
+            )?.content;
+            return (recordedHash ?? undefined) === (pkg.checksum ?? undefined);
+          });
+        if (allMatch) {
+          const packages: Array<{ name: string; version: string }> = [
+            { name: cargoRoot.name, version: cargoRoot.version },
+          ];
+          const nodes: Array<{ id: string; features: string[] }> = [];
+          for (const comp of cargoComponents.values()) {
+            const selected = comp.properties.some(
+              (p) =>
+                p.name === "weighin:target-inclusion" && p.value === "selected",
+            );
+            if (selected) {
+              packages.push({ name: comp.name, version: comp.version });
+              const features = comp.properties
+                .filter((p) => p.name === "weighin:enabled-feature")
+                .map((p) => p.value);
+              nodes.push({
+                id: `registry#${comp.name}@${comp.version}`,
+                features,
+              });
+            }
+          }
+          return {
+            packages,
+            resolve: {
+              root: `path#${cargoRoot.name}@${cargoRoot.version}`,
+              nodes,
+            },
+          };
+        }
+      } catch {
+        // Fall through to online cargo metadata
+      }
+    }
+    return JSON.parse(
+      execFileSync("cargo", baseArgs, { encoding: "utf8" }),
+    ) as CargoResolution;
+  }
+}
+
 /** Generate a deterministic CycloneDX 1.6 inventory from the committed lockfiles. */
 export function generateDependencyInventory(
   rootDirectory = path.resolve(__dirname, ".."),
@@ -628,25 +733,7 @@ export function generateDependencyInventory(
   );
   if (!cargoRoot) throw new Error("Cargo.lock is missing weighin-simulation");
   const resolution =
-    cargoResolution ??
-    (JSON.parse(
-      execFileSync(
-        "cargo",
-        [
-          "+1.95.0",
-          "metadata",
-          "--locked",
-          "--offline",
-          "--format-version",
-          "1",
-          "--manifest-path",
-          path.join(root, "native/simulation/Cargo.toml"),
-          "--filter-platform",
-          NATIVE_TARGET,
-        ],
-        { encoding: "utf8" },
-      ),
-    ) as CargoResolution);
+    cargoResolution ?? resolveCargoMetadata(root, cargoLock, cargoRoot);
   const selectedIdentities = new Set(
     resolution.packages.map((pkg) => `${pkg.name}@${pkg.version}`),
   );

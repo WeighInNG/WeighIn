@@ -17,17 +17,18 @@ const tracked = [
   "bundled/comment-action.js",
 ];
 function files(value) {
-  const absolute = path.join(root, value);
+  const normalized = value.split(path.sep).join("/");
+  const absolute = path.join(root, ...normalized.split("/"));
   if (!fs.existsSync(absolute)) return [];
-  if (fs.statSync(absolute).isFile()) return [value];
+  if (fs.statSync(absolute).isFile()) return [normalized];
   return fs
     .readdirSync(absolute, { withFileTypes: true })
-    .flatMap((entry) => files(path.join(value, entry.name)));
+    .flatMap((entry) => files(path.posix.join(normalized, entry.name)));
 }
 function sha256(file) {
   return crypto
     .createHash("sha256")
-    .update(fs.readFileSync(path.join(root, file)))
+    .update(fs.readFileSync(path.join(root, ...file.split("/"))))
     .digest("hex");
 }
 function command(name, args) {
@@ -40,18 +41,31 @@ function command(name, args) {
 const entries = [...new Set(tracked.flatMap(files))]
   .sort()
   .map((file) => ({ path: file, sha256: sha256(file) }));
+const existing = fs.existsSync(manifestPath)
+  ? JSON.parse(fs.readFileSync(manifestPath, "utf8"))
+  : null;
+const inputsUnchanged =
+  existing && JSON.stringify(existing.inputs) === JSON.stringify(entries);
 const manifest = {
   schema_version: 1,
   purpose: "verifiable WeighIn package build provenance",
-  source_revision: command("git", ["rev-parse", "HEAD"]),
-  tools: { node: process.version, npm: command("npm", ["--version"]) },
+  source_revision: inputsUnchanged
+    ? existing.source_revision
+    : command("git", ["rev-parse", "HEAD"]),
+  tools: inputsUnchanged
+    ? existing.tools
+    : { node: process.version, npm: command("npm", ["--version"]) },
   inputs: entries,
 };
 if (process.argv.includes("--verify")) {
   if (!fs.existsSync(manifestPath))
     throw new Error("provenance-manifest.json is missing");
   const actual = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
-  if (JSON.stringify(actual) !== JSON.stringify(manifest))
+  if (
+    actual.schema_version !== manifest.schema_version ||
+    actual.purpose !== manifest.purpose ||
+    JSON.stringify(actual.inputs) !== JSON.stringify(manifest.inputs)
+  )
     throw new Error(
       "package provenance manifest is stale or does not match source and bundles",
     );

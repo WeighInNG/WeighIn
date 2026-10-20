@@ -53314,8 +53314,17 @@ function execute(file, args, input, cwd, signal) {
               signal?.reason || new Error("Simulation helper execution cancelled")
             );
           } else {
+            let detail = stderr || error2.message;
+            try {
+              const envelope = parseHelperFailure({ stdout });
+              if (envelope) {
+                const keyDetail = envelope.status === "uncaptured" && envelope.keys?.length ? ` (UNCAPTURED_KEY:${envelope.keys.join(",")})` : "";
+                detail = `${detail.trim()} (${envelope.status}: ${envelope.message}${keyDetail})`;
+              }
+            } catch {
+            }
             const failure = new Error(
-              `Simulation helper failed: ${stderr || error2.message}`
+              `Simulation helper failed: ${detail}`
             );
             failure.stdout = stdout;
             failure.exitCode = typeof error2.code === "number" ? error2.code : void 0;

@@ -126,7 +126,10 @@ test("the bundled Action reports a sanitized endpoint and sends the unchanged UR
 });
 
 test("malformed endpoints render a safe placeholder instead of the raw value", () => {
-  const { sanitizeEndpoint, redactEndpointSecrets } = require("../dist/endpoint");
+  const {
+    sanitizeEndpoint,
+    redactEndpointSecrets,
+  } = require("../dist/endpoint");
   assert.equal(sanitizeEndpoint(secretUrl), sanitizedUrl);
   assert.equal(
     sanitizeEndpoint(`not a url ${credentials.query}`),
@@ -160,14 +163,14 @@ test("account readiness transport errors never expose endpoint credentials", asy
     return setImmediate(callback, ...args);
   };
   try {
-    await assert.rejects(
-      ensureAccountReady(secretUrl, publicKey),
-      (error) => {
-        assertNoCredentials(error.message);
-        assert.match(error.message, /transport failure at http:\/\/127\.0\.0\.1:8000/);
-        return true;
-      },
-    );
+    await assert.rejects(ensureAccountReady(secretUrl, publicKey), (error) => {
+      assertNoCredentials(error.message);
+      assert.match(
+        error.message,
+        /transport failure at http:\/\/127\.0\.0\.1:8000/,
+      );
+      return true;
+    });
     assert.ok(calls.length > 0);
     assert.ok(calls.every((url) => url === secretUrl));
   } finally {
@@ -208,7 +211,10 @@ test("simulation transport errors never expose endpoint credentials", async () =
       measureInvocation(secretUrl, transaction, __filename),
       (error) => {
         assertNoCredentials(error.message);
-        assert.match(error.message, /RPC getNetwork: HTTP 400 at http:\/\/127\.0\.0\.1:8000/);
+        assert.match(
+          error.message,
+          /RPC getNetwork: HTTP 400 at http:\/\/127\.0\.0\.1:8000/,
+        );
         return true;
       },
     );
