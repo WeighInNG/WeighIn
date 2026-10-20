@@ -21,6 +21,7 @@ export interface CliOptions {
   rpcUrl: string;
   jsonStdout: boolean;
   allowCrossTargetSubstitution: boolean;
+  validateFixtures?: boolean;
 }
 
 export function parseArgs(
@@ -29,6 +30,7 @@ export function parseArgs(
   let fixturesPath: string | null = null;
   let explicitOutputFile: string | null = null;
   let jsonStdout = false;
+  let validateFixtures = false;
   let rpcUrl = "http://localhost:8000/rpc";
   let allowCrossTargetSubstitution = false;
 
@@ -47,6 +49,8 @@ export function parseArgs(
       jsonStdout = true;
     } else if (arg === "--allow-cross-target-substitution") {
       allowCrossTargetSubstitution = true;
+    } else if (arg === "--validate-fixtures") {
+      validateFixtures = true;
     } else if (!arg.startsWith("--")) {
       // Positional argument
       if (fixturesPath === null) {
@@ -80,6 +84,7 @@ export function parseArgs(
     rpcUrl,
     jsonStdout,
     allowCrossTargetSubstitution,
+    ...(validateFixtures ? { validateFixtures: true } : {}),
   };
 }
 
@@ -103,6 +108,26 @@ async function main() {
   if (jsonStdout) {
     console.log = (...args: any[]) => console.error(...args);
     console.info = (...args: any[]) => console.error(...args);
+  }
+
+  if (options.validateFixtures) {
+    try {
+      const raw = fs.readFileSync(fixturesPath, "utf8");
+      const parsed = parseFixtures(raw, fixturesPath);
+      if (jsonStdout) {
+        process.stdout.write(JSON.stringify(parsed, null, 2) + "\n");
+      } else {
+        console.log(
+          `Fixture validation passed: ${parsed.fixture_id} (${parsed.contracts.length} contract(s))`,
+        );
+      }
+      return;
+    } catch (err: any) {
+      console.error(
+        `Fixture validation failed (${fixturesPath}): ${err?.message ?? err}`,
+      );
+      process.exit(1);
+    }
   }
 
   // Best-effort: resolve each fixture artifact to its owning Cargo
