@@ -522,3 +522,65 @@ test("Action preserves primary error when writing report-path fails due to inval
   assert.match(res.output, /fail/);
   assert.match(res.summary, /RPC has not reported healthy/);
 });
+
+test("Action fails closed on invalid primitive fixture arguments before builds, keys, or RPC calls", () => {
+  const invalidCases = [
+    { type: "u32", value: -1 },
+    { type: "u32", value: 4294967296 },
+    { type: "u32", value: 1.5 },
+    { type: "i32", value: 2147483648 },
+    { type: "bool", value: "true" },
+    { type: "string", value: 123 },
+    { type: "symbol", value: "invalid-char" },
+    { type: "symbol", value: "a".repeat(33) },
+  ];
+
+  for (const invalidArg of invalidCases) {
+    const result = action(
+      "control",
+      policy,
+      null,
+      "weighin-report.md",
+      "fixtures.json",
+      ({ head }) => {
+        const fixture = {
+          contracts: [
+            {
+              wasm_path: "contract/contract.wasm",
+              invocations: [
+                {
+                  function_name: "hello",
+                  args: [invalidArg],
+                },
+              ],
+            },
+          ],
+        };
+        fs.writeFileSync(
+          path.join(head, "fixtures.json"),
+          JSON.stringify(fixture),
+        );
+      },
+    );
+
+    assert.equal(
+      result.status,
+      1,
+      `Expected invalid arg ${JSON.stringify(invalidArg)} to cause exit 1`,
+    );
+    assert.match(result.summary, /Invalid WeighIn configuration in/);
+    assert.match(result.summary, /contracts\.0\.invocations\.0\.args\.0\.value/);
+
+    // Verify zero external side effects: zero keys generated and zero builds executed
+    assert.equal(
+      result.keyPaths.length,
+      0,
+      `Expected 0 keys generated for invalid arg, found: ${result.keyPaths.length}`,
+    );
+    assert.equal(
+      result.builds.length,
+      0,
+      `Expected 0 builds executed for invalid arg, found: ${result.builds.length}`,
+    );
+  }
+});

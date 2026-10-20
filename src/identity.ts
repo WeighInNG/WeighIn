@@ -1,6 +1,6 @@
 import * as path from "path";
 import type { FixturesSpec, ContractSpec, InvocationSpec } from "./measurement";
-import { FixturesSpecSchema } from "./config";
+import { FixturesSpecSchema, formatZodError } from "./config";
 
 export interface IdentifiedInvocation extends InvocationSpec {
   case_id: string;
@@ -47,7 +47,17 @@ export function parseFixtures(
   raw: string,
   fixturePath: string,
 ): IdentifiedFixtures {
-  const fixtures = FixturesSpecSchema.parse(JSON.parse(raw));
+  let parsedJson: any;
+  try {
+    parsedJson = JSON.parse(raw);
+  } catch (err: any) {
+    throw new Error(`Invalid JSON in ${fixturePath}: ${err.message}`);
+  }
+  const parsed = FixturesSpecSchema.safeParse(parsedJson);
+  if (!parsed.success) {
+    throw new Error(formatZodError(parsed.error, fixturePath));
+  }
+  const fixtures = parsed.data;
   const fixture_id =
     fixtures.id === undefined
       ? `path:${relativePath(fixturePath)}`
