@@ -81,6 +81,68 @@ export interface InvocationArg {
   value: any;
 }
 
+export interface RuntimeContractReference {
+  ref: string;
+}
+
+export function resolveRuntimeContractReferenceValue(
+  arg: InvocationArg,
+  runtimeContractIds: Map<string, string> | Record<string, string>,
+): InvocationArg {
+  if (arg.type.toLowerCase() !== "address") {
+    return arg;
+  }
+
+  const refValue = arg.value;
+  if (
+    refValue === null ||
+    typeof refValue !== "object" ||
+    Array.isArray(refValue) ||
+    typeof (refValue as RuntimeContractReference).ref !== "string"
+  ) {
+    return arg;
+  }
+
+  const refs =
+    runtimeContractIds instanceof Map
+      ? runtimeContractIds
+      : new Map(Object.entries(runtimeContractIds));
+  const ref = (refValue as RuntimeContractReference).ref.trim();
+  if (!ref) {
+    throw new Error("Runtime contract reference must not be blank");
+  }
+  if (!refs.has(ref)) {
+    const approved = Array.from(refs.keys()).join(", ") || "none";
+    throw new Error(
+      `Unknown runtime contract reference: ${ref}. Approved references: ${approved}`,
+    );
+  }
+
+  const found = refs.get(ref);
+  if (typeof found !== "string" || !found.trim()) {
+    throw new Error(`Runtime contract reference ${ref} resolved to an empty address`);
+  }
+
+  try {
+    Address.fromString(found);
+  } catch (error: any) {
+    throw new Error(
+      `Runtime contract reference ${ref} resolved to an invalid address: ${error.message}`,
+    );
+  }
+
+  return { ...arg, value: found };
+}
+
+export function resolveRuntimeContractReferences(
+  args: InvocationArg[],
+  runtimeContractIds: Map<string, string> | Record<string, string>,
+): InvocationArg[] {
+  return args.map((arg) =>
+    resolveRuntimeContractReferenceValue(arg, runtimeContractIds),
+  );
+}
+
 export interface InvocationSpec {
   id?: string;
   function_name: string;
@@ -650,7 +712,15 @@ export async function runMeasurement(
       }
       console.log(`Simulating ${invokeSpec.function_name}...`);
       const account = await server.getAccount(deployer.publicKey());
-      const argsSc = invokeSpec.args.map(toScVal);
+      const runtimeContractIds = new Map<string, string>([
+        [contractSpec.id ?? "self", contractId],
+        [contractSpec.logical_id ?? contractSpec.id ?? "self", contractId],
+        ["self", contractId],
+      ]);
+      const argsSc = resolveRuntimeContractReferences(
+        invokeSpec.args,
+        runtimeContractIds,
+      ).map(toScVal);
 
       const invokeTx = new TransactionBuilder(account, {
         fee: "1000000",
