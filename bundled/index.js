@@ -53319,6 +53319,19 @@ function execute(file, args, input, cwd, signal) {
             );
             failure.stdout = stdout;
             failure.exitCode = typeof error2.code === "number" ? error2.code : void 0;
+            try {
+              const envelope = parseHelperFailure(failure);
+              if (envelope) {
+                failure.message = [
+                  failure.message,
+                  `Native helper ${envelope.status}: ${envelope.message}`,
+                  ...(envelope.keys ?? []).map(
+                    (key) => `UNCAPTURED_KEY:${key}`
+                  )
+                ].join("\n");
+              }
+            } catch {
+            }
             reject(failure);
           }
         } else resolve6(stdout);
