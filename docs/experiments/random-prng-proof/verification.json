@@ -1,0 +1,21 @@
+{
+  "status": "VERIFIED",
+  "scenario": "random_prng_parity",
+  "result": "pass",
+  "protocol": 28,
+  "auth_mode": "recording(true,true)",
+  "seed": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  "zero_seed_preserved": true,
+  "random_behavior_detected": true,
+  "parity_rejected": true,
+  "seed_not_forced": true,
+  "synthetic_seed_override_attempted": false,
+  "genuine_nonzero_results_retained": true,
+  "parity_gate": "reject_and_fail_closed",
+  "rpc_native_parity": {
+    "return_value_match": false,
+    "transaction_data_match": false,
+    "events_match": false,
+    "failure": "Local simulation disagrees with RPC at captured ledger; auth/random/state-dependent invocation is unsupported"
+  }
+}
