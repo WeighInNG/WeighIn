@@ -598,28 +598,28 @@
           "$ref": "#/$defs/SafePositiveInteger"
         },
         "helper_sha256": {
-          "$ref": "#/$defs/NonBlankString"
+          "$ref": "#/$defs/Sha256Hex"
         },
         "network_id": {
-          "$ref": "#/$defs/NonBlankString"
+          "$ref": "#/$defs/Sha256Hex"
         },
         "ledger": {
           "$ref": "#/$defs/SafeNonNegativeInteger"
         },
         "header_sha256": {
-          "$ref": "#/$defs/NonBlankString"
+          "$ref": "#/$defs/Sha256Hex"
         },
         "snapshot_sha256": {
-          "$ref": "#/$defs/NonBlankString"
+          "$ref": "#/$defs/Sha256Hex"
         },
         "config_sha256": {
-          "$ref": "#/$defs/NonBlankString"
+          "$ref": "#/$defs/Sha256Hex"
         },
         "compute_config_sha256": {
-          "$ref": "#/$defs/NonBlankString"
+          "$ref": "#/$defs/Sha256Hex"
         },
         "input_sha256": {
-          "$ref": "#/$defs/NonBlankString"
+          "$ref": "#/$defs/Sha256Hex"
         },
         "seed": {
           "$ref": "#/$defs/SeedArray"
