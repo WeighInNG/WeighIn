@@ -36,19 +36,25 @@ The private deployer key remains in the existing private runner file.
 The repository startup script checks RPC health for up to 120 seconds, then uses
 the same account readiness path to fund a disposable account and confirm its RPC
 inclusion. These sequential phases can take up to 240 seconds, excluding Docker
-startup. It labels its disposable `stellar-quickstart` container with
+startup. It labels its disposable container with
 `io.weighin.managed-by=weighin-start-local-network` and only replaces a matching
 container carrying that ownership label. An unowned name collision is preserved
 and causes an actionable error. To explicitly authorize replacing an unowned
 container, set `WEIGHIN_REPLACE_UNOWNED_CONTAINER=1` for that invocation. Docker
 ownership-inspection failures also stop startup without modifying the container.
-Install Node dependencies and build TypeScript before running:
+The helper accepts optional positional arguments for the container name and host
+port while preserving the existing defaults:
 
 ```bash
 npm ci
 npm run build
 bash scripts/start-local-network.sh
+bash scripts/start-local-network.sh review-sidecar 8123
 ```
+
+The default form keeps `stellar-quickstart` on port `8000`; the custom form
+creates an isolated sidecar with a different container name and RPC endpoint so
+multiple local proof runs can coexist without crossing ownership or state.
 
 The example external workflow polls `getHealth`; the bundled Action independently
 checks its real deployer's funding/inclusion. External consumers do not need the
