@@ -1,12 +1,26 @@
 #!/usr/bin/env bash
 
 set -euo pipefail
+#!/usr/bin/env bash
 
-CONTAINER_NAME="stellar-quickstart"
+set -euo pipefail
+
+CONTAINER_NAME="${1:-stellar-quickstart}"
+PORT="${2:-8000}"
 IMAGE="stellar/quickstart@sha256:4c8bad1ef7341205b898f83d9489321da80c7bd74183100fc8e2a39a5938c7d5"
 OWNER_LABEL="io.weighin.managed-by"
 OWNER_VALUE="weighin-start-local-network"
-PORT=8000
+
+if [[ ! "${CONTAINER_NAME}" =~ ^[A-Za-z0-9][A-Za-z0-9_.-]*$ ]]; then
+    echo "Error: Invalid container name '${CONTAINER_NAME}'. Use letters, digits, dots, underscores, or dashes and start with a letter or digit." >&2
+    exit 1
+fi
+
+if ! [[ "${PORT}" =~ ^[0-9]+$ ]] || (( PORT < 1 || PORT > 65535 )); then
+    echo "Error: Port must be a positive integer between 1 and 65535." >&2
+    exit 1
+fi
+
 RPC_URL="http://localhost:${PORT}/rpc"
 
 # The CI builds TypeScript and installs Node dependencies before this script.

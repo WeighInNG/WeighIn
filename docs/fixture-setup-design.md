@@ -89,7 +89,9 @@ logical deployment ID and is scoped to the revision/scenario namespace above.
 For a caller/callee pair, the callee is deployed first. Its committed setup
 return is placed in a typed binding. The caller's setup or measured invocation
 consumes that binding through a typed argument reference, never by interpolating
-an address into a string. The concrete bounded example is recorded in
+an address into a string. Approved runtime IDs are resolved to typed address
+values before invocation; unknown names fail before any simulation or on-chain
+submission. The concrete bounded example is recorded in
 `docs/experiments/fixture-setup-design/example.json`.
 
 Cleanup receipts are ordered in reverse topological order when a disposable

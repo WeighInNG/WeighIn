@@ -68,3 +68,15 @@ test('only committed setup receipts can satisfy a binding', () => {
   incomplete.setup_receipts.callee.status = 'partial_setup';
   assert.notEqual(incomplete.setup_receipts.callee.status, 'committed');
 });
+
+test('runtime contract references resolve approved dependency IDs to typed address values', () => {
+  const { resolveRuntimeContractReferenceValue } = require('../dist/measurement.js');
+  const runtimeIds = new Map([
+    ['callee', 'CC227UDF6WBLRTOKKVRIJN7BGSBK67ZGV6IDARJ2AMATGSQ7UZNBZHSB'],
+    ['caller', 'CB7P4M6VPK3QYB5EBJ3P2KQ6K7QQGLT4Q3A7WBGX3RAI5L6Q4I2N5F4Y'],
+  ]);
+
+  const resolved = resolveRuntimeContractReferenceValue({ type: 'address', value: { ref: 'callee' } }, runtimeIds);
+  assert.deepEqual(resolved, { type: 'address', value: 'CC227UDF6WBLRTOKKVRIJN7BGSBK67ZGV6IDARJ2AMATGSQ7UZNBZHSB' });
+  assert.throws(() => resolveRuntimeContractReferenceValue({ type: 'address', value: { ref: 'missing' } }, runtimeIds), /unknown runtime contract reference/i);
+});

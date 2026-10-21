@@ -224,6 +224,16 @@ function contractMap(
   const validated = validateMeasurementRecords(contracts);
   const result = new Map<string, ContractBenchmark>();
   validated.forEach((contract, index) => {
+    if (contract.benchmarks.length === 0) {
+      throw new MeasurementRecordValidationError([
+        {
+          path: `$[${index}].benchmarks`,
+          version: detectRecordEnvelopeVersion(contract),
+          code: "EMPTY_BENCHMARKS_ARRAY",
+          message: `Contract ${contractLabel(contract)} benchmarks must not be empty`,
+        },
+      ]);
+    }
     const key = resolveContractIdentityKey(contract, index);
     result.set(key, contract);
   });
@@ -253,6 +263,12 @@ export function diffBenchmarks(
   base: ContractBenchmark[],
   head: ContractBenchmark[],
 ): DiffResult {
+  if (base.length === 0 && head.length === 0) {
+    throw new Error(
+      "Empty measurement suite: cannot compare an empty BASE and HEAD contract record set",
+    );
+  }
+
   const baseMap = contractMap(base);
   const headMap = contractMap(head);
 

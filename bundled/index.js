@@ -35475,6 +35475,14 @@ function inspectMeasurementRecord(value, index) {
     });
     return { valid: false, version: version2, diagnostics };
   }
+  if (benchmarksArray.length === 0) {
+    diagnostics.push({
+      path: `${basePath}.benchmarks`,
+      version: version2,
+      code: "EMPTY_BENCHMARKS_ARRAY",
+      message: "Contract benchmarks must not be empty"
+    });
+  }
   const seenBenchmarks = /* @__PURE__ */ new Set();
   benchmarksArray.forEach((benchmark, bIdx) => {
     const bPath = `${basePath}.benchmarks[${bIdx}]`;
@@ -35890,6 +35898,16 @@ function contractMap(contracts) {
   const validated = validateMeasurementRecords(contracts);
   const result = /* @__PURE__ */ new Map();
   validated.forEach((contract, index) => {
+    if (contract.benchmarks.length === 0) {
+      throw new MeasurementRecordValidationError([
+        {
+          path: `$[${index}].benchmarks`,
+          version: detectRecordEnvelopeVersion(contract),
+          code: "EMPTY_BENCHMARKS_ARRAY",
+          message: `Contract ${contractLabel(contract)} benchmarks must not be empty`
+        }
+      ]);
+    }
     const key = resolveContractIdentityKey(contract, index);
     result.set(key, contract);
   });
@@ -35899,6 +35917,11 @@ function contractLabel(contract) {
   return contract.logical_id === void 0 ? contract.contract_id : `${contract.fixture_id} / ${contract.logical_id}`;
 }
 function diffBenchmarks(base, head) {
+  if (base.length === 0 && head.length === 0) {
+    throw new Error(
+      "Empty measurement suite: cannot compare an empty BASE and HEAD contract record set"
+    );
+  }
   const baseMap = contractMap(base);
   const headMap = contractMap(head);
   if (base.length > 0 && head.length > 0 && base[0].schema_version !== void 0 && head[0].schema_version !== void 0 && base[0].schema_version !== head[0].schema_version) {
