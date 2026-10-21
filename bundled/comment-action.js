@@ -26164,6 +26164,13 @@ var METRIC_KEYS = [
   "events_count",
   "event_data_bytes"
 ];
+var SUPPORTED_PROVENANCE_COMBINATIONS = Object.freeze([
+  Object.freeze({
+    source: "soroban-simulation",
+    source_version: "28.0.1",
+    protocol: 28
+  })
+]);
 var METRIC_KEY_SET = new Set(METRIC_KEYS);
 
 // src/comment.ts

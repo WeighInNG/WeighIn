@@ -117,3 +117,19 @@ test('schema 4 report distinguishes footprint, disk bytes, events plus return, n
     assert.ok(report.includes(label),label);
   }
 });
+test('schema 3 and schema 4 reject unknown provenance source/version/protocol combinations even when BASE and HEAD match (#225)', () => {
+  for (const mutation of [
+    p => { p.source = 'fabricated-simulator'; },
+    p => { p.source_version = '99.0.0'; },
+    p => { p.protocol = 29; },
+  ]) {
+    const base = clone(records);
+    const head = clone(records);
+    mutation(base[0].benchmarks[0].provenance);
+    mutation(head[0].benchmarks[0].provenance);
+    assert.throws(
+      () => diffBenchmarks(base, head),
+      /unsupported provenance combination/,
+    );
+  }
+});
