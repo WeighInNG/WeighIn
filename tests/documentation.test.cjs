@@ -8,16 +8,96 @@ const root = path.resolve(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 const mainDocs = ['README.md', 'CONTRIBUTING.md', 'docs/EVIDENCE.md', 'docs/KNOWN_LIMITATIONS.md', 'docs/architecture.md', 'docs/DEPENDENCY_SECURITY.md', 'docs/repeatability.md', 'docs/ledger-variation.md'];
 
-test('public reviewer path resolves product documentation and retained evidence without internal notes', () => {
-  for (const file of mainDocs) {
-    const text = read(file);
-    assert.doesNotMatch(text, /WEIGHIN_PROGRESS|DRIPS_APPEAL_CONTEXT|Drips|appeal preparation/);
-    for (const match of text.matchAll(/\[[^\]]*\]\(([^)]+)\)/g)) {
-      const target = match[1].split('#')[0];
-      if (!target || /^https?:/.test(target)) continue;
-      assert.ok(fs.existsSync(path.resolve(root, path.dirname(file), target)), `${file}: ${target}`);
+const FROZEN_EVIDENCE_PREFIXES = ['docs/experiments/'];
+
+function listActiveMarkdownDocs(repoRoot = root) {
+  const candidates = ['README.md', 'CONTRIBUTING.md'];
+  const walk = relDir => {
+    for (const entry of fs.readdirSync(path.join(repoRoot, relDir), { withFileTypes: true })) {
+      const relPath = path.posix.join(relDir, entry.name);
+      if (FROZEN_EVIDENCE_PREFIXES.some(prefix => relPath.startsWith(prefix))) continue;
+      if (entry.isDirectory()) walk(relPath);
+      else if (entry.isFile() && entry.name.endsWith('.md')) candidates.push(relPath);
+    }
+  };
+  walk('docs');
+  return candidates.sort();
+}
+
+function slugifyHeading(raw) {
+  return raw
+    .trim()
+    .replace(/`([^`]*)`/g, '$1')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-');
+}
+
+function extractHeadingAnchors(markdown) {
+  const anchors = new Set();
+  const counts = new Map();
+  const stripped = markdown.replace(/```[\s\S]*?```/g, '');
+  for (const line of stripped.split(/\r?\n/)) {
+    const match = /^#{1,6}\s+(.+?)\s*$/.exec(line);
+    if (!match) continue;
+    const base = slugifyHeading(match[1]);
+    if (!base) continue;
+    const seen = counts.get(base) || 0;
+    counts.set(base, seen + 1);
+    anchors.add(seen === 0 ? base : `${base}-${seen}`);
+  }
+  return anchors;
+}
+
+function validateMarkdownLinksAndAnchors(docFiles, readDoc = read, repoRoot = root) {
+  const failures = [];
+  for (const file of docFiles) {
+    const stripped = readDoc(file).replace(/```[\s\S]*?```/g, '');
+    for (const match of stripped.matchAll(/\[[^\]]*\]\(([^)]+)\)/g)) {
+      const href = match[1].trim();
+      if (!href || /^(?:https?:|mailto:)/.test(href)) continue;
+      const hashIndex = href.indexOf('#');
+      const relTarget = hashIndex === -1 ? href : href.slice(0, hashIndex);
+      const anchor = hashIndex === -1 ? '' : href.slice(hashIndex + 1);
+      const resolvedPath = relTarget
+        ? path.resolve(repoRoot, path.dirname(file), relTarget)
+        : path.resolve(repoRoot, file);
+      if (!fs.existsSync(resolvedPath)) {
+        failures.push(`${file}: missing link target "${href}"`);
+        continue;
+      }
+      if (anchor) {
+        const stat = fs.statSync(resolvedPath);
+        if (!stat.isFile() || !resolvedPath.endsWith('.md')) {
+          failures.push(`${file}: anchor "#${anchor}" requires a Markdown file target ("${href}")`);
+          continue;
+        }
+        const targetRel = path.relative(repoRoot, resolvedPath).split(path.sep).join('/');
+        const targetContent = targetRel === file ? readDoc(file) : fs.readFileSync(resolvedPath, 'utf8');
+        const anchors = extractHeadingAnchors(targetContent);
+        if (!anchors.has(anchor)) {
+          failures.push(`${file}: missing heading anchor "#${anchor}" in "${href}"`);
+        }
+      }
     }
   }
+  return failures;
+}
+
+test('public reviewer path resolves product documentation and retained evidence without internal notes', () => {
+  const activeDocs = listActiveMarkdownDocs();
+  assert.ok(activeDocs.length >= mainDocs.length);
+  for (const file of mainDocs) {
+    assert.ok(activeDocs.includes(file), `expected ${file} in active docs`);
+  }
+  for (const file of activeDocs) {
+    const text = read(file);
+    assert.doesNotMatch(text, /WEIGHIN_PROGRESS|DRIPS_APPEAL_CONTEXT|Drips|appeal preparation/);
+  }
+  const linkFailures = validateMarkdownLinksAndAnchors(activeDocs);
+  assert.deepEqual(linkFailures, []);
   assert.ok(read('README.md').includes('(docs/EVIDENCE.md)'));
   assert.ok(read('README.md').includes('(docs/KNOWN_LIMITATIONS.md)'));
   assert.ok(read('docs/EVIDENCE.md').includes('/actions/runs/37777040210'));
@@ -28,6 +108,36 @@ test('public reviewer path resolves product documentation and retained evidence 
   assert.ok(read('docs/EVIDENCE.md').includes('(ledger-variation.md)'));
 });
 
+test('markdown link and anchor validator rejects broken relative files, missing anchors, and non-markdown anchor targets (#168)', () => {
+  const virtualDocs = {
+    'README.md': [
+      '# Overview',
+      '## Quick Start',
+      '### Repeated Heading',
+      '### Repeated Heading',
+      'Valid internal [start](#quick-start) and duplicate [second](#repeated-heading-1).',
+      'Valid cross-doc [evidence](docs/EVIDENCE.md#reproduction).',
+      'Broken file [missing](docs/DOES_NOT_EXIST.md).',
+      'Broken anchor [bad-anchor](docs/EVIDENCE.md#no-such-section).',
+      'Broken self anchor [bad-self](#missing-local-anchor).',
+      'Broken directory anchor [dir-anchor](docs#section).',
+      '```markdown',
+      '[ignored inside code fence](docs/IGNORED_MISSING.md#ignored)',
+      '```',
+    ].join('\n'),
+  };
+  const failures = validateMarkdownLinksAndAnchors(
+    ['README.md'],
+    file => virtualDocs[file] ?? read(file),
+    root,
+  );
+  assert.deepEqual(failures, [
+    'README.md: missing link target "docs/DOES_NOT_EXIST.md"',
+    'README.md: missing heading anchor "#no-such-section" in "docs/EVIDENCE.md#no-such-section"',
+    'README.md: missing heading anchor "#missing-local-anchor" in "#missing-local-anchor"',
+    'README.md: anchor "#section" requires a Markdown file target ("docs#section")',
+  ]);
+});
 
 test('README fixture and policy examples parse with the current public runtime API', () => {
   const markdown = read('README.md');
