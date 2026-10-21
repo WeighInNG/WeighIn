@@ -21,6 +21,8 @@ test('public reviewer path resolves product documentation and retained evidence 
   assert.ok(read('README.md').includes('(docs/EVIDENCE.md)'));
   assert.ok(read('README.md').includes('(docs/KNOWN_LIMITATIONS.md)'));
   assert.ok(read('docs/EVIDENCE.md').includes('/actions/runs/37777040210'));
+  assert.ok(read('README.md').includes('report and metadata paths are read from the caller\'s working directory'));
+  assert.match(read('docs/architecture.md'), /independently of the caller's current working\s+directory/);
   assert.ok(read('docs/KNOWN_LIMITATIONS.md').includes('(ledger-variation.md)'));
   assert.ok(read('docs/repeatability.md').includes('(ledger-variation.md)'));
   assert.ok(read('docs/EVIDENCE.md').includes('(ledger-variation.md)'));
