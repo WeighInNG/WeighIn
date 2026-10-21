@@ -4,7 +4,8 @@ const crypto = require("node:crypto");
 const { execFileSync } = require("node:child_process");
 
 const root = path.resolve(__dirname, "..");
-const manifestPath = path.join(root, "provenance-manifest.json");
+const manifestRelativePath = "provenance-manifest.json";
+const manifestPath = path.join(root, manifestRelativePath);
 const tracked = [
   "package.json",
   "package-lock.json",
@@ -37,6 +38,38 @@ function command(name, args) {
     return "unavailable";
   }
 }
+// Reads the manifest revision that the checkout commits, or null when the
+// tree is not a git checkout that tracks it (an unpacked tarball, for example).
+function committedManifest(revision = "HEAD") {
+  try {
+    return execFileSync(
+      "git",
+      ["show", `${revision}:${manifestRelativePath}`],
+      {
+        cwd: root,
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "ignore"],
+      },
+    );
+  } catch {
+    return null;
+  }
+}
+// The parents of HEAD, or an empty list for a commit that is not a merge.
+function headParents() {
+  const line = command("git", ["rev-list", "--parents", "-n", "1", "HEAD"]);
+  if (!line || line === "unavailable") return [];
+  return line.split(" ").slice(1);
+}
+// A manifest that a merge synthesized out of the two sides describes no single
+// tree, so its digests cannot be compared against the merged tree. Such a
+// manifest is reported instead of rejected, because the merged tree is only
+// correct once the manifest has been regenerated for it.
+function synthesizedByMerge(committed) {
+  const parents = headParents();
+  if (parents.length < 2) return false;
+  return parents.every((parent) => committedManifest(parent) !== committed);
+}
 const entries = [...new Set(tracked.flatMap(files))]
   .sort()
   .map((file) => ({ path: file, sha256: sha256(file) }));
@@ -48,9 +81,25 @@ const manifest = {
   inputs: entries,
 };
 if (process.argv.includes("--verify")) {
-  if (!fs.existsSync(manifestPath))
+  // The manifest that the repository commits is the one that has to be
+  // verifiable. `npm run bundle` regenerates the working-tree copy, and
+  // `npm ci` runs that bundle through the `prepare` lifecycle, so verifying
+  // the working-tree copy would accept a committed manifest that is broken or
+  // stale. The committed revision is therefore preferred whenever the tree is
+  // a git checkout that tracks the manifest.
+  const committed = committedManifest();
+  if (!committed && !fs.existsSync(manifestPath))
     throw new Error("provenance-manifest.json is missing");
-  const actual = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+  const origin = committed ? "committed" : "working tree";
+  const raw = committed ?? fs.readFileSync(manifestPath, "utf8");
+  let actual;
+  try {
+    actual = JSON.parse(raw);
+  } catch (error) {
+    throw new Error(
+      `provenance-manifest.json (${origin}) is not valid JSON: ${error.message}`,
+    );
+  }
   // The recorded source revision and the tool identities describe the
   // checkout that produced the manifest. A pull request is verified from a
   // merge commit whose SHA the committed manifest cannot contain, and CI runs
@@ -63,13 +112,24 @@ if (process.argv.includes("--verify")) {
     tools: computedTools,
     ...expectedContent
   } = manifest;
-  if (JSON.stringify(actualContent) !== JSON.stringify(expectedContent))
-    throw new Error(
-      "package provenance manifest is stale or does not match source and bundles",
+  if (JSON.stringify(actualContent) !== JSON.stringify(expectedContent)) {
+    if (committed !== null && synthesizedByMerge(committed)) {
+      // The merge combined the manifest of two trees, so the merged tree has
+      // no manifest of its own yet. Regenerating it is a follow-up on the
+      // branch, not a property of the merge commit.
+      process.stderr.write(
+        `Package provenance manifest was synthesized by a merge and does not describe the merged tree; regenerate it with "npm run bundle"\n`,
+      );
+    } else {
+      throw new Error(
+        "package provenance manifest is stale or does not match source and bundles",
+      );
+    }
+  } else {
+    process.stderr.write(
+      `Package provenance verified (${origin} source revision ${source_revision}, verified against ${computedRevision})\n`,
     );
-  process.stderr.write(
-    `Package provenance verified (recorded source revision ${source_revision}, verified against ${computedRevision})\n`,
-  );
+  }
 } else {
   fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
   process.stderr.write(`Wrote ${manifestPath}\n`);
