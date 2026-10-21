@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
   "purpose": "verifiable WeighIn package build provenance",
-  "source_revision": "4f266c5e8d5a98de7e83e80ebe4a1475ec1bbe0f",
+  "source_revision": "e0d3cbfa386dbaeb3d17a8799908231a75cf7fa7",
   "tools": {
-    "node": "v22.17.1",
-    "npm": "10.9.2"
+    "node": "v24.19.0",
+    "npm": "11.17.0"
   },
   "inputs": [
     {
@@ -17,7 +17,7 @@
     },
     {
       "path": "bundled/index.js",
-      "sha256": "1e010b55d7c556a9275e6376046ca7851b062d68fe80b0bbf59767b796f34081"
+      "sha256": "d6f76476c1290110397a705a1a2ab012b584d6ae6a7ddbb7a78740b720485d32"
     },
     {
       "path": "native/simulation/Cargo.lock",
@@ -29,7 +29,7 @@
     },
     {
       "path": "native/simulation/src/main.rs",
-      "sha256": "9b83079ed0d532d315d4f05295742ba99d3e9731afb9d16fa8b928ac3c5a8e31"
+      "sha256": "e1e2e960dd446f88d8cb21d681797201892bd97f25372c9d1b4eb32e71e79e4e"
     },
     {
       "path": "package-lock.json",
@@ -73,7 +73,7 @@
     },
     {
       "path": "src/config.ts",
-      "sha256": "ddc8c4849b30eb8b2db1e80d48b8f2f5426c3183a50e15a7fe5292e1c79aa9d0"
+      "sha256": "cad9310d67ae2ef4aad5fc345b05d5863dee5deac589a154777788487d50ee10"
     },
     {
       "path": "src/dependency-inventory.ts",
@@ -93,7 +93,7 @@
     },
     {
       "path": "src/measurement.ts",
-      "sha256": "a63ea58a01c7a0d7023213d2f034ab9a25f90c6e7ea4fd75c2b869380d83241f"
+      "sha256": "f5807238eeb2d45d7dc05ee9b9a6583677cff3331f8f6ab3f80355e5ef9949c1"
     },
     {
       "path": "src/network.ts",

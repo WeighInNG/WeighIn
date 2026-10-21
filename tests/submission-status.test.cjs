@@ -3,10 +3,17 @@
 // tests verify how runMeasurement classifies sendTransaction before polling.
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
+const crypto = require("node:crypto");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
-const { Account, Keypair, rpc } = require("@stellar/stellar-sdk");
+const {
+  Account,
+  Keypair,
+  Operation,
+  rpc,
+  xdr,
+} = require("@stellar/stellar-sdk");
 const { runMeasurement } = require("../dist/measurement");
 
 const H1 = "1".repeat(64);
@@ -37,7 +44,10 @@ function scenario(t, options = {}) {
   fs.writeFileSync(path.join(dir, "key"), Keypair.random().secret(), {
     mode: 0o600,
   });
-  fs.writeFileSync(path.join(dir, "contract.wasm"), Buffer.from("test-only-wasm"));
+  fs.writeFileSync(
+    path.join(dir, "contract.wasm"),
+    Buffer.from("test-only-wasm"),
+  );
   fs.writeFileSync(
     path.join(dir, "fixtures.json"),
     JSON.stringify({
@@ -45,6 +55,9 @@ function scenario(t, options = {}) {
         {
           id: "greeting",
           wasm_path: "contract.wasm",
+          ...(options.constructorArgs
+            ? { constructor_args: options.constructorArgs }
+            : {}),
           invocations: [
             {
               id: "world",
@@ -59,6 +72,8 @@ function scenario(t, options = {}) {
 
   const order = [];
   const state = { send: 0, poll: 0 };
+  const createOperations = [];
+  const createdOperations = [];
 
   t.mock.method(console, "log", () => {});
   t.mock.method(console, "warn", () => {});
@@ -67,7 +82,18 @@ function scenario(t, options = {}) {
     t.mock.method(globalThis, "setTimeout", (callback) =>
       setImmediate(callback),
     );
-  t.mock.method(require("../dist/account"), "ensureAccountReady", async () => {});
+  t.mock.method(
+    require("../dist/account"),
+    "ensureAccountReady",
+    async () => {},
+  );
+  const createCustomContract = Operation.createCustomContract;
+  t.mock.method(Operation, "createCustomContract", (opts) => {
+    createOperations.push(opts);
+    const operation = createCustomContract(opts);
+    createdOperations.push(operation);
+    return operation;
+  });
   t.mock.method(rpc.Server.prototype, "getAccount", async (address) => {
     order.push("getAccount");
     return new Account(address, "1");
@@ -98,6 +124,8 @@ function scenario(t, options = {}) {
   return {
     order,
     state,
+    createOperations,
+    createdOperations,
     run: () =>
       runMeasurement({
         fixturesPath: path.join(dir, "fixtures.json"),
@@ -110,6 +138,100 @@ function scenario(t, options = {}) {
       }),
   };
 }
+
+test("constructor arguments reach the SDK create operation and derive a distinct deterministic salt", async (t) => {
+  const { createOperations, createdOperations, run } = scenario(t, {
+    constructorArgs: [{ type: "u32", value: 42 }],
+    sends: [send("PENDING", H1), send("PENDING", H2)],
+  });
+  await assert.rejects(run(), /reached invocation/);
+
+  assert.equal(createOperations.length, 1);
+  assert.equal(createOperations[0].constructorArgs.length, 1);
+  assert.deepEqual(
+    createOperations[0].constructorArgs[0].toXDR(),
+    xdr.ScVal.scvU32(42).toXDR(),
+  );
+  const encodedConstructorArgs = createdOperations[0]
+    .body()
+    .invokeHostFunctionOp()
+    .hostFunction()
+    .createContractV2()
+    .constructorArgs();
+  assert.deepEqual(
+    encodedConstructorArgs.map((arg) => arg.toXDR()),
+    [xdr.ScVal.scvU32(42).toXDR()],
+  );
+  const wasmHash = crypto
+    .createHash("sha256")
+    .update(Buffer.from("test-only-wasm"))
+    .digest();
+  const expectedSalt = crypto
+    .createHash("sha256")
+    .update("weighin-constructor-args-v1\0")
+    .update(wasmHash)
+    .update(xdr.ScVal.scvVec([xdr.ScVal.scvU32(42)]).toXDR())
+    .digest();
+  assert.deepEqual(createOperations[0].salt, expectedSalt);
+  const legacySalt = crypto.createHash("sha256").update(wasmHash).digest();
+  assert.notDeepEqual(createOperations[0].salt, legacySalt);
+});
+
+test("contracts without constructor arguments keep the legacy deployment salt", async (t) => {
+  const { createOperations, createdOperations, run } = scenario(t, {
+    sends: [send("PENDING", H1), send("PENDING", H2)],
+  });
+  await assert.rejects(run(), /reached invocation/);
+
+  const wasmHash = crypto
+    .createHash("sha256")
+    .update(Buffer.from("test-only-wasm"))
+    .digest();
+  const legacySalt = crypto.createHash("sha256").update(wasmHash).digest();
+  assert.deepEqual(createOperations[0].salt, legacySalt);
+  assert.deepEqual(createOperations[0].constructorArgs, []);
+  assert.deepEqual(
+    createdOperations[0]
+      .body()
+      .invokeHostFunctionOp()
+      .hostFunction()
+      .createContractV2()
+      .constructorArgs(),
+    [],
+  );
+});
+
+test("a failed constructor transaction prevents invocation simulation", async (t) => {
+  const { order, state, run } = scenario(t, {
+    constructorArgs: [{ type: "u32", value: 42 }],
+    sends: [send("PENDING", H1), send("PENDING", H2)],
+    poll: (hash) => (hash === H2 ? "FAILED" : "SUCCESS"),
+  });
+  await assert.rejects(
+    run(),
+    /contract creation with constructor transaction .* did not succeed \(status=FAILED\)/,
+  );
+  assert.equal(state.poll, 2);
+  assert.ok(!order.includes("simulateTransaction"));
+});
+
+test("an explicitly configured zero-argument constructor has a clear failure phase", async (t) => {
+  const { run } = scenario(t, {
+    constructorArgs: [],
+    sends: [send("PENDING", H1), send("PENDING", H2)],
+    poll: (hash) => (hash === H2 ? "FAILED" : "SUCCESS"),
+  });
+  await assert.rejects(run(), /contract creation with constructor transaction/);
+});
+
+test("invalid constructor values fail before account or deployment RPC work", async (t) => {
+  const { order, createOperations, run } = scenario(t, {
+    constructorArgs: [{ type: "address", value: "not-an-address" }],
+  });
+  await assert.rejects(run(), /Invalid value for address/);
+  assert.deepEqual(order, []);
+  assert.equal(createOperations.length, 0);
+});
 
 test("upload PENDING with a valid hash confirms before continuing to create", async (t) => {
   const { order, state, run } = scenario(t, {

@@ -228,6 +228,7 @@ export const ContractSpecSchema = z
   .object({
     id: idSchema.optional(),
     wasm_path: z.string().min(1),
+    constructor_args: z.array(InvocationArgSchema).optional(),
     invocations: z.array(InvocationSpecSchema).min(1),
   })
   .strict();

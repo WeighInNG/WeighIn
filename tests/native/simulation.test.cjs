@@ -30,12 +30,95 @@ test('real helper rejects missing config, uncaptured state, failed calls, protoc
   const badFunction = xdr.HostFunction.fromXDR(base.host_function_xdr, 'base64'); badFunction.invokeContract().functionName('missing');
   const cases = [
     [{ ...base, entries: [] }, /network configuration/],
-    [{ ...base, entries: base.entries.filter(row => !['contractCode', 'contractData'].includes(xdr.LedgerKey.fromXDR(row.key, 'base64').switch().name)) }, /UNCAPTURED_KEY/],
-    [{ ...base, host_function_xdr: badFunction.toXDR('base64') }, /host invocation failed/],
     [{ ...base, header_xdr: alteredHeader.toXDR('base64') }, /unsupported protocol/],
     [{ ...base, seed: [0] }, /32 bytes/],
   ];
   for (const [input, message] of cases) await assert.rejects(simulateSnapshot(input, helper), message);
+  const uncaptured = {
+    ...base,
+    entries: base.entries.filter(row => !['contractCode', 'contractData'].includes(xdr.LedgerKey.fromXDR(row.key, 'base64').switch().name)),
+  };
+  await assert.rejects(simulateSnapshot(uncaptured, helper), error => {
+    const envelope = helperFailureEnvelope(error);
+    assert.equal(envelope.status, 'uncaptured');
+    assert.ok(envelope.keys.length > 0);
+    return true;
+  });
+  await assert.rejects(simulateSnapshot({ ...base, host_function_xdr: badFunction.toXDR('base64') }, helper), error => {
+    const envelope = helperFailureEnvelope(error);
+    assert.equal(envelope.status, 'host_failure');
+    assert.match(envelope.message, /host invocation failed/);
+    return true;
+  });
+});
+function withTemporaryContractData(input, liveUntil) {
+  const copy = structuredClone(input);
+  const source = copy.entries.find(row => {
+    if (!row.xdr) return false;
+    const data = xdr.LedgerEntryData.fromXDR(row.xdr, 'base64');
+    return data.switch().name === 'contractData' && data.contractData().durability().name === 'persistent';
+  });
+  assert.ok(source, 'fixture includes persistent contract data to clone into a controlled temporary row');
+  const key = xdr.LedgerKey.fromXDR(source.key, 'base64');
+  const data = xdr.LedgerEntryData.fromXDR(source.xdr, 'base64');
+  key.contractData().durability(xdr.ContractDataDurability.temporary());
+  data.contractData().durability(xdr.ContractDataDurability.temporary());
+  copy.entries.push({
+    ...source,
+    key: key.toXDR('base64'),
+    xdr: data.toXDR('base64'),
+    live_until: liveUntil,
+  });
+  return copy;
+}
+function helperFailureEnvelope(error) {
+  assert.equal(typeof error.stdout, 'string', error.message);
+  assert.equal(error.exitCode, 1, 'expected an explicit helper rejection');
+  return JSON.parse(error.stdout);
+}
+test('controlled live temporary entry is accepted; expired or unbounded TTL outcomes fail without provenance', async () => {
+  const ledger = xdr.LedgerHeader.fromXDR(base.header_xdr, 'base64').ledgerSeq();
+  const baseline = {
+    ...require(`${evidence}/base-output.json`),
+    host_features: ['recording_mode', 'testutils'],
+    auth_mode: 'recording(true,true)',
+  };
+  const capturedInputSha256 = crypto.createHash('sha256').update(JSON.stringify(base)).digest('hex');
+
+  // This cloned synthetic row is only a temporal behavior control. The saved
+  // captured input and its provenance evidence are left unchanged.
+  const live = withTemporaryContractData(base, ledger);
+  assert.deepEqual(await simulateSnapshot(live, helper), baseline);
+
+  const expired = withTemporaryContractData(base, ledger - 1);
+  await assert.rejects(simulateSnapshot(expired, helper), error => {
+    const envelope = helperFailureEnvelope(error);
+    assert.equal(envelope.status, 'unsupported');
+    assert.match(envelope.message, /expired temporary contract data/);
+    assert.match(envelope.message, new RegExp(`live until ledger ${ledger - 1}`));
+    assert.match(envelope.message, new RegExp(`snapshot ledger ${ledger}`));
+    return true;
+  });
+
+  const withoutTtl = withTemporaryContractData(base, null);
+  await assert.rejects(simulateSnapshot(withoutTtl, helper), error => {
+    const envelope = helperFailureEnvelope(error);
+    assert.equal(envelope.status, 'incomplete');
+    assert.match(envelope.message, /missing live-until TTL metadata/);
+    return true;
+  });
+
+  const expiredPersistent = structuredClone(base);
+  const persistent = expiredPersistent.entries.find(row => {
+    if (!row.xdr) return false;
+    return xdr.LedgerEntryData.fromXDR(row.xdr, 'base64').switch().name === 'contractData';
+  });
+  persistent.live_until = ledger - 1;
+  await assert.rejects(simulateSnapshot(expiredPersistent, helper), error => {
+    assert.match(helperFailureEnvelope(error).message, /archived ledger state is unsupported/);
+    return true;
+  });
+  assert.equal(crypto.createHash('sha256').update(JSON.stringify(base)).digest('hex'), capturedInputSha256);
 });
 
 function capturedRpc(t, mutate) {

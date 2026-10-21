@@ -106,6 +106,38 @@ test("empty fixture suites and contracts are rejected; zero argument invocations
   );
 });
 
+test("optional constructor arguments use the existing typed fixture argument schema", () => {
+  const configured = parseFixtures(
+    JSON.stringify({
+      contracts: [
+        {
+          wasm_path: "contract.wasm",
+          constructor_args: [{ type: "u32", value: 42 }],
+          invocations: [{ function_name: "hello", args: [] }],
+        },
+      ],
+    }),
+    "fixtures.json",
+  );
+  assert.deepEqual(configured.contracts[0].constructor_args, [
+    { type: "u32", value: 42 },
+  ]);
+  assert.throws(() =>
+    parseFixtures(
+      JSON.stringify({
+        contracts: [
+          {
+            wasm_path: "contract.wasm",
+            constructor_args: [{ type: "unsupported", value: "x" }],
+            invocations: [{ function_name: "hello", args: [] }],
+          },
+        ],
+      }),
+      "fixtures.json",
+    ),
+  );
+});
+
 function action(
   mode,
   config = policy,

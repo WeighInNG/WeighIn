@@ -68,10 +68,15 @@ An explicit ID is the caller's assertion of continuity across revisions.
 ### Deployment/runtime identity
 
 `src/measurement.ts::runMeasurement` hashes the WASM. That hash determines the
-deployment salt; the address also depends on the deployer and standalone network
-ID. The same WASM may reuse a deployment; changed WASM can change the address.
-Upload and creation transactions are real submitted transactions. A generated
-private deployer key is shared across BASE/HEAD in a private temporary file.
+deployment salt when no constructor arguments are configured, preserving
+existing deployment addresses. Nonempty typed `constructor_args` derive a
+domain-separated salt from the WASM hash and serialized ScVal arguments, so
+different initialized states use different instances. The address also depends
+on the deployer and standalone network ID. Upload and creation transactions are
+real submitted transactions; the SDK atomically invokes a contract constructor
+as part of custom contract creation. Failed constructor creation fails the
+scenario before any benchmark invocation. A generated private deployer key is
+shared across BASE/HEAD in a private temporary file.
 Submission classifies the RPC `sendTransaction` status before polling: `ERROR`
 and `TRY_AGAIN_LATER` fail immediately (no confirmation poll, no dependent
 upload/create step, and no hidden resubmission); `PENDING` or `DUPLICATE` with a
@@ -174,11 +179,13 @@ valid comparison emit `fail` and `{}`; they never reuse a diff from another run.
 There is no successful no-baseline fallback. Optional direct-comment failure is
 warning-only.
 
-The separate `comment/` Action runs `bundled/comment-action.js`, reads and
-validates downloaded report/PR metadata, and creates or updates the comment
-carrying `<!-- weighin-report -->`. It fails on missing artifacts, invalid
-metadata or API failure. The example consumer runs only after successful PR
-producers, on trusted default-branch workflow code; it does not execute
-downloaded PR code. Failed policy reports remain in producer artifacts and
-summaries. Hosted expected-negative proof jobs separately assert genuine Action
-exit 1, then finish green once verified.
+The separate `comment/` Action runs `bundled/comment-action.js` resolved from
+the Action installation, independently of the caller's current working
+directory. Report and metadata paths are resolved from the caller's working
+directory. It reads and validates downloaded report/PR metadata, then creates or
+updates the comment carrying `<!-- weighin-report -->`. It fails on missing
+artifacts, invalid metadata or API failure. The example consumer runs only after
+successful PR producers, on trusted default-branch workflow code; it does not
+execute downloaded PR code. Failed policy reports remain in producer artifacts
+and summaries. Hosted expected-negative proof jobs separately assert genuine
+Action exit 1, then finish green once verified.

@@ -87,6 +87,35 @@ contract interface. The path is relative to the fixture file. The default
 builder finds the owning Cargo manifest; merely renaming an unrelated artifact
 is not supported.
 
+Contracts that require a Soroban constructor can declare its typed arguments on
+the contract fixture:
+
+```json
+{
+  "id": "initialized-greeting",
+  "contracts": [{
+    "id": "greeting",
+    "wasm_path": "contract/target/wasm32v1-none/release/contract_test.wasm",
+    "constructor_args": [{"type": "string", "value": "hello"}],
+    "invocations": [{
+      "id": "read-message",
+      "function_name": "message",
+      "args": []
+    }]
+  }]
+}
+```
+
+`constructor_args` is optional and uses the same typed values as invocation
+`args`. Omit it for contracts without constructor arguments; existing deployment
+salts and addresses remain unchanged. Nonempty constructor arguments are passed
+to the SDK's atomic contract-creation operation and produce a distinct
+deterministic deployment salt, so different initial states do not reuse an
+instance. Use an empty array for an explicitly declared zero-argument
+constructor. A rejected or failed constructor stops the fixture before
+invocation simulation. Constructor setup is supported only on the documented
+standalone network path; this does not add signed production authorization.
+
 `weighin.toml`:
 
 ```toml
@@ -116,6 +145,8 @@ For PR comments, add the [separate comment workflow](.github/workflows/weighin-c
 to the default branch. It reads report artifacts without executing PR code with
 a write token. The supplied consumer posts only after a successful PR producer;
 failed policy reports remain in artifacts and job summaries.
+The comment sub-Action runs its bundled entry point from the Action installation;
+report and metadata paths are read from the caller's working directory.
 
 ### PR comment metadata contract
 

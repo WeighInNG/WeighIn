@@ -94,6 +94,45 @@ fn validate_correspondence(key: &LedgerKey, data: &LedgerEntryData) -> Result<()
         _ => bail!("ledger entry/key correspondence mismatch"),
     }
 }
+
+fn validate_entry_lifetime(
+    data: Option<&LedgerEntryData>,
+    live_until: Option<u32>,
+    ledger_seq: u32,
+) -> Result<()> {
+    let is_temporary_contract_data = matches!(
+        data,
+        Some(LedgerEntryData::ContractData(entry))
+            if entry.durability == ContractDataDurability::Temporary
+    );
+    if is_temporary_contract_data && live_until.is_none() {
+        return Err(failure(
+            "incomplete",
+            None,
+            "temporary contract data is missing live-until TTL metadata",
+        ));
+    }
+    if let Some(live_until) = live_until {
+        if live_until < ledger_seq {
+            if is_temporary_contract_data {
+                return Err(failure(
+                    "unsupported",
+                    None,
+                    format!(
+                        "expired temporary contract data (live until ledger {live_until}; snapshot ledger {ledger_seq}); archived-state restoration is unsupported"
+                    ),
+                ));
+            }
+            return Err(failure(
+                "unsupported",
+                None,
+                "archived ledger state is unsupported",
+            ));
+        }
+    }
+    Ok(())
+}
+
 fn run() -> Result<()> {
     let mut raw = String::new();
     io::stdin().read_to_string(&mut raw)?;
@@ -111,12 +150,15 @@ fn run() -> Result<()> {
     let mut map = BTreeMap::new();
     for row in input.entries {
         let key = LedgerKey::from_xdr_base64(&row.key, DEFAULT_XDR_RW_LIMITS)?;
-        if row.live_until.is_some_and(|ttl| ttl < header.ledger_seq) {
-            bail!("archived ledger state is unsupported");
-        }
-        let value = if let Some(data) = row.xdr {
+        let data = if let Some(data) = row.xdr {
             let data = LedgerEntryData::from_xdr_base64(&data, DEFAULT_XDR_RW_LIMITS)?;
             validate_correspondence(&key, &data)?;
+            Some(data)
+        } else {
+            None
+        };
+        validate_entry_lifetime(data.as_ref(), row.live_until, header.ledger_seq)?;
+        let value = if let Some(data) = data {
             let ext = LedgerEntryExt::from_xdr_base64(
                 row.extension_xdr
                     .as_ref()

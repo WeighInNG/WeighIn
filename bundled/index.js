@@ -5999,7 +5999,7 @@ var require_client_h1 = __commonJS({
       kResume,
       kHTTPContext
     } = require_symbols();
-    var constants2 = require_constants2();
+    var constants3 = require_constants2();
     var EMPTY_BUF = Buffer.alloc(0);
     var FastBuffer = Buffer[Symbol.species];
     var addListener = util2.addListener;
@@ -6074,7 +6074,7 @@ var require_client_h1 = __commonJS({
       constructor(client, socket, { exports: exports3 }) {
         assert(Number.isFinite(client[kMaxHeadersSize]) && client[kMaxHeadersSize] > 0);
         this.llhttp = exports3;
-        this.ptr = this.llhttp.llhttp_alloc(constants2.TYPE.RESPONSE);
+        this.ptr = this.llhttp.llhttp_alloc(constants3.TYPE.RESPONSE);
         this.client = client;
         this.socket = socket;
         this.timeout = null;
@@ -6169,11 +6169,11 @@ var require_client_h1 = __commonJS({
             currentBufferRef = null;
           }
           const offset = llhttp.llhttp_get_error_pos(this.ptr) - currentBufferPtr;
-          if (ret !== constants2.ERROR.OK) {
+          if (ret !== constants3.ERROR.OK) {
             const body = data.subarray(offset);
-            if (ret === constants2.ERROR.PAUSED_UPGRADE) {
+            if (ret === constants3.ERROR.PAUSED_UPGRADE) {
               this.onUpgrade(body);
-            } else if (ret === constants2.ERROR.PAUSED) {
+            } else if (ret === constants3.ERROR.PAUSED) {
               this.paused = true;
               socket.unshift(body);
             } else {
@@ -6196,10 +6196,10 @@ var require_client_h1 = __commonJS({
         } finally {
           currentParser = null;
         }
-        if (ret === constants2.ERROR.OK) {
+        if (ret === constants3.ERROR.OK) {
           return null;
         }
-        if (ret === constants2.ERROR.PAUSED || ret === constants2.ERROR.PAUSED_UPGRADE) {
+        if (ret === constants3.ERROR.PAUSED || ret === constants3.ERROR.PAUSED_UPGRADE) {
           this.paused = true;
           return null;
         }
@@ -6216,7 +6216,7 @@ var require_client_h1 = __commonJS({
           const len = new Uint8Array(llhttp.memory.buffer, ptr).indexOf(0);
           message = "Response does not match the HTTP/1.1 protocol (" + Buffer.from(llhttp.memory.buffer, ptr, len).toString() + ")";
         }
-        return new HTTPParserError(message, constants2.ERROR[ret], data);
+        return new HTTPParserError(message, constants3.ERROR[ret], data);
       }
       destroy() {
         assert(this.ptr != null);
@@ -6395,7 +6395,7 @@ var require_client_h1 = __commonJS({
           socket[kBlocking] = false;
           client[kResume]();
         }
-        return pause ? constants2.ERROR.PAUSED : 0;
+        return pause ? constants3.ERROR.PAUSED : 0;
       }
       onBody(buf) {
         const { client, socket, statusCode, maxResponseSize } = this;
@@ -6417,7 +6417,7 @@ var require_client_h1 = __commonJS({
         }
         this.bytesRead += buf.length;
         if (request3.onData(buf) === false) {
-          return constants2.ERROR.PAUSED;
+          return constants3.ERROR.PAUSED;
         }
       }
       onMessageComplete() {
@@ -6453,13 +6453,13 @@ var require_client_h1 = __commonJS({
         if (socket[kWriting]) {
           assert(client[kRunning] === 0);
           util2.destroy(socket, new InformationalError("reset"));
-          return constants2.ERROR.PAUSED;
+          return constants3.ERROR.PAUSED;
         } else if (!shouldKeepAlive) {
           util2.destroy(socket, new InformationalError("reset"));
-          return constants2.ERROR.PAUSED;
+          return constants3.ERROR.PAUSED;
         } else if (socket[kReset] && client[kRunning] === 0) {
           util2.destroy(socket, new InformationalError("reset"));
-          return constants2.ERROR.PAUSED;
+          return constants3.ERROR.PAUSED;
         } else if (client[kPipelining] == null || client[kPipelining] === 1) {
           setImmediate(() => client[kResume]());
         } else {
@@ -36127,6 +36127,7 @@ var InvocationSpecSchema = external_exports.object({
 var ContractSpecSchema = external_exports.object({
   id: idSchema.optional(),
   wasm_path: external_exports.string().min(1),
+  constructor_args: external_exports.array(InvocationArgSchema).optional(),
   invocations: external_exports.array(InvocationSpecSchema).min(1)
 }).strict();
 var FixturesSpecSchema = external_exports.object({
@@ -54157,14 +54158,108 @@ function calculateContractId(deployerAddress, salt) {
   const contractIdBytes = hash(hashIdPreimage.toXDR());
   return StrKey.encodeContract(contractIdBytes);
 }
+function calculateDeploymentSalt(wasmHash, constructorArgs) {
+  if (constructorArgs.length === 0) {
+    return crypto3.createHash("sha256").update(wasmHash).digest();
+  }
+  return crypto3.createHash("sha256").update("weighin-constructor-args-v1\0").update(wasmHash).update(types.ScVal.scvVec(constructorArgs).toXDR()).digest();
+}
+function assertPrivateKeyFileStats(stats, keyFile) {
+  if (!stats.isFile()) {
+    throw new Error(
+      `Deployer key path must be a regular file, not a symlink or special file: ${keyFile}`
+    );
+  }
+  if (typeof process.getuid !== "function" || stats.uid !== process.getuid()) {
+    throw new Error(
+      `Deployer key file must be owned by the current user: ${keyFile}`
+    );
+  }
+  if ((stats.mode & 63) !== 0) {
+    throw new Error(
+      `Deployer key file permissions must deny all group and other access: ${keyFile}`
+    );
+  }
+}
+function readExistingPrivateKey(keyFile) {
+  if (process.platform === "win32" || typeof process.getuid !== "function") {
+    throw new Error(
+      "Secure deployer key files require a POSIX platform with verifiable ownership and permissions"
+    );
+  }
+  if (typeof fs2.constants.O_NOFOLLOW !== "number") {
+    throw new Error(
+      "Secure deployer key files require filesystem O_NOFOLLOW support"
+    );
+  }
+  let pathStats;
+  try {
+    pathStats = fs2.lstatSync(keyFile);
+  } catch (error2) {
+    if (error2.code === "ENOENT") return void 0;
+    throw error2;
+  }
+  if (pathStats.isSymbolicLink() || !pathStats.isFile()) {
+    throw new Error(
+      `Deployer key path must be a regular file, not a symlink or special file: ${keyFile}`
+    );
+  }
+  let fd;
+  try {
+    fd = fs2.openSync(
+      keyFile,
+      fs2.constants.O_RDONLY | fs2.constants.O_NOFOLLOW | fs2.constants.O_NONBLOCK
+    );
+  } catch (error2) {
+    if (error2.code === "ELOOP") {
+      throw new Error(
+        `Deployer key path must be a regular file, not a symlink: ${keyFile}`
+      );
+    }
+    throw error2;
+  }
+  try {
+    assertPrivateKeyFileStats(fs2.fstatSync(fd), keyFile);
+    return fs2.readFileSync(fd, "utf8").trim();
+  } finally {
+    fs2.closeSync(fd);
+  }
+}
 async function getOrInitAccount(keyFile, rpcUrl, signal) {
+  let secret = readExistingPrivateKey(keyFile);
   let keypair;
-  if (fs2.existsSync(keyFile)) {
-    const secret = fs2.readFileSync(keyFile, "utf8").trim();
+  if (secret !== void 0) {
     keypair = Keypair.fromSecret(secret);
   } else {
     keypair = Keypair.random();
-    fs2.writeFileSync(keyFile, keypair.secret(), { mode: 384 });
+    let fd;
+    try {
+      fd = fs2.openSync(
+        keyFile,
+        fs2.constants.O_WRONLY | fs2.constants.O_CREAT | fs2.constants.O_EXCL | fs2.constants.O_NOFOLLOW,
+        384
+      );
+    } catch (error2) {
+      if (error2.code === "EEXIST") {
+        secret = readExistingPrivateKey(keyFile);
+        if (secret === void 0) {
+          throw new Error(
+            `Deployer key file disappeared while opening: ${keyFile}`
+          );
+        }
+        keypair = Keypair.fromSecret(secret);
+      } else {
+        throw error2;
+      }
+    }
+    if (fd !== void 0) {
+      try {
+        assertPrivateKeyFileStats(fs2.fstatSync(fd), keyFile);
+        fs2.writeFileSync(fd, keypair.secret(), "utf8");
+      } finally {
+        fs2.closeSync(fd);
+      }
+    }
   }
   await ensureAccountReady(rpcUrl, keypair.publicKey(), signal);
   return keypair;
@@ -54303,6 +54398,9 @@ async function runMeasurement(fixturesPathOrOptions, gitCommit, sdkVersion, rpcU
     rawFixtures,
     opts.fixtureId ?? path3.relative(process.cwd(), path3.resolve(opts.fixturesPath))
   );
+  const constructorArgs = fixturesSpec.contracts.map(
+    (contractSpec) => contractSpec.constructor_args?.map(toScVal) ?? []
+  );
   const server = new rpc_exports.Server(effectiveRpcUrl, { allowHttp: true });
   const deployer = await getOrInitAccount(
     keyFile,
@@ -54311,7 +54409,11 @@ async function runMeasurement(fixturesPathOrOptions, gitCommit, sdkVersion, rpcU
   );
   const deployerAddress = Address.fromString(deployer.publicKey());
   const results = [];
-  for (const contractSpec of fixturesSpec.contracts) {
+  for (const [
+    contractIndex,
+    contractSpec
+  ] of fixturesSpec.contracts.entries()) {
+    const contractConstructorArgs = constructorArgs[contractIndex];
     let wasmPath = path3.resolve(fixturesDir, contractSpec.wasm_path);
     if (!fs2.existsSync(wasmPath)) {
       let altPath = "";
@@ -54334,7 +54436,7 @@ Build the contract before running measurements.`
     const wasmSha256 = wasmHash.toString("hex");
     console.log(`WASM: ${wasmPath}`);
     console.log(`WASM SHA256: ${wasmSha256}`);
-    const salt = crypto3.createHash("sha256").update(wasmHash).digest();
+    const salt = calculateDeploymentSalt(wasmHash, contractConstructorArgs);
     const contractId = calculateContractId(deployer.publicKey(), salt);
     console.log(`Contract ID: ${contractId}`);
     const deployed = await isContractDeployed(server, contractId);
@@ -54371,7 +54473,8 @@ Build the contract before running measurements.`
         Operation.createCustomContract({
           wasmHash,
           address: deployerAddress,
-          salt
+          salt,
+          constructorArgs: contractConstructorArgs
         })
       ).setTimeout(30).build();
       const preparedCreate = await server.prepareTransaction(createTx);
@@ -54379,7 +54482,7 @@ Build the contract before running measurements.`
       await submitAndConfirm(
         server,
         preparedCreate,
-        "contract creation",
+        contractSpec.constructor_args !== void 0 ? "contract creation with constructor" : "contract creation",
         effectiveRpcUrl,
         opts.signal
       );

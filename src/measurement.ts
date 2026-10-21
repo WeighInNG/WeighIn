@@ -90,6 +90,7 @@ export interface InvocationSpec {
 export interface ContractSpec {
   id?: string;
   wasm_path: string;
+  constructor_args?: InvocationArg[];
   invocations: InvocationSpec[];
 }
 
@@ -300,6 +301,21 @@ function calculateContractId(deployerAddress: string, salt: Buffer): string {
   return StrKey.encodeContract(contractIdBytes);
 }
 
+function calculateDeploymentSalt(
+  wasmHash: Buffer,
+  constructorArgs: xdr.ScVal[],
+): Buffer {
+  if (constructorArgs.length === 0) {
+    return crypto.createHash("sha256").update(wasmHash).digest();
+  }
+  return crypto
+    .createHash("sha256")
+    .update("weighin-constructor-args-v1\0")
+    .update(wasmHash)
+    .update(xdr.ScVal.scvVec(constructorArgs).toXDR())
+    .digest();
+}
+
 /**
  * Load or generate a deployer keypair.
  *
@@ -307,18 +323,113 @@ function calculateContractId(deployerAddress: string, salt: Buffer): string {
  *                 runs so both measurements use the same on-chain account.
  * @param rpcUrl   Used to derive the friendbot URL for initial funding.
  */
+function assertPrivateKeyFileStats(stats: fs.Stats, keyFile: string): void {
+  if (!stats.isFile()) {
+    throw new Error(
+      `Deployer key path must be a regular file, not a symlink or special file: ${keyFile}`,
+    );
+  }
+  if (typeof process.getuid !== "function" || stats.uid !== process.getuid()) {
+    throw new Error(
+      `Deployer key file must be owned by the current user: ${keyFile}`,
+    );
+  }
+  if ((stats.mode & 0o077) !== 0) {
+    throw new Error(
+      `Deployer key file permissions must deny all group and other access: ${keyFile}`,
+    );
+  }
+}
+
+function readExistingPrivateKey(keyFile: string): string | undefined {
+  if (process.platform === "win32" || typeof process.getuid !== "function") {
+    throw new Error(
+      "Secure deployer key files require a POSIX platform with verifiable ownership and permissions",
+    );
+  }
+  if (typeof fs.constants.O_NOFOLLOW !== "number") {
+    throw new Error(
+      "Secure deployer key files require filesystem O_NOFOLLOW support",
+    );
+  }
+
+  let pathStats: fs.Stats;
+  try {
+    pathStats = fs.lstatSync(keyFile);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return undefined;
+    throw error;
+  }
+  if (pathStats.isSymbolicLink() || !pathStats.isFile()) {
+    throw new Error(
+      `Deployer key path must be a regular file, not a symlink or special file: ${keyFile}`,
+    );
+  }
+
+  let fd: number;
+  try {
+    fd = fs.openSync(
+      keyFile,
+      fs.constants.O_RDONLY | fs.constants.O_NOFOLLOW | fs.constants.O_NONBLOCK,
+    );
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ELOOP") {
+      throw new Error(
+        `Deployer key path must be a regular file, not a symlink: ${keyFile}`,
+      );
+    }
+    throw error;
+  }
+  try {
+    assertPrivateKeyFileStats(fs.fstatSync(fd), keyFile);
+    return fs.readFileSync(fd, "utf8").trim();
+  } finally {
+    fs.closeSync(fd);
+  }
+}
+
 async function getOrInitAccount(
   keyFile: string,
   rpcUrl: string,
   signal?: AbortSignal,
 ): Promise<Keypair> {
+  let secret = readExistingPrivateKey(keyFile);
   let keypair: Keypair;
-  if (fs.existsSync(keyFile)) {
-    const secret = fs.readFileSync(keyFile, "utf8").trim();
+  if (secret !== undefined) {
     keypair = Keypair.fromSecret(secret);
   } else {
     keypair = Keypair.random();
-    fs.writeFileSync(keyFile, keypair.secret(), { mode: 0o600 });
+    let fd: number | undefined;
+    try {
+      fd = fs.openSync(
+        keyFile,
+        fs.constants.O_WRONLY |
+          fs.constants.O_CREAT |
+          fs.constants.O_EXCL |
+          fs.constants.O_NOFOLLOW,
+        0o600,
+      );
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "EEXIST") {
+        secret = readExistingPrivateKey(keyFile);
+        if (secret === undefined) {
+          throw new Error(
+            `Deployer key file disappeared while opening: ${keyFile}`,
+          );
+        }
+        keypair = Keypair.fromSecret(secret);
+      } else {
+        throw error;
+      }
+    }
+    if (fd !== undefined) {
+      try {
+        assertPrivateKeyFileStats(fs.fstatSync(fd), keyFile);
+        fs.writeFileSync(fd, keypair.secret(), "utf8");
+      } finally {
+        fs.closeSync(fd);
+      }
+    }
   }
 
   await ensureAccountReady(rpcUrl, keypair.publicKey(), signal);
@@ -489,9 +600,11 @@ export interface RunMeasurementOptions {
   /** Soroban RPC endpoint. Defaults to localhost:8000/rpc. */
   rpcUrl?: string;
   /**
-   * Absolute path to a file used to persist the deployer keypair between
-   * base and head runs so both use the same funded on-chain account.
-   * Defaults to <fixturesDir>/.weighin-temp-key
+   * Absolute path to a file used to persist the deployer keypair between base and head
+   * runs so both use the same funded on-chain account. On POSIX, existing
+   * files must be regular, current-user-owned, and inaccessible to group/other.
+   * Windows is rejected because Node cannot verify key-file ACLs portably.
+   * Defaults to <fixturesDir>/.weighin-temp-key.
    */
   keyFile?: string;
   /** Executable override; otherwise build the bundled pinned helper on Linux x64. */
@@ -533,6 +646,9 @@ export async function runMeasurement(
     opts.fixtureId ??
       path.relative(process.cwd(), path.resolve(opts.fixturesPath)),
   );
+  const constructorArgs = fixturesSpec.contracts.map(
+    (contractSpec) => contractSpec.constructor_args?.map(toScVal) ?? [],
+  );
 
   const server = new rpc.Server(effectiveRpcUrl, { allowHttp: true });
   const deployer = await getOrInitAccount(
@@ -544,7 +660,11 @@ export async function runMeasurement(
 
   const results: ContractBenchmark[] = [];
 
-  for (const contractSpec of fixturesSpec.contracts) {
+  for (const [
+    contractIndex,
+    contractSpec,
+  ] of fixturesSpec.contracts.entries()) {
+    const contractConstructorArgs = constructorArgs[contractIndex];
     let wasmPath = path.resolve(fixturesDir, contractSpec.wasm_path);
     if (!fs.existsSync(wasmPath)) {
       let altPath = "";
@@ -569,8 +689,8 @@ export async function runMeasurement(
     console.log(`WASM: ${wasmPath}`);
     console.log(`WASM SHA256: ${wasmSha256}`);
 
-    // Deterministic salt based on WASM hash — same WASM always gets same contract ID
-    const salt = crypto.createHash("sha256").update(wasmHash).digest();
+    // Preserve legacy deployment identity unless constructor arguments initialize state.
+    const salt = calculateDeploymentSalt(wasmHash, contractConstructorArgs);
     const contractId = calculateContractId(deployer.publicKey(), salt);
 
     console.log(`Contract ID: ${contractId}`);
@@ -620,6 +740,7 @@ export async function runMeasurement(
             wasmHash,
             address: deployerAddress,
             salt,
+            constructorArgs: contractConstructorArgs,
           }),
         )
         .setTimeout(30)
@@ -630,7 +751,9 @@ export async function runMeasurement(
       await submitAndConfirm(
         server,
         preparedCreate,
-        "contract creation",
+        contractSpec.constructor_args !== undefined
+          ? "contract creation with constructor"
+          : "contract creation",
         effectiveRpcUrl,
         opts.signal,
       );

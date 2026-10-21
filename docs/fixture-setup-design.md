@@ -1,7 +1,8 @@
 # Committed fixture setup and typed dependency design
 
 This document is the design and bounded feasibility proof for issues #39, #56,
-and #57. It does not add a production deployment graph, constructor executor,
+and #57. Constructor arguments are supported as a bounded extension to single
+contract deployment. This does not add a production deployment graph,
 asset-contract deployer, generic expression language, or public-network setup.
 
 ## 1. Setup lifecycle and measurement boundary (#39)
@@ -16,8 +17,10 @@ The setup phase is separate from the measured invocation:
    source snapshot.
 4. Upload each required WASM in dependency order. Wait for a successful,
    included transaction and record its hash and inclusion ledger.
-5. Create each contract instance with the deterministic deployment salt. Wait
-   for successful inclusion and record the instance ID and receipt.
+5. Create each contract instance with the deterministic deployment salt and
+   optional typed constructor arguments. The constructor runs atomically with
+   creation; wait for successful inclusion and record the instance ID and
+   receipt.
 6. Resolve committed setup returns and bindings, then verify the expected
    initialized storage entries through a separate RPC read.
 7. Only after all setup receipts and reads are confirmed, simulate the measured
@@ -39,11 +42,11 @@ It is independent of runtime addresses, generated return values, deployment
 salts, and setup receipts. A scenario namespace is the tuple
 `[revision_sha, scenario_id, logical_contract_id]`; BASE and HEAD use separate
 disposable environments even when the same WASM deterministically produces the
-same address. Within one environment, the deployment salt is derived from the
-logical ID and WASM hash. Therefore identical logical ID + identical WASM can
-reuse an address, while a changed WASM produces a different address. This is an
-identity rule for the experiment, not an assertion that arbitrary networks
-reuse state.
+same address. Without constructor arguments, the existing WASM-derived salt is
+preserved. Nonempty constructor arguments use a domain-separated salt derived
+from the WASM hash and serialized typed arguments, so different initialized
+states cannot reuse the same deployment instance. This is an identity rule for
+the experiment, not an assertion that arbitrary networks reuse state.
 
 State belongs to one scenario namespace. It is never copied between revisions.
 The evidence records the namespace, deployer, salt, contract ID, setup receipts,
@@ -62,9 +65,10 @@ series; disposable networks and deployer accounts are then discarded.
 Authorization is explicit: setup uses the scenario deployer signer, and every
 operation declares its required signer. Existing independent fixtures remain
 backward-compatible because a fixture with no dependencies follows the same
-setup boundary with an empty dependency list. Constructor arguments, standard
-asset-contract deployment, and alternate authorization schemes remain named
-extensions rather than silently supported behavior.
+setup boundary with an empty dependency list. Standard asset-contract
+deployment and alternate authorization schemes remain named extensions rather
+than silently supported behavior. Constructor arguments use the existing
+fixture typed-value conversions and do not add signed production authorization.
 
 ## 2. Named dependency planning (#56)
 
