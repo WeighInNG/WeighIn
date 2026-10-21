@@ -26164,6 +26164,60 @@ var METRIC_KEYS = [
   "events_count",
   "event_data_bytes"
 ];
+var SCHEMA_4_METRIC_SEMANTIC_MAPPINGS = Object.freeze({
+  cpu_instructions: Object.freeze({
+    availability: "measured",
+    source: "soroban-simulation.simulated_instructions",
+    limit_source: "ConfigSettingContractComputeV0.txMaxInstructions"
+  }),
+  memory_bytes: Object.freeze({
+    availability: "measured",
+    source: "soroban-simulation.simulated_memory",
+    limit_source: "ConfigSettingContractComputeV0.txMemoryLimit"
+  }),
+  ledger_read_entries: Object.freeze({
+    availability: "measured",
+    source: "SorobanResources.footprint.readOnly.length + readWrite.length",
+    limit_source: "ConfigSettingContractLedgerCostExtV0.txMaxFootprintEntries"
+  }),
+  ledger_read_bytes: Object.freeze({
+    availability: "measured",
+    source: "SorobanResources.diskReadBytes (identity adjustment)",
+    limit_source: "ConfigSettingContractLedgerCostV0.txMaxDiskReadBytes"
+  }),
+  ledger_write_entries: Object.freeze({
+    availability: "measured",
+    source: "SorobanResources.footprint.readWrite.length",
+    limit_source: "ConfigSettingContractLedgerCostV0.txMaxWriteLedgerEntries"
+  }),
+  ledger_write_bytes: Object.freeze({
+    availability: "measured",
+    source: "SorobanResources.writeBytes (identity adjustment)",
+    limit_source: "ConfigSettingContractLedgerCostV0.txMaxWriteBytes"
+  }),
+  historical_data_read_bytes: Object.freeze({
+    availability: "unavailable"
+  }),
+  contract_data_hard_limit: Object.freeze({
+    availability: "unavailable"
+  }),
+  tx_size_bytes: Object.freeze({
+    availability: "unavailable"
+  }),
+  events_count: Object.freeze({
+    availability: "measured",
+    source: "successful non-diagnostic ContractEvents.length",
+    limit_reason: "Protocol 28 has no independent event-count cap"
+  }),
+  event_data_bytes: Object.freeze({
+    availability: "measured",
+    source: "sum(successful non-diagnostic ContractEvent XDR bytes) + return ScVal XDR bytes",
+    limit_source: "ConfigSettingContractEventsV0.txMaxContractEventsSizeBytes"
+  })
+});
+var METRIC_SEMANTIC_MAPPINGS_BY_VERSION = Object.freeze({
+  4: SCHEMA_4_METRIC_SEMANTIC_MAPPINGS
+});
 var METRIC_KEY_SET = new Set(METRIC_KEYS);
 
 // src/comment.ts

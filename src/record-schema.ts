@@ -29,6 +29,79 @@ export const CURRENT_RECORD_SCHEMA_VERSION = 4 as const;
 /** Explicitly versioned measurement record schemas accepted by WeighIn. */
 export const SUPPORTED_RECORD_SCHEMA_VERSIONS = [2, 3, 4] as const;
 
+export interface MetricSemanticMapping {
+  readonly availability: "measured" | "unavailable";
+  readonly source?: string;
+  readonly limit_source?: string;
+  readonly limit_reason?: string;
+}
+
+export const SCHEMA_4_METRIC_SEMANTIC_MAPPINGS: Readonly<
+  Record<MetricKey, MetricSemanticMapping>
+> = Object.freeze({
+  cpu_instructions: Object.freeze({
+    availability: "measured",
+    source: "soroban-simulation.simulated_instructions",
+    limit_source: "ConfigSettingContractComputeV0.txMaxInstructions",
+  }),
+  memory_bytes: Object.freeze({
+    availability: "measured",
+    source: "soroban-simulation.simulated_memory",
+    limit_source: "ConfigSettingContractComputeV0.txMemoryLimit",
+  }),
+  ledger_read_entries: Object.freeze({
+    availability: "measured",
+    source: "SorobanResources.footprint.readOnly.length + readWrite.length",
+    limit_source: "ConfigSettingContractLedgerCostExtV0.txMaxFootprintEntries",
+  }),
+  ledger_read_bytes: Object.freeze({
+    availability: "measured",
+    source: "SorobanResources.diskReadBytes (identity adjustment)",
+    limit_source: "ConfigSettingContractLedgerCostV0.txMaxDiskReadBytes",
+  }),
+  ledger_write_entries: Object.freeze({
+    availability: "measured",
+    source: "SorobanResources.footprint.readWrite.length",
+    limit_source: "ConfigSettingContractLedgerCostV0.txMaxWriteLedgerEntries",
+  }),
+  ledger_write_bytes: Object.freeze({
+    availability: "measured",
+    source: "SorobanResources.writeBytes (identity adjustment)",
+    limit_source: "ConfigSettingContractLedgerCostV0.txMaxWriteBytes",
+  }),
+  historical_data_read_bytes: Object.freeze({
+    availability: "unavailable",
+  }),
+  contract_data_hard_limit: Object.freeze({
+    availability: "unavailable",
+  }),
+  tx_size_bytes: Object.freeze({
+    availability: "unavailable",
+  }),
+  events_count: Object.freeze({
+    availability: "measured",
+    source: "successful non-diagnostic ContractEvents.length",
+    limit_reason: "Protocol 28 has no independent event-count cap",
+  }),
+  event_data_bytes: Object.freeze({
+    availability: "measured",
+    source:
+      "sum(successful non-diagnostic ContractEvent XDR bytes) + return ScVal XDR bytes",
+    limit_source: "ConfigSettingContractEventsV0.txMaxContractEventsSizeBytes",
+  }),
+});
+
+export const METRIC_SEMANTIC_MAPPINGS_BY_VERSION: Readonly<
+  Partial<
+    Record<
+      RecordSchemaVersion,
+      Readonly<Record<MetricKey, MetricSemanticMapping>>
+    >
+  >
+> = Object.freeze({
+  4: SCHEMA_4_METRIC_SEMANTIC_MAPPINGS,
+});
+
 export type RecordSchemaVersion =
   (typeof SUPPORTED_RECORD_SCHEMA_VERSIONS)[number];
 
@@ -707,6 +780,51 @@ export function inspectMeasurementRecord(
                 code: "MISSING_METRIC_LIMIT_PROVENANCE",
                 message: `Schema 4 requires explicit limit provenance for ${key}`,
               });
+            } else {
+              const expectedSemantic =
+                METRIC_SEMANTIC_MAPPINGS_BY_VERSION[version]?.[key];
+              if (expectedSemantic) {
+                if (expectedSemantic.availability === "unavailable") {
+                  diagnostics.push({
+                    path: `${mPath}.availability`,
+                    version,
+                    code: "INVALID_METRIC_SEMANTIC_MAPPING",
+                    message: `Incompatible metric semantics: ${key} has no approved measured source mapping in schema ${version}`,
+                  });
+                } else if (
+                  nonblank(metricVal.source) &&
+                  metricVal.source !== expectedSemantic.source
+                ) {
+                  diagnostics.push({
+                    path: `${mPath}.source`,
+                    version,
+                    code: "INVALID_METRIC_SEMANTIC_MAPPING",
+                    message: `Incompatible metric semantics: ${key}.source must be "${expectedSemantic.source}" in schema ${version}`,
+                  });
+                } else if (
+                  expectedSemantic.limit_source !== undefined &&
+                  (metricVal.limit === null ||
+                    metricVal.limit_source !== expectedSemantic.limit_source)
+                ) {
+                  diagnostics.push({
+                    path: `${mPath}.limit_source`,
+                    version,
+                    code: "INVALID_METRIC_SEMANTIC_MAPPING",
+                    message: `Incompatible metric semantics: ${key}.limit_source must be "${expectedSemantic.limit_source}" in schema ${version}`,
+                  });
+                } else if (
+                  expectedSemantic.limit_reason !== undefined &&
+                  (metricVal.limit !== null ||
+                    metricVal.limit_reason !== expectedSemantic.limit_reason)
+                ) {
+                  diagnostics.push({
+                    path: `${mPath}.limit_reason`,
+                    version,
+                    code: "INVALID_METRIC_SEMANTIC_MAPPING",
+                    message: `Incompatible metric semantics: ${key}.limit_reason must be "${expectedSemantic.limit_reason}" in schema ${version}`,
+                  });
+                }
+              }
             }
           }
         }
