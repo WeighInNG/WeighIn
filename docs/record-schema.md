@@ -21,7 +21,7 @@ defines the explicitly numbered versions (`[2, 3, 4]`), with
 | `legacy` | `schema_version`, `fixture_id`, and `logical_id` omitted | `["legacy", contract_id]` | `[function_name, null]` (`case_id` forbidden) | All 11 `METRIC_KEYS` required; `availability` optional (`"measured"` or `"unavailable"`); `unavailable` requires `consumed: null` and non-blank `reason`; measured/implicit requires non-negative safe integer `consumed` and `null` or non-negative safe integer `limit` | Optional `provenance`; validated if present |
 | `2` | `schema_version: 2` | `["logical", fixture_id, logical_id]` | `[function_name, case_id]` (`fixture_id`, `logical_id`, and every `case_id` required and non-blank) | Same 11-metric value constraints as `legacy` | Optional `provenance`; validated if present |
 | `3` | `schema_version: 3` | `["logical", fixture_id, logical_id]` | `[function_name, case_id]` | All 11 `METRIC_KEYS` require explicit `availability` (`"measured"` or `"unavailable"`); `"measured"` requires non-blank `source`; `"unavailable"` requires `consumed: null` and non-blank `reason` | Required `ComputeProvenance` (`source`, `source_version`, `protocol`, `helper_sha256`, `network_id`, `ledger`, `header_sha256`, `snapshot_sha256`, `config_sha256`, `compute_config_sha256`, `input_sha256`, 32-byte `seed`, `auth_mode`, non-blank `host_features[]`) |
-| `4` (current) | `schema_version: 4` | `["logical", fixture_id, logical_id]` | `[function_name, case_id]` | All Schema 3 rules plus per-metric limit provenance on every `"measured"` metric: non-blank `limit_source` when `limit !== null`, or non-blank `limit_reason` when `limit === null` | All Schema 3 `ComputeProvenance` rules plus required 64-character lowercase hex `resource_limits_sha256` (`^[a-f0-9]{64}$`) |
+| `4` (current) | `schema_version: 4` | `["logical", fixture_id, logical_id]` | `[function_name, case_id]` | All Schema 3 rules plus per-metric limit provenance on every `"measured"` metric: non-blank `limit_source` when `limit !== null`, or non-blank `limit_reason` when `limit === null` | All Schema 3 `ComputeProvenance` rules plus required 64-character lowercase hex `resource_limits_sha256` (`^[a-f0-9]{64}$`) and the optional `source_account` (Ed25519 account public key, `^G[A-Z2-7]{55}$`) |
 
 All envelopes require non-blank top-level `contract_id`, `git_commit`, and
 `soroban_sdk_version` strings, a non-negative safe integer `timestamp`, a
@@ -75,8 +75,22 @@ additional invariants enforced at runtime:
    versioned schemas must match across BASE and HEAD, and paired benchmarks with
    provenance must agree on `source`, `source_version`, `protocol`,
    `helper_sha256`, `network_id`, `compute_config_sha256`, `seed`, `auth_mode`,
-   `host_features`, `resource_limits_sha256`, and schema-4 per-metric
-   `availability`, `source`, `limit`, `limit_source`, and `limit_reason`.
+   `host_features`, `resource_limits_sha256`, `source_account`, and schema-4
+   per-metric `availability`, `source`, `limit`, `limit_source`, and
+   `limit_reason`.
 5. `SAFE_INTEGER_BOUNDS`: numeric `consumed`, `limit`, `timestamp`, `ledger`,
    and `protocol` fields must satisfy `Number.isSafeInteger` in JavaScript
    runtime evaluation in addition to JSON integer bounds.
+
+## Source account in compute provenance
+
+`provenance.source_account` is optional. It records the account that invoked
+the measured contract call, so a reviewer can tell which account produced a
+record. Records written before the field existed stay valid, and a comparison
+of two records that both omit it keeps its previous behaviour.
+
+When both records carry the field, a comparison fails with
+`Incompatible measurement environment: source_account` if the accounts differ.
+Results measured under different source accounts are then not comparable. The
+measurement capability and the measured proof are documented in
+[source-account effects](source-account-effects.md).
