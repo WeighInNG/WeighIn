@@ -54,7 +54,6 @@ jobs:
           bash scripts/prime-npm-consumer-cache.sh
           npm test
           npm run test:native
-          npm run build
           npm run bundle
           git diff --exit-code -- bundled/index.js
           npm pack --dry-run --json

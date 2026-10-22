@@ -45,7 +45,7 @@ test('helper exit failures do not produce successful or zero benchmark values', 
   transport(t, '', new Error('exit 1'));
   await assert.rejects(simulateSnapshot(input, '/test/helper'), /Simulation helper failed: host invocation failed/);
 });
-test('structured native failures preserve capture payload but expose only the stable code', async t => {
+test('structured native failures preserve capture payload and report the stable code', async t => {
   const envelope = {
     protocol_version: 1,
     status: 'uncaptured',
@@ -54,7 +54,17 @@ test('structured native failures preserve capture payload but expose only the st
   };
   transport(t, JSON.stringify(envelope), new Error('native helper failure'), 'native helper failure');
   await assert.rejects(simulateSnapshot(input, '/test/helper'), error => {
-    assert.equal(error.message, 'Simulation helper failed: UNCAPTURED_KEY');
+    assert.equal(error.message, 'Native helper uncaptured: snapshot is missing ledger keys (UNCAPTURED_KEY)');
+    assert.equal(error.stdout, JSON.stringify(envelope));
+    assert.ok(!error.message.includes(input.entries[0].key));
+    return true;
+  });
+});
+test('host failure envelopes omit the host debug detail from the thrown message', async t => {
+  const envelope = { protocol_version: 1, status: 'host_failure', message: 'host invocation failed: Error(Contract, #7)' };
+  transport(t, JSON.stringify(envelope), new Error('native helper failure'), 'native helper failure');
+  await assert.rejects(simulateSnapshot(input, '/test/helper'), error => {
+    assert.equal(error.message, 'Native helper host_failure: host invocation failed');
     assert.equal(error.stdout, JSON.stringify(envelope));
     return true;
   });

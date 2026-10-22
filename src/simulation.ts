@@ -74,6 +74,11 @@ export interface ComputeProvenance {
   seed: number[];
   auth_mode: string;
   host_features: string[];
+  /** Public key of the account that invoked the measured transaction.
+   *  Absent only in records produced before source-account identity was
+   *  recorded; comparisons require both sides to agree on it.
+   */
+  source_account?: string;
   /** Schema 4: audited resource caps only, excluding fee settings and metadata. */
   resource_limits_sha256?: string;
 }
@@ -288,14 +293,15 @@ function parseHelperFailure(error: unknown): HelperFailureEnvelope | null {
   }
 }
 
-function helperFailureDiagnostic(
-  status: HelperFailureEnvelope["status"],
-): string {
-  return status === "uncaptured"
-    ? "UNCAPTURED_KEY"
-    : status === "host_failure"
-      ? "host_failure: host invocation failed"
-      : status;
+function helperFailureMessage(envelope: HelperFailureEnvelope): string {
+  // Ledger keys stay on the attached stdout; host_failure messages embed the
+  // host's Debug output, so the thrown message carries only the fixed detail.
+  const detail =
+    envelope.status === "host_failure"
+      ? "host invocation failed"
+      : envelope.message;
+  const code = envelope.status === "uncaptured" ? " (UNCAPTURED_KEY)" : "";
+  return `Native helper ${envelope.status}: ${detail}${code}`;
 }
 
 let provisioned: Promise<string> | undefined;
@@ -473,9 +479,7 @@ export async function simulateSnapshot(
   } catch (failure) {
     const envelope = parseHelperFailure(failure);
     if (envelope && failure instanceof Error) {
-      failure.message = `Simulation helper failed: ${helperFailureDiagnostic(
-        envelope.status,
-      )}`;
+      failure.message = helperFailureMessage(envelope);
     }
     throw failure;
   }
@@ -976,9 +980,7 @@ export async function measureInvocation(
       const envelope = parseHelperFailure(failure);
       if (envelope) {
         if (envelope.status !== "uncaptured")
-          throw new Error(
-            `Native helper ${helperFailureDiagnostic(envelope.status)}`,
-          );
+          throw new Error(helperFailureMessage(envelope));
         const additional = (envelope.keys ?? []).filter(
           (key) => !keys.has(key),
         );
@@ -1115,6 +1117,7 @@ export async function measureInvocation(
         seed: input.seed,
         auth_mode: output.auth_mode,
         host_features: output.host_features,
+        source_account: transaction.source,
       },
     };
   }
