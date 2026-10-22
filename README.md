@@ -168,10 +168,12 @@ All supported inputs are declared in [action.yml](action.yml):
 | `base-ref` | Baseline branch, tag, or commit SHA; PR base branch, otherwise `main`, if omitted. Invalid refs are rejected before builds or deployment. |
 | `rust-toolchain` | Contract-build Rustup override; does not change pinned native-helper toolchain |
 | `build-command` | Custom shell build command in each revision; replaces default build guarantees |
+| `allow-cross-target-substitution` | Opt in to using a WASM artifact built for a different target when the declared target artifact is missing; disabled by default |
 | `skip-build` | `true` uses prebuilt fixture WASMs in both revisions; incompatible with `build-command`. Accepts YAML 1.2 boolean spellings (`true`, `True`, `TRUE`, `false`, `False`, `FALSE`); defaults to `false`. Non-boolean values are rejected |
 | `report-path` | Optional Markdown report destination; replaced atomically, so an interrupted write keeps the previously published report |
 | `metadata-path` | Optional versioned PR-number/HEAD-SHA JSON destination; emitted only in a PR context |
 | `github-token` | Optional direct PR-comment token; omit for the separate comment workflow |
+| `comment-author-mode` | Which identity owns the report comment: `github-actions` (default, canonical GitHub Actions bot ID 41898282) or `authenticated-user` (resolves the authenticated user via `GET /user`). Unsupported values fail the action before any comment mutation. Custom installation-token writers and arbitrary third-party GitHub App identities are not supported by either mode. |
 
 Outputs: `result` is `pass` or `fail`; `diff-json` contains the comparison.
 An unsuccessful comparison emits `fail` and `{}`. A valid comparison with policy
