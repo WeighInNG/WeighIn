@@ -19,7 +19,7 @@ const tracked = [
 function files(value) {
   const absolute = path.join(root, value);
   if (!fs.existsSync(absolute)) return [];
-  if (fs.statSync(absolute).isFile()) return [value];
+  if (fs.statSync(absolute).isFile()) return [value.split(path.sep).join("/")];
   return fs
     .readdirSync(absolute, { withFileTypes: true })
     .flatMap((entry) => files(path.join(value, entry.name)));
@@ -60,13 +60,25 @@ if (process.argv.includes("--verify")) {
       "package provenance manifest has an invalid source_revision",
     );
   }
-  const { source_revision: _actualRevision, ...actualInputs } = actual;
-  const { source_revision: _expectedRevision, ...expectedInputs } = manifest;
-  if (JSON.stringify(actualInputs) !== JSON.stringify(expectedInputs))
+  // The recorded source revision and the tool identities describe the
+  // checkout that produced the manifest. A pull request is verified from a
+  // merge commit whose SHA the committed manifest cannot contain, and CI runs
+  // a different Node/npm patch release than the machine that generated the
+  // committed manifest, so both fields are informational. Every recorded
+  // digest is still compared against the current source and bundles.
+  const { source_revision, tools, ...actualContent } = actual;
+  const {
+    source_revision: computedRevision,
+    tools: computedTools,
+    ...expectedContent
+  } = manifest;
+  if (JSON.stringify(actualContent) !== JSON.stringify(expectedContent))
     throw new Error(
       "package provenance manifest is stale or does not match source and bundles",
     );
-  process.stderr.write("Package provenance verified\n");
+  process.stderr.write(
+    `Package provenance verified (recorded source revision ${source_revision}, verified against ${computedRevision})\n`,
+  );
 } else {
   fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
   process.stderr.write(`Wrote ${manifestPath}\n`);
