@@ -74,6 +74,11 @@ export interface ComputeProvenance {
   seed: number[];
   auth_mode: string;
   host_features: string[];
+  /** Public key of the account that invoked the measured transaction.
+   *  Absent only in records produced before source-account identity was
+   *  recorded; comparisons require both sides to agree on it.
+   */
+  source_account?: string;
   /** Schema 4: audited resource caps only, excluding fee settings and metadata. */
   resource_limits_sha256?: string;
 }
@@ -288,14 +293,15 @@ function parseHelperFailure(error: unknown): HelperFailureEnvelope | null {
   }
 }
 
-function helperFailureDiagnostic(
-  status: HelperFailureEnvelope["status"],
-): string {
-  return status === "uncaptured"
-    ? "UNCAPTURED_KEY"
-    : status === "host_failure"
-      ? "host_failure: host invocation failed"
-      : status;
+// host_failure detail is fixed: the helper's message embeds Rust Debug output of the host error.
+// The UNCAPTURED_KEY token is the documented code for uncaptured snapshots.
+function helperFailureMessage(envelope: HelperFailureEnvelope): string {
+  const detail =
+    envelope.status === "host_failure"
+      ? "host invocation failed"
+      : envelope.message;
+  const code = envelope.status === "uncaptured" ? " (UNCAPTURED_KEY)" : "";
+  return `${envelope.status}: ${detail}${code}`;
 }
 
 let provisioned: Promise<string> | undefined;
@@ -471,11 +477,13 @@ export async function simulateSnapshot(
       signal,
     );
   } catch (failure) {
+    // The helper reports a structured failure envelope on stdout. Surface its
+    // status and message instead of the generic helper error text.
     const envelope = parseHelperFailure(failure);
     if (envelope && failure instanceof Error) {
-      failure.message = `Simulation helper failed: ${helperFailureDiagnostic(
-        envelope.status,
-      )}`;
+      // Keep the original error (and its stdout) so the snapshot capture path can
+      // still read the envelope's captured keys.
+      failure.message = `Native helper ${helperFailureMessage(envelope)}`;
     }
     throw failure;
   }
@@ -977,7 +985,7 @@ export async function measureInvocation(
       if (envelope) {
         if (envelope.status !== "uncaptured")
           throw new Error(
-            `Native helper ${helperFailureDiagnostic(envelope.status)}`,
+            `Native helper ${helperFailureMessage(envelope)}`,
           );
         const additional = (envelope.keys ?? []).filter(
           (key) => !keys.has(key),
@@ -1115,6 +1123,7 @@ export async function measureInvocation(
         seed: input.seed,
         auth_mode: output.auth_mode,
         host_features: output.host_features,
+        source_account: transaction.source,
       },
     };
   }

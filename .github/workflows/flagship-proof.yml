@@ -46,7 +46,6 @@ jobs:
         run: |
           cargo +1.95.0 fetch --locked --manifest-path native/simulation/Cargo.toml --target x86_64-unknown-linux-gnu
           cargo +1.95.0 fetch --locked --manifest-path contract/Cargo.toml --target wasm32v1-none
-
       - name: Install dependencies and validate source
         run: |
           npm ci
@@ -54,7 +53,6 @@ jobs:
           bash scripts/prime-npm-consumer-cache.sh
           npm test
           npm run test:native
-          npm run build
           npm run bundle
           git diff --exit-code -- bundled/index.js
           npm pack --dry-run --json

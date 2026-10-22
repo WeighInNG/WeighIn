@@ -31,7 +31,6 @@ jobs:
           key: ${{ runner.os }}-cargo-1.95.0-${{ hashFiles('native/simulation/Cargo.lock', 'contract/Cargo.lock') }}
       - name: Pre-fetch locked Cargo dependencies
         run: cargo +1.95.0 fetch --locked --manifest-path native/simulation/Cargo.toml --target x86_64-unknown-linux-gnu
-
       - run: npm ci
       - name: npm audit (moderate+ advisory gate)
         run: |
@@ -76,15 +75,15 @@ jobs:
           key: ${{ runner.os }}-cargo-1.95.0-${{ hashFiles('native/simulation/Cargo.lock', 'contract/Cargo.lock') }}
       - name: Pre-fetch locked Cargo dependencies
         run: cargo +1.95.0 fetch --locked --manifest-path native/simulation/Cargo.toml --target x86_64-unknown-linux-gnu
-
       - run: npm ci
+      - name: Verify committed package provenance
+        run: npm run provenance
       - run: npm run bundle
-      - name: Verify no uncommitted changes
+      - name: Verify regenerated bundles
         run: |
-          if [ -n "$(git status --porcelain)" ]; then
-            echo "Error: Uncommitted changes detected after build. Please run 'npm run bundle' locally and commit the results."
-            git status
-            git diff
+          if ! git diff --exit-code -- bundled/; then
+            echo "Error: Regenerated bundles differ from the committed bundles. Please run 'npm run bundle' locally and commit the results."
+            git diff -- bundled/
             exit 1
           fi
       - name: Smoke-test packed npm artifact from clean installed consumer
@@ -154,6 +153,10 @@ jobs:
           npm test
           npm run test:native
           npm run bundle
+          # Bundle generation refreshes the informational source_revision in
+          # the provenance manifest. Keep the benchmark checkout at its
+          # reported HEAD after generating the bundles.
+          git restore --source=HEAD -- provenance-manifest.json
 
       - name: Start local Stellar network
         run: bash scripts/start-local-network.sh

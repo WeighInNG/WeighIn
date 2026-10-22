@@ -5,6 +5,7 @@ const { createHash } = require('node:crypto');
 const { xdr } = require('@stellar/stellar-sdk');
 const { diffBenchmarks, METRIC_KEYS } = require('../../dist/diff');
 const { enforceThresholds } = require('../../dist/threshold');
+const { renderComment } = require('../../dist/comment');
 const { analyzeRepeatability } = require('./repeatability-analysis.cjs');
 
 const MEASURED_KEYS = [
@@ -25,6 +26,19 @@ const UNAVAILABLE_KEYS = [
 ];
 
 const sha256 = (value) => createHash('sha256').update(value).digest('hex');
+
+// The archived summary.md is retained historical evidence rendered by the
+// report renderer of the experiment revision. That renderer later moved its
+// provenance block into a <details> section and expanded it, so the archived
+// file is compared on the facts it reports - metric rows, violations,
+// unavailable reasons and metric sources - instead of on byte equality. The
+// archived file and its recorded SHA256 stay untouched.
+function reportFacts(text) {
+  return text
+    .split("\n")
+    .filter((line) => line.startsWith("|") || line.startsWith("- **"))
+    .map((line) => line.trimEnd());
+}
 
 function decodeSymbolVec(retvalXdr) {
   const scVal = xdr.ScVal.fromXDR(retvalXdr, 'base64');
@@ -56,6 +70,7 @@ function verifyLedgerVariation({
   variationDiff,
   policy,
   violations,
+  summary,
   verification,
 }) {
   assert.equal(verification.status, 'VERIFIED');
@@ -260,6 +275,34 @@ function verifyLedgerVariation({
     ),
     'Strict CPU policy violation must be enforced on unchanged artifact when ledger progression increases CPU',
   );
+
+  const rendered = renderComment(variationDiff, violations, 'ledger-900', 'ledger-1000');
+  assert.deepEqual(
+    reportFacts(rendered),
+    reportFacts(summary),
+    'Archived summary must report the same metrics, violations and sources as the current renderer',
+  );
+
+  // The archived report must still state the archived provenance facts.
+  const archivedFunction = variationDiff.contracts[0].functions[0];
+  const archivedBase = archivedFunction.base_provenance;
+  const archivedHead = archivedFunction.head_provenance;
+  assert.ok(
+    summary.includes(`Snapshot ledgers: BASE ${archivedBase.ledger} → HEAD ${archivedHead.ledger}`),
+    'Archived summary must record the archived ledger endpoints',
+  );
+  for (const digest of [
+    archivedBase.compute_config_sha256,
+    archivedHead.compute_config_sha256,
+    archivedBase.config_sha256,
+    archivedHead.config_sha256,
+    archivedHead.resource_limits_sha256,
+  ]) {
+    assert.ok(summary.includes(digest), `Archived summary must record ${digest}`);
+  }
+
+  assert.match(summary, /threshold violation/);
+  assert.match(summary, /cpu_instructions increased by .*strict zero tolerance/);
 
   return true;
 }
