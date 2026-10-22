@@ -80,7 +80,10 @@ test('documented Action inputs, outputs and workflow snippets use supported name
   const action = yaml.parse(read('action.yml'));
   const commentAction = yaml.parse(read('comment/action.yml'));
   const markdown = read('README.md');
-  for (const input of Object.keys(action.inputs)) assert.ok(markdown.includes(`| \`${input}\` |`), input);
+  const documentedInputCells = new Set(
+    markdown.split('\n').filter((line) => line.startsWith('|')).map((line) => line.split('|')[1].trim()),
+  );
+  for (const input of Object.keys(action.inputs)) assert.ok(documentedInputCells.has(`\`${input}\``), input);
   for (const output of Object.keys(action.outputs)) assert.ok(markdown.includes(`\`${output}\``), output);
   for (const match of markdown.matchAll(/```yaml\n([\s\S]*?)```/g)) {
     for (const step of yaml.parse(match[1])) for (const name of Object.keys(step.with || {})) assert.ok(action.inputs[name], name);
