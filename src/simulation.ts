@@ -984,9 +984,7 @@ export async function measureInvocation(
       const envelope = parseHelperFailure(failure);
       if (envelope) {
         if (envelope.status !== "uncaptured")
-          throw new Error(
-            `Native helper ${helperFailureMessage(envelope)}`,
-          );
+          throw new Error(`Native helper ${helperFailureMessage(envelope)}`);
         const additional = (envelope.keys ?? []).filter(
           (key) => !keys.has(key),
         );

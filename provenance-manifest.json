@@ -12,7 +12,7 @@
     },
     {
       "path": "bundled/index.js",
-      "sha256": "695cb6443aa0e86c4d8af96f04579dc74882ed5f873a914b33be6bc8de472c00"
+      "sha256": "d11a68ad7df330ac6daadeeb26a76a926495daf10c612aebc066f061d59eac34"
     },
     {
       "path": "native/simulation/Cargo.lock",
@@ -112,7 +112,7 @@
     },
     {
       "path": "src/simulation.ts",
-      "sha256": "d9984f3e90c5b2f9d5d41dc420c3110dffb98ba8041c7ee6044b6e9ac442ac50"
+      "sha256": "fb8756d8e4467add059240373d5221b1dc37d83cc5868322348159e6b6a2025b"
     },
     {
       "path": "src/source-account.ts",
