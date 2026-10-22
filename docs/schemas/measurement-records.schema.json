@@ -1116,3 +1116,287 @@
         "function_name",
         "case_id",
         "metrics",
+        "wasm_sha256",
+        "provenance"
+      ],
+      "properties": {
+        "function_name": {
+          "$ref": "#/$defs/NonBlankString"
+        },
+        "case_id": {
+          "$ref": "#/$defs/NonBlankString"
+        },
+        "metrics": {
+          "$ref": "#/$defs/Schema4Metrics"
+        },
+        "wasm_sha256": {
+          "$ref": "#/$defs/NonBlankString"
+        },
+        "provenance": {
+          "$ref": "#/$defs/Schema4ComputeProvenance"
+        }
+      }
+    },
+    "Schema5BenchmarkResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "function_name",
+        "case_id",
+        "metrics",
+        "wasm_sha256",
+        "provenance"
+      ],
+      "properties": {
+        "function_name": {
+          "$ref": "#/$defs/NonBlankString"
+        },
+        "case_id": {
+          "$ref": "#/$defs/NonBlankString"
+        },
+        "metrics": {
+          "$ref": "#/$defs/Schema5Metrics"
+        },
+        "wasm_sha256": {
+          "$ref": "#/$defs/NonBlankString"
+        },
+        "provenance": {
+          "$ref": "#/$defs/Schema5ComputeProvenance"
+        }
+      }
+    },
+    "LegacyContractBenchmark": {
+      "title": "LegacyContractBenchmark",
+      "x-weighin-envelope-version": "legacy",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract_id",
+        "git_commit",
+        "soroban_sdk_version",
+        "timestamp",
+        "benchmarks"
+      ],
+      "properties": {
+        "contract_id": {
+          "$ref": "#/$defs/NonBlankString"
+        },
+        "git_commit": {
+          "$ref": "#/$defs/NonBlankString"
+        },
+        "soroban_sdk_version": {
+          "$ref": "#/$defs/NonBlankString"
+        },
+        "timestamp": {
+          "$ref": "#/$defs/SafeNonNegativeInteger"
+        },
+        "benchmarks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LegacyBenchmarkResult"
+          }
+        }
+      }
+    },
+    "Schema2ContractBenchmark": {
+      "title": "Schema2ContractBenchmark",
+      "x-weighin-envelope-version": 2,
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "fixture_id",
+        "logical_id",
+        "contract_id",
+        "git_commit",
+        "soroban_sdk_version",
+        "timestamp",
+        "benchmarks"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": 2
+        },
+        "fixture_id": {
+          "$ref": "#/$defs/NonBlankString"
+        },
+        "logical_id": {
+          "$ref": "#/$defs/NonBlankString"
+        },
+        "contract_id": {
+          "$ref": "#/$defs/NonBlankString"
+        },
+        "git_commit": {
+          "$ref": "#/$defs/NonBlankString"
+        },
+        "soroban_sdk_version": {
+          "$ref": "#/$defs/NonBlankString"
+        },
+        "timestamp": {
+          "$ref": "#/$defs/SafeNonNegativeInteger"
+        },
+        "benchmarks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Schema2BenchmarkResult"
+          }
+        }
+      }
+    },
+    "Schema3ContractBenchmark": {
+      "title": "Schema3ContractBenchmark",
+      "x-weighin-envelope-version": 3,
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "fixture_id",
+        "logical_id",
+        "contract_id",
+        "git_commit",
+        "soroban_sdk_version",
+        "timestamp",
+        "benchmarks"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": 3
+        },
+        "fixture_id": {
+          "$ref": "#/$defs/NonBlankString"
+        },
+        "logical_id": {
+          "$ref": "#/$defs/NonBlankString"
+        },
+        "contract_id": {
+          "$ref": "#/$defs/NonBlankString"
+        },
+        "git_commit": {
+          "$ref": "#/$defs/NonBlankString"
+        },
+        "soroban_sdk_version": {
+          "$ref": "#/$defs/NonBlankString"
+        },
+        "timestamp": {
+          "$ref": "#/$defs/SafeNonNegativeInteger"
+        },
+        "benchmarks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Schema3BenchmarkResult"
+          }
+        }
+      }
+    },
+    "Schema4ContractBenchmark": {
+      "title": "Schema4ContractBenchmark",
+      "x-weighin-envelope-version": 4,
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "fixture_id",
+        "logical_id",
+        "contract_id",
+        "git_commit",
+        "soroban_sdk_version",
+        "timestamp",
+        "benchmarks"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": 4
+        },
+        "fixture_id": {
+          "$ref": "#/$defs/NonBlankString"
+        },
+        "logical_id": {
+          "$ref": "#/$defs/NonBlankString"
+        },
+        "contract_id": {
+          "$ref": "#/$defs/NonBlankString"
+        },
+        "git_commit": {
+          "$ref": "#/$defs/NonBlankString"
+        },
+        "soroban_sdk_version": {
+          "$ref": "#/$defs/NonBlankString"
+        },
+        "timestamp": {
+          "$ref": "#/$defs/SafeNonNegativeInteger"
+        },
+        "benchmarks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Schema4BenchmarkResult"
+          }
+        }
+      }
+    },
+    "Schema5ContractBenchmark": {
+      "title": "Schema5ContractBenchmark",
+      "x-weighin-envelope-version": 5,
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "fixture_id",
+        "logical_id",
+        "contract_id",
+        "git_commit",
+        "soroban_sdk_version",
+        "timestamp",
+        "benchmarks"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": 5
+        },
+        "fixture_id": {
+          "$ref": "#/$defs/NonBlankString"
+        },
+        "logical_id": {
+          "$ref": "#/$defs/NonBlankString"
+        },
+        "contract_id": {
+          "$ref": "#/$defs/NonBlankString"
+        },
+        "git_commit": {
+          "$ref": "#/$defs/NonBlankString"
+        },
+        "soroban_sdk_version": {
+          "$ref": "#/$defs/NonBlankString"
+        },
+        "timestamp": {
+          "$ref": "#/$defs/SafeNonNegativeInteger"
+        },
+        "benchmarks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Schema5BenchmarkResult"
+          }
+        }
+      }
+    },
+    "ContractBenchmark": {
+      "description": "Discriminated union of supported WeighIn saved contract measurement envelopes.",
+      "oneOf": [
+        {
+          "$ref": "#/$defs/LegacyContractBenchmark"
+        },
+        {
+          "$ref": "#/$defs/Schema2ContractBenchmark"
+        },
+        {
+          "$ref": "#/$defs/Schema3ContractBenchmark"
+        },
+        {
+          "$ref": "#/$defs/Schema4ContractBenchmark"
+        },
+        {
+          "$ref": "#/$defs/Schema5ContractBenchmark"
+        }
+      ]
+    }
+  }
+}
