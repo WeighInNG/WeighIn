@@ -54645,7 +54645,7 @@ async function submitAndConfirm(server, prepared, phase, rpcUrl, signal) {
     );
   }
 }
-async function isContractDeployed(server, contractId) {
+async function probeContractInstance(server, contractId) {
   const contractScAddress = Address.fromString(contractId).toScAddress();
   const ledgerKey = types.LedgerKey.contractData(
     new types.LedgerKeyContractData({
@@ -54661,7 +54661,9 @@ async function isContractDeployed(server, contractId) {
         `Deployment probe returned an invalid ledger response: ${JSON.stringify(res)}`
       );
     }
-    if (res.entries.length === 0) return false;
+    if (res.entries.length === 0) {
+      return { deployed: false, latestLedger: res.latestLedger };
+    }
     if (res.entries.length > 1) {
       throw new Error(
         `Deployment probe returned ${res.entries.length} entries for ${contractId}; expected at most one matching contract instance`
@@ -54716,7 +54718,11 @@ async function isContractDeployed(server, contractId) {
         `Deployment probe returned a different contract for ${contractId}; expected ${contractScAddress.toXDR("base64")}`
       );
     }
-    return true;
+    return {
+      deployed: true,
+      liveUntilLedgerSeq: entry.liveUntilLedgerSeq,
+      latestLedger: res.latestLedger
+    };
   } catch (error2) {
     if (error2 instanceof Error && error2.message.startsWith("Deployment probe")) {
       throw error2;
@@ -54726,10 +54732,63 @@ async function isContractDeployed(server, contractId) {
     );
   }
 }
+var DEFAULT_MIN_CONTRACT_TTL_LEDGERS = 17280;
+function assertReusableTtl(args) {
+  const { label, contractId, liveUntilLedgerSeq, latestLedger, minTtlLedgers } = args;
+  if (!Number.isInteger(minTtlLedgers) || minTtlLedgers < 0) {
+    throw new Error(`Invalid minimum contract TTL window: ${minTtlLedgers}`);
+  }
+  if (typeof liveUntilLedgerSeq !== "number" || typeof latestLedger !== "number") {
+    throw new Error(
+      `Deployment probe returned no TTL metadata for the ${label} of ${contractId}; cannot verify the ${minTtlLedgers}-ledger minimum window`
+    );
+  }
+  const remaining = liveUntilLedgerSeq - latestLedger;
+  if (remaining < minTtlLedgers) {
+    throw new Error(
+      `Reusable contract ${contractId} ${label} expires too soon: live until ledger ${liveUntilLedgerSeq}, latest ledger ${latestLedger} (${remaining} ledgers remaining, minimum ${minTtlLedgers}). Refusing to benchmark; WeighIn does not extend TTLs or restore archived state. Extend the TTL externally or deploy under a different deployer key.`
+    );
+  }
+}
+async function probeContractCode(server, wasmHash, contractId) {
+  const key = types.LedgerKey.contractCode(
+    new types.LedgerKeyContractCode({ hash: wasmHash })
+  );
+  const res = await server.getLedgerEntries(key);
+  if (!res || !Array.isArray(res.entries)) {
+    throw new Error(
+      `Deployment probe returned an invalid ledger response for the contract code of ${contractId}`
+    );
+  }
+  if (res.entries.length !== 1) {
+    throw new Error(
+      `Deployment probe found ${res.entries.length} contract code entries for ${contractId}; expected exactly one (the code entry may be expired or archived)`
+    );
+  }
+  return {
+    liveUntilLedgerSeq: res.entries[0].liveUntilLedgerSeq,
+    latestLedger: res.latestLedger
+  };
+}
 async function ensureContractDeployed(options) {
   const { server, deployer, deployerAddress, wasmBytes, wasmHash, salt } = options;
-  const deployed = await isContractDeployed(server, options.contractId);
-  if (deployed) {
+  const probe = await probeContractInstance(server, options.contractId);
+  if (probe.deployed) {
+    const minTtlLedgers = options.minTtlLedgers ?? DEFAULT_MIN_CONTRACT_TTL_LEDGERS;
+    assertReusableTtl({
+      label: "instance",
+      contractId: options.contractId,
+      liveUntilLedgerSeq: probe.liveUntilLedgerSeq,
+      latestLedger: probe.latestLedger,
+      minTtlLedgers
+    });
+    const code = await probeContractCode(server, wasmHash, options.contractId);
+    assertReusableTtl({
+      label: "code",
+      contractId: options.contractId,
+      ...code,
+      minTtlLedgers
+    });
     console.log(`Already deployed at ${options.contractId}`);
     return;
   }
@@ -54956,7 +55015,8 @@ async function runMeasurement(fixturesPathOrOptions, gitCommit, sdkVersion, rpcU
       salt,
       contractId,
       rpcUrl: effectiveRpcUrl,
-      signal: opts.signal
+      signal: opts.signal,
+      minTtlLedgers: opts.minTtlLedgers
     });
     const benchmarks = [];
     for (const invokeSpec of contractSpec.invocations) {
