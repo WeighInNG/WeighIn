@@ -374,15 +374,15 @@ function parseHelperFailure(error: unknown): HelperFailureEnvelope | null {
   }
 }
 
-// host_failure detail is fixed: the helper's message embeds Rust Debug output of the host error.
-// The UNCAPTURED_KEY token is the documented code for uncaptured snapshots.
 function helperFailureMessage(envelope: HelperFailureEnvelope): string {
+  // Ledger keys stay on the attached stdout; host_failure messages embed the
+  // host's Debug output, so the thrown message carries only the fixed detail.
   const detail =
     envelope.status === "host_failure"
       ? "host invocation failed"
       : envelope.message;
   const code = envelope.status === "uncaptured" ? " (UNCAPTURED_KEY)" : "";
-  return `${envelope.status}: ${detail}${code}`;
+  return `Native helper ${envelope.status}: ${detail}${code}`;
 }
 
 let provisioned: Promise<string> | undefined;
@@ -564,7 +564,7 @@ export async function simulateSnapshot(
     if (envelope && failure instanceof Error) {
       // Keep the original error (and its stdout) so the snapshot capture path can
       // still read the envelope's captured keys.
-      failure.message = `Native helper ${helperFailureMessage(envelope)}`;
+      failure.message = helperFailureMessage(envelope);
     }
     throw failure;
   }
@@ -1082,7 +1082,7 @@ export async function measureInvocation(
       const envelope = parseHelperFailure(failure);
       if (envelope) {
         if (envelope.status !== "uncaptured")
-          throw new Error(`Native helper ${helperFailureMessage(envelope)}`);
+          throw new Error(helperFailureMessage(envelope));
         const additional = (envelope.keys ?? []).filter(
           (key) => !keys.has(key),
         );

@@ -53698,7 +53698,7 @@ function parseHelperFailure(error2) {
 function helperFailureMessage(envelope) {
   const detail = envelope.status === "host_failure" ? "host invocation failed" : envelope.message;
   const code = envelope.status === "uncaptured" ? " (UNCAPTURED_KEY)" : "";
-  return `${envelope.status}: ${detail}${code}`;
+  return `Native helper ${envelope.status}: ${detail}${code}`;
 }
 var provisioned;
 async function resolveSimulationHelper(explicitPath, customBuild) {
@@ -53791,7 +53791,7 @@ async function simulateSnapshot(input, helperPath, signal) {
   } catch (failure) {
     const envelope = parseHelperFailure(failure);
     if (envelope && failure instanceof Error) {
-      failure.message = `Native helper ${helperFailureMessage(envelope)}`;
+      failure.message = helperFailureMessage(envelope);
     }
     throw failure;
   }
@@ -54207,7 +54207,7 @@ async function measureInvocation(rpcUrl, transaction, helperPath, options) {
       const envelope = parseHelperFailure(failure);
       if (envelope) {
         if (envelope.status !== "uncaptured")
-          throw new Error(`Native helper ${helperFailureMessage(envelope)}`);
+          throw new Error(helperFailureMessage(envelope));
         const additional2 = (envelope.keys ?? []).filter(
           (key) => !keys.has(key)
         );

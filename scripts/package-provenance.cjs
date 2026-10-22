@@ -41,25 +41,11 @@ if (process.argv.includes("--verify")) {
   if (!fs.existsSync(manifestPath))
     throw new Error("provenance-manifest.json is missing");
   const actual = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
-  // The recorded source revision and the tool identities describe the
-  // checkout that produced the manifest. A pull request is verified from a
-  // merge commit whose SHA the committed manifest cannot contain, and CI runs
-  // a different Node/npm patch release than the machine that generated the
-  // committed manifest, so both fields are informational. Every recorded
-  // digest is still compared against the current source and bundles.
-  const { source_revision, tools, ...actualContent } = actual;
-  const {
-    source_revision: computedRevision,
-    tools: computedTools,
-    ...expectedContent
-  } = manifest;
-  if (JSON.stringify(actualContent) !== JSON.stringify(expectedContent))
+  if (JSON.stringify(actual) !== JSON.stringify(manifest))
     throw new Error(
       "package provenance manifest is stale or does not match source and bundles",
     );
-  process.stderr.write(
-    `Package provenance verified (recorded source revision ${source_revision}, verified against ${computedRevision})\n`,
-  );
+  process.stderr.write("Package provenance verified\n");
 } else {
   fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
   process.stderr.write(`Wrote ${manifestPath}\n`);
