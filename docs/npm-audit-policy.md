@@ -79,6 +79,12 @@ inventory (`npm run inventory:generate`) and a matching
 locked version, so the Cargo 1.95.0 toolchain and the locked native helper
 crates have to be available when it is generated.
 
+The October 22 remediation updates the exact Vitest pin from `4.1.11` to
+`4.1.12`, including its matching `@vitest/mocker`, for
+[GHSA-qxg6-89mg-rqv8](https://github.com/advisories/GHSA-qxg6-89mg-rqv8) and
+[GHSA-xp26-3454-mjgp](https://github.com/advisories/GHSA-xp26-3454-mjgp).
+The moderate+ threshold, dev-dependency coverage and retained report remain unchanged.
+
 ## Distinction from native and image security
 
 This step covers only the **npm lock graph** (`package-lock.json`). It does

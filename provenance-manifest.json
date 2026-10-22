@@ -28,11 +28,11 @@
     },
     {
       "path": "package-lock.json",
-      "sha256": "b62643470a879fd2d809dae1652e83995a8d4aa3f4ea1595b868fc8b237778a6"
+      "sha256": "932fef16ee0e0dba8cd024113db4c9a0e06be38c6b2105124c91601c859ec801"
     },
     {
       "path": "package.json",
-      "sha256": "55f9ce2a904d6bef2a000c2dcfb4dbdb1b862fd70c992ef368d0ee521f30c9b8"
+      "sha256": "6efcc6cd79073f8a245c263aed6541dcb448c80099ee33e3bdf219eb3dede1a6"
     },
     {
       "path": "src/account.ts",
