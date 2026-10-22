@@ -28,7 +28,9 @@ const validMetadata = { schemaVersion: 1, repository: 'WeighInNG/WeighIn', prNum
 async function execute(order, metadata = true, run = successfulPr, condition = commentJob.if) {
   if (!shouldRun(condition, run)) return { skipped: true, executedSteps: [], calls: [] };
   const temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'weighin-comment-test-'));
-  const workspace = path.join(temporary, 'workspace'), calls = [];
+  const workspace = path.join(temporary, 'caller'), actionInstall = path.join(temporary, 'action-install'), calls = [];
+  assert.notEqual(workspace, root);
+  assert.notEqual(actionInstall, workspace);
   const server = http.createServer((request, response) => {
     let raw = ''; request.on('data', data => raw += data);
     request.on('end', () => {
@@ -43,20 +45,21 @@ async function execute(order, metadata = true, run = successfulPr, condition = c
   });
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   const apiUrl = `http://127.0.0.1:${server.address().port}`;
-  fs.mkdirSync(workspace);
+  fs.mkdirSync(workspace); fs.mkdirSync(actionInstall);
   try {
     git(workspace, 'init', '--quiet');
     git(workspace, 'config', 'user.name', 'WeighIn workflow test');
     git(workspace, 'config', 'user.email', 'workflow@example.invalid');
+    fs.writeFileSync(path.join(workspace, 'README.md'), 'Isolated comment caller\n');
+    git(workspace, 'add', 'README.md'); git(workspace, 'commit', '--quiet', '-m', 'Disposable caller workspace');
     for (const file of ['comment/action.yml', 'bundled/comment-action.js']) {
-      const destination = path.join(workspace, file); fs.mkdirSync(path.dirname(destination), { recursive: true });
+      const destination = path.join(actionInstall, file); fs.mkdirSync(path.dirname(destination), { recursive: true });
       fs.copyFileSync(path.join(root, file), destination);
     }
-    git(workspace, 'add', 'comment', 'bundled'); git(workspace, 'commit', '--quiet', '-m', 'Disposable workflow test');
     let result;
     for (const step of order) {
       if (step.uses === 'actions/checkout@v4') {
-        // Real cleanup performed by checkout's default clean policy.
+        // Model checkout's cleanup of caller artifacts without placing the Action there.
         git(workspace, 'clean', '-ffdx'); git(workspace, 'reset', '--hard', 'HEAD');
       } else if (step.uses === 'actions/download-artifact@v4') {
         assert.equal(step.with.name, 'weighin-artifacts');
@@ -69,9 +72,13 @@ async function execute(order, metadata = true, run = successfulPr, condition = c
           fs.writeFileSync(path.join(workspace, post.with['metadata-path']), text);
         }
       } else if (step.uses === './comment') {
-        const action = YAML.parse(fs.readFileSync(path.join(workspace, 'comment/action.yml'), 'utf8'));
+        const actionYml = path.join(actionInstall, 'comment/action.yml');
+        const action = YAML.parse(fs.readFileSync(actionYml, 'utf8'));
+        const entrypoint = path.resolve(path.dirname(actionYml), action.runs.main);
+        assert.equal(entrypoint, path.join(actionInstall, 'bundled/comment-action.js'));
+        assert.ok(fs.existsSync(entrypoint), 'Action entrypoint must resolve inside the installed Action directory');
         result = await new Promise((resolve, reject) => {
-          const child = spawn(process.execPath, ['--require', path.join(root, 'tests/support/comment-transport-hook.cjs'), path.resolve(workspace, 'comment', action.runs.main)], {
+          const child = spawn(process.execPath, ['--require', path.join(root, 'tests/support/comment-transport-hook.cjs'), entrypoint], {
             cwd: workspace, timeout: 15000,
             env: { ...process.env, GITHUB_REPOSITORY: 'WeighInNG/WeighIn', GITHUB_EVENT_PATH: '', GITHUB_API_URL: apiUrl,
               HTTP_PROXY: '', HTTPS_PROXY: '', ALL_PROXY: '', http_proxy: '', https_proxy: '', all_proxy: '', NO_PROXY: '127.0.0.1', no_proxy: '127.0.0.1',
@@ -88,7 +95,7 @@ async function execute(order, metadata = true, run = successfulPr, condition = c
     return { ...result, skipped: false, executedSteps: order.map(step => step.name), calls };
   } finally { await new Promise(resolve => server.close(resolve)); fs.rmSync(temporary, { recursive: true, force: true }); }
 }
-test('comment workflow preserves downloaded report/metadata and sends their contents through the bundled Action', async () => {
+test('installed comment Action uses caller artifacts from a separate working directory and sends the report', async () => {
   const result = await execute(steps);
   assert.equal(result.skipped, false);
   assert.equal(result.status, 0, result.stdout + result.stderr);

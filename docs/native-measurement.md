@@ -113,8 +113,29 @@ Host settings match the proven RPC configuration: protocol 28, host features
 32-byte zero seed. Entire helper transaction-data XDR, return value and successful
 non-diagnostic events must match RPC at the captured ledger. This corroborates state/resources; RPC still exposes
 no direct consumed CPU/memory values. Random-dependent or auth-dependent fixtures
-that disagree fail explicitly. Archived state is unsupported. Invocation writes
-are simulated and discarded; upload/deployment transactions are submitted.
+that disagree fail explicitly.
+
+### Temporary-entry TTL scope
+
+TTL is interpreted against the ledger sequence in the captured header. A
+temporary `ContractData` entry must include `liveUntilLedgerSeq`; it is accepted
+as live when `live_until >= snapshot ledger`. Missing TTL metadata is an
+incomplete snapshot, and `live_until < snapshot ledger` is an explicit
+unsupported outcome. Neither case emits a partial measurement, zero metrics or
+compute provenance. Expired temporary entries are not restored or treated as
+absent by this helper. Expired persistent/code state remains unsupported too;
+this is not general archived-state support.
+
+The resulting measurement is scoped to the one captured ledger and its TTL
+state. It does not predict later expiration, extension, archival or restoration,
+and does not model an invocation across a TTL transition. Invocation writes are
+simulated and discarded; upload/deployment transactions are submitted.
+The controlled helper test in
+[`tests/native/simulation.test.cjs`](../tests/native/simulation.test.cjs) clones
+a saved input, adds a synthetic temporary row, and verifies live, expired and
+missing-TTL outcomes while checking that the saved input hash is unchanged.
+This is an offline helper-input proof, not a live-network proof of contract
+access to temporary storage.
 
 BASE and HEAD can be captured at different ledgers. The diff requires matching
 helper binary, library, protocol, network, compute cost/limit/TTL configuration, seed, auth mode

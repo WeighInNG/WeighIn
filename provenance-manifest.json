@@ -29,8 +29,10 @@
     },
     {
       "path": "native/simulation/src/main.rs",
-      "sha256": "c46eaa54dc07ea5aed5ab42481328e630d7b8f595e5198f7c58b468f9949507e"
-    },
+      "sha256": "e1e2e960dd446f88d8cb21d681797201892bd97f25372c9d1b4eb32e71e79e4e"
+    }
+  ]
+}
     {
       "path": "package-lock.json",
       "sha256": "932fef16ee0e0dba8cd024113db4c9a0e06be38c6b2105124c91601c859ec801"

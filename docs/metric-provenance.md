@@ -40,6 +40,14 @@ explains the distinction between live Soroban in-memory reads, classic/archive
 disk reads and the RO+RW footprint cap. Its proposal constants are not used as
 runtime limits. The production helper explicitly rejects archived state today.
 
+Temporary contract-data measurements are TTL-dependent and scoped to the
+captured ledger sequence. The helper requires TTL metadata, accepts a temporary
+entry only while `live_until >= ledger sequence`, and reports missing or expired
+temporary state as incomplete/unsupported rather than producing metrics or
+provenance. It does not restore archived state, treat expired entries as
+absent, or establish general archive compatibility. Expired persistent/code
+state remains unsupported.
+
 ## All eleven metric names
 
 Limits below are decoded from the same immutable snapshot as the invocation.
@@ -84,7 +92,8 @@ sources/limits. Fee-only settings and last-modified metadata remain visible in
 full config hashes and do not change the resource-limit identity.
 
 Snapshots are per invocation. Live state and ledger-sensitive behavior can still
-differ across revisions. Random/auth/archived compatibility limitations remain.
+differ across revisions. TTL expiry after the captured ledger is outside the
+measurement; random/auth/archived compatibility limitations remain.
 This source audit alone does not establish clean-build or live repeatability;
 see the separate [repeatability experiment](repeatability.md).
 

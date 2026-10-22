@@ -117,6 +117,8 @@ For PR comments, add the [separate comment workflow](.github/workflows/weighin-c
 to the default branch. It reads report artifacts without executing PR code with
 a write token. The supplied consumer posts only after a successful PR producer;
 failed policy reports remain in artifacts and job summaries.
+The comment sub-Action runs its bundled entry point from the Action installation;
+report and metadata paths are read from the caller's working directory.
 
 ### PR comment metadata contract
 
