@@ -157,9 +157,9 @@ jobs:
           npm test
           npm run test:native
           npm run bundle
-          # Bundle generation refreshes the informational source_revision in
-          # the provenance manifest. Keep the benchmark checkout at its
-          # reported HEAD after generating the bundles.
+          # Bundle generation recomputes the input digests in
+          # provenance-manifest.json from this checkout. Restore the committed
+          # manifest so the benchmark run leaves no modified manifest behind.
           git restore --source=HEAD -- provenance-manifest.json
 
       - name: Start local Stellar network
