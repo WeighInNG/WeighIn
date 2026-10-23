@@ -343,3 +343,16 @@ test('vec and map payloads with valid typed-argument contents parse successfully
   const mapResult = parseFixtures(mapFixture, 'weighin-fixtures.json');
   assert.ok(mapResult.contracts[0], 'map fixture should parse to a contract');
 });
+
+test('published weighin-fixtures.schema.json matches runtime getFixturesJsonSchema and parseFixtures parity (#229)', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const { getFixturesJsonSchema } = require('../dist/config');
+  const schemaPath = path.resolve(__dirname, '..', 'schemas', 'weighin-fixtures.schema.json');
+  const diskSchema = JSON.parse(fs.readFileSync(schemaPath, 'utf8'));
+  assert.deepEqual(diskSchema, getFixturesJsonSchema());
+  assert.ok(Array.isArray(diskSchema.examples) && diskSchema.examples.length >= 1);
+  const parsed = parseFixtures(JSON.stringify(diskSchema.examples[0]), 'weighin-fixtures.json');
+  assert.equal(parsed.fixture_id, 'id:token-suite');
+  assert.equal(parsed.contracts[0].logical_id, 'id:soroban-token');
+});

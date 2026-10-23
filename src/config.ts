@@ -283,3 +283,137 @@ export type GlobalThresholds = z.infer<typeof GlobalThresholdsSchema>;
 export type InvocationArg = z.infer<typeof InvocationArgSchema>;
 export type InvocationSpec = z.infer<typeof InvocationSpecSchema>;
 export type ContractSpec = z.infer<typeof ContractSpecSchema>;
+
+export const WEIGHIN_FIXTURES_JSON_SCHEMA = {
+  $schema: "https://json-schema.org/draft/2020-12/schema",
+  $id: "https://weighin.dev/schemas/weighin-fixtures.schema.json",
+  title: "WeighIn Benchmark Fixtures",
+  description:
+    "Machine-readable JSON Schema for weighin-fixtures.json matching runtime Zod and logical identity rules (#229).",
+  type: "object",
+  additionalProperties: false,
+  required: ["contracts"],
+  properties: {
+    id: {
+      $ref: "#/$defs/nonBlankId",
+      description:
+        "Optional explicit fixture suite identifier (resolves to id:<id>).",
+    },
+    contracts: {
+      type: "array",
+      minItems: 1,
+      items: {
+        $ref: "#/$defs/contractSpec",
+      },
+    },
+  },
+  $defs: {
+    nonBlankId: {
+      type: "string",
+      minLength: 1,
+      pattern: "\\S",
+    },
+    relativeWasmPath: {
+      type: "string",
+      minLength: 1,
+      pattern: "^(?!/)(?![A-Za-z]:)(?!\\\\).+",
+    },
+    integerString: {
+      type: "string",
+      pattern: "^-?\\d+$",
+    },
+    invocationArg: {
+      type: "object",
+      additionalProperties: false,
+      required: ["type", "value"],
+      properties: {
+        type: {
+          type: "string",
+          enum: [
+            "symbol",
+            "string",
+            "u32",
+            "i32",
+            "bool",
+            "u64",
+            "i64",
+            "u128",
+            "i128",
+            "address",
+            "bytes",
+            "vec",
+            "map",
+          ],
+        },
+        value: {},
+      },
+    },
+    invocationSpec: {
+      type: "object",
+      additionalProperties: false,
+      required: ["function_name", "args"],
+      properties: {
+        id: {
+          $ref: "#/$defs/nonBlankId",
+        },
+        function_name: {
+          type: "string",
+          minLength: 1,
+        },
+        args: {
+          type: "array",
+          items: {
+            $ref: "#/$defs/invocationArg",
+          },
+        },
+      },
+    },
+    contractSpec: {
+      type: "object",
+      additionalProperties: false,
+      required: ["wasm_path", "invocations"],
+      properties: {
+        id: {
+          $ref: "#/$defs/nonBlankId",
+        },
+        wasm_path: {
+          $ref: "#/$defs/relativeWasmPath",
+        },
+        invocations: {
+          type: "array",
+          minItems: 1,
+          items: {
+            $ref: "#/$defs/invocationSpec",
+          },
+        },
+      },
+    },
+  },
+  examples: [
+    {
+      id: "token-suite",
+      contracts: [
+        {
+          id: "soroban-token",
+          wasm_path: "contract/target/wasm32v1-none/release/token.wasm",
+          invocations: [
+            {
+              id: "transfer-small",
+              function_name: "transfer",
+              args: [
+                {
+                  type: "u64",
+                  value: "1000",
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ],
+} as const;
+
+export function getFixturesJsonSchema() {
+  return JSON.parse(JSON.stringify(WEIGHIN_FIXTURES_JSON_SCHEMA));
+}
