@@ -117,3 +117,28 @@ test('schema 4 report distinguishes footprint, disk bytes, events plus return, n
     assert.ok(report.includes(label),label);
   }
 });
+test('schema 4 rejects matching fabricated metric source or cap mappings on both BASE and HEAD (#226)', () => {
+  for (const mutate of [
+    b => { b.metrics.cpu_instructions.source = 'fabricated-cpu-source'; },
+    b => { b.metrics.cpu_instructions.limit_source = 'fabricated-cpu-cap'; },
+    b => { b.metrics.events_count.limit_reason = 'fabricated-events-reason'; },
+    b => {
+      b.metrics.tx_size_bytes = {
+        availability: 'measured',
+        consumed: 100,
+        limit: 1000,
+        source: 'fabricated-tx-size-source',
+        limit_source: 'fabricated-tx-size-cap',
+      };
+    },
+  ]) {
+    const base = clone(records);
+    const head = clone(records);
+    mutate(base[0].benchmarks[0]);
+    mutate(head[0].benchmarks[0]);
+    assert.throws(
+      () => diffBenchmarks(base, head),
+      /Incompatible metric semantics/,
+    );
+  }
+});

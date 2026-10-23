@@ -99,15 +99,13 @@ additional invariants enforced at runtime:
    and `protocol` fields must satisfy `Number.isSafeInteger` in JavaScript
    runtime evaluation in addition to JSON integer bounds.
 
-## Source account in compute provenance
+## Schema 4 semantic metric source and cap mappings
 
-`provenance.source_account` is optional. It records the account that invoked
-the measured contract call, so a reviewer can tell which account produced a
-record. Records written before the field existed stay valid, and a comparison
-of two records that both omit it keeps its previous behaviour.
-
-When both records carry the field, a comparison fails with
-`Incompatible measurement environment: source_account` if the accounts differ.
-Results measured under different source accounts are then not comparable. The
-measurement capability and the measured proof are documented in
-[source-account effects](source-account-effects.md).
+In `schema_version: 4`, each measured metric must use its approved semantic
+`source` and `limit_source` (or `limit_reason` for `events_count`) defined in
+`SCHEMA_4_METRIC_SEMANTIC_MAPPINGS` (`METRIC_SEMANTIC_MAPPINGS_BY_VERSION[4]`).
+Records with fabricated or mismatched `source`, `limit_source`, or
+`limit_reason` strings are rejected with `INVALID_METRIC_SEMANTIC_MAPPING` even
+when BASE and HEAD carry identical fabricated strings, while historical
+`legacy`, `schema_version: 2`, and `schema_version: 3` records remain governed
+by their own envelope rules.
