@@ -41,7 +41,7 @@ startup. It labels its disposable `stellar-quickstart` container with
 container carrying that ownership label. An unowned name collision is preserved
 and causes an actionable error. To explicitly authorize replacing an unowned
 container, set `WEIGHIN_REPLACE_UNOWNED_CONTAINER=1` for that invocation. Docker
-ownership-inspection failures also stop startup without modifying the container.
+ownership-inspection failures also stop startup without modifying the container. If RPC health or disposable-account readiness fails after creating a new sidecar container, `scripts/start-local-network.sh` prints the container logs and removes only the newly created container ID (`docker rm -f "$CREATED_CONTAINER_ID"`) before exiting with status 1, leaving any pre-existing unowned container untouched even if log capture or cleanup fails.
 Install Node dependencies and build TypeScript before running:
 
 ```bash

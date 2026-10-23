@@ -111,3 +111,11 @@ if(args[0]==='ps'&&process.env.MOCK_OWNED==='1')process.stdout.write('mock-conta
     fs.writeFileSync(logPath,'');
   }
 });
+
+test('start-local-network.sh cleans up the newly created owned container when readiness fails (#218)', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const script = fs.readFileSync(path.join(__dirname, '..', 'scripts', 'start-local-network.sh'), 'utf8');
+  assert.match(script, /created_container_id="\$\(docker run/);
+  assert.match(script, /docker rm -f "\$\{created_container_id\}"/);
+});
