@@ -59,10 +59,8 @@ re-enabling parallel files.
 
 Use `npm run format` for intentional formatting changes.
 
-The JavaScript test suite also covers the dependency inventory and the packed
-consumer, so it needs the pinned Rust 1.95.0 toolchain and the locked native
-helper crates (`cargo +1.95.0 fetch --locked --manifest-path
-native/simulation/Cargo.toml`). CI provisions both before it runs the suite.
+Use the cache preparation under [Install](#install) before the inventory and
+packed-consumer checks. CI provisions the same prerequisites.
 `npm audit` is a blocking gate: a moderate, high or critical advisory fails the
 run. Clear an advisory with a deliberate dependency update and a regenerated
 `docs/dependency-inventory.json` (`npm run inventory:generate`); the gate
