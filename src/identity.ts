@@ -97,3 +97,68 @@ export function parseFixtures(
   });
   return { ...fixtures, fixture_id, contracts };
 }
+
+export interface DependencyNode {
+  id: string;
+  depends_on?: string[];
+}
+
+/**
+ * Compute a deterministic topological deployment order for fixture contract declarations (#213).
+ * Rejects unknown dependency targets, self-dependencies, and dependency cycles before deployment.
+ */
+export function resolveTopologicalDeploymentOrder<T extends DependencyNode>(
+  nodes: readonly T[],
+): T[] {
+  const byId = new Map<string, T>();
+  for (const node of nodes) {
+    if (!node.id || !node.id.trim()) {
+      throw new Error(
+        "Dependency declaration requires a non-empty contract id",
+      );
+    }
+    if (byId.has(node.id)) {
+      throw new Error(`Duplicate contract id in dependency graph: ${node.id}`);
+    }
+    byId.set(node.id, node);
+  }
+
+  const state = new Map<string, "visiting" | "visited">();
+  const ordered: T[] = [];
+
+  const visit = (id: string, stack: string[]) => {
+    const current = state.get(id);
+    if (current === "visited") return;
+    if (current === "visiting") {
+      throw new Error(
+        `Cyclic fixture dependency detected: ${[...stack, id].join(" -> ")}`,
+      );
+    }
+
+    const node = byId.get(id);
+    if (!node) {
+      throw new Error(`Unknown fixture dependency target: ${id}`);
+    }
+
+    state.set(id, "visiting");
+    for (const dep of node.depends_on ?? []) {
+      if (dep === id) {
+        throw new Error(`Contract cannot depend on itself: ${id}`);
+      }
+      if (!byId.has(dep)) {
+        throw new Error(
+          `Contract ${id} depends on unknown contract prerequisite: ${dep}`,
+        );
+      }
+      visit(dep, [...stack, id]);
+    }
+    state.set(id, "visited");
+    ordered.push(node);
+  };
+
+  for (const node of nodes) {
+    visit(node.id, []);
+  }
+
+  return ordered;
+}
