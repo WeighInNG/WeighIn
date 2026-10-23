@@ -117,3 +117,29 @@ test('schema 4 report distinguishes footprint, disk bytes, events plus return, n
     assert.ok(report.includes(label),label);
   }
 });
+test('schema 4 validates all eight provenance SHA256 digest fields as 64-character lowercase hex, including unmatched records (#223)', () => {
+  const digestFields = [
+    'helper_sha256',
+    'network_id',
+    'header_sha256',
+    'snapshot_sha256',
+    'config_sha256',
+    'compute_config_sha256',
+    'input_sha256',
+    'resource_limits_sha256',
+  ];
+  for (const field of digestFields) {
+    for (const invalidValue of ['not-a-sha256', 'a'.repeat(63), 'a'.repeat(65), 'A'.repeat(64)]) {
+      for (const matched of [true, false]) {
+        const head = clone(records);
+        if (!matched) head[0].logical_id = 'id:unmatched-digest-check';
+        head[0].benchmarks[0].provenance[field] = invalidValue;
+        assert.throws(
+          () => diffBenchmarks(records, head),
+          /Schema 4 requires/,
+          `expected ${field}=${invalidValue} (matched=${matched}) to be rejected`,
+        );
+      }
+    }
+  }
+});

@@ -183,6 +183,17 @@ const PROVENANCE_REQUIRED_STRINGS = [
   "auth_mode",
 ] as const;
 
+export const PROVENANCE_SHA256_DIGEST_FIELDS = [
+  "helper_sha256",
+  "network_id",
+  "header_sha256",
+  "snapshot_sha256",
+  "config_sha256",
+  "compute_config_sha256",
+  "input_sha256",
+  "resource_limits_sha256",
+] as const;
+
 const METRIC_KEY_SET = new Set<string>(METRIC_KEYS);
 const SHA256_HEX_PATTERN = /^[a-f0-9]{64}$/;
 /** Ed25519 account public keys (StrKey "G..." form). */
@@ -317,18 +328,24 @@ function validateProvenanceObject(
     });
   }
 
-  if (
-    provenance.source_account !== undefined &&
-    (typeof provenance.source_account !== "string" ||
-      !ACCOUNT_PUBLIC_KEY_PATTERN.test(provenance.source_account))
-  ) {
-    diagnostics.push({
-      path: `${pPath}.source_account`,
-      version,
-      code: "INVALID_SOURCE_ACCOUNT",
-      message:
-        "Invalid compute provenance: source_account must be an Ed25519 account public key",
-    });
+  if (version === 4) {
+    for (const digestField of PROVENANCE_SHA256_DIGEST_FIELDS) {
+      if (digestField === "resource_limits_sha256") continue;
+      const val = provenance[digestField];
+      if (typeof val !== "string" || !SHA256_HEX_PATTERN.test(val)) {
+        const alreadyReported = diagnostics.some(
+          (d) => d.path === `${pPath}.${digestField}`,
+        );
+        if (!alreadyReported) {
+          diagnostics.push({
+            path: `${pPath}.${digestField}`,
+            version,
+            code: "INVALID_PROVENANCE_DIGEST",
+            message: `Schema 4 requires 64-character lowercase hex SHA256 for ${digestField}`,
+          });
+        }
+      }
+    }
   }
 }
 
@@ -1196,7 +1213,17 @@ export function getMeasurementRecordJsonSchema(): Record<string, any> {
         type: "object",
         additionalProperties: false,
         required: [...provenanceSchema3Required, "resource_limits_sha256"],
-        properties: provenanceBaseProperties,
+        properties: {
+          ...provenanceBaseProperties,
+          helper_sha256: { $ref: "#/$defs/Sha256Hex" },
+          network_id: { $ref: "#/$defs/Sha256Hex" },
+          header_sha256: { $ref: "#/$defs/Sha256Hex" },
+          snapshot_sha256: { $ref: "#/$defs/Sha256Hex" },
+          config_sha256: { $ref: "#/$defs/Sha256Hex" },
+          compute_config_sha256: { $ref: "#/$defs/Sha256Hex" },
+          input_sha256: { $ref: "#/$defs/Sha256Hex" },
+          resource_limits_sha256: { $ref: "#/$defs/Sha256Hex" },
+        },
       },
       LegacyBenchmarkResult: {
         type: "object",
