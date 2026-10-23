@@ -498,6 +498,18 @@ export function inspectMeasurementRecord(
     return { valid: false, version, diagnostics };
   }
 
+  if (hasLogical && benchmarksArray.length === 0) {
+    const ctx = [value.fixture_id, value.logical_id, value.contract_id]
+      .filter((x) => typeof x === "string" && x.trim().length > 0)
+      .join(" / ");
+    diagnostics.push({
+      path: `${basePath}.benchmarks`,
+      version,
+      code: "EMPTY_CONTRACT_BENCHMARKS",
+      message: `Version 2/3/4 contract record${ctx ? ` (${ctx})` : ""} must contain at least one benchmark case`,
+    });
+  }
+
   const seenBenchmarks = new Set<string>();
 
   benchmarksArray.forEach((benchmark: unknown, bIdx: number) => {
