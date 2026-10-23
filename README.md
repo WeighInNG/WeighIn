@@ -19,8 +19,8 @@ These are Soroban simulation resources, not hardware performance or fee estimate
 ## How It Works
 
 ```text
-HEAD checkout (must have no uncommitted changes) + fetched BASE worktree
-  → verify HEAD workspace is clean
+HEAD checkout (no modified tracked files) + fetched BASE worktree
+  → verify HEAD workspace has no modified tracked files
   → build each revision's configured contracts
   → deploy WASM and simulate each revision's fixtures
   → capture RPC state and measure with protocol-matched native simulation
@@ -117,6 +117,8 @@ For PR comments, add the [separate comment workflow](.github/workflows/weighin-c
 to the default branch. It reads report artifacts without executing PR code with
 a write token. The supplied consumer posts only after a successful PR producer;
 failed policy reports remain in artifacts and job summaries.
+The comment sub-Action runs its bundled entry point from the Action installation;
+report and metadata paths are read from the caller's working directory.
 
 ### PR comment metadata contract
 
@@ -247,6 +249,12 @@ The CLI measures existing WASMs and writes JSON; it does not build, compare
 revisions, enforce thresholds or post comments. Provision the native helper/RPC,
 then run `node dist/cli.js <fixtures.json> --rpc-url <standalone-rpc> --output <results.json>`
 from a built checkout. See [native provisioning](docs/native-measurement.md).
+
+SDK metadata is reported per contract from the Cargo workspace/lock owning each
+fixture WASM (`contract/Cargo.lock` or a root workspace `Cargo.lock`), or
+`"unknown"` when no owning lock can be established; multiple declared versions
+are listed rather than collapsed to one. It is best-effort on-disk metadata and
+does not prove how a prebuilt WASM was compiled.
 
 ## Source Accounts
 
