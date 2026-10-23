@@ -646,3 +646,82 @@ export async function buildContracts(
   }
   return results;
 }
+
+export interface CancellationRegistry {
+  registerWorktree(repoRoot: string, worktreeDir: string): void;
+  registerTempDir(tempDir: string): void;
+  registerChild(killFn: () => void): void;
+  cleanupAll(): Promise<{
+    cleanedWorktrees: string[];
+    cleanedTempDirs: string[];
+    terminatedChildren: number;
+  }>;
+}
+
+/**
+ * Create an explicit cancellation lifecycle coordinator that only cleans
+ * WeighIn-owned temporary directories (`weighin-*`), worktrees, and child
+ * processes on SIGINT/SIGTERM without touching the caller workspace (#238).
+ */
+export function createCancellationRegistry(): CancellationRegistry {
+  const worktrees: Array<{ repoRoot: string; worktreeDir: string }> = [];
+  const tempDirs = new Set<string>();
+  const childKillers: Array<() => void> = [];
+
+  const isOwnedTempPath = (candidate: string): boolean => {
+    const base = path.basename(path.resolve(candidate));
+    return base.startsWith("weighin-");
+  };
+
+  return {
+    registerWorktree(repoRoot: string, worktreeDir: string): void {
+      if (!isOwnedTempPath(worktreeDir)) {
+        throw new Error(
+          `Refusing to register non-owned worktree path for cancellation cleanup: ${worktreeDir}`,
+        );
+      }
+      worktrees.push({ repoRoot, worktreeDir });
+    },
+    registerTempDir(tempDir: string): void {
+      if (!isOwnedTempPath(tempDir)) {
+        throw new Error(
+          `Refusing to register non-owned temp directory for cancellation cleanup: ${tempDir}`,
+        );
+      }
+      tempDirs.add(path.resolve(tempDir));
+    },
+    registerChild(killFn: () => void): void {
+      childKillers.push(killFn);
+    },
+    async cleanupAll() {
+      let terminatedChildren = 0;
+      for (const kill of childKillers.splice(0, childKillers.length)) {
+        try {
+          kill();
+          terminatedChildren += 1;
+        } catch {
+          /* best effort child termination */
+        }
+      }
+
+      const cleanedWorktrees: string[] = [];
+      for (const { worktreeDir } of worktrees.splice(0, worktrees.length)) {
+        if (isOwnedTempPath(worktreeDir) && fs.existsSync(worktreeDir)) {
+          fs.rmSync(worktreeDir, { recursive: true, force: true });
+          cleanedWorktrees.push(worktreeDir);
+        }
+      }
+
+      const cleanedTempDirs: string[] = [];
+      for (const dir of Array.from(tempDirs)) {
+        tempDirs.delete(dir);
+        if (isOwnedTempPath(dir) && fs.existsSync(dir)) {
+          fs.rmSync(dir, { recursive: true, force: true });
+          cleanedTempDirs.push(dir);
+        }
+      }
+
+      return { cleanedWorktrees, cleanedTempDirs, terminatedChildren };
+    },
+  };
+}
