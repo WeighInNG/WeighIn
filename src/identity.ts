@@ -97,3 +97,80 @@ export function parseFixtures(
   });
   return { ...fixtures, fixture_id, contracts };
 }
+
+export interface SetupResultBindingRecord {
+  expectedType: string;
+  value: unknown;
+}
+
+/**
+ * Resolve typed setup-result bindings (`$setup:<bindingId>[.<fieldOrIndex>]`) into
+ * concrete call arguments while validating expected types and rejecting malformed paths (#215).
+ */
+export function resolveSetupResultBinding(
+  reference: string,
+  expectedType: string,
+  bindings: Readonly<Record<string, SetupResultBindingRecord>>,
+): unknown {
+  if (!reference.startsWith("$setup:")) {
+    throw new Error(`Invalid setup-result reference prefix: ${reference}`);
+  }
+  const rawPath = reference.slice("$setup:".length).trim();
+  if (
+    !rawPath ||
+    rawPath.startsWith(".") ||
+    rawPath.endsWith(".") ||
+    rawPath.includes("..")
+  ) {
+    throw new Error(`Malformed setup-result binding path: ${reference}`);
+  }
+
+  const segments = rawPath.split(".");
+  const rootId = segments[0];
+  if (!/^[A-Za-z0-9_-]+$/.test(rootId)) {
+    throw new Error(`Invalid setup-result binding identifier: ${rootId}`);
+  }
+
+  const record = bindings[rootId];
+  if (!record) {
+    throw new Error(`Unknown setup-result binding: ${rootId}`);
+  }
+
+  if (record.expectedType.toLowerCase() !== expectedType.toLowerCase()) {
+    throw new Error(
+      `Setup-result binding type mismatch for ${rootId}: expected ${expectedType}, got ${record.expectedType}`,
+    );
+  }
+
+  let current: any = record.value;
+  for (let i = 1; i < segments.length; i++) {
+    const seg = segments[i];
+    if (Array.isArray(current)) {
+      if (!/^(0|[1-9][0-9]*)$/.test(seg)) {
+        throw new Error(
+          `Invalid array index "${seg}" in setup-result binding ${reference}`,
+        );
+      }
+      const idx = Number(seg);
+      if (idx < 0 || idx >= current.length) {
+        throw new Error(
+          `Out-of-bounds array index ${idx} in setup-result binding ${reference}`,
+        );
+      }
+      current = current[idx];
+    } else if (current !== null && typeof current === "object") {
+      if (!Object.prototype.hasOwnProperty.call(current, seg)) {
+        throw new Error(
+          `Missing field "${seg}" in setup-result binding ${reference}`,
+        );
+      }
+      current = current[seg];
+    } else {
+      throw new Error(
+        `Cannot traverse segment "${seg}" on scalar setup-result binding ${reference}`,
+      );
+    }
+  }
+
+  return current;
+}
