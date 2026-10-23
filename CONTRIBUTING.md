@@ -50,23 +50,17 @@ npm audit
 `lint` checks Prettier formatting in `src` and `test`; `typecheck` checks TypeScript.
 `npm test` builds TypeScript, runs Node behavior/evidence tests under `tests`, and
 runs Vitest tests under `test`. `npm run test:watch` starts Vitest watch mode.
-Node test files use `--test-concurrency=1` because `package-smoke.test.cjs` runs
-normal `npm pack`, whose `prepack` rebuilds `dist` while other test files import it.
-ponytail: this caps file-level parallelism; isolate the packaging test's checkout
-before re-enabling parallel files.
+Node test files run one at a time (`--test-concurrency=1`). Packing the consumer
+artifact runs the `prepack` lifecycle, which rebuilds `dist/` and `bundled/` in
+the checkout; running test files concurrently let one file read a bundle another
+file was still writing. Keep the suite serial so every test observes a complete
+build artifact. Upgrade path: isolate the packaging test's checkout before
+re-enabling parallel files.
 
 Use `npm run format` for intentional formatting changes.
 
-The Node test files run one at a time (`--test-concurrency=1`). Packing the
-consumer artifact runs the `prepack` lifecycle, which rebuilds `dist/` and
-`bundled/` in the checkout; running test files concurrently let one file read a
-bundle another file was still writing. Keep the suite serial so every test
-observes a complete build artifact.
-
-The JavaScript test suite also covers the dependency inventory and the packed
-consumer, so it needs the pinned Rust 1.95.0 toolchain and the locked native
-helper crates (`cargo +1.95.0 fetch --locked --manifest-path
-native/simulation/Cargo.toml`). CI provisions both before it runs the suite.
+Use the cache preparation under [Install](#install) before the inventory and
+packed-consumer checks. CI provisions the same prerequisites.
 `npm audit` is a blocking gate: a moderate, high or critical advisory fails the
 run. Clear an advisory with a deliberate dependency update and a regenerated
 `docs/dependency-inventory.json` (`npm run inventory:generate`); the gate

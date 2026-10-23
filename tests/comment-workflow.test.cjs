@@ -136,14 +136,11 @@ for (const [label, invalidReport] of [
   ['unrelated marker', report.replace('<!-- weighin-report -->', '<!-- weighin-comment -->')],
   ['missing WeighIn Benchmark Report heading', report.replace('WeighIn Benchmark Report', 'Unrelated Report')],
 ]) {
-  for (const existingComment of [false, true]) {
-    const mutation = existingComment ? 'PATCH' : 'POST';
-    test(`the bundled consumer rejects ${label} before any ${mutation}`, async () => {
-      const result = await execute(steps, true, successfulPr, commentJob.if, invalidReport, existingComment);
-      assert.equal(result.status, 1, `${label} unexpectedly succeeded`);
-      assert.deepEqual(result.calls.filter(call => call.method === 'POST' || call.method === 'PATCH'), []);
-    });
-  }
+  test(`the bundled consumer rejects ${label} before any GitHub API access`, async () => {
+    const result = await execute(steps, true, successfulPr, commentJob.if, invalidReport);
+    assert.equal(result.status, 1, `${label} unexpectedly succeeded`);
+    assert.deepEqual(result.calls, []);
+  });
 }
 test('a case-insensitive repository match is accepted by the bundled consumer', async () => {
   const result = await execute(steps, { ...validMetadata, repository: 'weighinng/weighin' });
