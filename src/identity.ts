@@ -40,6 +40,64 @@ function canonical(value: any): any {
   return value;
 }
 
+function canonicalArg(arg: { type: string; value: any }): {
+  type: string;
+  value: any;
+} {
+  const type = arg.type.toLowerCase();
+  const val = arg.value;
+  if (type === "vec" && Array.isArray(val)) {
+    return {
+      type,
+      value: val.map((item) =>
+        item !== null &&
+        typeof item === "object" &&
+        !Array.isArray(item) &&
+        typeof item.type === "string" &&
+        "value" in item
+          ? canonicalArg(item)
+          : canonical(item),
+      ),
+    };
+  }
+  if (type === "map" && Array.isArray(val)) {
+    return {
+      type,
+      value: val.map((entry) => {
+        if (
+          entry !== null &&
+          typeof entry === "object" &&
+          !Array.isArray(entry)
+        ) {
+          return Object.fromEntries(
+            Object.keys(entry)
+              .sort()
+              .map((k) => {
+                const v = entry[k];
+                if (
+                  (k === "key" || k === "value") &&
+                  v !== null &&
+                  typeof v === "object" &&
+                  !Array.isArray(v) &&
+                  typeof v.type === "string" &&
+                  "value" in v
+                ) {
+                  return [k, canonicalArg(v)];
+                }
+                return [k, canonical(v)];
+              }),
+          );
+        }
+        return canonical(entry);
+      }),
+    };
+  }
+  return {
+    type,
+    value: canonical(val),
+  };
+}
+
 /** Resolve logical identities before any deployment or simulation side effects.
  * fixturePath is a stable workspace-relative path, shared by BASE and HEAD.
  * Explicit ids are scoped to their fixture/contract, not global names.
@@ -76,10 +134,7 @@ export function parseFixtures(
 
     const caseIds = new Set<string>();
     const invocations = contract.invocations.map((invocation) => {
-      const args = invocation.args.map((arg) => ({
-        type: arg.type.toLowerCase(),
-        value: canonical(arg.value),
-      }));
+      const args = invocation.args.map((arg) => canonicalArg(arg));
       const case_id =
         invocation.id === undefined
           ? `args:${JSON.stringify(args)}`
