@@ -29,6 +29,34 @@ export const CURRENT_RECORD_SCHEMA_VERSION = 4 as const;
 /** Explicitly versioned measurement record schemas accepted by WeighIn. */
 export const SUPPORTED_RECORD_SCHEMA_VERSIONS = [2, 3, 4] as const;
 
+export interface ProvenanceSourceCombination {
+  readonly source: string;
+  readonly source_version: string;
+  readonly protocol: number;
+}
+
+export const SUPPORTED_PROVENANCE_COMBINATIONS: readonly ProvenanceSourceCombination[] =
+  Object.freeze([
+    Object.freeze({
+      source: "soroban-simulation",
+      source_version: "28.0.1",
+      protocol: 28,
+    }),
+  ]);
+
+export function isSupportedProvenanceCombination(provenance: {
+  source: string;
+  source_version: string;
+  protocol: number;
+}): boolean {
+  return SUPPORTED_PROVENANCE_COMBINATIONS.some(
+    (entry) =>
+      entry.source === provenance.source &&
+      entry.source_version === provenance.source_version &&
+      entry.protocol === provenance.protocol,
+  );
+}
+
 export type RecordSchemaVersion =
   (typeof SUPPORTED_RECORD_SCHEMA_VERSIONS)[number];
 
@@ -318,16 +346,22 @@ function validateProvenanceObject(
   }
 
   if (
-    provenance.source_account !== undefined &&
-    (typeof provenance.source_account !== "string" ||
-      !ACCOUNT_PUBLIC_KEY_PATTERN.test(provenance.source_account))
+    version === 4 &&
+    nonblank(provenance.source) &&
+    nonblank(provenance.source_version) &&
+    Number.isSafeInteger(provenance.protocol) &&
+    provenance.protocol > 0 &&
+    !isSupportedProvenanceCombination({
+      source: provenance.source,
+      source_version: provenance.source_version,
+      protocol: provenance.protocol,
+    })
   ) {
     diagnostics.push({
-      path: `${pPath}.source_account`,
+      path: pPath,
       version,
-      code: "INVALID_SOURCE_ACCOUNT",
-      message:
-        "Invalid compute provenance: source_account must be an Ed25519 account public key",
+      code: "UNSUPPORTED_PROVENANCE_COMBINATION",
+      message: `Incompatible measurement environment: unsupported provenance combination ${provenance.source}@${provenance.source_version} (protocol ${provenance.protocol})`,
     });
   }
 }
@@ -912,6 +946,18 @@ export function validateBenchmarkComparisonCompatibility(
     ) {
       throw new Error(`Incompatible measurement environment: ${field}`);
     }
+  }
+  if (
+    baseFn.provenance &&
+    !isSupportedProvenanceCombination({
+      source: baseFn.provenance.source,
+      source_version: baseFn.provenance.source_version,
+      protocol: baseFn.provenance.protocol,
+    })
+  ) {
+    throw new Error(
+      `Incompatible measurement environment: unsupported provenance combination ${baseFn.provenance.source}@${baseFn.provenance.source_version} (protocol ${baseFn.provenance.protocol})`,
+    );
   }
   if (
     JSON.stringify(baseFn.provenance?.resource_limits_sha256) !==

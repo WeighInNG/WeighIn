@@ -99,15 +99,12 @@ additional invariants enforced at runtime:
    and `protocol` fields must satisfy `Number.isSafeInteger` in JavaScript
    runtime evaluation in addition to JSON integer bounds.
 
-## Source account in compute provenance
+## Supported provenance source/version/protocol registry
 
-`provenance.source_account` is optional. It records the account that invoked
-the measured contract call, so a reviewer can tell which account produced a
-record. Records written before the field existed stay valid, and a comparison
-of two records that both omit it keeps its previous behaviour.
-
-When both records carry the field, a comparison fails with
-`Incompatible measurement environment: source_account` if the accounts differ.
-Results measured under different source accounts are then not comparable. The
-measurement capability and the measured proof are documented in
-[source-account effects](source-account-effects.md).
+For `schema_version: 3` and `schema_version: 4` records, `ComputeProvenance`
+must match a recognized `(source, source_version, protocol)` entry in
+`SUPPORTED_PROVENANCE_COMBINATIONS` (currently
+`soroban-simulation` `28.0.1` on protocol `28`). Matching arbitrary or
+unverified source/version/protocol tuples on both BASE and HEAD is rejected with
+`UNSUPPORTED_PROVENANCE_COMBINATION` before pairing, while legacy and
+`schema_version: 2` envelopes remain explicitly isolated.
