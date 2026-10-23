@@ -1,7 +1,11 @@
 import * as fs from "fs";
 import * as TOML from "toml";
-import { z } from "zod";
-import { formatZodError } from "./config";
+import {
+  validateConfig,
+  WeighinConfig,
+  GlobalThresholds,
+  RuleValue,
+} from "./config";
 import {
   DiffResult,
   METRIC_KEYS,
@@ -24,135 +28,17 @@ import * as crypto from "crypto";
  *   "strict_zero_tolerance"     — any increase fails
  *   "allow_N_percent_increase"  — N% increase allowed (e.g. "allow_10_percent_increase")
  *   "ignore"                    — never fail on this metric
+ *
+ * Authoritative schema: see RuleValueSchema in config.ts.
  */
-export type RuleValue = string | number;
-
-export interface GlobalThresholds {
-  /** If true, any metric increase (even 1 unit) fails. Default false. */
-  fail_on_any_regression?: boolean;
-  /** Maximum allowed CPU increase as a percentage. */
-  max_allowed_cpu_increase_pct?: number;
-  /** Maximum allowed memory increase as a percentage. */
-  max_allowed_memory_increase_pct?: number;
-}
-
-export interface WeighinConfig {
-  limits?: {
-    global?: Partial<Record<MetricKey, number>>;
-    functions?: Record<string, Partial<Record<MetricKey, number>>>;
-    aggregates?: Record<string, Partial<Record<MetricKey, number>>>;
-  };
-  thresholds?: {
-    global?: GlobalThresholds;
-    /** Per-function overrides keyed by function name */
-    functions?: Record<string, Partial<Record<MetricKey, RuleValue>>>;
-    aggregates?: Record<string, Partial<Record<MetricKey, RuleValue>>>;
-  };
-  aggregates?: Record<string, AggregateBudgetConfig>;
-}
+export type { RuleValue, WeighinConfig, GlobalThresholds };
+export { validateConfig };
 
 export interface PolicyOrigin {
   mode: "head" | "trusted";
   path: string;
   revision: string;
   content_sha256: string;
-}
-
-export type PolicyStatus = "absent" | "empty" | "active";
-
-export interface ResolvedRule {
-  target: "global" | string;
-  metric: MetricKey;
-  rule: RuleValue;
-  source: "default" | "global" | "function_override" | "ignore";
-}
-
-export interface EffectivePolicyReport {
-  status: PolicyStatus;
-  mode?: "head" | "trusted";
-  path?: string;
-  revision?: string;
-  content_sha256?: string;
-  report_only: boolean;
-  fail_on_any_regression?: boolean;
-  rules: ResolvedRule[];
-}
-
-const percentage = z.number().finite().nonnegative();
-const ruleSchema = z.union([
-  percentage,
-  z
-    .string()
-    .refine(
-      (value) =>
-        value === "ignore" ||
-        value === "strict_zero_tolerance" ||
-        parseAllowPct(value) !== null,
-      "Unsupported threshold rule",
-    ),
-]);
-const metricRules = z
-  .object(
-    Object.fromEntries(METRIC_KEYS.map((key) => [key, ruleSchema.optional()])),
-  )
-  .strict();
-const benchmarkSelectorSchema = z
-  .object({
-    fixture_id: z.string().min(1).optional(),
-    logical_id: z.string().min(1).optional(),
-    function_name: z.string().min(1),
-    case_id: z.string().min(1).optional(),
-  })
-  .strict();
-const aggregateBudgetConfigSchema = z
-  .object({
-    description: z.string().optional(),
-    members: z.array(benchmarkSelectorSchema).min(1),
-    limits: z.record(z.enum(METRIC_KEYS), percentage).optional(),
-    thresholds: metricRules.optional(),
-  })
-  .strict();
-const configSchema = z
-  .object({
-    limits: z
-      .object({
-        global: z.record(z.enum(METRIC_KEYS), percentage).optional(),
-        functions: z
-          .record(z.string().min(1), z.record(z.enum(METRIC_KEYS), percentage))
-          .optional(),
-        aggregates: z
-          .record(z.string().min(1), z.record(z.enum(METRIC_KEYS), percentage))
-          .optional(),
-      })
-      .strict()
-      .optional(),
-    thresholds: z
-      .object({
-        global: z
-          .object({
-            fail_on_any_regression: z.boolean().optional(),
-            max_allowed_cpu_increase_pct: percentage.optional(),
-            max_allowed_memory_increase_pct: percentage.optional(),
-          })
-          .strict()
-          .optional(),
-        functions: z.record(z.string().min(1), metricRules).optional(),
-        aggregates: z.record(z.string().min(1), metricRules).optional(),
-      })
-      .strict()
-      .optional(),
-    aggregates: z
-      .record(z.string().min(1), aggregateBudgetConfigSchema)
-      .optional(),
-  })
-  .strict();
-
-/** Validate policies independently of whether a benchmark happened to regress. */
-export function validateConfig(value: unknown): WeighinConfig {
-  const parsed = configSchema.safeParse(value);
-  if (!parsed.success)
-    throw new Error(formatZodError(parsed.error, "weighin.toml"));
-  return parsed.data as WeighinConfig;
 }
 
 // ---------------------------------------------------------------------------

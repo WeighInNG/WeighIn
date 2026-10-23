@@ -5,45 +5,66 @@ import { METRIC_KEYS } from "./diff";
 // weighin.toml Schema
 // ---------------------------------------------------------------------------
 
+/**
+ * A nonnegative finite percentage value used for per-metric numeric rules.
+ * Rejects NaN, Infinity, and negative numbers.
+ */
+const percentageSchema = z.number().finite().nonnegative();
+
+/**
+ * Authoritative rule value schema. Agrees with runtime validation in
+ * threshold.ts. Accepts:
+ *   - Nonnegative finite numbers (percentage caps, e.g. 10 or 1e-7)
+ *   - "ignore"
+ *   - "strict_zero_tolerance"
+ *   - "allow_N_percent_increase" where N is a nonnegative decimal (e.g.
+ *     "allow_10_percent_increase", "allow_2.5_percent_increase")
+ *
+ * Rejects: negative numbers, NaN, Infinity, malformed percentage strings such
+ * as "allow_1.2.3_percent_increase" or "allow_-1_percent_increase".
+ */
 export const RuleValueSchema = z.union([
-  z.number(),
-  z.string().refine(
-    (val) => {
-      return (
+  percentageSchema,
+  z
+    .string()
+    .refine(
+      (val) =>
         val === "ignore" ||
         val === "strict_zero_tolerance" ||
-        /^allow_[\d.]+_percent_increase$/.test(val)
-      );
-    },
-    {
-      message:
-        "Invalid rule string. Must be 'ignore', 'strict_zero_tolerance', or 'allow_X_percent_increase'",
-    },
-  ),
+        /^allow_(\d+(?:\.\d+)?)_percent_increase$/.test(val),
+      {
+        message:
+          "Invalid rule string. Must be 'ignore', 'strict_zero_tolerance', or 'allow_X_percent_increase' where X is a nonnegative decimal",
+      },
+    ),
 ]);
 
 export const GlobalThresholdsSchema = z
   .object({
     fail_on_any_regression: z.boolean().optional(),
-    max_allowed_cpu_increase_pct: z.number().optional(),
-    max_allowed_memory_increase_pct: z.number().optional(),
+    max_allowed_cpu_increase_pct: percentageSchema.optional(),
+    max_allowed_memory_increase_pct: percentageSchema.optional(),
   })
   .strict();
 
 export const GlobalLimitsSchema = z.record(
   z.enum(METRIC_KEYS),
-  z.number().nonnegative(),
+  percentageSchema,
 );
 
 export const FunctionLimitsSchema = z.record(
   z.enum(METRIC_KEYS),
-  z.number().nonnegative(),
+  percentageSchema,
 );
 
-export const FunctionThresholdsSchema = z.record(
-  z.enum(METRIC_KEYS),
-  RuleValueSchema,
-);
+// Per-metric optional rule object, strict (no unknown metric keys allowed).
+export const FunctionThresholdsSchema = z
+  .object(
+    Object.fromEntries(
+      METRIC_KEYS.map((key) => [key, RuleValueSchema.optional()]),
+    ),
+  )
+  .strict();
 
 export const BenchmarkSelectorSchema = z
   .object({
@@ -58,37 +79,67 @@ export const AggregateBudgetConfigSchema = z
   .object({
     description: z.string().optional(),
     members: z.array(BenchmarkSelectorSchema).min(1),
-    limits: z.record(z.enum(METRIC_KEYS), z.number().nonnegative()).optional(),
-    thresholds: z.record(z.enum(METRIC_KEYS), RuleValueSchema).optional(),
+    limits: z.record(z.enum(METRIC_KEYS), percentageSchema).optional(),
+    thresholds: FunctionThresholdsSchema.optional(),
   })
   .strict();
 
 export type BenchmarkSelector = z.infer<typeof BenchmarkSelectorSchema>;
 export type AggregateBudgetConfig = z.infer<typeof AggregateBudgetConfigSchema>;
 
+/**
+ * Authoritative WeighIn policy configuration schema. Exported for library
+ * consumers. Agrees with the runtime validation performed by `validateConfig`.
+ *
+ * Function and aggregate selectors must be non-blank strings. Numeric rule
+ * values must be nonnegative finite numbers. Malformed named percentage strings
+ * are rejected. Unknown top-level and nested keys are rejected.
+ */
 export const WeighinConfigSchema = z
   .object({
     thresholds: z
       .object({
         global: GlobalThresholdsSchema.optional(),
-        functions: z.record(z.string(), FunctionThresholdsSchema).optional(),
-        aggregates: z.record(z.string(), FunctionThresholdsSchema).optional(),
+        // Selectors must be non-blank (min(1)) — blank keys are rejected.
+        functions: z
+          .record(z.string().min(1), FunctionThresholdsSchema)
+          .optional(),
+        aggregates: z
+          .record(z.string().min(1), FunctionThresholdsSchema)
+          .optional(),
       })
       .strict()
       .optional(),
     limits: z
       .object({
         global: GlobalLimitsSchema.optional(),
-        functions: z.record(z.string(), FunctionLimitsSchema).optional(),
-        aggregates: z.record(z.string(), FunctionLimitsSchema).optional(),
+        functions: z.record(z.string().min(1), FunctionLimitsSchema).optional(),
+        aggregates: z
+          .record(z.string().min(1), FunctionLimitsSchema)
+          .optional(),
       })
       .strict()
       .optional(),
-    aggregates: z.record(z.string(), AggregateBudgetConfigSchema).optional(),
+    aggregates: z
+      .record(z.string().min(1), AggregateBudgetConfigSchema)
+      .optional(),
   })
   .strict();
 
 export type WeighinConfig = z.infer<typeof WeighinConfigSchema>;
+
+/**
+ * Validate an unknown value against the authoritative WeighIn policy schema.
+ * Throws a descriptive error on any violation. This is the single source of
+ * truth for policy validation used by both exported consumers and runtime
+ * threshold enforcement.
+ */
+export function validateConfig(value: unknown): WeighinConfig {
+  const parsed = WeighinConfigSchema.safeParse(value);
+  if (!parsed.success)
+    throw new Error(formatZodError(parsed.error, "weighin.toml"));
+  return parsed.data;
+}
 
 // ---------------------------------------------------------------------------
 // Large Integer Validation

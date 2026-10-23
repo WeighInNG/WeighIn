@@ -36235,34 +36235,34 @@ function diffBenchmarks(base, head, config2) {
 }
 
 // src/config.ts
+var percentageSchema = external_exports.number().finite().nonnegative();
 var RuleValueSchema = external_exports.union([
-  external_exports.number(),
+  percentageSchema,
   external_exports.string().refine(
-    (val) => {
-      return val === "ignore" || val === "strict_zero_tolerance" || /^allow_[\d.]+_percent_increase$/.test(val);
-    },
+    (val) => val === "ignore" || val === "strict_zero_tolerance" || /^allow_(\d+(?:\.\d+)?)_percent_increase$/.test(val),
     {
-      message: "Invalid rule string. Must be 'ignore', 'strict_zero_tolerance', or 'allow_X_percent_increase'"
+      message: "Invalid rule string. Must be 'ignore', 'strict_zero_tolerance', or 'allow_X_percent_increase' where X is a nonnegative decimal"
     }
   )
 ]);
 var GlobalThresholdsSchema = external_exports.object({
   fail_on_any_regression: external_exports.boolean().optional(),
-  max_allowed_cpu_increase_pct: external_exports.number().optional(),
-  max_allowed_memory_increase_pct: external_exports.number().optional()
+  max_allowed_cpu_increase_pct: percentageSchema.optional(),
+  max_allowed_memory_increase_pct: percentageSchema.optional()
 }).strict();
 var GlobalLimitsSchema = external_exports.record(
   external_exports.enum(METRIC_KEYS),
-  external_exports.number().nonnegative()
+  percentageSchema
 );
 var FunctionLimitsSchema = external_exports.record(
   external_exports.enum(METRIC_KEYS),
-  external_exports.number().nonnegative()
+  percentageSchema
 );
-var FunctionThresholdsSchema = external_exports.record(
-  external_exports.enum(METRIC_KEYS),
-  RuleValueSchema
-);
+var FunctionThresholdsSchema = external_exports.object(
+  Object.fromEntries(
+    METRIC_KEYS.map((key) => [key, RuleValueSchema.optional()])
+  )
+).strict();
 var BenchmarkSelectorSchema = external_exports.object({
   fixture_id: external_exports.string().min(1).optional(),
   logical_id: external_exports.string().min(1).optional(),
@@ -36272,22 +36272,29 @@ var BenchmarkSelectorSchema = external_exports.object({
 var AggregateBudgetConfigSchema = external_exports.object({
   description: external_exports.string().optional(),
   members: external_exports.array(BenchmarkSelectorSchema).min(1),
-  limits: external_exports.record(external_exports.enum(METRIC_KEYS), external_exports.number().nonnegative()).optional(),
-  thresholds: external_exports.record(external_exports.enum(METRIC_KEYS), RuleValueSchema).optional()
+  limits: external_exports.record(external_exports.enum(METRIC_KEYS), percentageSchema).optional(),
+  thresholds: FunctionThresholdsSchema.optional()
 }).strict();
 var WeighinConfigSchema = external_exports.object({
   thresholds: external_exports.object({
     global: GlobalThresholdsSchema.optional(),
-    functions: external_exports.record(external_exports.string(), FunctionThresholdsSchema).optional(),
-    aggregates: external_exports.record(external_exports.string(), FunctionThresholdsSchema).optional()
+    // Selectors must be non-blank (min(1)) — blank keys are rejected.
+    functions: external_exports.record(external_exports.string().min(1), FunctionThresholdsSchema).optional(),
+    aggregates: external_exports.record(external_exports.string().min(1), FunctionThresholdsSchema).optional()
   }).strict().optional(),
   limits: external_exports.object({
     global: GlobalLimitsSchema.optional(),
-    functions: external_exports.record(external_exports.string(), FunctionLimitsSchema).optional(),
-    aggregates: external_exports.record(external_exports.string(), FunctionLimitsSchema).optional()
+    functions: external_exports.record(external_exports.string().min(1), FunctionLimitsSchema).optional(),
+    aggregates: external_exports.record(external_exports.string().min(1), FunctionLimitsSchema).optional()
   }).strict().optional(),
-  aggregates: external_exports.record(external_exports.string(), AggregateBudgetConfigSchema).optional()
+  aggregates: external_exports.record(external_exports.string().min(1), AggregateBudgetConfigSchema).optional()
 }).strict();
+function validateConfig(value) {
+  const parsed = WeighinConfigSchema.safeParse(value);
+  if (!parsed.success)
+    throw new Error(formatZodError(parsed.error, "weighin.toml"));
+  return parsed.data;
+}
 var U64_MAX = 18446744073709551615n;
 var I64_MIN = -9223372036854775808n;
 var I64_MAX = 9223372036854775807n;
@@ -55095,52 +55102,6 @@ async function runMeasurement(fixturesPathOrOptions, gitCommit, sdkVersion, rpcU
 // src/threshold.ts
 var TOML = __toESM(require_toml());
 var crypto4 = __toESM(require("crypto"));
-var percentage = external_exports.number().finite().nonnegative();
-var ruleSchema = external_exports.union([
-  percentage,
-  external_exports.string().refine(
-    (value) => value === "ignore" || value === "strict_zero_tolerance" || parseAllowPct(value) !== null,
-    "Unsupported threshold rule"
-  )
-]);
-var metricRules = external_exports.object(
-  Object.fromEntries(METRIC_KEYS.map((key) => [key, ruleSchema.optional()]))
-).strict();
-var benchmarkSelectorSchema = external_exports.object({
-  fixture_id: external_exports.string().min(1).optional(),
-  logical_id: external_exports.string().min(1).optional(),
-  function_name: external_exports.string().min(1),
-  case_id: external_exports.string().min(1).optional()
-}).strict();
-var aggregateBudgetConfigSchema = external_exports.object({
-  description: external_exports.string().optional(),
-  members: external_exports.array(benchmarkSelectorSchema).min(1),
-  limits: external_exports.record(external_exports.enum(METRIC_KEYS), percentage).optional(),
-  thresholds: metricRules.optional()
-}).strict();
-var configSchema = external_exports.object({
-  limits: external_exports.object({
-    global: external_exports.record(external_exports.enum(METRIC_KEYS), percentage).optional(),
-    functions: external_exports.record(external_exports.string().min(1), external_exports.record(external_exports.enum(METRIC_KEYS), percentage)).optional(),
-    aggregates: external_exports.record(external_exports.string().min(1), external_exports.record(external_exports.enum(METRIC_KEYS), percentage)).optional()
-  }).strict().optional(),
-  thresholds: external_exports.object({
-    global: external_exports.object({
-      fail_on_any_regression: external_exports.boolean().optional(),
-      max_allowed_cpu_increase_pct: percentage.optional(),
-      max_allowed_memory_increase_pct: percentage.optional()
-    }).strict().optional(),
-    functions: external_exports.record(external_exports.string().min(1), metricRules).optional(),
-    aggregates: external_exports.record(external_exports.string().min(1), metricRules).optional()
-  }).strict().optional(),
-  aggregates: external_exports.record(external_exports.string().min(1), aggregateBudgetConfigSchema).optional()
-}).strict();
-function validateConfig(value) {
-  const parsed = configSchema.safeParse(value);
-  if (!parsed.success)
-    throw new Error(formatZodError(parsed.error, "weighin.toml"));
-  return parsed.data;
-}
 function loadConfigContent(content, sourcePath) {
   try {
     return validateConfig(TOML.parse(content));
