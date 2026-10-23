@@ -102,3 +102,28 @@ test('fee-only configuration/metadata changes remain visible without invalidatin
   assert.equal(diff.hasRegression, false);
   assert.notEqual(diff.contracts[0].functions[0].base_provenance.config_sha256, diff.contracts[0].functions[0].head_provenance.config_sha256);
 });
+
+test('enforceThresholds validates public DiffResult inputs and rejects forged regression flags or deltas (#228)', () => {
+  const diff = diffBenchmarks(result('base', 100), result('head', 150));
+  const forgedRegression = JSON.parse(JSON.stringify(diff));
+  forgedRegression.contracts[0].functions[0].metrics[0].regression = false;
+  assert.throws(
+    () => enforceThresholds(forgedRegression, cpuPolicy),
+    /regression flag.*contradicts delta/,
+  );
+
+  const forgedDelta = JSON.parse(JSON.stringify(diff));
+  forgedDelta.contracts[0].functions[0].metrics[0].delta = 0;
+  forgedDelta.contracts[0].functions[0].metrics[0].regression = false;
+  assert.throws(
+    () => enforceThresholds(forgedDelta, cpuPolicy),
+    /delta.*does not match head - base/,
+  );
+
+  const forgedUnavailable = JSON.parse(JSON.stringify(diff));
+  forgedUnavailable.contracts[0].functions[0].metrics[0].availability = 'unavailable';
+  assert.throws(
+    () => enforceThresholds(forgedUnavailable, cpuPolicy),
+    /marked unavailable but both BASE and HEAD have measured values/,
+  );
+});
