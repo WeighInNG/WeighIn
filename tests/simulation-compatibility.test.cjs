@@ -242,10 +242,12 @@ async function replay(t, response) {
     async () => new Account(keypair.publicKey(), "1"),
   );
   t.mock.method(rpc.Server.prototype, "getLedgerEntries", async () => ({
+    latestLedger: 100,
     entries: [
       {
         key: ledgerKey.toXDR("base64"),
         xdr: existingEntry.toXDR("base64"),
+        liveUntilLedgerSeq: 100 + 1_000_000,
       },
     ],
   }));
