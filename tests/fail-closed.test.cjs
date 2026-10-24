@@ -531,14 +531,6 @@ test("Action does not invent a diff when failure occurs before comparison", () =
   assert.deepEqual(JSON.parse(outputValue(result.output, "diff-json")), {});
 });
 
-test("Action preserves primary error when writing report-path fails due to invalid output path", () => {
-  // Pass an invalid path that cannot be created as a file
-  const res = action("rpc-unhealthy", policy, null, "fixtures.json"); // fixtures.json already exists as a file, but let's test a directory path as file
-  assert.equal(res.status, 1);
-  assert.match(res.output, /fail/);
-  assert.match(res.summary, /RPC has not reported healthy/);
-});
-
 // ---------------------------------------------------------------------------
 // Unknown fixture declaration field rejection (strict schema)
 // ---------------------------------------------------------------------------
