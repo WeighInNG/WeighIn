@@ -379,6 +379,36 @@ function compareViolations(a: Violation, b: Violation): number {
   );
 }
 
+export interface RenderContext {
+  baseSha?: string;
+  headSha?: string;
+  baseRef?: string;
+  policyOrigin?: PolicyOrigin;
+}
+
+export function deriveBaseRevision(diff?: DiffResult | null): string {
+  if (!diff || !Array.isArray(diff.contracts) || diff.contracts.length === 0) {
+    return "unknown";
+  }
+  const commits = new Set<string>();
+  for (const contract of diff.contracts) {
+    const commit = (contract.base_commit ?? "").trim();
+    if (!commit || commit === "unknown") {
+      commits.add("unknown");
+    } else {
+      commits.add(commit);
+    }
+  }
+  if (commits.size === 0) {
+    return "unknown";
+  }
+  if (commits.size > 1) {
+    return "mixed";
+  }
+  const [single] = commits;
+  return single;
+}
+
 /**
  * Build a complete markdown body for a PR comment.
  */
@@ -387,8 +417,38 @@ export function renderComment(
   violations: Violation[],
   baseRef: string,
   headSha: string,
-  policyOrigin?: PolicyOrigin | EffectivePolicyReport,
+  policyOriginOrContext?: PolicyOrigin | EffectivePolicyReport | RenderContext,
+  optionalContext?: RenderContext,
 ): string {
+  let policyOrigin: PolicyOrigin | EffectivePolicyReport | undefined;
+  let context: RenderContext | undefined;
+
+  if (optionalContext) {
+    context = optionalContext;
+    if (
+      policyOriginOrContext &&
+      ("mode" in policyOriginOrContext || "status" in policyOriginOrContext)
+    ) {
+      policyOrigin = policyOriginOrContext as
+        PolicyOrigin | EffectivePolicyReport;
+    }
+  } else if (policyOriginOrContext) {
+    if (
+      "mode" in policyOriginOrContext &&
+      "content_sha256" in policyOriginOrContext
+    ) {
+      policyOrigin = policyOriginOrContext as
+        PolicyOrigin | EffectivePolicyReport;
+    } else if ("status" in policyOriginOrContext) {
+      policyOrigin = policyOriginOrContext as EffectivePolicyReport;
+    } else {
+      context = policyOriginOrContext as RenderContext;
+      if (context.policyOrigin) {
+        policyOrigin = context.policyOrigin;
+      }
+    }
+  }
+
   const lines: string[] = [];
 
   // Sort violations without mutating input
@@ -445,9 +505,29 @@ export function renderComment(
     );
     lines.push("");
   }
-  lines.push(
-    `${statusText} — comparing \`${baseRef}\` → \`${headSha.slice(0, 8)}\``,
-  );
+
+  const effectiveBaseRef = (context?.baseRef ?? baseRef ?? "").trim();
+  const effectiveBaseSha = (
+    context?.baseSha !== undefined ? context.baseSha : deriveBaseRevision(diff)
+  ).trim();
+  const effectiveHeadSha = (
+    context?.headSha !== undefined ? context.headSha : headSha
+  ).trim();
+
+  let baseDisplay: string;
+  if (!effectiveBaseRef) {
+    baseDisplay = `\`${effectiveBaseSha || "unknown"}\``;
+  } else if (!effectiveBaseSha) {
+    baseDisplay = `\`${effectiveBaseRef}\` (\`unknown\`)`;
+  } else if (effectiveBaseRef === effectiveBaseSha) {
+    baseDisplay = `\`${effectiveBaseSha}\``;
+  } else {
+    baseDisplay = `\`${effectiveBaseRef}\` (\`${effectiveBaseSha}\`)`;
+  }
+
+  const headDisplay = `\`${effectiveHeadSha || "unknown"}\``;
+
+  lines.push(`${statusText} — comparing ${baseDisplay} → ${headDisplay}`);
   lines.push("");
 
   // Violations block
