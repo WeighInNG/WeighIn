@@ -12,7 +12,7 @@
     },
     {
       "path": "bundled/index.js",
-      "sha256": "a3fdb0576010126ceb68718043d34ab9f71ab00c7a90eca3d3c7a2f7272ccb3e"
+      "sha256": "6613a4e6c6372e84da3f154a5662f8ced4163d3d233c1e849dd290885719865e"
     },
     {
       "path": "native/simulation/Cargo.lock",
@@ -24,7 +24,7 @@
     },
     {
       "path": "native/simulation/src/main.rs",
-      "sha256": "c46eaa54dc07ea5aed5ab42481328e630d7b8f595e5198f7c58b468f9949507e"
+      "sha256": "ca7af818f409ab160148f500e07f4fa67dd6c1c6107cd061c3fa8a8bf4a64def"
     },
     {
       "path": "package-lock.json",
@@ -68,7 +68,7 @@
     },
     {
       "path": "src/config.ts",
-      "sha256": "adef1c5eb600467a42138cbdd92f52b6d3d65b903ba913800feb88e65b5292cf"
+      "sha256": "a9edd6a775bb24a8177a5ac12c5d0dc3fb450d0dfdf8182b918840ffcb7cb5ad"
     },
     {
       "path": "src/dependency-inventory.ts",
@@ -76,7 +76,7 @@
     },
     {
       "path": "src/diff.ts",
-      "sha256": "e266a6660e1e09b25b283c0adde2401f771fbdd2216a4f50a819310ced09143e"
+      "sha256": "71951faad895affbf131eba11cb0ceee2769000d6fa3016444996de812839524"
     },
     {
       "path": "src/endpoint.ts",
@@ -88,11 +88,11 @@
     },
     {
       "path": "src/identity.ts",
-      "sha256": "e0127204807e1bca07896eaee3396c54295ef8a09188debba09edc0ed7e1c086"
+      "sha256": "987c2136e2a777328bf8383b2d321572230f88c61ed27d2c2ae88a60925e5f7d"
     },
     {
       "path": "src/measurement.ts",
-      "sha256": "4f7d35342977c5d38018e8e02ad06de7339c12a480a8794d3320c51958415890"
+      "sha256": "4477b6c5addcab75404cf029f89234128bceff5e008326f0a31d029863ee22eb"
     },
     {
       "path": "src/network.ts",
@@ -104,7 +104,7 @@
     },
     {
       "path": "src/record-schema.ts",
-      "sha256": "dcc5f0e4bc22f02aeb69df0c728b182808dc34ebf1ae068020f271b48466aa73"
+      "sha256": "296290f8e53aca64d8b65798bdfe822083af02a99b398144aec1682a4974969a"
     },
     {
       "path": "src/report.ts",
@@ -113,6 +113,10 @@
     {
       "path": "src/sdk-version.ts",
       "sha256": "8c0aeced896b1b3085cf1a087b67d0e6e484f4f8986b6ce4d34314d9ff543d35"
+    },
+    {
+      "path": "src/setup-plan.ts",
+      "sha256": "6f1926d555b4dda124f833fced2f9adac965aeb6edc0e91dabcd71ed92c24f47"
     },
     {
       "path": "src/simulation.ts",
@@ -124,7 +128,7 @@
     },
     {
       "path": "src/threshold.ts",
-      "sha256": "f0212b8320e05a70271362a2864a62a57d6146795a9d0339ee65c953d233c39e"
+      "sha256": "37c0377ed744ae7865efd4365240193baf04dc75dcc068e1921e189fa22118c9"
     }
   ]
 }
