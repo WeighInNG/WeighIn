@@ -21,7 +21,7 @@ function files(value) {
   if (fs.statSync(absolute).isFile()) return [value];
   return fs
     .readdirSync(absolute, { withFileTypes: true })
-    .flatMap((entry) => files(path.join(value, entry.name)));
+    .flatMap((entry) => files(path.posix.join(value, entry.name)));
 }
 function sha256(file) {
   return crypto
