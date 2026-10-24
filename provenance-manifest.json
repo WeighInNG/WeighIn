@@ -1,14 +1,10 @@
 {
   "schema_version": 1,
   "purpose": "verifiable WeighIn package build provenance",
-  "source_revision": "d882ca087705b15ad7e8c381a039dcf7789ac6a4",
+  "source_revision": "fe8fde760d0f640d4cb9bc1847704cc048b44328",
   "tools": {
-    "node": "v22.23.1",
-    "npm": "12.0.2"
-  "source_revision": "e0b7b3e48021af6b1d0f1c78ec65074a5ef8a148",
-  "tools": {
-    "node": "v24.21.0",
-    "npm": "11.19.0"
+    "node": "v24.19.0",
+    "npm": "unavailable"
   },
   "inputs": [
     {
@@ -17,12 +13,11 @@
     },
     {
       "path": "bundled/comment-action.js",
-      "sha256": "fa76a82b443f072be6401fe6ed12d3387de0e25f180a78a1b8557a850c976e04"
+      "sha256": "72bd43c4c63ec8ae22fadfb3f1a0e4694ed46fce38984e28bc0dc0cadaa35631"
     },
     {
       "path": "bundled/index.js",
-      "sha256": "8a9f95736a10f453afe2dfd02d354a7400bd78bfc82fa9e65498f77c6d883292"
-      "sha256": "e0432feb946821a6c8d4997c03d3fd9f0903b8c7ea47ebd80ee40c88978475c3"
+      "sha256": "c6a8be161cca015c9e6722ce9622cbc9da426085120d46a473fa6aa00d88944b"
     },
     {
       "path": "native/simulation/Cargo.lock",
@@ -38,11 +33,11 @@
     },
     {
       "path": "package-lock.json",
-      "sha256": "4b9b1bd4d1a2bea2d5987622f1a32293df5f13c2b027d3065fdf7336894cf8e4"
+      "sha256": "b9ab1cbea072e0226adec6b61b4c50b4b5f61ff8f97e810bb98204fec2cb3193"
     },
     {
       "path": "package.json",
-      "sha256": "4ab0915dc8e341dbf1d0f577de1c8f380dbe70870124f7b7fa3a195d57401bc1"
+      "sha256": "d3d5133289aacbd22b1e2cbadb4763e2768701a25710c43b907329ebcce37f59"
     },
     {
       "path": "src/account.ts",
@@ -78,7 +73,7 @@
     },
     {
       "path": "src/config.ts",
-      "sha256": "0c742c2ed0573e447b70e22a2fde13af9e9a1e4d69b78d9cbe79a4fddc66168c"
+      "sha256": "b46b23ac4536615653198aafe59f2f60a5769e4c70144faae846108fce961779"
     },
     {
       "path": "src/dependency-inventory.ts",
@@ -102,8 +97,7 @@
     },
     {
       "path": "src/measurement.ts",
-      "sha256": "f959cad9896bcb1544ab0cfed64504836e1269b327a245339219621db8bf2d18"
-      "sha256": "4f7d35342977c5d38018e8e02ad06de7339c12a480a8794d3320c51958415890"
+      "sha256": "5eba7a4956ddbea58c06cbc5d0e93133d075628d0133bf80f1e1441182270f0f"
     },
     {
       "path": "src/network.ts",
@@ -122,10 +116,12 @@
       "sha256": "531612923e05a8d96b61037d98f3efc179735bfe8a526bcd88dcda1f6b9547c2"
     },
     {
-      "path": "src/setup-plan.ts",
-      "sha256": "6f1926d555b4dda124f833fced2f9adac965aeb6edc0e91dabcd71ed92c24f47"
       "path": "src/sdk-version.ts",
       "sha256": "8c0aeced896b1b3085cf1a087b67d0e6e484f4f8986b6ce4d34314d9ff543d35"
+    },
+    {
+      "path": "src/setup-plan.ts",
+      "sha256": "6f1926d555b4dda124f833fced2f9adac965aeb6edc0e91dabcd71ed92c24f47"
     },
     {
       "path": "src/simulation.ts",
@@ -137,7 +133,7 @@
     },
     {
       "path": "src/threshold.ts",
-      "sha256": "9fbabcda31da3ed2dd8d0fd49beea695f7d85d1bb0ead75d10a3752350c03067"
+      "sha256": "37c0377ed744ae7865efd4365240193baf04dc75dcc068e1921e189fa22118c9"
     }
   ]
 }
