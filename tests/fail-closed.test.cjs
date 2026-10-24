@@ -114,6 +114,7 @@ function action(
   fixturesPath = "fixtures.json",
   setupFiles,
   baseRefInput = "main",
+  configPathInput = "weighin.toml",
 ) {
   const temporary =
     tmpRoot ?? fs.mkdtempSync(path.join(os.tmpdir(), "weighin-action-unit-"));
@@ -180,7 +181,7 @@ function action(
           GITHUB_OUTPUT: output,
           GITHUB_STEP_SUMMARY: summary,
           "INPUT_FIXTURES-PATH": fixturesPath,
-          "INPUT_CONFIG-PATH": "weighin.toml",
+          "INPUT_CONFIG-PATH": configPathInput,
           "INPUT_GITHUB-TOKEN": "",
           "INPUT_BASE-REF": baseRefInput,
           "INPUT_REPORT-PATH": reportPath || "",
@@ -664,4 +665,47 @@ test("Action rejects unknown fixture root field before build or deployment", () 
   ).finally(() => fs.rmSync(tmp, { recursive: true, force: true }));
 
   return p.catch(() => {}); // let the test runner see it resolved
+});
+
+test("Action rejects a report-path that aliases the fixtures file and leaves it untouched", () => {
+  const result = action("measurement", policy, null, "fixtures.json");
+  assert.equal(result.status, 1);
+  assert.match(result.summary, /must not resolve to the same path/);
+  assert.doesNotMatch(result.reportContent ?? "", /Unsuccessful Comparison/);
+  assert.ok(JSON.parse(result.reportContent).contracts.length > 0);
+});
+
+test("Action rejects a report-path symlink to the fixtures file and leaves it untouched", () => {
+  const result = action(
+    "measurement",
+    policy,
+    null,
+    "link.md",
+    "fixtures.json",
+    ({ head }) => fs.symlinkSync(path.join(head, "fixtures.json"), path.join(head, "link.md")),
+  );
+  assert.equal(result.status, 1);
+  assert.match(result.summary, /symbolic link/);
+  assert.ok(JSON.parse(result.reportContent).contracts.length > 0);
+});
+
+test("Action rejects report-path and metadata-path that resolve to the same file", () => {
+  process.env["INPUT_METADATA-PATH"] = "same.out";
+  try {
+    const result = action("measurement", policy, null, "same.out");
+    assert.equal(result.status, 1);
+    assert.match(result.summary, /must not resolve to the same path/);
+    assert.doesNotMatch(result.reportContent ?? "", /Unsuccessful Comparison/);
+  } finally {
+    delete process.env["INPUT_METADATA-PATH"];
+  }
+});
+
+test("Action guards default weighin.toml when config-path is empty and leaves its bytes intact", () => {
+  const result = action("measurement", policy, null, "weighin.toml", "fixtures.json", undefined, "main", "");
+  assert.equal(result.status, 1);
+  assert.match(result.summary, /must not resolve to the same path/, result.stdout + result.stderr);
+  assert.equal(result.reportContent, policy);
+  assert.doesNotMatch(result.stdout, /Checking RPC health/);
+  assert.deepEqual(result.builds, []);
 });
