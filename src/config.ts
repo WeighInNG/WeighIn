@@ -30,17 +30,17 @@ export const GlobalThresholdsSchema = z
   })
   .strict();
 
-export const GlobalLimitsSchema = z.record(
+export const GlobalLimitsSchema = z.partialRecord(
   z.enum(METRIC_KEYS),
   z.number().nonnegative(),
 );
 
-export const FunctionLimitsSchema = z.record(
+export const FunctionLimitsSchema = z.partialRecord(
   z.enum(METRIC_KEYS),
   z.number().nonnegative(),
 );
 
-export const FunctionThresholdsSchema = z.record(
+export const FunctionThresholdsSchema = z.partialRecord(
   z.enum(METRIC_KEYS),
   RuleValueSchema,
 );
@@ -58,8 +58,12 @@ export const AggregateBudgetConfigSchema = z
   .object({
     description: z.string().optional(),
     members: z.array(BenchmarkSelectorSchema).min(1),
-    limits: z.record(z.enum(METRIC_KEYS), z.number().nonnegative()).optional(),
-    thresholds: z.record(z.enum(METRIC_KEYS), RuleValueSchema).optional(),
+    limits: z
+      .partialRecord(z.enum(METRIC_KEYS), z.number().nonnegative())
+      .optional(),
+    thresholds: z
+      .partialRecord(z.enum(METRIC_KEYS), RuleValueSchema)
+      .optional(),
   })
   .strict();
 
@@ -273,7 +277,30 @@ export function formatZodError(error: z.ZodError, fileName: string): string {
   const lines = [`Invalid WeighIn configuration in ${fileName}:`];
   for (const issue of error.issues) {
     const path = issue.path.join(".");
-    lines.push(`- ${path || "root"}: ${issue.message}`);
+    let message = issue.message;
+    if (issue.code === "unrecognized_keys") {
+      message = `Unrecognized key(s) in object: ${issue.keys
+        .map((key) => `'${key}'`)
+        .join(", ")}`;
+    } else if (
+      issue.code === "invalid_type" &&
+      issue.message.endsWith("received undefined")
+    ) {
+      message = "Required";
+    } else if (
+      issue.code === "invalid_value" &&
+      "values" in issue &&
+      Array.isArray(issue.values)
+    ) {
+      message = "Invalid enum value";
+    } else if (
+      issue.code === "too_small" &&
+      issue.origin === "number" &&
+      issue.minimum === 0
+    ) {
+      message = "Number must be greater than or equal to 0";
+    }
+    lines.push(`- ${path || "root"}: ${message}`);
   }
   return lines.join("\n");
 }
