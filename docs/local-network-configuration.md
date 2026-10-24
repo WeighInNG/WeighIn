@@ -1,0 +1,2 @@
+{"tool": "browser", "action": "navigate", "url": "https://github.com/WeighInNG/WeighIn/blob/f679238a096b49df0edfaf7d02d5bfa2dfd6be8f/scripts/start-local-network.sh"}
+{"tool": "browser", "action": "navigate", "url": "https://github.com/WeighInNG/WeighIn/blob/f679238a096b49df0edfaf7d02d5bfa2dfd6be8f/scripts/wait-for-local-network.cjs"}
