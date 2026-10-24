@@ -1,0 +1,41 @@
+[
+  {
+    "order": 1,
+    "case_id": "id:write-seed",
+    "function_name": "hello",
+    "mode_arg": "write",
+    "snapshot_ledger": 1101,
+    "transaction_submitted": false,
+    "simulated_modified_entries": 1,
+    "simulated_write_bytes": 88,
+    "committed_state_before_xdr": null,
+    "committed_state_after_xdr": null,
+    "retval_xdr": "AAAAEAAAAAEAAAAEAAAADwAAAAVIZWxsbwAAAAAAAA8AAAAFd3JpdGUAAAAAAAAPAAAABXdyb3RlAAAAAAAADwAAAAZzZWVkZWQAAA==",
+    "decoded_return": [
+      "Hello",
+      "write",
+      "wrote",
+      "seeded"
+    ]
+  },
+  {
+    "order": 2,
+    "case_id": "id:read-after-write",
+    "function_name": "hello",
+    "mode_arg": "read",
+    "snapshot_ledger": 1101,
+    "transaction_submitted": false,
+    "simulated_modified_entries": 0,
+    "simulated_write_bytes": 0,
+    "committed_state_before_xdr": null,
+    "committed_state_after_xdr": null,
+    "observed_prior_simulated_write": false,
+    "retval_xdr": "AAAAEAAAAAEAAAAEAAAADwAAAAVIZWxsbwAAAAAAAA8AAAAEcmVhZAAAAA8AAAAGYWJzZW50AAAAAAAPAAAABnVuaW5pdAAA",
+    "decoded_return": [
+      "Hello",
+      "read",
+      "absent",
+      "uninit"
+    ]
+  }
+]

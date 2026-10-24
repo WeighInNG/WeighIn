@@ -1,0 +1,44 @@
+{
+  "contract_id": "CCCJJJDJ5HS676PYT6DCMY4RJVOAQMUOWBG5OQBVYTXNLWOFX4UF2ZKJ",
+  "wasm_sha256": "309dc48348de58b63f17c396fa075ba5839283abef31f4e7f52c07a87b049ead",
+  "write_case": {
+    "case_id": "id:write-seed",
+    "arg_symbol": "write",
+    "retval_xdr": "AAAAEAAAAAEAAAAEAAAADwAAAAVIZWxsbwAAAAAAAA8AAAAFd3JpdGUAAAAAAAAPAAAABXdyb3RlAAAAAAAADwAAAAZzZWVkZWQAAA==",
+    "decoded_symbols": [
+      "Hello",
+      "write",
+      "wrote",
+      "seeded"
+    ],
+    "simulated_write_bytes": 88,
+    "committed_to_ledger": false
+  },
+  "read_after_write_case": {
+    "case_id": "id:read-after-write",
+    "arg_symbol": "read",
+    "retval_xdr": "AAAAEAAAAAEAAAAEAAAADwAAAAVIZWxsbwAAAAAAAA8AAAAEcmVhZAAAAA8AAAAGYWJzZW50AAAAAAAPAAAABnVuaW5pdAAA",
+    "decoded_symbols": [
+      "Hello",
+      "read",
+      "absent",
+      "uninit"
+    ],
+    "observed_state": "absent_uninitialized",
+    "observed_prior_simulated_write": false
+  },
+  "seeded_state_control_read": {
+    "case_id": "id:read-after-write",
+    "arg_symbol": "read",
+    "retval_xdr": "AAAAEAAAAAEAAAAEAAAADwAAAAVIZWxsbwAAAAAAAA8AAAAEcmVhZAAAAA8AAAAHcHJlc2VudAAAAAAPAAAABnNlZWRlZAAA",
+    "decoded_symbols": [
+      "Hello",
+      "read",
+      "present",
+      "seeded"
+    ],
+    "observed_state": "present_committed",
+    "committed_state_entry_xdr": "AAAABgAAAAAAAAABhJSkaenl7/n4n4YmY5FNXAgyjrBN10A1xO7V2cW/KF0AAAAPAAAABXN0YXRlAAAAAAAAAQAAAA8AAAAGc2VlZGVkAAA="
+  },
+  "why_setup_is_required": "runMeasurement submits only WASM upload and contract instance creation transactions, then executes each configured fixture invocation strictly through RPC simulateTransaction and the offline native helper (measureInvocation). Because simulated ledger writes from id:write-seed are never signed, submitted, or included in a ledger, the persistent state key remains absent (entry_xdr: null) on-chain when id:read-after-write runs next. Consequently, id:read-after-write observes committed state ([\"Hello\",\"read\",\"absent\",\"uninit\"]) rather than the discarded simulated write ([\"Hello\",\"read\",\"present\",\"seeded\"]), and any case that requires pre-initialized state (mode \"require\") traps during simulation. Benchmarks that depend on initialized contract state or prior invocation outputs therefore require an explicit committed setup phase (#58, docs/fixture-setup-design.md) that submits and confirms setup transactions before measured simulation begins."
+}

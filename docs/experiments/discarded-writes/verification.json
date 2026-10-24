@@ -1,0 +1,34 @@
+{
+  "status": "VERIFIED",
+  "scenario": "discarded_simulation_writes_proof",
+  "fresh_deployment_verified": true,
+  "write_then_read_sequence_verified": true,
+  "write_case_simulated_only": true,
+  "read_case_observes_committed_state": true,
+  "return_values_archived": true,
+  "setup_requirement_explained": true,
+  "rejected_paths_verified": true,
+  "committed_setup_implemented_in_this_pr": false,
+  "unavailable_metrics_explicit_null": true,
+  "contract_id": "CCCJJJDJ5HS676PYT6DCMY4RJVOAQMUOWBG5OQBVYTXNLWOFX4UF2ZKJ",
+  "wasm_sha256": "309dc48348de58b63f17c396fa075ba5839283abef31f4e7f52c07a87b049ead",
+  "persistent_state_key_xdr": "AAAABgAAAAGElKRp6eXv+fifhiZjkU1cCDKOsE3XQDXE7tXZxb8oXQAAAA8AAAAFc3RhdGUAAAAAAAAB",
+  "write_case_return": [
+    "Hello",
+    "write",
+    "wrote",
+    "seeded"
+  ],
+  "read_after_write_return": [
+    "Hello",
+    "read",
+    "absent",
+    "uninit"
+  ],
+  "seeded_control_read_return": [
+    "Hello",
+    "read",
+    "present",
+    "seeded"
+  ]
+}

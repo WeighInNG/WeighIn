@@ -1,0 +1,22 @@
+[
+  {
+    "id": "uninitialized_require_after_simulated_write",
+    "description": "Invoking hello(\"require\") after simulated hello(\"write\") on a fresh deployment fails closed because Case 1 writes were discarded",
+    "error": "Simulation failed for hello: HostError: Error(WasmVm, InvalidAction) — setup required: state key not initialized in committed storage"
+  },
+  {
+    "id": "duplicate_case_identity_collision",
+    "description": "Declaring write and read invocations of hello without explicit distinct case IDs is rejected before measurement",
+    "error": "Duplicate benchmark identity in id:reference-contract: hello / id:write-seed. Set distinct invocation ids."
+  },
+  {
+    "id": "native_parity_return_mismatch",
+    "description": "Substituting the seeded return value ([\"Hello\",\"read\",\"present\",\"seeded\"]) when RPC simulated against uncommitted state ([\"Hello\",\"read\",\"absent\",\"uninit\"]) fails parity verification",
+    "error": "Native simulation return value does not match RPC simulation: expected AAAAEAAAAAEAAAAEAAAADwAAAAVIZWxsbwAAAAAAAA8AAAAEcmVhZAAAAA8AAAAGYWJzZW50AAAAAAAPAAAABnVuaW5pdAAA, got AAAAEAAAAAEAAAAEAAAADwAAAAVIZWxsbwAAAAAAAA8AAAAEcmVhZAAAAA8AAAAHcHJlc2VudAAAAAAPAAAABnNlZWRlZAAA"
+  },
+  {
+    "id": "unverified_state_key_injection",
+    "description": "Injecting an unrequested persistent state entry into getLedgerEntries fails key-to-entry correspondence validation",
+    "error": "Ledger entry/key mismatch: contract-data identity"
+  }
+]
