@@ -25,7 +25,7 @@ column causes a parse error.
 | Fixture root | `FixturesSpecSchema` | `id` (optional), `contracts` (required) |
 | Contract | `ContractSpecSchema` | `id` (optional), `wasm_path` (required), `invocations` (required) |
 | Invocation | `InvocationSpecSchema` | `id` (optional), `function_name` (required), `args` (required) |
-| Typed argument | `InvocationArgSchema` | `type` (required), `value` (required) |
+| Typed argument | `InvocationArgSchema` | `type` (required), `value` (any; may be omitted) |
 
 All four schemas are defined in `src/config.ts` and use Zod's `.strict()` mode.
 
@@ -48,10 +48,7 @@ The misspelling went undetected and the intended `id:` identity was never used.
 
 **After this change** — the same object produces an error immediately:
 
-```
-Invalid WeighIn configuration in weighin-fixtures.json:
-- idenitifer: Unrecognized key(s) in object: 'idenitifer'
-```
+The rejection names `weighin-fixtures.json` and the unknown key `idenitifer` at the fixture root. The wording of the underlying validator message is not a stable interface.
 
 Parsing stops. No identity is assigned. No build, deployment, or simulation is attempted.
 
@@ -64,14 +61,9 @@ Every rejection error includes:
 1. The fixture file path (the value passed as `fixturePath` to `parseFixtures`, typically the
    workspace-relative path such as `weighin-fixtures.json` or `nested/fixtures.json`).
 2. The dot-notation JSON path to the offending key.
-3. Zod's `Unrecognized key(s) in object` message listing the unknown key(s).
+3. The unknown key name(s) reported by the validator. The message wording is not a stable interface.
 
-Example — unknown key on an invocation:
-
-```
-Invalid WeighIn configuration in weighin-fixtures.json:
-- contracts.0.invocations.0.functoin_name: Unrecognized key(s) in object: 'functoin_name'
-```
+Example — unknown key on an invocation: the error is prefixed `Invalid WeighIn configuration in weighin-fixtures.json:` and refers to the JSON path `contracts.0.invocations.0.functoin_name`.
 
 ---
 

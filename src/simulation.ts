@@ -369,11 +369,20 @@ function parseHelperFailure(error: unknown): HelperFailureEnvelope | null {
     )
       throw new Error("uncaptured envelope has no keys");
     return parsed as HelperFailureEnvelope;
-  } catch (parseError) {
-    throw new Error(
-      `Invalid native helper failure protocol: ${parseError instanceof Error ? parseError.message : parseError}`,
-    );
+  } catch {
+    throw new Error("Invalid native helper failure protocol");
   }
+}
+
+function helperFailureMessage(envelope: HelperFailureEnvelope): string {
+  // Ledger keys stay on the attached stdout; host_failure messages embed the
+  // host's Debug output, so the thrown message carries only the fixed detail.
+  const detail =
+    envelope.status === "host_failure"
+      ? "host invocation failed"
+      : envelope.message;
+  const code = envelope.status === "uncaptured" ? " (UNCAPTURED_KEY)" : "";
+  return `Native helper ${envelope.status}: ${detail}${code}`;
 }
 
 let provisioned: Promise<string> | undefined;
@@ -549,11 +558,9 @@ export async function simulateSnapshot(
       signal,
     );
   } catch (failure) {
-    // The helper reports a structured failure envelope on stdout. Surface its
-    // status and message instead of the generic helper error text.
     const envelope = parseHelperFailure(failure);
-    if (envelope) {
-      throw new Error(`Native helper ${envelope.status}: ${envelope.message}`);
+    if (envelope && failure instanceof Error) {
+      failure.message = helperFailureMessage(envelope);
     }
     throw failure;
   }
@@ -1071,9 +1078,7 @@ export async function measureInvocation(
       const envelope = parseHelperFailure(failure);
       if (envelope) {
         if (envelope.status !== "uncaptured")
-          throw new Error(
-            `Native helper ${envelope.status}: ${envelope.message}`,
-          );
+          throw new Error(helperFailureMessage(envelope));
         const additional = (envelope.keys ?? []).filter(
           (key) => !keys.has(key),
         );
