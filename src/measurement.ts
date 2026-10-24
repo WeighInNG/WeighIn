@@ -2,6 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as crypto from "crypto";
 import { parseFixtures } from "./identity";
+import { discoverSdkVersion } from "./sdk-version";
 import { ensureAccountReady } from "./account";
 import { redactEndpointSecrets, sanitizeEndpoint } from "./endpoint";
 import { validateLargeInt } from "./config";
@@ -9,6 +10,7 @@ import { SUPPORTED_NETWORK_PASSPHRASE } from "./network";
 import {
   measureInvocation,
   resolveSimulationHelper,
+  validateFootprintKeys,
   ComputeProvenance,
   SimulationOutput,
   ResourceLimits,
@@ -106,6 +108,11 @@ export function metricsFromSimulation(
   output: SimulationOutput,
   limits: ResourceLimits,
 ): Metrics {
+  validateFootprintKeys(
+    output.read_only_keys,
+    output.read_write_keys,
+    "measured simulation footprint",
+  );
   const measured = (
     consumed: number,
     limit: number,
@@ -751,7 +758,18 @@ export interface RunMeasurementOptions {
    */
   fixtureId?: string;
   gitCommit: string;
-  sdkVersion: string;
+  /**
+   * SDK metadata reported on every contract record.
+   * Caller-supplied: when supplied, this value is used verbatim for all
+   * records (the GitHub Action passes an explicitly discovered value this
+   * way). When omitted, each record's `soroban_sdk_version` is discovered
+   * independently from the Cargo workspace/lock owning that contract's WASM
+   * artifact (see `discoverSdkVersion` in `./sdk-version`); unresolved
+   * associations report `"unknown"`. Discovered metadata is best-effort
+   * filesystem data: it is read from lockfiles on disk, never from RPC, and
+   * does not prove how a prebuilt WASM was compiled.
+   */
+  sdkVersion?: string;
   /** Soroban RPC endpoint. Defaults to localhost:8000/rpc. */
   rpcUrl?: string;
   /**
@@ -772,6 +790,133 @@ export interface RunMeasurementOptions {
   invocationSourceAccount?: string;
   /** Optional cancellation signal. */
   signal?: AbortSignal;
+  allowCrossTargetSubstitution?: boolean;
+}
+
+const WASM_MAGIC = Buffer.from([
+  0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00,
+]);
+
+export interface ResolveWasmPathOptions {
+  allowCrossTargetSubstitution?: boolean;
+}
+
+/**
+ * Resolves the path to a declared WASM artifact.
+ * Fails closed if the declared path does not exist, unless allowCrossTargetSubstitution
+ * is explicitly enabled (or WEIGHIN_ALLOW_CROSS_TARGET_SUBSTITUTION env var is set).
+ */
+export function resolveWasmPath(
+  fixturesDir: string,
+  declaredWasmPath: string,
+  options?: ResolveWasmPathOptions,
+): string {
+  const wasmPath = path.resolve(fixturesDir, declaredWasmPath);
+  if (fs.existsSync(wasmPath)) {
+    return wasmPath;
+  }
+
+  const allowOptIn =
+    options?.allowCrossTargetSubstitution ??
+    (process.env.WEIGHIN_ALLOW_CROSS_TARGET_SUBSTITUTION === "true" ||
+      process.env.WEIGHIN_ALLOW_CROSS_TARGET_SUBSTITUTION === "1");
+
+  if (allowOptIn) {
+    let altPath = "";
+    if (wasmPath.includes("wasm32-unknown-unknown")) {
+      altPath = wasmPath.replace("wasm32-unknown-unknown", "wasm32v1-none");
+    } else if (wasmPath.includes("wasm32v1-none")) {
+      altPath = wasmPath.replace("wasm32v1-none", "wasm32-unknown-unknown");
+    }
+    if (altPath && fs.existsSync(altPath)) {
+      console.warn(
+        `Warning: declared WASM artifact not found at ${wasmPath}; substituting alternate target artifact at ${altPath}`,
+      );
+      return altPath;
+    }
+  }
+
+  throw new Error(
+    `WASM not found: ${wasmPath}\nBuild the contract before running measurements.`,
+  );
+}
+
+/**
+ * Validates existence, regular-file status, and WASM binary header for a single contract artifact.
+ */
+export function validateWasmArtifact(
+  fixturesDir: string,
+  declaredWasmPath: string,
+  options?: ResolveWasmPathOptions,
+): { resolvedPath: string } {
+  const resolvedPath = resolveWasmPath(fixturesDir, declaredWasmPath, options);
+
+  let stat: fs.Stats;
+  try {
+    stat = fs.statSync(resolvedPath);
+  } catch (err: any) {
+    throw new Error(
+      `WASM artifact inaccessible at ${resolvedPath}: ${err.message}`,
+    );
+  }
+
+  if (!stat.isFile()) {
+    throw new Error(`WASM artifact at ${resolvedPath} is not a regular file`);
+  }
+
+  const fd = fs.openSync(resolvedPath, "r");
+  try {
+    const buffer = Buffer.alloc(8);
+    const bytesRead = fs.readSync(fd, buffer, 0, 8, 0);
+    if (bytesRead < 8 || !buffer.equals(WASM_MAGIC)) {
+      throw new Error(
+        `Invalid WASM header at ${resolvedPath}: expected magic header \\0asm\\x01\\x00\\x00\\x00`,
+      );
+    }
+  } finally {
+    fs.closeSync(fd);
+  }
+
+  return { resolvedPath };
+}
+
+/**
+ * Preflight all contract artifacts across the fixture before initiating network operations.
+ */
+export function preflightContractArtifacts(
+  fixturesDir: string,
+  contracts: Array<{ wasm_path: string; id?: string; logical_id?: string }>,
+  fixtureId: string,
+  options?: ResolveWasmPathOptions,
+): Map<string, string> {
+  const resolvedPaths = new Map<string, string>();
+  const errors: string[] = [];
+
+  for (const contract of contracts) {
+    const contractLabel =
+      contract.logical_id ??
+      (contract.id ? `id:${contract.id}` : `wasm:${contract.wasm_path}`);
+    const context = `${fixtureId} / ${contractLabel}`;
+
+    try {
+      const { resolvedPath } = validateWasmArtifact(
+        fixturesDir,
+        contract.wasm_path,
+        options,
+      );
+      resolvedPaths.set(contract.wasm_path, resolvedPath);
+    } catch (err: any) {
+      errors.push(`[${context}] ${err.message}`);
+    }
+  }
+
+  if (errors.length > 0) {
+    throw new Error(
+      `Preflight validation failed for configured contract WASM artifacts:\n${errors.join("\n")}`,
+    );
+  }
+
+  return resolvedPaths;
 }
 
 export async function runMeasurement(
@@ -786,7 +931,7 @@ export async function runMeasurement(
     opts = {
       fixturesPath: fixturesPathOrOptions,
       gitCommit: gitCommit ?? "unknown",
-      sdkVersion: sdkVersion ?? "unknown",
+      sdkVersion: sdkVersion,
       rpcUrl,
     };
   } else {
@@ -806,6 +951,14 @@ export async function runMeasurement(
     rawFixtures,
     opts.fixtureId ??
       path.relative(process.cwd(), path.resolve(opts.fixturesPath)),
+  );
+
+  // Preflight every configured contract WASM BEFORE funding or deploying anything (#119, #120)
+  const resolvedWasmPaths = preflightContractArtifacts(
+    fixturesDir,
+    fixturesSpec.contracts,
+    fixturesSpec.fixture_id,
+    { allowCrossTargetSubstitution: opts.allowCrossTargetSubstitution },
   );
 
   const server = new rpc.Server(effectiveRpcUrl, { allowHttp: true });
@@ -831,11 +984,7 @@ export async function runMeasurement(
   const results: ContractBenchmark[] = [];
 
   for (const contractSpec of fixturesSpec.contracts) {
-    const wasmPath = resolveContractWasmPath(
-      fixturesDir,
-      contractSpec.wasm_path,
-    );
-
+    const wasmPath = resolvedWasmPaths.get(contractSpec.wasm_path)!;
     const wasmBytes = fs.readFileSync(wasmPath);
     const wasmHash = crypto.createHash("sha256").update(wasmBytes).digest();
     const wasmSha256 = wasmHash.toString("hex");
@@ -909,13 +1058,18 @@ export async function runMeasurement(
       });
     }
 
+    const sorobanSdkVersion =
+      opts.sdkVersion !== undefined
+        ? opts.sdkVersion
+        : discoverSdkVersion(wasmPath);
+
     results.push({
       schema_version: 4,
       fixture_id: fixturesSpec.fixture_id,
       logical_id: contractSpec.logical_id,
       contract_id: contractId,
       git_commit: opts.gitCommit,
-      soroban_sdk_version: opts.sdkVersion,
+      soroban_sdk_version: sorobanSdkVersion,
       timestamp: Math.floor(Date.now() / 1000),
       benchmarks,
     });
@@ -946,3 +1100,12 @@ export {
   SingleRecordValidationResult,
   RecordValidationResult,
 } from "./record-schema";
+export type { SdkAssociation } from "./sdk-version";
+export {
+  discoverSdkAssociations,
+  discoverSdkVersion,
+  findOwningLock,
+  formatSdkVersions,
+  parseSdkVersionsFromLock,
+  readSdkVersionsFromLock,
+} from "./sdk-version";
