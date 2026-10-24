@@ -243,3 +243,14 @@ The temporary HEAD preserves `hello(Env, Symbol)` and adds a persistent write
 before its unchanged return. Private deployer keys remain in temporary directories
 and are never copied into evidence. Frozen-snapshot native tests replay the prior
 captured proof offline; they do not establish clean-build/live-network determinism.
+
+## Temporary-storage expiry boundary
+
+Archived or expired snapshot entries (`live_until < header.ledger_seq`) are rejected
+fail-closed by the native helper (`archived ledger state is unsupported`), whereas
+entries at the exact inclusive TTL boundary (`live_until == header.ledger_seq`)
+remain live. Evicted temporary entries past their TTL (`ledger_seq > live_until`,
+omitted by RPC as `xdr: null`) have no archive or restore operation and either
+execute the contract's absent-entry path or fail closed on missing state. See the
+[temporary-storage expiry boundary proof](temporary-storage-expiry.md) and
+[archived experiment bundle](experiments/temporary-storage-expiry/).
