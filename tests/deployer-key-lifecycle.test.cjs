@@ -110,6 +110,19 @@ function setup(t, { wasm = false } = {}) {
   );
   // A well-formed contract-instance entry for whichever key is probed.
   t.mock.method(rpc.Server.prototype, "getLedgerEntries", async (key) => {
+    // The reuse probe also reads the contract-code entry's TTL (#221); only the
+    // TTL is inspected, so a generous window is enough for these tests.
+    if (key.switch().name === "contractCode") {
+      return {
+        latestLedger: 100,
+        entries: [
+          {
+            key: key.toXDR("base64"),
+            liveUntilLedgerSeq: 100 + 1_000_000,
+          },
+        ],
+      };
+    }
     const instance = xdr.LedgerEntryData.contractData(
       new xdr.ContractDataEntry({
         ext: new xdr.ExtensionPoint(0),
