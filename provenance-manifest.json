@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "purpose": "verifiable WeighIn package build provenance",
-  "source_revision": "f961d722e582a2b8a55198d2d5476aed19f61719",
+  "source_revision": "d004013aae5d20d47adc2be82f4d65e62b39970b",
   "tools": {
     "node": "v22.22.2",
     "npm": "10.9.7"
@@ -9,15 +9,15 @@
   "inputs": [
     {
       "path": "action.yml",
-      "sha256": "9ee9d878ff42069d32c50f19cb2c644a19332433e9f153015dde59cfcf514c47"
+      "sha256": "ca7d20495d8a4d02bbfa7953df9e6dc6fca09040a96aa80dd79896365b9e9f59"
     },
     {
       "path": "bundled/comment-action.js",
-      "sha256": "afac41bf65d49309065f622bbd370a73aed1387231dae3ca6300498efcca1d52"
+      "sha256": "fa76a82b443f072be6401fe6ed12d3387de0e25f180a78a1b8557a850c976e04"
     },
     {
       "path": "bundled/index.js",
-      "sha256": "a3baf5cf76ac567eb6ce0bd5fda14faec45f9997130e02784a93085a85f244e0"
+      "sha256": "be834f34e5cc6cdbc3ce882be424c240710ac5a2ac66ff1da0cbe32c950c516a"
     },
     {
       "path": "native/simulation/Cargo.lock",
@@ -29,15 +29,15 @@
     },
     {
       "path": "native/simulation/src/main.rs",
-      "sha256": "9b83079ed0d532d315d4f05295742ba99d3e9731afb9d16fa8b928ac3c5a8e31"
+      "sha256": "c46eaa54dc07ea5aed5ab42481328e630d7b8f595e5198f7c58b468f9949507e"
     },
     {
       "path": "package-lock.json",
-      "sha256": "492e3e9b1bec64039b8ab30976b30ee6dee0b6a1dfdbce6231d49a9e03d7076c"
+      "sha256": "4b9b1bd4d1a2bea2d5987622f1a32293df5f13c2b027d3065fdf7336894cf8e4"
     },
     {
       "path": "package.json",
-      "sha256": "e2b8b3253ac8920648171b0193453ba8d69d1d1bdde55a71c7fd1ba4db3fbbf9"
+      "sha256": "4ab0915dc8e341dbf1d0f577de1c8f380dbe70870124f7b7fa3a195d57401bc1"
     },
     {
       "path": "src/account.ts",
@@ -45,7 +45,7 @@
     },
     {
       "path": "src/action.ts",
-      "sha256": "ea355b0db5ea9e52c7cdeaf89cddaa524c49c4970b5573bcde789c0ac06abb73"
+      "sha256": "0e843d7529fe2638936ee6624ad9e40d4441bc90db0399974dab3e9037efefe2"
     },
     {
       "path": "src/audit-policy.ts",
@@ -53,27 +53,27 @@
     },
     {
       "path": "src/build-selection.ts",
-      "sha256": "838d8060022377c89286c29cdf4443849750c51c03dde174e490a6d60dd11cb1"
+      "sha256": "927d8ebbae359017b0cbe4b5cbdeb763d576005b84e4c47160814c4569a39a78"
     },
     {
       "path": "src/build.ts",
-      "sha256": "5260d945a696bb64d951a3fdbd3fad8c7e819b1debe4ade62c8e0318361312df"
+      "sha256": "05a7e3bfac53726615414ab171e90c1231084908e8b467ac5b50eda5faca9504"
     },
     {
       "path": "src/cli.ts",
-      "sha256": "959ad3312510c83d43e2141446f29810c4f152b069e2d1ed01360802bc387e21"
+      "sha256": "2ba43e870d8bf2f223782910ef75db0fc4b9b7637a5e6dd94a119011095be982"
     },
     {
       "path": "src/comment-action.ts",
-      "sha256": "1644ad2ea499ae7bc763392435478ce8f840f63190d8a1691bc552223fc84a1c"
+      "sha256": "bdf47a27661cae97c47deeef7cdd5042ad15fa6546f8122bd288af46889c36aa"
     },
     {
       "path": "src/comment.ts",
-      "sha256": "4d47f62edc80ed6ec7353dc29086126a556fa57e64e5961f9c2ed109d3593e50"
+      "sha256": "84404c770f2314842c6a67f399e5ea54845cfe70a7c4c15ef1c182df27612e9c"
     },
     {
       "path": "src/config.ts",
-      "sha256": "4d89a11b0c2c69a1b0dead5d896d58910e6841aaef53172ba495e9cdedafd9d8"
+      "sha256": "0462f4a4fe906cb6475b7bba0ab57cc9303e58363f159e542a1065cba18bb0a4"
     },
     {
       "path": "src/dependency-inventory.ts",
@@ -81,19 +81,23 @@
     },
     {
       "path": "src/diff.ts",
-      "sha256": "1670678eec6547966090d2c1f675b57c0e7c0c5ba019f99ff4714fbe1b0f2074"
+      "sha256": "e266a6660e1e09b25b283c0adde2401f771fbdd2216a4f50a819310ced09143e"
     },
     {
       "path": "src/endpoint.ts",
       "sha256": "65f94722112a2cd6a643fc66fd5d26801349adbce3f355abc36fdfbd6dee7d46"
     },
     {
+      "path": "src/git-utils.ts",
+      "sha256": "18d4cf6dc2fab7abcf13716ee51e1b427db34d6b4b729a6bdc78849bd9f0cc68"
+    },
+    {
       "path": "src/identity.ts",
-      "sha256": "ccb993bad6126389a65407b12a43740014978f636421f667f601ebc46d48656b"
+      "sha256": "548bf18ea904428ee31a53a441ab3fb82c0a9c3b87384d8c5161ff97ec01a38c"
     },
     {
       "path": "src/measurement.ts",
-      "sha256": "28d9c4955284e2fa8aa9e4b8b3ad187b64877d40c1c5bd85a83988ee591e43e4"
+      "sha256": "fdaf7001663ab77f426dae2f0164d7e0724734985540c4bd46b7156a105be558"
     },
     {
       "path": "src/network.ts",
@@ -105,19 +109,27 @@
     },
     {
       "path": "src/record-schema.ts",
-      "sha256": "207c928ccc2005b97b09e9ea74336abf715b40a7acae55b8e0f895e320c4d10d"
+      "sha256": "dcc5f0e4bc22f02aeb69df0c728b182808dc34ebf1ae068020f271b48466aa73"
     },
     {
       "path": "src/report.ts",
-      "sha256": "f47e80cb1f72dca555457e2319eafdca7c48a397db0dc7cebc56286bfe6ea46e"
+      "sha256": "531612923e05a8d96b61037d98f3efc179735bfe8a526bcd88dcda1f6b9547c2"
+    },
+    {
+      "path": "src/sdk-version.ts",
+      "sha256": "8c0aeced896b1b3085cf1a087b67d0e6e484f4f8986b6ce4d34314d9ff543d35"
     },
     {
       "path": "src/simulation.ts",
-      "sha256": "4b59fc70fc25811e3c25f86739f7cb29d2d62f9f495995be4a308f20f95d663a"
+      "sha256": "f25168e2b70e7920e220adf98c9e2cacb2f4e27771ab98ea481644b329139f85"
+    },
+    {
+      "path": "src/source-account.ts",
+      "sha256": "ec7c43238e07e030fb8c470d03670c89dce56f7935543e419d0150013ba7ee5b"
     },
     {
       "path": "src/threshold.ts",
-      "sha256": "0a337cb0dbb56a1214394933db6dea8ddd7b294adb31e46587a854da0ba2eb53"
+      "sha256": "815882d56065516b950b4917de7b6f27a9a37554e9ae9689f64729f1b0ceb511"
     }
   ]
 }

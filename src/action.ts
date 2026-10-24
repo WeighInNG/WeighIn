@@ -12,11 +12,12 @@ import {
   loadConfigContent,
   policyContentSha256,
   enforceThresholds,
+  resolveEffectivePolicy,
   Violation,
   PolicyOrigin,
 } from "./threshold";
 
-import { renderComment } from "./comment";
+import { renderComment, upsertPrComment, CommentAuthorMode } from "./comment";
 import { parseFixtures } from "./identity";
 import { buildForRevision, parseOptionalBooleanInput } from "./build-selection";
 import { writeReportFile, generateFailureReport } from "./report";
@@ -30,6 +31,13 @@ import {
   SUPPORTED_NETWORK_PASSPHRASE,
   SUPPORTED_PROTOCOL_VERSION,
 } from "./network";
+import {
+  isWorkspaceClean,
+  getModifiedFiles,
+  getHeadSha,
+  capture,
+  captureRaw,
+} from "./git-utils";
 
 // The configured endpoint is tracked only so the terminal failure path can
 // redact any credential it may contain before reporting.
@@ -202,43 +210,6 @@ function resolveRevisionFixturesPath(
 // Helpers
 // ---------------------------------------------------------------------------
 
-/** Run a command and capture stdout. Throws on non-zero exit. */
-async function capture(
-  cmd: string,
-  args: string[],
-  cwd?: string,
-): Promise<string> {
-  let out = "";
-  await exec.exec(cmd, args, {
-    cwd,
-    listeners: {
-      stdout: (d: Buffer) => {
-        out += d.toString();
-      },
-    },
-    silent: true,
-  });
-  return out.trim();
-}
-
-async function captureRaw(
-  cmd: string,
-  args: string[],
-  cwd?: string,
-): Promise<string> {
-  let out = "";
-  await exec.exec(cmd, args, {
-    cwd,
-    silent: true,
-    listeners: {
-      stdout: (d: Buffer) => {
-        out += d.toString();
-      },
-    },
-  });
-  return out;
-}
-
 async function loadPolicy(
   repoDir: string,
   configPathRel: string,
@@ -289,15 +260,6 @@ async function loadPolicy(
       content_sha256: policyContentSha256(content),
     },
   };
-}
-
-/** Get HEAD SHA in the given directory. */
-async function getHeadSha(dir: string): Promise<string> {
-  try {
-    return await capture("git", ["rev-parse", "HEAD"], dir);
-  } catch {
-    return "unknown";
-  }
 }
 
 /** Read soroban-sdk version from Cargo.lock (best-effort). */
@@ -368,51 +330,6 @@ async function removeWorktree(repoRoot: string, dir: string): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// PR comment management
-// ---------------------------------------------------------------------------
-
-const COMMENT_MARKER = "<!-- weighin-report -->";
-
-async function upsertPrComment(token: string, body: string): Promise<void> {
-  const octokit = github.getOctokit(token);
-  const { owner, repo } = github.context.repo;
-  const prNumber = github.context.payload.pull_request?.number;
-
-  if (!prNumber) {
-    core.warning("Not in a pull_request context; skipping PR comment.");
-    return;
-  }
-
-  const { data: comments } = await octokit.rest.issues.listComments({
-    owner,
-    repo,
-    issue_number: prNumber,
-  });
-
-  const existing = comments.find((c: { id: number; body?: string | null }) =>
-    c.body?.includes(COMMENT_MARKER),
-  );
-
-  if (existing) {
-    await octokit.rest.issues.updateComment({
-      owner,
-      repo,
-      comment_id: existing.id,
-      body,
-    });
-    core.info(`Updated PR comment #${existing.id}`);
-  } else {
-    await octokit.rest.issues.createComment({
-      owner,
-      repo,
-      issue_number: prNumber,
-      body,
-    });
-    core.info("Created new PR comment");
-  }
-}
-
-// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 
@@ -429,12 +346,28 @@ async function run(): Promise<void> {
     const rpcUrl = core.getInput("rpc-url") || "http://localhost:8000/rpc";
     configuredRpcUrl = rpcUrl;
     const githubToken = core.getInput("github-token");
+    const commentAuthorModeRaw =
+      core.getInput("comment-author-mode") || "github-actions";
+    if (
+      commentAuthorModeRaw !== "github-actions" &&
+      commentAuthorModeRaw !== "authenticated-user"
+    ) {
+      throw new Error(
+        `Unsupported comment-author-mode: "${commentAuthorModeRaw}". ` +
+          'Supported values are "github-actions" and "authenticated-user".',
+      );
+    }
+    const commentAuthorMode = commentAuthorModeRaw as CommentAuthorMode;
     const baseRefInput = core.getInput("base-ref", { trimWhitespace: false });
     const rustToolchain = core.getInput("rust-toolchain");
     const reportPathInput = core.getInput("report-path");
     const metadataPathInput = core.getInput("metadata-path");
     const buildCommand = core.getInput("build-command");
     const skipBuild = parseOptionalBooleanInput("skip-build", false);
+    const allowCrossTargetSubstitution = parseOptionalBooleanInput(
+      "allow-cross-target-substitution",
+      false,
+    );
 
     if (buildCommand && skipBuild) {
       throw new Error("build-command and skip-build cannot be used together");
@@ -494,6 +427,15 @@ async function run(): Promise<void> {
     const headSha = await getHeadSha(headWorkspace);
     core.info(`HEAD SHA: ${headSha}`);
 
+    // Check for uncommitted changes to ensure benchmarks reflect the reported HEAD
+    const isClean = await isWorkspaceClean(headWorkspace);
+    if (!isClean) {
+      const modifiedFiles = await getModifiedFiles(headWorkspace);
+      throw new Error(
+        `HEAD workspace has uncommitted changes. Benchmark measurements must reflect the reported git HEAD revision. Modified files:\n${modifiedFiles.map((f) => `  - ${f}`).join("\n")}\n\nCommit or stash changes before running benchmarks.`,
+      );
+    }
+
     let headResults: ContractBenchmark[];
     try {
       await buildForRevision(
@@ -510,6 +452,7 @@ async function run(): Promise<void> {
         sdkVersion: getSdkVersion(headWorkspace),
         rpcUrl,
         keyFile: sharedKeyFile,
+        allowCrossTargetSubstitution,
       });
     } catch (err: any) {
       throw new Error(`HEAD measurement failed: ${err.message}`);
@@ -561,6 +504,7 @@ async function run(): Promise<void> {
         sdkVersion: getSdkVersion(baseDir),
         rpcUrl,
         keyFile: sharedKeyFile,
+        allowCrossTargetSubstitution,
       });
 
       // Log WASM hashes from base
@@ -607,9 +551,13 @@ async function run(): Promise<void> {
     validatedDiffJson = JSON.stringify(diff);
     core.info(`Violations: ${violations.length}`);
     for (const v of violations) {
-      core.error(
-        `[${contractLabel(v)} / ${v.function_name} / ${v.case_id}] ${v.message}`,
-      );
+      if (v.aggregate_id) {
+        core.error(`[aggregate: ${v.aggregate_id}] ${v.message}`);
+      } else {
+        core.error(
+          `[${contractLabel(v as any)} / ${v.function_name} / ${v.case_id}] ${v.message}`,
+        );
+      }
     }
     core.endGroup();
 
@@ -619,12 +567,13 @@ async function run(): Promise<void> {
     core.setOutput("diff-json", validatedDiffJson);
 
     // Report is available in the job summary even without permission to post a PR comment.
+    const effectivePolicy = resolveEffectivePolicy(diff, config, policy.origin);
     const body = renderComment(
       diff,
       violations,
       baseRef,
       headSha,
-      policy.origin,
+      effectivePolicy,
     );
     if (process.env.GITHUB_STEP_SUMMARY)
       await core.summary.addRaw(body).write();
@@ -648,7 +597,10 @@ async function run(): Promise<void> {
     if (githubToken) {
       core.startGroup("Posting PR comment");
       try {
-        await upsertPrComment(githubToken, body);
+        await upsertPrComment(githubToken, body, {
+          commentAuthorMode,
+          core,
+        });
       } catch (err: any) {
         core.warning(`Failed to post PR comment: ${err.message}`);
       }

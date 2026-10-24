@@ -1,4 +1,5 @@
 import * as path from "path";
+import { ZodError } from "zod";
 import type { FixturesSpec, ContractSpec, InvocationSpec } from "./measurement";
 import { FixturesSpecSchema, formatZodError } from "./config";
 
@@ -47,7 +48,7 @@ export function parseFixtures(
   raw: string,
   fixturePath: string,
 ): IdentifiedFixtures {
-  let parsedJson: any;
+  let parsedJson: unknown;
   try {
     parsedJson = JSON.parse(raw);
   } catch (err: any) {
