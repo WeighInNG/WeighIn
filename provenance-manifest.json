@@ -4,7 +4,7 @@
   "inputs": [
     {
       "path": "action.yml",
-      "sha256": "ca7d20495d8a4d02bbfa7953df9e6dc6fca09040a96aa80dd79896365b9e9f59"
+      "sha256": "9c6e4066837e332ea48dcdb2b40a75c6979a09336e0f77982723e4f60c1684f2"
     },
     {
       "path": "bundled/comment-action.js",
@@ -12,7 +12,7 @@
     },
     {
       "path": "bundled/index.js",
-      "sha256": "751ad7103f312d8a090c23c90415f30f87300ac3073cb20e5a9a34b49569fce3"
+      "sha256": "b909cedd7b7af6c7ba264dff276145220dff9f2620843d708e9d782cfbb6e0d1"
     },
     {
       "path": "native/simulation/Cargo.lock",
@@ -40,7 +40,7 @@
     },
     {
       "path": "src/action.ts",
-      "sha256": "64fe5084dcc00ea09d7b37b9001f6696eaffa8ff175cd8f489782b7cac3e74a8"
+      "sha256": "c44c12a1099104ea68211f2fae646b05c14b9c0bc5317cae0b37245c4dce861f"
     },
     {
       "path": "src/audit-policy.ts",
@@ -97,6 +97,10 @@
     {
       "path": "src/network.ts",
       "sha256": "a79ec668430348b6c694b40dfe9a0dcc1b5de5495d3934b80c76bc814ee8e44f"
+    },
+    {
+      "path": "src/output-paths.ts",
+      "sha256": "d7e4f2d127e1822fc2b62280f1f6857bc49af553e04a9540bed06d15bf894290"
     },
     {
       "path": "src/pr-metadata.ts",
