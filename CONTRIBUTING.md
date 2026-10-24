@@ -21,6 +21,20 @@ needs `wasm32v1-none`, checksum-verified Stellar CLI 28.1.0 and Docker. Provisio
 these as shown in [the proof workflow](.github/workflows/flagship-proof.yml).
 WeighIn does not install the Rust or Stellar toolchains itself.
 
+The full test suite includes package-inventory and offline-consumer checks.
+Prepare their caches before running those checks on a clean machine:
+
+```bash
+rustup toolchain install 1.95.0 --profile minimal
+cargo +1.95.0 fetch --locked --manifest-path native/simulation/Cargo.toml --target x86_64-unknown-linux-gnu
+npm run build
+RUNNER_TEMP="${RUNNER_TEMP:-${TMPDIR:-/tmp}}" bash scripts/prime-npm-consumer-cache.sh
+```
+
+Preparation downloads dependencies; the offline acceptance checks stay offline.
+The cache-prime helper disables package lifecycle scripts and removes its
+temporary consumer. Full native helper coverage still requires Linux x64.
+
 ## Quality gates
 
 ```bash
@@ -36,18 +50,17 @@ npm audit
 `lint` checks Prettier formatting in `src` and `test`; `typecheck` checks TypeScript.
 `npm test` builds TypeScript, runs Node behavior/evidence tests under `tests`, and
 runs Vitest tests under `test`. `npm run test:watch` starts Vitest watch mode.
+Node test files run one at a time (`--test-concurrency=1`). Packing the consumer
+artifact runs the `prepack` lifecycle, which rebuilds `dist/` and `bundled/` in
+the checkout; running test files concurrently let one file read a bundle another
+file was still writing. Keep the suite serial so every test observes a complete
+build artifact. Upgrade path: isolate the packaging test's checkout before
+re-enabling parallel files.
+
 Use `npm run format` for intentional formatting changes.
 
-The Node test files run one at a time (`--test-concurrency=1`). Packing the
-consumer artifact runs the `prepack` lifecycle, which rebuilds `dist/` and
-`bundled/` in the checkout; running test files concurrently let one file read a
-bundle another file was still writing. Keep the suite serial so every test
-observes a complete build artifact.
-
-The JavaScript test suite also covers the dependency inventory and the packed
-consumer, so it needs the pinned Rust 1.95.0 toolchain and the locked native
-helper crates (`cargo +1.95.0 fetch --locked --manifest-path
-native/simulation/Cargo.toml`). CI provisions both before it runs the suite.
+Use the cache preparation under [Install](#install) before the inventory and
+packed-consumer checks. CI provisions the same prerequisites.
 `npm audit` is a blocking gate: a moderate, high or critical advisory fails the
 run. Clear an advisory with a deliberate dependency update and a regenerated
 `docs/dependency-inventory.json` (`npm run inventory:generate`); the gate

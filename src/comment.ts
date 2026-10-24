@@ -122,8 +122,6 @@ export async function upsertPrComment(
   bodyOrOptions?: string | UpsertPrCommentOptions,
   maybeOptions?: UpsertPrCommentOptions,
 ): Promise<void> {
-  const github = await import("@actions/github");
-
   // Disambiguate overloads
   let body: string;
   let prNumberInput: number | undefined;
@@ -141,6 +139,21 @@ export async function upsertPrComment(
     options = (bodyOrOptions as UpsertPrCommentOptions | undefined) ?? {};
   }
 
+  // Validate the bounded report artifact before any API access or mutation.
+  if (typeof body !== "string" || !/\S/.test(body)) {
+    throw new Error("Report body is empty or whitespace-only.");
+  }
+  if (!body.includes(COMMENT_MARKER)) {
+    throw new Error(`Report body is missing ${COMMENT_MARKER}.`);
+  }
+  if (!/^## .*WeighIn Benchmark Report\s*$/m.test(body)) {
+    throw new Error(
+      "Report body is missing the WeighIn Benchmark Report heading.",
+    );
+  }
+  // The GitHub SDK is import-only ESM; static imports become require() in this
+  // CommonJS package and would break report-only consumers.
+  const github = await import("@actions/github");
   const core = options.core ?? (await import("@actions/core"));
   const mode: CommentAuthorMode = options.commentAuthorMode ?? "github-actions";
 

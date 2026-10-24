@@ -178,6 +178,11 @@ hexadecimal SHA. Malformed JSON, a missing or unsupported `schemaVersion`,
 another repository and malformed PR-number/SHA fields all fail before mutation.
 These checks only validate the artifact shape and repository identity; they do
 not prove the run belongs to the PR.
+The comment consumer also rejects empty or whitespace-only reports and reports
+missing the exact `<!-- weighin-report -->` marker or `WeighIn Benchmark Report`
+heading before looking up comments. These marker and heading checks validate
+only basic report shape; they are not authentication and do not establish that a
+report came from a trusted producer.
 
 Producer and consumer versions must be paired. **Producer v1 (this revision)
 requires consumer v1 (this revision), and the v1 consumer rejects legacy
@@ -260,7 +265,7 @@ benchmarks; a configured global cap fails with an actionable error if there are
 no matched benchmarks, rather than silently passing. New or removed cases alone
 do not evaluate absolute caps. An absent policy and an explicitly empty global
 limits table remain report-only. Prefer targeted rules as in the quick start.
-Omitting `config-path` still loads the default file if it exists.
+Omitting `config-path` still loads the default file if it exists. An empty or omitted `config-path` still protects the default `weighin.toml` from being used as `report-path` or `metadata-path`: output paths are validated before any RPC or build, and failure reports are never written to unvalidated paths.
 
 ## Benchmark Identity
 
@@ -291,7 +296,6 @@ revisions, enforce thresholds or post comments. Provision the native helper/RPC,
 then run `node dist/cli.js <fixtures.json> --rpc-url <standalone-rpc> --output <results.json>`
 from a built checkout. See [native provisioning](docs/native-measurement.md).
 
-<<<<<<< HEAD
 SDK metadata is reported per contract from the Cargo workspace/lock owning each
 fixture WASM (`contract/Cargo.lock` or a root workspace `Cargo.lock`), or
 `"unknown"` when no owning lock can be established; multiple declared versions

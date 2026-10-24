@@ -30,17 +30,18 @@ export const GlobalThresholdsSchema = z
   })
   .strict();
 
-export const GlobalLimitsSchema = z.record(
+// Zod 4 enum-keyed z.record is exhaustive; metric keys are optional.
+export const GlobalLimitsSchema = z.partialRecord(
   z.enum(METRIC_KEYS),
   z.number().nonnegative(),
 );
 
-export const FunctionLimitsSchema = z.record(
+export const FunctionLimitsSchema = z.partialRecord(
   z.enum(METRIC_KEYS),
   z.number().nonnegative(),
 );
 
-export const FunctionThresholdsSchema = z.record(
+export const FunctionThresholdsSchema = z.partialRecord(
   z.enum(METRIC_KEYS),
   RuleValueSchema,
 );
@@ -58,8 +59,12 @@ export const AggregateBudgetConfigSchema = z
   .object({
     description: z.string().optional(),
     members: z.array(BenchmarkSelectorSchema).min(1),
-    limits: z.record(z.enum(METRIC_KEYS), z.number().nonnegative()).optional(),
-    thresholds: z.record(z.enum(METRIC_KEYS), RuleValueSchema).optional(),
+    limits: z
+      .partialRecord(z.enum(METRIC_KEYS), z.number().nonnegative())
+      .optional(),
+    thresholds: z
+      .partialRecord(z.enum(METRIC_KEYS), RuleValueSchema)
+      .optional(),
   })
   .strict();
 
@@ -161,7 +166,8 @@ export const InvocationArgSchema: z.ZodType<any> = z.lazy(() =>
         (val) => (typeof val === "string" ? val.toLowerCase() : val),
         z.enum(INVOCATION_ARG_TYPES),
       ),
-      value: z.any(),
+      // Zod 4 requires z.any() keys; preserve omitted argument values.
+      value: z.any().optional(),
     })
     .strict()
     .superRefine((data, ctx) => {
@@ -275,7 +281,9 @@ const TopLevelInvocationArgSchema = z.unknown().transform((val, ctx) => {
       : InvocationArgSchema;
   const result = schema.safeParse(val);
   if (!result.success) {
-    result.error.issues.forEach((issue) => ctx.addIssue(issue));
+    result.error.issues.forEach((issue) =>
+      ctx.addIssue(issue as Parameters<typeof ctx.addIssue>[0]),
+    );
     return z.NEVER;
   }
   return result.data;

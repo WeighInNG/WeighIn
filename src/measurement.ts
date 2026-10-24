@@ -1143,7 +1143,7 @@ export async function runMeasurement(
     const sorobanSdkVersion =
       opts.sdkVersion !== undefined
         ? opts.sdkVersion
-        : discoverSdkVersion(wasmPath);
+        : discoverSdkVersion(resolvedWasmPaths.get(contractSpec.wasm_path)!);
 
     results.push({
       schema_version: CURRENT_RECORD_SCHEMA_VERSION,
