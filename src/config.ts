@@ -133,6 +133,114 @@ export function validateLargeInt(type: string, val: any): string | null {
   return null;
 }
 
+export const U32_MIN = 0;
+export const U32_MAX = 4294967295;
+export const I32_MIN = -2147483648;
+export const I32_MAX = 2147483647;
+export const SCSYMBOL_LIMIT = 32;
+
+/**
+ * Validates a boolean value.
+ * Must be an actual boolean without coercion.
+ */
+export function validateBool(val: any): string | null {
+  if (typeof val !== "boolean") {
+    return "Invalid value for bool: must be boolean";
+  }
+  return null;
+}
+
+/**
+ * Validates a u32 value.
+ * Must be an integer number in 0..4294967295.
+ */
+export function validateU32(val: any): string | null {
+  if (typeof val !== "number" || !Number.isFinite(val)) {
+    return "Invalid value for u32: must be number";
+  }
+  if (!Number.isInteger(val)) {
+    return "Invalid value for u32: must be integer";
+  }
+  if (val < U32_MIN || val > U32_MAX) {
+    return `Invalid value for u32: out of bounds (expected ${U32_MIN}..${U32_MAX})`;
+  }
+  return null;
+}
+
+/**
+ * Validates an i32 value.
+ * Must be an integer number in -2147483648..2147483647.
+ */
+export function validateI32(val: any): string | null {
+  if (typeof val !== "number" || !Number.isFinite(val)) {
+    return "Invalid value for i32: must be number";
+  }
+  if (!Number.isInteger(val)) {
+    return "Invalid value for i32: must be integer";
+  }
+  if (val < I32_MIN || val > I32_MAX) {
+    return `Invalid value for i32: out of bounds (expected ${I32_MIN}..${I32_MAX})`;
+  }
+  return null;
+}
+
+/**
+ * Validates a string value.
+ * Must be an actual string without coercion.
+ */
+export function validateString(val: any): string | null {
+  if (typeof val !== "string") {
+    return "Invalid value for string: must be string";
+  }
+  return null;
+}
+
+/**
+ * Validates a symbol value.
+ * Must be an actual string obeying the pinned Soroban host's symbol length/character rules:
+ * - Length: 0 to 32 bytes (SCSYMBOL_LIMIT = 32, per soroban-env-common/src/symbol.rs).
+ * - Character repertoire: 63 characters [a-zA-Z0-9_] (per soroban-env-common/src/symbol.rs and soroban-env-host/src/host.rs).
+ * - Empty string "" is explicitly supported by the host (per soroban-env-host/src/test/symbol.rs:zero_len).
+ */
+export function validateSymbol(val: any): string | null {
+  if (typeof val !== "string") {
+    return "Invalid value for symbol: must be string";
+  }
+  if (Buffer.byteLength(val, "utf8") > SCSYMBOL_LIMIT) {
+    return `Invalid value for symbol: length exceeds maximum ${SCSYMBOL_LIMIT} bytes (got ${Buffer.byteLength(val, "utf8")})`;
+  }
+  if (!/^[a-zA-Z0-9_]*$/.test(val)) {
+    return "Invalid value for symbol: contains invalid characters (allowed: [a-zA-Z0-9_])";
+  }
+  return null;
+}
+
+/**
+ * Validates any primitive argument (bool, u32, i32, string, symbol, or large int).
+ * Returns an error message if invalid, or null if valid.
+ */
+export function validatePrimitiveArg(type: string, val: any): string | null {
+  switch (type.toLowerCase()) {
+    case "bool":
+      return validateBool(val);
+    case "u32":
+      return validateU32(val);
+    case "i32":
+      return validateI32(val);
+    case "string":
+      return validateString(val);
+    case "symbol":
+      return validateSymbol(val);
+    case "u64":
+    case "i64":
+    case "u128":
+    case "i128":
+      return validateLargeInt(type, val);
+    default:
+      return null;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // weighin-fixtures.json Schema
 
@@ -163,15 +271,13 @@ export const InvocationArgSchema: z.ZodType<any> = z.lazy(() =>
     })
     .strict()
     .superRefine((data, ctx) => {
-      if (["u64", "i64", "u128", "i128"].includes(data.type)) {
-        const err = validateLargeInt(data.type, data.value);
-        if (err) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: err,
-            path: ["value"],
-          });
-        }
+      const primitiveErr = validatePrimitiveArg(data.type, data.value);
+      if (primitiveErr) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: primitiveErr,
+          path: ["value"],
+        });
       } else if (data.type === "vec") {
         if (!Array.isArray(data.value)) {
           ctx.addIssue({

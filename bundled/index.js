@@ -26632,16 +26632,16 @@ var require_parser = __commonJS({
         return (sign3 || "") + digits;
       }
       function peg$f42(digits) {
-        return integerNode(16, digits, offset());
+        return node("Integer", parseInt(stripUnderscores(digits), 16), offset());
       }
       function peg$f43(digits) {
-        return integerNode(8, digits, offset());
+        return node("Integer", parseInt(stripUnderscores(digits), 8), offset());
       }
       function peg$f44(digits) {
-        return integerNode(2, digits, offset());
+        return node("Integer", parseInt(stripUnderscores(digits), 2), offset());
       }
       function peg$f45(text2) {
-        return integerNode(10, text2, offset());
+        return node("Integer", parseInt(stripUnderscores(text2), 10), offset());
       }
       function peg$f46(sign3) {
         return (sign3 || "") + "0";
@@ -26701,10 +26701,7 @@ var require_parser = __commonJS({
         validateDate(d, off);
         validateTime(t, off);
         validateOffset(o, off);
-        var n = node("Date", /* @__PURE__ */ new Date(d + "T" + t + o), off);
-        n.raw = d + "T" + t;
-        n.tz = o;
-        return n;
+        return node("Date", /* @__PURE__ */ new Date(d + "T" + t + o), off);
       }
       function peg$f64(d, t) {
         var off = offset();
@@ -30826,16 +30823,6 @@ var require_parser = __commonJS({
       function stripUnderscores(str) {
         return str.indexOf("_") === -1 ? str : str.replace(/_/g, "");
       }
-      var MAX_INT64_DIGITS = { 2: 63, 8: 21, 10: 19, 16: 16 };
-      var RADIX_PREFIX = { 2: "0b", 8: "0o", 10: "", 16: "0x" };
-      function integerNode(radix, text2, off) {
-        var digits = stripUnderscores(text2);
-        var significant = digits.replace(/^[+-]?0*/, "");
-        if (significant.length > MAX_INT64_DIGITS[radix]) {
-          genError("Integer literal is outside the 64-bit signed integer range required by TOML.", off);
-        }
-        return node("Integer", BigInt(RADIX_PREFIX[radix] + digits), off);
-      }
       function convertCodePoint(str) {
         var num = parseInt(str, 16);
         if (num !== num || num < 0 || num > 1114111 || num > 55295 && num < 57344) {
@@ -30888,30 +30875,14 @@ var require_parser = __commonJS({
 var require_compiler = __commonJS({
   "node_modules/toml/lib/compiler.js"(exports2, module2) {
     "use strict";
-    var INT64_MIN = -(2n ** 63n);
-    var INT64_MAX = 2n ** 63n - 1n;
-    var MAX_SAFE = BigInt(Number.MAX_SAFE_INTEGER);
-    var MIN_SAFE = BigInt(Number.MIN_SAFE_INTEGER);
-    var HEADER_TABLE = "header";
-    var IMPLICIT_TABLE = "implicit";
-    var DOTTED_TABLE = "dotted";
-    var INLINE_TABLE = "inline";
-    var TABLE_ARRAY = "table-array";
-    function compile(nodes, inputText, options) {
-      options = options || {};
-      var temporal = null;
-      if (options.useTemporal) {
-        temporal = options.temporal || (typeof Temporal !== "undefined" ? Temporal : null);
-        if (!temporal) {
-          throw new Error(
-            "The `useTemporal` option was set, but no Temporal implementation is available. Use a runtime with global `Temporal` support, or provide an implementation (e.g. from the `@js-temporal/polyfill` package) via the `temporal` option."
-          );
-        }
-      }
-      var containerKinds = /* @__PURE__ */ new WeakMap();
-      var data = createTable(HEADER_TABLE);
-      var context3 = data;
+    function compile(nodes, inputText) {
+      var assignedPaths = /* @__PURE__ */ new Set();
+      var valueAssignments = /* @__PURE__ */ new Set();
+      var explicitTablePaths = /* @__PURE__ */ new Set();
       var currentPath = [];
+      var ownedContainers = /* @__PURE__ */ new WeakSet();
+      var data = createTable();
+      var context3 = data;
       return reduce(nodes);
       function reduce(nodes2) {
         var node;
@@ -30951,163 +30922,148 @@ var require_compiler = __commonJS({
         throw ex;
       }
       function assign(node) {
-        var keys = Array.isArray(node.key) ? node.key : [node.key];
-        assignDotted(context3, keys, reduceValueNode(node.value), node.offset, currentPath);
-      }
-      function assignDotted(table, keys, value, off, prefix) {
+        var keys = node.key;
+        var value = node.value;
+        var off = node.offset;
+        if (!Array.isArray(keys)) keys = [keys];
+        var reduced = reduceValueNode(value);
+        var target = context3;
         for (var i = 0; i < keys.length - 1; i++) {
-          var key = keys[i];
-          var next = table[key];
-          if (next === void 0) {
-            next = createTable(DOTTED_TABLE);
-            table[key] = next;
-          } else {
-            var kind = containerKinds.get(next);
-            if (kind !== DOTTED_TABLE && kind !== IMPLICIT_TABLE) {
-              var path8 = pathKey(prefix.concat(keys.slice(0, i + 1)));
-              if (kind === HEADER_TABLE) {
-                genError("Cannot use dotted keys to extend table '" + path8 + "' defined elsewhere.", off);
-              }
-              if (kind === INLINE_TABLE) {
-                genError("Cannot extend inline table '" + path8 + "'.", off);
-              }
-              genError("Cannot redefine existing key '" + path8 + "'.", off);
-            }
+          var k = keys[i];
+          var intermediatePath = makeFullPath(keys.slice(0, i + 1));
+          if (typeof target[k] === "undefined") {
+            target[k] = createTable();
+            assignedPaths.add(intermediatePath);
+          } else if (typeof target[k] !== "object" || target[k] === null || Array.isArray(target[k])) {
+            genError("Cannot redefine existing key '" + intermediatePath + "'.", off);
+          } else if (valueAssignments.has(intermediatePath)) {
+            genError("Cannot redefine existing key '" + intermediatePath + "'.", off);
+          } else if (explicitTablePaths.has(intermediatePath) && intermediatePath !== pathKey(currentPath)) {
+            genError("Cannot use dotted keys to extend table '" + intermediatePath + "' defined elsewhere.", off);
           }
-          table = next;
+          target = target[k];
         }
         var lastKey = keys[keys.length - 1];
-        if (table[lastKey] !== void 0) {
-          genError("Cannot redefine existing key '" + pathKey(prefix.concat(keys)) + "'.", off);
+        var fullPath = makeFullPath(keys);
+        if (typeof target[lastKey] !== "undefined") {
+          genError("Cannot redefine existing key '" + fullPath + "'.", off);
         }
-        table[lastKey] = value;
+        target[lastKey] = reduced;
+        assignedPaths.add(fullPath);
+        valueAssignments.add(fullPath);
       }
       function reduceValueNode(node) {
-        if (node.type === "Integer") {
-          return reduceInteger(node);
-        } else if (node.type === "Array") {
+        if (node.type === "Array") {
           return reduceArray(node.value);
         } else if (node.type === "InlineTable") {
           return reduceInlineTableNode(node.value);
-        } else if (temporal) {
-          switch (node.type) {
-            case "Date":
-              return temporal.ZonedDateTime.from(
-                truncateFractionalSeconds(node.raw) + node.tz + "[" + (node.tz === "Z" ? "UTC" : node.tz) + "]"
-              );
-            case "LocalDateTime":
-              return temporal.PlainDateTime.from(truncateFractionalSeconds(node.value));
-            case "LocalDate":
-              return temporal.PlainDate.from(node.value);
-            case "LocalTime":
-              return temporal.PlainTime.from(truncateFractionalSeconds(node.value));
-          }
+        } else {
+          return node.value;
         }
-        return node.value;
-      }
-      function truncateFractionalSeconds(str) {
-        return str.replace(/\.(\d{9})\d+/, ".$1");
-      }
-      function reduceInteger(node) {
-        var value = node.value;
-        if (value < INT64_MIN || value > INT64_MAX) {
-          genError(
-            "Integer " + value + " is outside the 64-bit signed integer range required by TOML.",
-            node.offset
-          );
-        }
-        if (options.bigint) {
-          return value;
-        }
-        if (value < MIN_SAFE || value > MAX_SAFE) {
-          genError(
-            "Integer " + value + " cannot be represented losslessly as a JavaScript number. Use the `bigint` option to parse integers as BigInt values.",
-            node.offset
-          );
-        }
-        return Number(value);
       }
       function reduceInlineTableNode(values) {
-        var table = createTable(INLINE_TABLE);
+        var obj = createTable();
+        var definedKeys = /* @__PURE__ */ new Set();
         for (var i = 0; i < values.length; i++) {
           var val = values[i];
           if (val.type !== "InlineTableValue") continue;
-          var keys = Array.isArray(val.key) ? val.key : [val.key];
-          assignDotted(table, keys, reduceValueNode(val.value), val.offset, []);
+          var keys = val.key;
+          if (!Array.isArray(keys)) keys = [keys];
+          var reduced = reduceValueNode(val.value);
+          setNestedKey(obj, keys, reduced, val.offset, definedKeys);
+          definedKeys.add(pathKey(keys));
         }
-        return table;
+        return obj;
+      }
+      function setNestedKey(obj, keys, value, off, definedKeys) {
+        for (var i = 0; i < keys.length - 1; i++) {
+          var k = keys[i];
+          var intermediatePath = pathKey(keys.slice(0, i + 1));
+          if (typeof obj[k] === "undefined") {
+            obj[k] = createTable();
+          } else if (typeof obj[k] !== "object" || obj[k] === null || Array.isArray(obj[k])) {
+            genError("Cannot redefine existing key '" + intermediatePath + "'.", off);
+          } else if (definedKeys && definedKeys.has(intermediatePath)) {
+            genError("Cannot extend inline table '" + intermediatePath + "'.", off);
+          }
+          obj = obj[k];
+        }
+        var lastKey = keys[keys.length - 1];
+        if (typeof obj[lastKey] !== "undefined") {
+          genError("Cannot redefine existing key '" + pathKey(keys) + "'.", off);
+        }
+        obj[lastKey] = value;
       }
       function setPath(node) {
         var path8 = node.value;
+        var quotedPath = path8.map(quoteDottedString).join(".");
         var off = node.offset;
-        var parent = resolveParentTable(path8, off);
-        var name = path8[path8.length - 1];
-        var table = parent[name];
-        if (table === void 0) {
-          table = createTable(HEADER_TABLE);
-          parent[name] = table;
-        } else if (containerKinds.get(table) === IMPLICIT_TABLE) {
-          containerKinds.set(table, HEADER_TABLE);
-        } else {
-          genError("Cannot redefine existing key '" + pathKey(path8) + "'.", off);
+        if (assignedPaths.has(quotedPath)) {
+          genError("Cannot redefine existing key '" + path8 + "'.", off);
         }
-        context3 = table;
+        assignedPaths.add(quotedPath);
+        explicitTablePaths.add(quotedPath);
+        context3 = deepRef(data, path8, createTable(), off);
         currentPath = path8;
       }
       function addTableArray(node) {
         var path8 = node.value;
+        var quotedPath = path8.map(quoteDottedString).join(".");
         var off = node.offset;
-        var parent = resolveParentTable(path8, off);
-        var name = path8[path8.length - 1];
-        var tableArray = parent[name];
-        if (tableArray === void 0) {
-          tableArray = createTableArray();
-          parent[name] = tableArray;
-        } else if (containerKinds.get(tableArray) !== TABLE_ARRAY) {
-          if (Array.isArray(tableArray)) {
-            genError("Cannot append to statically defined array '" + pathKey(path8) + "'.", off);
-          }
-          genError("Cannot redefine existing key '" + pathKey(path8) + "'.", off);
+        if (valueAssignments.has(quotedPath)) {
+          genError("Cannot append to statically defined array '" + quotedPath + "'.", off);
         }
-        var table = createTable(HEADER_TABLE);
-        tableArray.push(table);
-        context3 = table;
+        assignedPaths.forEach(function(p) {
+          if (isSameOrSubPath(p, quotedPath)) assignedPaths.delete(p);
+        });
+        valueAssignments.forEach(function(p) {
+          if (isSameOrSubPath(p, quotedPath)) valueAssignments.delete(p);
+        });
+        assignedPaths.add(quotedPath);
+        context3 = deepRef(data, path8, createTableArray(), off);
         currentPath = path8;
-      }
-      function resolveParentTable(path8, off) {
-        var table = data;
-        for (var i = 0; i < path8.length - 1; i++) {
-          var key = path8[i];
-          var next = table[key];
-          if (next === void 0) {
-            next = createTable(IMPLICIT_TABLE);
-            table[key] = next;
-          }
-          var kind = containerKinds.get(next);
-          if (kind === TABLE_ARRAY) {
-            next = next[next.length - 1];
-          } else if (kind === void 0 || kind === INLINE_TABLE) {
-            genError("Cannot redefine existing key '" + pathKey(path8.slice(0, i + 1)) + "'.", off);
-          }
-          table = next;
+        if (context3 instanceof Array) {
+          var newObj = createTable();
+          context3.push(newObj);
+          context3 = newObj;
+        } else {
+          genError("Cannot redefine existing key '" + path8 + "'.", off);
         }
-        return table;
+      }
+      function deepRef(start, keys, value, off) {
+        var ctx = start;
+        for (var i = 0; i < keys.length; i++) {
+          var key = keys[i];
+          var traversedPath = pathKey(keys.slice(0, i + 1));
+          if (typeof ctx[key] === "undefined") {
+            if (i === keys.length - 1) {
+              ctx[key] = value;
+            } else {
+              ctx[key] = createTable();
+            }
+          } else if (i !== keys.length - 1 && valueAssignments.has(traversedPath)) {
+            genError("Cannot redefine existing key '" + traversedPath + "'.", off);
+          }
+          ctx = ctx[key];
+          if (i < keys.length - 1) {
+            if (!isOwnedContainer(ctx)) {
+              genError("Cannot redefine existing key '" + traversedPath + "'.", off);
+            }
+            if (ctx instanceof Array) {
+              if (!ctx.length) {
+                genError("Cannot redefine existing key '" + traversedPath + "'.", off);
+              }
+              ctx = ctx[ctx.length - 1];
+              if (!isOwnedContainer(ctx)) {
+                genError("Cannot redefine existing key '" + traversedPath + "'.", off);
+              }
+            }
+          }
+        }
+        return ctx;
       }
       function reduceArray(array) {
         return array.map(reduceValueNode);
-      }
-      function createTable(kind) {
-        var table = /* @__PURE__ */ Object.create(null);
-        containerKinds.set(table, kind);
-        return table;
-      }
-      function createTableArray() {
-        var tableArray = [];
-        containerKinds.set(tableArray, TABLE_ARRAY);
-        return tableArray;
-      }
-      function pathKey(keys) {
-        return keys.map(quoteDottedString).join(".");
       }
       function quoteDottedString(str) {
         if (str.indexOf(".") > -1) {
@@ -31115,6 +31071,28 @@ var require_compiler = __commonJS({
         } else {
           return str;
         }
+      }
+      function createTable() {
+        var table = /* @__PURE__ */ Object.create(null);
+        ownedContainers.add(table);
+        return table;
+      }
+      function createTableArray() {
+        var tableArray = [];
+        ownedContainers.add(tableArray);
+        return tableArray;
+      }
+      function isOwnedContainer(value) {
+        return value !== null && typeof value === "object" && ownedContainers.has(value);
+      }
+      function pathKey(keys) {
+        return keys.map(quoteDottedString).join(".");
+      }
+      function makeFullPath(keys) {
+        return pathKey(currentPath.concat(keys));
+      }
+      function isSameOrSubPath(path8, prefix) {
+        return path8 === prefix || path8.indexOf(prefix + ".") === 0;
       }
     }
     module2.exports = {
@@ -31132,7 +31110,7 @@ var require_toml = __commonJS({
       parse: function(input, options) {
         var str = input.toString();
         var nodes = parser.parse(str, options);
-        return compiler.compile(nodes, str, options);
+        return compiler.compile(nodes, str);
       }
     };
   }
@@ -36326,6 +36304,80 @@ function validateLargeInt(type, val) {
   }
   return null;
 }
+var U32_MIN = 0;
+var U32_MAX = 4294967295;
+var I32_MIN = -2147483648;
+var I32_MAX = 2147483647;
+var SCSYMBOL_LIMIT = 32;
+function validateBool(val) {
+  if (typeof val !== "boolean") {
+    return "Invalid value for bool: must be boolean";
+  }
+  return null;
+}
+function validateU32(val) {
+  if (typeof val !== "number" || !Number.isFinite(val)) {
+    return "Invalid value for u32: must be number";
+  }
+  if (!Number.isInteger(val)) {
+    return "Invalid value for u32: must be integer";
+  }
+  if (val < U32_MIN || val > U32_MAX) {
+    return `Invalid value for u32: out of bounds (expected ${U32_MIN}..${U32_MAX})`;
+  }
+  return null;
+}
+function validateI32(val) {
+  if (typeof val !== "number" || !Number.isFinite(val)) {
+    return "Invalid value for i32: must be number";
+  }
+  if (!Number.isInteger(val)) {
+    return "Invalid value for i32: must be integer";
+  }
+  if (val < I32_MIN || val > I32_MAX) {
+    return `Invalid value for i32: out of bounds (expected ${I32_MIN}..${I32_MAX})`;
+  }
+  return null;
+}
+function validateString(val) {
+  if (typeof val !== "string") {
+    return "Invalid value for string: must be string";
+  }
+  return null;
+}
+function validateSymbol(val) {
+  if (typeof val !== "string") {
+    return "Invalid value for symbol: must be string";
+  }
+  if (Buffer.byteLength(val, "utf8") > SCSYMBOL_LIMIT) {
+    return `Invalid value for symbol: length exceeds maximum ${SCSYMBOL_LIMIT} bytes (got ${Buffer.byteLength(val, "utf8")})`;
+  }
+  if (!/^[a-zA-Z0-9_]*$/.test(val)) {
+    return "Invalid value for symbol: contains invalid characters (allowed: [a-zA-Z0-9_])";
+  }
+  return null;
+}
+function validatePrimitiveArg(type, val) {
+  switch (type.toLowerCase()) {
+    case "bool":
+      return validateBool(val);
+    case "u32":
+      return validateU32(val);
+    case "i32":
+      return validateI32(val);
+    case "string":
+      return validateString(val);
+    case "symbol":
+      return validateSymbol(val);
+    case "u64":
+    case "i64":
+    case "u128":
+    case "i128":
+      return validateLargeInt(type, val);
+    default:
+      return null;
+  }
+}
 var InvocationArgSchema = external_exports.lazy(
   () => external_exports.object({
     type: external_exports.preprocess(
@@ -36348,15 +36400,13 @@ var InvocationArgSchema = external_exports.lazy(
     ),
     value: external_exports.any()
   }).strict().superRefine((data, ctx) => {
-    if (["u64", "i64", "u128", "i128"].includes(data.type)) {
-      const err = validateLargeInt(data.type, data.value);
-      if (err) {
-        ctx.addIssue({
-          code: external_exports.ZodIssueCode.custom,
-          message: err,
-          path: ["value"]
-        });
-      }
+    const primitiveErr = validatePrimitiveArg(data.type, data.value);
+    if (primitiveErr) {
+      ctx.addIssue({
+        code: external_exports.ZodIssueCode.custom,
+        message: primitiveErr,
+        path: ["value"]
+      });
     } else if (data.type === "vec") {
       if (!Array.isArray(data.value)) {
         ctx.addIssue({
@@ -36464,15 +36514,17 @@ function canonical(value) {
   return value;
 }
 function parseFixtures(raw, fixturePath) {
-  let fixtures;
+  let parsedJson;
   try {
-    fixtures = FixturesSpecSchema.parse(JSON.parse(raw));
+    parsedJson = JSON.parse(raw);
   } catch (err) {
-    if (err instanceof ZodError) {
-      throw new Error(formatZodError(err, fixturePath));
-    }
-    throw err;
+    throw new Error(`Invalid JSON in ${fixturePath}: ${err.message}`);
   }
+  const parsed = FixturesSpecSchema.safeParse(parsedJson);
+  if (!parsed.success) {
+    throw new Error(formatZodError(parsed.error, fixturePath));
+  }
+  const fixtures = parsed.data;
   const fixture_id = fixtures.id === void 0 ? `path:${relativePath(fixturePath)}` : `id:${fixtures.id}`;
   const contractIds = /* @__PURE__ */ new Set();
   const contracts = fixtures.contracts.map((contract) => {
@@ -39093,7 +39145,7 @@ function config(fn, types2 = {}) {
 
 // node_modules/@stellar/stellar-sdk/lib/esm/base/generated/curr_generated.js
 var types = config((xdr) => {
-  const SCSYMBOL_LIMIT = 32;
+  const SCSYMBOL_LIMIT2 = 32;
   const SC_SPEC_DOC_LIMIT = 1024;
   xdr.typedef("Value", xdr.varOpaque());
   xdr.struct("ScpBallot", [
@@ -42283,7 +42335,7 @@ var types = config((xdr) => {
   xdr.typedef("ScMap", xdr.varArray(xdr.lookup("ScMapEntry"), 2147483647));
   xdr.typedef("ScBytes", xdr.varOpaque());
   xdr.typedef("ScString", xdr.string());
-  xdr.typedef("ScSymbol", xdr.string(SCSYMBOL_LIMIT));
+  xdr.typedef("ScSymbol", xdr.string(SCSYMBOL_LIMIT2));
   xdr.struct("ScNonceKey", [["nonce", xdr.lookup("Int64")]]);
   xdr.struct("ScContractInstance", [
     ["executable", xdr.lookup("ContractExecutable")],
@@ -51311,20 +51363,20 @@ var TransactionBuilder = class _TransactionBuilder {
     }
     if (sorobanFees) {
       const { instructions, readBytes, writeBytes, resourceFee } = sorobanFees;
-      const U32_MAX = 4294967295;
-      if (instructions <= 0 || instructions > U32_MAX) {
+      const U32_MAX2 = 4294967295;
+      if (instructions <= 0 || instructions > U32_MAX2) {
         throw new Error(
-          `instructions must be greater than 0 and at most ${U32_MAX}`
+          `instructions must be greater than 0 and at most ${U32_MAX2}`
         );
       }
-      if (readBytes <= 0 || readBytes > U32_MAX) {
+      if (readBytes <= 0 || readBytes > U32_MAX2) {
         throw new Error(
-          `readBytes must be greater than 0 and at most ${U32_MAX}`
+          `readBytes must be greater than 0 and at most ${U32_MAX2}`
         );
       }
-      if (writeBytes <= 0 || writeBytes > U32_MAX) {
+      if (writeBytes <= 0 || writeBytes > U32_MAX2) {
         throw new Error(
-          `writeBytes must be greater than 0 and at most ${U32_MAX}`
+          `writeBytes must be greater than 0 and at most ${U32_MAX2}`
         );
       }
       if (resourceFee <= 0n || resourceFee > HYPER_MAX_VALUE) {
@@ -54523,16 +54575,31 @@ function toScVal(arg) {
   const type = arg.type.toLowerCase();
   const val = arg.value;
   switch (type) {
-    case "symbol":
+    case "symbol": {
+      const err = validateSymbol(val);
+      if (err) throw new Error(err);
       return types.ScVal.scvSymbol(val);
-    case "string":
+    }
+    case "string": {
+      const err = validateString(val);
+      if (err) throw new Error(err);
       return types.ScVal.scvString(val);
-    case "u32":
+    }
+    case "u32": {
+      const err = validateU32(val);
+      if (err) throw new Error(err);
       return types.ScVal.scvU32(val);
-    case "i32":
+    }
+    case "i32": {
+      const err = validateI32(val);
+      if (err) throw new Error(err);
       return types.ScVal.scvI32(val);
-    case "bool":
+    }
+    case "bool": {
+      const err = validateBool(val);
+      if (err) throw new Error(err);
       return types.ScVal.scvBool(val);
+    }
     case "u64":
     case "i64":
     case "u128":
@@ -56901,6 +56968,7 @@ async function run() {
     if (!fs6.existsSync(headFixturesPath)) {
       throw new Error(`fixtures-path not found: ${headFixturesPath}`);
     }
+    parseFixtures(fs6.readFileSync(headFixturesPath, "utf8"), fixtureId);
     core3.startGroup("Building + measuring HEAD");
     const headSha = await getHeadSha(headWorkspace);
     core3.info(`HEAD SHA: ${headSha}`);
@@ -56959,29 +57027,29 @@ Commit or stash changes before running benchmarks.`
       );
       if (!fs6.existsSync(baseFixturesPath)) {
         throw new Error("fixtures-path not found in base ref");
-      } else {
-        await buildForRevision(
-          baseFixturesPath,
-          baseDir,
-          rustToolchain,
-          buildCommand,
-          skipBuild
-        );
-        baseResults = await runMeasurement({
-          fixturesPath: baseFixturesPath,
-          fixtureId,
-          gitCommit: baseSha,
-          sdkVersion: getSdkVersion(baseDir),
-          rpcUrl,
-          keyFile: sharedKeyFile,
-          allowCrossTargetSubstitution
-        });
-        for (const contract of baseResults) {
-          for (const bench of contract.benchmarks) {
-            core3.info(
-              `[BASE] WASM SHA256 (${bench.function_name}): ${bench.wasm_sha256}`
-            );
-          }
+      }
+      parseFixtures(fs6.readFileSync(baseFixturesPath, "utf8"), fixtureId);
+      await buildForRevision(
+        baseFixturesPath,
+        baseDir,
+        rustToolchain,
+        buildCommand,
+        skipBuild
+      );
+      baseResults = await runMeasurement({
+        fixturesPath: baseFixturesPath,
+        fixtureId,
+        gitCommit: baseSha,
+        sdkVersion: getSdkVersion(baseDir),
+        rpcUrl,
+        keyFile: sharedKeyFile,
+        allowCrossTargetSubstitution
+      });
+      for (const contract of baseResults) {
+        for (const bench of contract.benchmarks) {
+          core3.info(
+            `[BASE] WASM SHA256 (${bench.function_name}): ${bench.wasm_sha256}`
+          );
         }
       }
     } catch (err) {

@@ -1,20 +1,184 @@
 import { describe, it, expect } from "vitest";
 import { toScVal } from "../src/measurement";
-import { Keypair } from "@stellar/stellar-sdk";
+import { Keypair, xdr } from "@stellar/stellar-sdk";
+import {
+  U32_MIN,
+  U32_MAX,
+  I32_MIN,
+  I32_MAX,
+  SCSYMBOL_LIMIT,
+} from "../src/config";
 
 describe("toScVal", () => {
-  it("parses primitives", () => {
-    expect(toScVal({ type: "u32", value: 123 }).switch().name).toBe("scvU32");
-    expect(toScVal({ type: "i32", value: -123 }).switch().name).toBe("scvI32");
-    expect(toScVal({ type: "symbol", value: "test" }).switch().name).toBe(
-      "scvSymbol",
+  it("parses primitives with exact XDR parity against SDK constructors", () => {
+    // bool
+    expect(toScVal({ type: "bool", value: true }).toXDR("hex")).toBe(
+      xdr.ScVal.scvBool(true).toXDR("hex"),
     );
-    expect(toScVal({ type: "string", value: "hello" }).switch().name).toBe(
-      "scvString",
+    expect(toScVal({ type: "bool", value: false }).toXDR("hex")).toBe(
+      xdr.ScVal.scvBool(false).toXDR("hex"),
     );
-    expect(toScVal({ type: "bool", value: true }).switch().name).toBe(
-      "scvBool",
+
+    // u32 endpoints & values
+    expect(toScVal({ type: "u32", value: U32_MIN }).toXDR("hex")).toBe(
+      xdr.ScVal.scvU32(0).toXDR("hex"),
     );
+    expect(toScVal({ type: "u32", value: U32_MAX }).toXDR("hex")).toBe(
+      xdr.ScVal.scvU32(4294967295).toXDR("hex"),
+    );
+    expect(toScVal({ type: "u32", value: 123 }).toXDR("hex")).toBe(
+      xdr.ScVal.scvU32(123).toXDR("hex"),
+    );
+
+    // i32 endpoints & values
+    expect(toScVal({ type: "i32", value: I32_MIN }).toXDR("hex")).toBe(
+      xdr.ScVal.scvI32(-2147483648).toXDR("hex"),
+    );
+    expect(toScVal({ type: "i32", value: I32_MAX }).toXDR("hex")).toBe(
+      xdr.ScVal.scvI32(2147483647).toXDR("hex"),
+    );
+    expect(toScVal({ type: "i32", value: 0 }).toXDR("hex")).toBe(
+      xdr.ScVal.scvI32(0).toXDR("hex"),
+    );
+    expect(toScVal({ type: "i32", value: -123 }).toXDR("hex")).toBe(
+      xdr.ScVal.scvI32(-123).toXDR("hex"),
+    );
+
+    // string
+    expect(toScVal({ type: "string", value: "" }).toXDR("hex")).toBe(
+      xdr.ScVal.scvString("").toXDR("hex"),
+    );
+    expect(toScVal({ type: "string", value: "hello world" }).toXDR("hex")).toBe(
+      xdr.ScVal.scvString("hello world").toXDR("hex"),
+    );
+
+    // symbol (empty string, 32 chars max, valid charset [a-zA-Z0-9_])
+    expect(toScVal({ type: "symbol", value: "" }).toXDR("hex")).toBe(
+      xdr.ScVal.scvSymbol("").toXDR("hex"),
+    );
+    expect(toScVal({ type: "symbol", value: "test" }).toXDR("hex")).toBe(
+      xdr.ScVal.scvSymbol("test").toXDR("hex"),
+    );
+    expect(toScVal({ type: "symbol", value: "AaZz_09" }).toXDR("hex")).toBe(
+      xdr.ScVal.scvSymbol("AaZz_09").toXDR("hex"),
+    );
+    const maxSymbol = "A".repeat(SCSYMBOL_LIMIT);
+    expect(toScVal({ type: "symbol", value: maxSymbol }).toXDR("hex")).toBe(
+      xdr.ScVal.scvSymbol(maxSymbol).toXDR("hex"),
+    );
+  });
+
+  it("rejects invalid bool values without coercion", () => {
+    for (const bad of ["true", "false", 1, 0, null, undefined, {}, []]) {
+      expect(() => toScVal({ type: "bool", value: bad as any })).toThrow(
+        /Invalid value for bool: must be boolean/,
+      );
+    }
+  });
+
+  it("rejects invalid u32 values (fractional, overflow, wrong-type, nonfinite)", () => {
+    // Fractional
+    for (const frac of [1.5, 0.1, -0.5, 123.0001]) {
+      expect(() => toScVal({ type: "u32", value: frac })).toThrow(
+        /Invalid value for u32: must be integer/,
+      );
+    }
+
+    // Overflow & out of bounds
+    for (const out of [-1, -100, 4294967296, 5000000000, 1e40]) {
+      expect(() => toScVal({ type: "u32", value: out })).toThrow(
+        /Invalid value for u32: out of bounds/,
+      );
+    }
+
+    // Nonfinite
+    for (const nonfinite of [Infinity, -Infinity, NaN]) {
+      expect(() => toScVal({ type: "u32", value: nonfinite })).toThrow(
+        /Invalid value for u32: must be number/,
+      );
+    }
+
+    // Wrong type
+    for (const wrong of ["123", true, false, null, undefined, {}, []]) {
+      expect(() => toScVal({ type: "u32", value: wrong as any })).toThrow(
+        /Invalid value for u32: must be number/,
+      );
+    }
+  });
+
+  it("rejects invalid i32 values (fractional, overflow, wrong-type, nonfinite)", () => {
+    // Fractional
+    for (const frac of [1.5, -1.5, 0.9, -0.1]) {
+      expect(() => toScVal({ type: "i32", value: frac })).toThrow(
+        /Invalid value for i32: must be integer/,
+      );
+    }
+
+    // Overflow & out of bounds
+    for (const out of [
+      2147483648, -2147483649, 3000000000, -3000000000, 1e40, -1e40,
+    ]) {
+      expect(() => toScVal({ type: "i32", value: out })).toThrow(
+        /Invalid value for i32: out of bounds/,
+      );
+    }
+
+    // Nonfinite
+    for (const nonfinite of [Infinity, -Infinity, NaN]) {
+      expect(() => toScVal({ type: "i32", value: nonfinite })).toThrow(
+        /Invalid value for i32: must be number/,
+      );
+    }
+
+    // Wrong type
+    for (const wrong of ["-123", true, false, null, undefined, {}, []]) {
+      expect(() => toScVal({ type: "i32", value: wrong as any })).toThrow(
+        /Invalid value for i32: must be number/,
+      );
+    }
+  });
+
+  it("rejects invalid string values without coercion", () => {
+    for (const wrong of [123, true, false, null, undefined, {}, []]) {
+      expect(() => toScVal({ type: "string", value: wrong as any })).toThrow(
+        /Invalid value for string: must be string/,
+      );
+    }
+  });
+
+  it("rejects invalid symbol values obeying pinned Soroban host rules", () => {
+    // Wrong type
+    for (const wrong of [123, true, false, null, undefined, {}, []]) {
+      expect(() => toScVal({ type: "symbol", value: wrong as any })).toThrow(
+        /Invalid value for symbol: must be string/,
+      );
+    }
+
+    // Exceeds 32 bytes (SCSYMBOL_LIMIT)
+    const overlong = "a".repeat(33);
+    expect(() => toScVal({ type: "symbol", value: overlong })).toThrow(
+      /Invalid value for symbol: length exceeds maximum 32 bytes/,
+    );
+
+    // Invalid characters outside [a-zA-Z0-9_]
+    for (const badChar of [
+      "foo-bar",
+      "foo bar",
+      "foo.bar",
+      "foo#bar",
+      "foo$bar",
+      "foo@bar",
+      "foo/bar",
+      "foo:bar",
+      "foo;bar",
+      "hello!",
+      "sym?",
+      "🚀",
+    ]) {
+      expect(() => toScVal({ type: "symbol", value: badChar })).toThrow(
+        /Invalid value for symbol: contains invalid characters/,
+      );
+    }
   });
 
   it("parses large integers safely from strings", () => {

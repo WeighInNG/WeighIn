@@ -4,7 +4,9 @@ import {
   WeighinConfigSchema,
   FixturesSpecSchema,
   formatZodError,
+  validatePrimitiveArg,
 } from "../src/config";
+import { parseFixtures } from "../src/identity";
 import * as fs from "fs";
 
 vi.mock("fs");
@@ -275,5 +277,169 @@ describe("FixturesSpecSchema", () => {
         ],
       }).success,
     ).toBe(false);
+  });
+
+  describe("primitive argument validation in fixtures", () => {
+    it("accepts valid primitive values in fixtures", () => {
+      const fixture = {
+        contracts: [
+          {
+            wasm_path: "contract.wasm",
+            invocations: [
+              {
+                function_name: "test",
+                args: [
+                  { type: "bool", value: true },
+                  { type: "bool", value: false },
+                  { type: "u32", value: 0 },
+                  { type: "u32", value: 4294967295 },
+                  { type: "i32", value: -2147483648 },
+                  { type: "i32", value: 2147483647 },
+                  { type: "string", value: "" },
+                  { type: "string", value: "hello" },
+                  { type: "symbol", value: "" },
+                  { type: "symbol", value: "A".repeat(32) },
+                  { type: "symbol", value: "test_symbol_123" },
+                ],
+              },
+            ],
+          },
+        ],
+      };
+      const res = FixturesSpecSchema.safeParse(fixture);
+      expect(res.success).toBe(true);
+    });
+
+    it("rejects invalid primitives with precise path in Zod error", () => {
+      const cases = [
+        {
+          arg: { type: "bool", value: "true" },
+          expectedMessage: "Invalid value for bool: must be boolean",
+        },
+        {
+          arg: { type: "u32", value: -1 },
+          expectedMessage: "Invalid value for u32: out of bounds",
+        },
+        {
+          arg: { type: "u32", value: 4294967296 },
+          expectedMessage: "Invalid value for u32: out of bounds",
+        },
+        {
+          arg: { type: "u32", value: 1.5 },
+          expectedMessage: "Invalid value for u32: must be integer",
+        },
+        {
+          arg: { type: "u32", value: "100" },
+          expectedMessage: "Invalid value for u32: must be number",
+        },
+        {
+          arg: { type: "i32", value: 2147483648 },
+          expectedMessage: "Invalid value for i32: out of bounds",
+        },
+        {
+          arg: { type: "i32", value: -2147483649 },
+          expectedMessage: "Invalid value for i32: out of bounds",
+        },
+        {
+          arg: { type: "i32", value: -1.5 },
+          expectedMessage: "Invalid value for i32: must be integer",
+        },
+        {
+          arg: { type: "string", value: 123 },
+          expectedMessage: "Invalid value for string: must be string",
+        },
+        {
+          arg: { type: "symbol", value: "a".repeat(33) },
+          expectedMessage:
+            "Invalid value for symbol: length exceeds maximum 32 bytes",
+        },
+        {
+          arg: { type: "symbol", value: "bad-symbol" },
+          expectedMessage:
+            "Invalid value for symbol: contains invalid characters",
+        },
+      ];
+
+      for (const { arg, expectedMessage } of cases) {
+        const fixture = {
+          contracts: [
+            {
+              wasm_path: "contract.wasm",
+              invocations: [{ function_name: "test", args: [arg] }],
+            },
+          ],
+        };
+        const res = FixturesSpecSchema.safeParse(fixture);
+        expect(res.success).toBe(false);
+        if (!res.success) {
+          const formatted = formatZodError(res.error, "fixtures.json");
+          expect(formatted).toContain("contracts.0.invocations.0.args.0.value");
+          expect(formatted).toContain(expectedMessage);
+        }
+      }
+    });
+
+    it("rejects JSON exponent overflow as parsed-input case", () => {
+      // Exponent notation resulting in overflow beyond u32: 1e40
+      const fixture1 = JSON.stringify({
+        contracts: [
+          {
+            wasm_path: "contract.wasm",
+            invocations: [
+              { function_name: "test", args: [{ type: "u32", value: 1e40 }] },
+            ],
+          },
+        ],
+      });
+      expect(() => parseFixtures(fixture1, "fixtures.json")).toThrow(
+        /Invalid value for u32: out of bounds/,
+      );
+
+      // Fractional exponent: 1e-5 (0.00001)
+      const fixture2 = JSON.stringify({
+        contracts: [
+          {
+            wasm_path: "contract.wasm",
+            invocations: [
+              { function_name: "test", args: [{ type: "u32", value: 1e-5 }] },
+            ],
+          },
+        ],
+      });
+      expect(() => parseFixtures(fixture2, "fixtures.json")).toThrow(
+        /Invalid value for u32: must be integer/,
+      );
+
+      // JSON exponent overflow to Infinity: 1e400 parses as Infinity
+      const parsedInfinity = JSON.parse(
+        '{"contracts":[{"wasm_path":"contract.wasm","invocations":[{"function_name":"test","args":[{"type":"u32","value":1e400}]}]}]}',
+      );
+      const res = FixturesSpecSchema.safeParse(parsedInfinity);
+      expect(res.success).toBe(false);
+      if (!res.success) {
+        const formatted = formatZodError(res.error, "fixtures.json");
+        expect(formatted).toContain("contracts.0.invocations.0.args.0.value");
+        expect(formatted).toContain("Invalid value for u32: must be number");
+      }
+    });
+
+    it("parseFixtures includes fixture and argument path in error message", () => {
+      const raw = JSON.stringify({
+        contracts: [
+          {
+            wasm_path: "contract.wasm",
+            invocations: [
+              {
+                function_name: "test",
+                args: [{ type: "u32", value: -5 }],
+              },
+            ],
+          },
+        ],
+      });
+      expect(() => parseFixtures(raw, "path/to/my-fixtures.json")).toThrow(
+        /Invalid WeighIn configuration in path\/to\/my-fixtures\.json:[\s\S]*- contracts\.0\.invocations\.0\.args\.0\.value: Invalid value for u32: out of bounds/,
+      );
+    });
   });
 });

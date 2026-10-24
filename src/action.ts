@@ -18,6 +18,7 @@ import {
 } from "./threshold";
 
 import { renderComment, upsertPrComment, CommentAuthorMode } from "./comment";
+import { parseFixtures } from "./identity";
 import { buildForRevision, parseOptionalBooleanInput } from "./build-selection";
 import { writeReportFile, generateFailureReport } from "./report";
 import { buildPrMetadata } from "./pr-metadata";
@@ -419,6 +420,7 @@ async function run(): Promise<void> {
     if (!fs.existsSync(headFixturesPath)) {
       throw new Error(`fixtures-path not found: ${headFixturesPath}`);
     }
+    parseFixtures(fs.readFileSync(headFixturesPath, "utf8"), fixtureId);
 
     // 3. Measure HEAD (the PR branch — already checked out at headWorkspace)
     core.startGroup("Building + measuring HEAD");
@@ -486,31 +488,31 @@ async function run(): Promise<void> {
       );
       if (!fs.existsSync(baseFixturesPath)) {
         throw new Error("fixtures-path not found in base ref");
-      } else {
-        await buildForRevision(
-          baseFixturesPath,
-          baseDir,
-          rustToolchain,
-          buildCommand,
-          skipBuild,
-        );
-        baseResults = await runMeasurement({
-          fixturesPath: baseFixturesPath,
-          fixtureId,
-          gitCommit: baseSha,
-          sdkVersion: getSdkVersion(baseDir),
-          rpcUrl,
-          keyFile: sharedKeyFile,
-          allowCrossTargetSubstitution,
-        });
+      }
+      parseFixtures(fs.readFileSync(baseFixturesPath, "utf8"), fixtureId);
+      await buildForRevision(
+        baseFixturesPath,
+        baseDir,
+        rustToolchain,
+        buildCommand,
+        skipBuild,
+      );
+      baseResults = await runMeasurement({
+        fixturesPath: baseFixturesPath,
+        fixtureId,
+        gitCommit: baseSha,
+        sdkVersion: getSdkVersion(baseDir),
+        rpcUrl,
+        keyFile: sharedKeyFile,
+        allowCrossTargetSubstitution,
+      });
 
-        // Log WASM hashes from base
-        for (const contract of baseResults) {
-          for (const bench of contract.benchmarks) {
-            core.info(
-              `[BASE] WASM SHA256 (${bench.function_name}): ${bench.wasm_sha256}`,
-            );
-          }
+      // Log WASM hashes from base
+      for (const contract of baseResults) {
+        for (const bench of contract.benchmarks) {
+          core.info(
+            `[BASE] WASM SHA256 (${bench.function_name}): ${bench.wasm_sha256}`,
+          );
         }
       }
     } catch (err: any) {

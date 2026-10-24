@@ -5,7 +5,14 @@ import { parseFixtures } from "./identity";
 import { discoverSdkVersion } from "./sdk-version";
 import { ensureAccountReady } from "./account";
 import { redactEndpointSecrets, sanitizeEndpoint } from "./endpoint";
-import { validateLargeInt } from "./config";
+import {
+  validateLargeInt,
+  validateBool,
+  validateU32,
+  validateI32,
+  validateString,
+  validateSymbol,
+} from "./config";
 import { SUPPORTED_NETWORK_PASSPHRASE } from "./network";
 import {
   measureInvocation,
@@ -226,16 +233,31 @@ export function toScVal(arg: InvocationArg): xdr.ScVal {
   const type = arg.type.toLowerCase();
   const val = arg.value;
   switch (type) {
-    case "symbol":
+    case "symbol": {
+      const err = validateSymbol(val);
+      if (err) throw new Error(err);
       return xdr.ScVal.scvSymbol(val);
-    case "string":
+    }
+    case "string": {
+      const err = validateString(val);
+      if (err) throw new Error(err);
       return xdr.ScVal.scvString(val);
-    case "u32":
+    }
+    case "u32": {
+      const err = validateU32(val);
+      if (err) throw new Error(err);
       return xdr.ScVal.scvU32(val);
-    case "i32":
+    }
+    case "i32": {
+      const err = validateI32(val);
+      if (err) throw new Error(err);
       return xdr.ScVal.scvI32(val);
-    case "bool":
+    }
+    case "bool": {
+      const err = validateBool(val);
+      if (err) throw new Error(err);
       return xdr.ScVal.scvBool(val);
+    }
     case "u64":
     case "i64":
     case "u128":

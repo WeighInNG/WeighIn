@@ -48,15 +48,17 @@ export function parseFixtures(
   raw: string,
   fixturePath: string,
 ): IdentifiedFixtures {
-  let fixtures: ReturnType<typeof FixturesSpecSchema.parse>;
+  let parsedJson: unknown;
   try {
-    fixtures = FixturesSpecSchema.parse(JSON.parse(raw));
-  } catch (err) {
-    if (err instanceof ZodError) {
-      throw new Error(formatZodError(err, fixturePath));
-    }
-    throw err;
+    parsedJson = JSON.parse(raw);
+  } catch (err: any) {
+    throw new Error(`Invalid JSON in ${fixturePath}: ${err.message}`);
   }
+  const parsed = FixturesSpecSchema.safeParse(parsedJson);
+  if (!parsed.success) {
+    throw new Error(formatZodError(parsed.error, fixturePath));
+  }
+  const fixtures = parsed.data;
   const fixture_id =
     fixtures.id === undefined
       ? `path:${relativePath(fixturePath)}`
