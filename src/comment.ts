@@ -327,9 +327,7 @@ export function renderComment(
 
   const effectiveBaseRef = (context?.baseRef ?? baseRef ?? "").trim();
   const effectiveBaseSha = (
-    context?.baseSha !== undefined
-      ? context.baseSha
-      : deriveBaseRevision(diff)
+    context?.baseSha !== undefined ? context.baseSha : deriveBaseRevision(diff)
   ).trim();
   const effectiveHeadSha = (
     context?.headSha !== undefined ? context.headSha : headSha
