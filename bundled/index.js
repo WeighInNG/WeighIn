@@ -35781,7 +35781,7 @@ function inspectMeasurementRecord(value, index) {
     diagnostics: []
   };
 }
-function validateApprovedMetricProvenance(key, metric, path7, version2, diagnostics) {
+function validateApprovedMetricProvenance(key, metric, path9, version2, diagnostics) {
   const approved = APPROVED_METRIC_PROVENANCE[key];
   const allowedFields = approved.availability === "unavailable" ? ["availability", "consumed", "limit", "reason"] : [
     "availability",
@@ -35805,7 +35805,7 @@ function validateApprovedMetricProvenance(key, metric, path7, version2, diagnost
     const expected = expectedValues[field];
     if (metric[field] !== expected && (expected !== void 0 || metric[field] !== void 0)) {
       diagnostics.push({
-        path: `${path7}.${field}`,
+        path: `${path9}.${field}`,
         version: version2,
         code: "UNAPPROVED_METRIC_PROVENANCE",
         message: `Schema 5 metric ${key} has unapproved ${field} provenance`
@@ -35814,7 +35814,7 @@ function validateApprovedMetricProvenance(key, metric, path7, version2, diagnost
   }
   if (approved.availability === "unavailable" && metric.limit !== null || approved.availability === "measured" && "limitReason" in approved && metric.limit !== null || approved.availability === "measured" && "limitSource" in approved && metric.limit === null) {
     diagnostics.push({
-      path: `${path7}.limit`,
+      path: `${path9}.limit`,
       version: version2,
       code: "UNAPPROVED_METRIC_PROVENANCE",
       message: `Schema 5 metric ${key} has an unapproved limit shape`
@@ -35823,7 +35823,7 @@ function validateApprovedMetricProvenance(key, metric, path7, version2, diagnost
   for (const field of Object.keys(metric)) {
     if (!allowedFields.includes(field)) {
       diagnostics.push({
-        path: `${path7}.${field}`,
+        path: `${path9}.${field}`,
         version: version2,
         code: "UNAPPROVED_METRIC_PROVENANCE",
         message: `Schema 5 metric ${key} contains unsupported provenance field ${field}`
@@ -55015,7 +55015,7 @@ async function submitAndConfirm(server, prepared, phase, rpcUrl, signal) {
   }
   return confirmed;
 }
-async function isContractDeployed(server, contractId) {
+async function probeContractInstance(server, contractId) {
   const contractScAddress = Address.fromString(contractId).toScAddress();
   const ledgerKey = types.LedgerKey.contractData(
     new types.LedgerKeyContractData({
@@ -55031,7 +55031,9 @@ async function isContractDeployed(server, contractId) {
         `Deployment probe returned an invalid ledger response: ${JSON.stringify(res)}`
       );
     }
-    if (res.entries.length === 0) return false;
+    if (res.entries.length === 0) {
+      return { deployed: false, latestLedger: res.latestLedger };
+    }
     if (res.entries.length > 1) {
       throw new Error(
         `Deployment probe returned ${res.entries.length} entries for ${contractId}; expected at most one matching contract instance`
@@ -55086,7 +55088,11 @@ async function isContractDeployed(server, contractId) {
         `Deployment probe returned a different contract for ${contractId}; expected ${contractScAddress.toXDR("base64")}`
       );
     }
-    return true;
+    return {
+      deployed: true,
+      liveUntilLedgerSeq: entry.liveUntilLedgerSeq,
+      latestLedger: res.latestLedger
+    };
   } catch (error2) {
     if (error2 instanceof Error && error2.message.startsWith("Deployment probe")) {
       throw error2;
@@ -55096,10 +55102,69 @@ async function isContractDeployed(server, contractId) {
     );
   }
 }
+var DEFAULT_MIN_CONTRACT_TTL_LEDGERS = 17280;
+function assertValidMinTtl(value) {
+  if (typeof value !== "number" || !Number.isInteger(value) || value < 0) {
+    throw new Error(`Invalid minimum contract TTL window: ${String(value)}`);
+  }
+}
+function assertReusableTtl(args) {
+  const { label, contractId, liveUntilLedgerSeq, latestLedger, minTtlLedgers } = args;
+  assertValidMinTtl(minTtlLedgers);
+  if (typeof liveUntilLedgerSeq !== "number" || typeof latestLedger !== "number") {
+    throw new Error(
+      `Deployment probe returned no TTL metadata for the ${label} of ${contractId}; cannot verify the ${minTtlLedgers}-ledger minimum window`
+    );
+  }
+  const remaining = liveUntilLedgerSeq - latestLedger;
+  if (remaining < minTtlLedgers) {
+    throw new Error(
+      `Reusable contract ${contractId} ${label} expires too soon: live until ledger ${liveUntilLedgerSeq}, latest ledger ${latestLedger} (${remaining} ledgers remaining, minimum ${minTtlLedgers}). Refusing to benchmark; WeighIn does not extend TTLs or restore archived state. Extend the TTL externally or deploy under a different deployer key.`
+    );
+  }
+}
+async function probeContractCode(server, wasmHash, contractId) {
+  const key = types.LedgerKey.contractCode(
+    new types.LedgerKeyContractCode({ hash: wasmHash })
+  );
+  const res = await server.getLedgerEntries(key);
+  if (!res || !Array.isArray(res.entries)) {
+    throw new Error(
+      `Deployment probe returned an invalid ledger response for the contract code of ${contractId}`
+    );
+  }
+  if (res.entries.length !== 1) {
+    throw new Error(
+      `Deployment probe found ${res.entries.length} contract code entries for ${contractId}; expected exactly one (the code entry may be expired or archived)`
+    );
+  }
+  return {
+    liveUntilLedgerSeq: res.entries[0].liveUntilLedgerSeq,
+    latestLedger: res.latestLedger
+  };
+}
 async function ensureContractDeployed(options) {
   const { server, deployer, deployerAddress, wasmBytes, wasmHash, salt } = options;
-  const deployed = await isContractDeployed(server, options.contractId);
-  if (deployed) {
+  if (options.minTtlLedgers !== void 0) {
+    assertValidMinTtl(options.minTtlLedgers);
+  }
+  const probe = await probeContractInstance(server, options.contractId);
+  if (probe.deployed) {
+    const minTtlLedgers = options.minTtlLedgers ?? DEFAULT_MIN_CONTRACT_TTL_LEDGERS;
+    assertReusableTtl({
+      label: "instance",
+      contractId: options.contractId,
+      liveUntilLedgerSeq: probe.liveUntilLedgerSeq,
+      latestLedger: probe.latestLedger,
+      minTtlLedgers
+    });
+    const code = await probeContractCode(server, wasmHash, options.contractId);
+    assertReusableTtl({
+      label: "code",
+      contractId: options.contractId,
+      ...code,
+      minTtlLedgers
+    });
     console.log(`Already deployed at ${options.contractId}`);
     return {
       source: "existing_instance",
@@ -55295,6 +55360,9 @@ async function runMeasurement(fixturesPathOrOptions, gitCommit, sdkVersion, rpcU
   if (opts.signal?.aborted) {
     throw opts.signal.reason || new Error("Measurement cancelled by caller");
   }
+  if (opts.minTtlLedgers !== void 0) {
+    assertValidMinTtl(opts.minTtlLedgers);
+  }
   const effectiveRpcUrl = opts.rpcUrl ?? DEFAULT_RPC_URL;
   const fixturesDir = path4.dirname(path4.resolve(opts.fixturesPath));
   const keyFile = opts.keyFile ?? path4.join(fixturesDir, ".weighin-temp-key");
@@ -55352,7 +55420,8 @@ async function runMeasurement(fixturesPathOrOptions, gitCommit, sdkVersion, rpcU
         salt,
         contractId,
         rpcUrl: effectiveRpcUrl,
-        signal: opts.signal
+        signal: opts.signal,
+        minTtlLedgers: opts.minTtlLedgers
       });
     } catch (err) {
       const aborted = dependentsOf(contractSpec, setupOrder);
@@ -55377,6 +55446,7 @@ Setup of ${contractSpec.logical_id} failed; aborted dependents: ${aborted.map((c
     const { contractId, wasmSha256 } = deployments.get(
       contractSpec.logical_id
     );
+    const wasmPath = resolvedWasmPaths.get(contractSpec.wasm_path);
     const benchmarks = [];
     for (const invokeSpec of contractSpec.invocations) {
       if (opts.signal?.aborted) {
