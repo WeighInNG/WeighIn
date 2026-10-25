@@ -35781,7 +35781,7 @@ function inspectMeasurementRecord(value, index) {
     diagnostics: []
   };
 }
-function validateApprovedMetricProvenance(key, metric, path7, version2, diagnostics) {
+function validateApprovedMetricProvenance(key, metric, path9, version2, diagnostics) {
   const approved = APPROVED_METRIC_PROVENANCE[key];
   const allowedFields = approved.availability === "unavailable" ? ["availability", "consumed", "limit", "reason"] : [
     "availability",
@@ -35805,7 +35805,7 @@ function validateApprovedMetricProvenance(key, metric, path7, version2, diagnost
     const expected = expectedValues[field];
     if (metric[field] !== expected && (expected !== void 0 || metric[field] !== void 0)) {
       diagnostics.push({
-        path: `${path7}.${field}`,
+        path: `${path9}.${field}`,
         version: version2,
         code: "UNAPPROVED_METRIC_PROVENANCE",
         message: `Schema 5 metric ${key} has unapproved ${field} provenance`
@@ -35814,7 +35814,7 @@ function validateApprovedMetricProvenance(key, metric, path7, version2, diagnost
   }
   if (approved.availability === "unavailable" && metric.limit !== null || approved.availability === "measured" && "limitReason" in approved && metric.limit !== null || approved.availability === "measured" && "limitSource" in approved && metric.limit === null) {
     diagnostics.push({
-      path: `${path7}.limit`,
+      path: `${path9}.limit`,
       version: version2,
       code: "UNAPPROVED_METRIC_PROVENANCE",
       message: `Schema 5 metric ${key} has an unapproved limit shape`
@@ -35823,7 +35823,7 @@ function validateApprovedMetricProvenance(key, metric, path7, version2, diagnost
   for (const field of Object.keys(metric)) {
     if (!allowedFields.includes(field)) {
       diagnostics.push({
-        path: `${path7}.${field}`,
+        path: `${path9}.${field}`,
         version: version2,
         code: "UNAPPROVED_METRIC_PROVENANCE",
         message: `Schema 5 metric ${key} contains unsupported provenance field ${field}`
@@ -54919,8 +54919,47 @@ async function getOrInitAccount(keyFile, rpcUrl, signal) {
   await ensureAccountReady(rpcUrl, keypair.publicKey(), signal);
   return keypair;
 }
-async function waitForTransaction(server, txHash, signal) {
-  for (let i = 0; i < 30; i++) {
+var DEFAULT_CONFIRMATION_DEADLINE_MS = 3e4;
+var MIN_CONFIRMATION_DEADLINE_MS = 1e3;
+var MAX_CONFIRMATION_DEADLINE_MS = 3e5;
+var DEFAULT_CONFIRMATION_POLL_INTERVAL_MS = 1e3;
+function validateConfirmationDeadlineMs(deadlineMs = DEFAULT_CONFIRMATION_DEADLINE_MS) {
+  if (typeof deadlineMs !== "number" || !Number.isInteger(deadlineMs) || deadlineMs < MIN_CONFIRMATION_DEADLINE_MS || deadlineMs > MAX_CONFIRMATION_DEADLINE_MS) {
+    throw new Error(
+      `Invalid confirmationDeadlineMs (${String(deadlineMs)}): must be an integer between ${MIN_CONFIRMATION_DEADLINE_MS} and ${MAX_CONFIRMATION_DEADLINE_MS} ms`
+    );
+  }
+  return deadlineMs;
+}
+async function waitForTransaction(server, txHash, signal, options = {}) {
+  const deadlineMs = validateConfirmationDeadlineMs(
+    options.deadlineMs ?? DEFAULT_CONFIRMATION_DEADLINE_MS
+  );
+  const pollIntervalMs = options.pollIntervalMs ?? DEFAULT_CONFIRMATION_POLL_INTERVAL_MS;
+  const nowFn = options.now ?? (() => Date.now());
+  const defaultSleep = (ms, abortSig) => new Promise((resolve8, reject) => {
+    const timer = setTimeout(resolve8, ms);
+    if (abortSig) {
+      const onAbort = () => {
+        clearTimeout(timer);
+        reject(
+          abortSig.reason || new Error("Transaction confirmation cancelled")
+        );
+      };
+      if (abortSig.aborted) {
+        clearTimeout(timer);
+        return reject(
+          abortSig.reason || new Error("Transaction confirmation cancelled")
+        );
+      }
+      abortSig.addEventListener("abort", onAbort, { once: true });
+    }
+  });
+  const sleepFn = options.sleep ?? defaultSleep;
+  const startMs = nowFn();
+  const deadlineAt = startMs + deadlineMs;
+  const phasePrefix = options.phase ? `${options.phase} transaction` : "Transaction";
+  for (; ; ) {
     if (signal?.aborted) {
       throw signal.reason || new Error("Transaction confirmation cancelled");
     }
@@ -54928,26 +54967,15 @@ async function waitForTransaction(server, txHash, signal) {
     if (tx.status !== "NOT_FOUND") {
       return tx;
     }
-    await new Promise((resolve8, reject) => {
-      const timer = setTimeout(resolve8, 1e3);
-      if (signal) {
-        const onAbort = () => {
-          clearTimeout(timer);
-          reject(
-            signal.reason || new Error("Transaction confirmation cancelled")
-          );
-        };
-        if (signal.aborted) {
-          clearTimeout(timer);
-          return reject(
-            signal.reason || new Error("Transaction confirmation cancelled")
-          );
-        }
-        signal.addEventListener("abort", onAbort, { once: true });
-      }
-    });
+    const elapsedMs = nowFn() - startMs;
+    const remainingMs = deadlineAt - nowFn();
+    if (remainingMs <= 0) {
+      throw new Error(
+        `${phasePrefix} ${txHash} not found after ${Math.round(elapsedMs / 1e3)} seconds (elapsed=${elapsedMs}ms, deadline=${deadlineMs}ms)`
+      );
+    }
+    await sleepFn(Math.min(pollIntervalMs, remainingMs), signal);
   }
-  throw new Error(`Transaction ${txHash} not found after 30 seconds`);
 }
 var TX_HASH_PATTERN = /^[0-9a-f]{64}$/i;
 function isTransactionHash(value) {
@@ -55007,7 +55035,9 @@ async function submitAndConfirm(server, prepared, phase, rpcUrl, signal) {
       `${phase} submission returned an invalid response (status=${status}): missing or invalid transaction hash`
     );
   }
-  const confirmed = await waitForTransaction(server, submission.hash, signal);
+  const confirmed = await waitForTransaction(server, submission.hash, signal, {
+    phase
+  });
   if (confirmed.status !== rpc_exports.Api.GetTransactionStatus.SUCCESS) {
     throw new Error(
       `${phase} transaction ${submission.hash} did not succeed (status=${confirmed.status})`
@@ -55419,6 +55449,7 @@ Setup of ${contractSpec.logical_id} failed; aborted dependents: ${aborted.map((c
         wasm_sha256: wasmSha256
       });
     }
+    const wasmPath = resolvedWasmPaths.get(contractSpec.wasm_path);
     const sorobanSdkVersion = opts.sdkVersion !== void 0 ? opts.sdkVersion : discoverSdkVersion(wasmPath);
     results.push({
       schema_version: CURRENT_RECORD_SCHEMA_VERSION,

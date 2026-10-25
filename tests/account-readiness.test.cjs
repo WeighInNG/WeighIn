@@ -104,3 +104,48 @@ test('permanent HTTP error with a stalled body fails from headers without retryi
     (funds++, new Response(new ReadableStream({ cancel() { cancelled = true; } }), { status: 403 }))), /HTTP 403/);
   assert.equal(funds, 1); assert.equal(cancelled, true);
 });
+
+test('waitForTransaction enforces bounded confirmation deadlines and reports phase, hash, and elapsed time (#237)', async () => {
+  const {
+    waitForTransaction,
+    validateConfirmationDeadlineMs,
+  } = require('../dist/measurement');
+
+  assert.throws(() => validateConfirmationDeadlineMs(500), /Invalid confirmationDeadlineMs/);
+  assert.throws(() => validateConfirmationDeadlineMs(600000), /Invalid confirmationDeadlineMs/);
+  assert.equal(validateConfirmationDeadlineMs(30000), 30000);
+
+  let fakeNow = 1000;
+  let polls = 0;
+  const fastServer = {
+    async getTransaction() {
+      polls += 1;
+      return polls >= 2 ? { status: 'SUCCESS' } : { status: 'NOT_FOUND' };
+    },
+  };
+  const confirmed = await waitForTransaction(fastServer, 'a'.repeat(64), undefined, {
+    deadlineMs: 5000,
+    phase: 'WASM upload',
+    now: () => fakeNow,
+    sleep: async (ms) => { fakeNow += ms; },
+  });
+  assert.equal(confirmed.status, 'SUCCESS');
+  assert.equal(polls, 2);
+
+  let expiredNow = 0;
+  const timeoutServer = {
+    async getTransaction() {
+      return { status: 'NOT_FOUND' };
+    },
+  };
+  await assert.rejects(
+    () =>
+      waitForTransaction(timeoutServer, 'b'.repeat(64), undefined, {
+        deadlineMs: 3000,
+        phase: 'Contract creation',
+        now: () => expiredNow,
+        sleep: async (ms) => { expiredNow += ms; },
+      }),
+    /Contract creation transaction b{64} not found after 3 seconds \(elapsed=3000ms, deadline=3000ms\)/,
+  );
+});
