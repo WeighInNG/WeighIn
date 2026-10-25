@@ -21,6 +21,7 @@ import { renderComment, upsertPrComment, CommentAuthorMode } from "./comment";
 import { parseFixtures } from "./identity";
 import { buildForRevision, parseOptionalBooleanInput } from "./build-selection";
 import { writeReportFile, generateFailureReport } from "./report";
+import { assertDistinctOutputPaths } from "./output-paths";
 import { buildPrMetadata } from "./pr-metadata";
 import {
   parseJsonRpcResponse,
@@ -42,6 +43,7 @@ import {
 // The configured endpoint is tracked only so the terminal failure path can
 // redact any credential it may contain before reporting.
 let configuredRpcUrl = "";
+let outputPathsRejected = false;
 let validatedDiffJson: string | null = null;
 
 class RpcCompatibilityError extends Error {}
@@ -409,6 +411,19 @@ async function run(): Promise<void> {
       .relative(path.resolve(headWorkspace), headFixturesPath)
       .split(path.sep)
       .join("/");
+    outputPathsRejected = true;
+    assertDistinctOutputPaths({
+      workspace: headWorkspace,
+      outputs: {
+        "report-path": reportPathInput,
+        "metadata-path": metadataPathInput,
+      },
+      inputs: {
+        "fixtures-path": headFixturesPath,
+        "config-path": configPathRel,
+      },
+    });
+    outputPathsRejected = false;
     const policy = await loadPolicy(
       headWorkspace,
       configPathRel,
@@ -636,7 +651,7 @@ run().catch(async (error: Error) => {
 
   const reportPathInput = core.getInput("report-path");
   const headWorkspace = process.env["GITHUB_WORKSPACE"] ?? process.cwd();
-  if (reportPathInput) {
+  if (reportPathInput && !outputPathsRejected) {
     try {
       const failureReport = generateFailureReport(message);
       writeReportFile(reportPathInput, headWorkspace, failureReport);
