@@ -445,6 +445,31 @@ function hashLabel(hash: unknown): string {
 // rejections (ERROR) and temporary rejections (TRY_AGAIN_LATER) fail before any
 // confirmation polling; PENDING/DUPLICATE with a valid hash use the existing
 // confirmation path; any other response fails closed.
+export function verifyCreatedContractReceipt(
+  confirmed: rpc.Api.GetTransactionResponse,
+  expectedContractId: string,
+): void {
+  const anyConfirmed = confirmed as any;
+  if (
+    anyConfirmed?.returnValue !== undefined &&
+    anyConfirmed?.returnValue !== null
+  ) {
+    let observedAddress: string;
+    try {
+      observedAddress = Address.fromScVal(anyConfirmed.returnValue).toString();
+    } catch (err: any) {
+      throw new Error(
+        `Contract creation receipt returned an unreadable contract address (expected=${expectedContractId}, observed=unreadable: ${String(err?.message ?? err)})`,
+      );
+    }
+    if (observedAddress !== expectedContractId) {
+      throw new Error(
+        `Contract creation receipt address mismatch (expected=${expectedContractId}, observed=${observedAddress})`,
+      );
+    }
+  }
+}
+
 async function submitAndConfirm(
   server: rpc.Server,
   prepared: Transaction,
@@ -727,6 +752,7 @@ export async function ensureContractDeployed(options: {
     options.rpcUrl,
     options.signal,
   );
+  verifyCreatedContractReceipt(created, options.contractId);
   console.log(`Deployed at ${options.contractId}`);
   return {
     source: "created",
@@ -1140,6 +1166,7 @@ export async function runMeasurement(
       });
     }
 
+    const wasmPath = resolvedWasmPaths.get(contractSpec.wasm_path)!;
     const sorobanSdkVersion =
       opts.sdkVersion !== undefined
         ? opts.sdkVersion
