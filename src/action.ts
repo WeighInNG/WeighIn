@@ -587,6 +587,7 @@ async function run(): Promise<void> {
       baseRef,
       headSha,
       effectivePolicy,
+      { baseSha, headSha },
     );
     if (process.env.GITHUB_STEP_SUMMARY)
       await core.summary.addRaw(body).write();

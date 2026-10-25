@@ -35781,7 +35781,7 @@ function inspectMeasurementRecord(value, index) {
     diagnostics: []
   };
 }
-function validateApprovedMetricProvenance(key, metric, path7, version2, diagnostics) {
+function validateApprovedMetricProvenance(key, metric, path9, version2, diagnostics) {
   const approved = APPROVED_METRIC_PROVENANCE[key];
   const allowedFields = approved.availability === "unavailable" ? ["availability", "consumed", "limit", "reason"] : [
     "availability",
@@ -35805,7 +35805,7 @@ function validateApprovedMetricProvenance(key, metric, path7, version2, diagnost
     const expected = expectedValues[field];
     if (metric[field] !== expected && (expected !== void 0 || metric[field] !== void 0)) {
       diagnostics.push({
-        path: `${path7}.${field}`,
+        path: `${path9}.${field}`,
         version: version2,
         code: "UNAPPROVED_METRIC_PROVENANCE",
         message: `Schema 5 metric ${key} has unapproved ${field} provenance`
@@ -35814,7 +35814,7 @@ function validateApprovedMetricProvenance(key, metric, path7, version2, diagnost
   }
   if (approved.availability === "unavailable" && metric.limit !== null || approved.availability === "measured" && "limitReason" in approved && metric.limit !== null || approved.availability === "measured" && "limitSource" in approved && metric.limit === null) {
     diagnostics.push({
-      path: `${path7}.limit`,
+      path: `${path9}.limit`,
       version: version2,
       code: "UNAPPROVED_METRIC_PROVENANCE",
       message: `Schema 5 metric ${key} has an unapproved limit shape`
@@ -35823,7 +35823,7 @@ function validateApprovedMetricProvenance(key, metric, path7, version2, diagnost
   for (const field of Object.keys(metric)) {
     if (!allowedFields.includes(field)) {
       diagnostics.push({
-        path: `${path7}.${field}`,
+        path: `${path9}.${field}`,
         version: version2,
         code: "UNAPPROVED_METRIC_PROVENANCE",
         message: `Schema 5 metric ${key} contains unsupported provenance field ${field}`
@@ -55374,6 +55374,7 @@ Setup of ${contractSpec.logical_id} failed; aborted dependents: ${aborted.map((c
   }
   const results = [];
   for (const contractSpec of fixturesSpec.contracts) {
+    const wasmPath = resolvedWasmPaths.get(contractSpec.wasm_path);
     const { contractId, wasmSha256 } = deployments.get(
       contractSpec.logical_id
     );
@@ -56065,7 +56066,48 @@ function compareFunctions(a, b) {
 function compareViolations(a, b) {
   return compareCodePoints(a.aggregate_id, b.aggregate_id) || compareCodePoints(a.fixture_id, b.fixture_id) || compareCodePoints(a.logical_id, b.logical_id) || compareCodePoints(a.contract_id, b.contract_id) || compareCodePoints(a.function_name, b.function_name) || compareCodePoints(a.case_id, b.case_id) || compareCodePoints(a.metric, b.metric);
 }
-function renderComment(diff, violations, baseRef, headSha, policyOrigin) {
+function deriveBaseRevision(diff) {
+  if (!diff || !Array.isArray(diff.contracts) || diff.contracts.length === 0) {
+    return "unknown";
+  }
+  const commits = /* @__PURE__ */ new Set();
+  for (const contract of diff.contracts) {
+    const commit = (contract.base_commit ?? "").trim();
+    if (!commit || commit === "unknown") {
+      commits.add("unknown");
+    } else {
+      commits.add(commit);
+    }
+  }
+  if (commits.size === 0) {
+    return "unknown";
+  }
+  if (commits.size > 1) {
+    return "mixed";
+  }
+  const [single] = commits;
+  return single;
+}
+function renderComment(diff, violations, baseRef, headSha, policyOriginOrContext, optionalContext) {
+  let policyOrigin;
+  let context3;
+  if (optionalContext) {
+    context3 = optionalContext;
+    if (policyOriginOrContext && ("mode" in policyOriginOrContext || "status" in policyOriginOrContext)) {
+      policyOrigin = policyOriginOrContext;
+    }
+  } else if (policyOriginOrContext) {
+    if ("mode" in policyOriginOrContext && "content_sha256" in policyOriginOrContext) {
+      policyOrigin = policyOriginOrContext;
+    } else if ("status" in policyOriginOrContext) {
+      policyOrigin = policyOriginOrContext;
+    } else {
+      context3 = policyOriginOrContext;
+      if (context3.policyOrigin) {
+        policyOrigin = context3.policyOrigin;
+      }
+    }
+  }
   const lines = [];
   const sortedViolations = [...violations].sort(compareViolations);
   const statusEmoji = sortedViolations.length > 0 ? "\u{1F534}" : "\u{1F7E2}";
@@ -56110,9 +56152,21 @@ function renderComment(diff, violations, baseRef, headSha, policyOrigin) {
     );
     lines.push("");
   }
-  lines.push(
-    `${statusText} \u2014 comparing \`${baseRef}\` \u2192 \`${headSha.slice(0, 8)}\``
-  );
+  const effectiveBaseRef = (context3?.baseRef ?? baseRef ?? "").trim();
+  const effectiveBaseSha = (context3?.baseSha !== void 0 ? context3.baseSha : deriveBaseRevision(diff)).trim();
+  const effectiveHeadSha = (context3?.headSha !== void 0 ? context3.headSha : headSha).trim();
+  let baseDisplay;
+  if (!effectiveBaseRef) {
+    baseDisplay = `\`${effectiveBaseSha || "unknown"}\``;
+  } else if (!effectiveBaseSha) {
+    baseDisplay = `\`${effectiveBaseRef}\` (\`unknown\`)`;
+  } else if (effectiveBaseRef === effectiveBaseSha) {
+    baseDisplay = `\`${effectiveBaseSha}\``;
+  } else {
+    baseDisplay = `\`${effectiveBaseRef}\` (\`${effectiveBaseSha}\`)`;
+  }
+  const headDisplay = `\`${effectiveHeadSha || "unknown"}\``;
+  lines.push(`${statusText} \u2014 comparing ${baseDisplay} \u2192 ${headDisplay}`);
   lines.push("");
   if (sortedViolations.length > 0) {
     lines.push("### \u274C Violations");
@@ -57448,7 +57502,8 @@ Commit or stash changes before running benchmarks.`
       violations,
       baseRef,
       headSha,
-      effectivePolicy
+      effectivePolicy,
+      { baseSha, headSha }
     );
     if (process.env.GITHUB_STEP_SUMMARY)
       await core3.summary.addRaw(body).write();
