@@ -1,4 +1,5 @@
 import * as fs from "fs";
+import * as os from "os";
 import * as path from "path";
 import * as crypto from "crypto";
 import { parseFixtures } from "./identity";
@@ -988,176 +989,195 @@ export async function runMeasurement(
 
   const effectiveRpcUrl = opts.rpcUrl ?? DEFAULT_RPC_URL;
   const fixturesDir = path.dirname(path.resolve(opts.fixturesPath));
-  const keyFile = opts.keyFile ?? path.join(fixturesDir, ".weighin-temp-key");
-
-  const rawFixtures = fs.readFileSync(opts.fixturesPath, "utf8");
-  const fixturesSpec = parseFixtures(
-    rawFixtures,
-    opts.fixtureId ??
-      path.relative(process.cwd(), path.resolve(opts.fixturesPath)),
-  );
-
-  // Validate dependency references, bindings and cycles before any side effect.
-  const setupOrder = planSetupOrder(
-    fixturesSpec.fixture_id,
-    fixturesSpec.contracts,
-  );
-
-  // Preflight every configured contract WASM BEFORE funding or deploying anything (#119, #120)
-  const resolvedWasmPaths = preflightContractArtifacts(
-    fixturesDir,
-    fixturesSpec.contracts,
-    fixturesSpec.fixture_id,
-    { allowCrossTargetSubstitution: opts.allowCrossTargetSubstitution },
-  );
-
-  const server = new rpc.Server(effectiveRpcUrl, { allowHttp: true });
-  const deployer = await getOrInitAccount(
-    keyFile,
-    effectiveRpcUrl,
-    opts.signal,
-  );
-  const deployerAddress = Address.fromString(deployer.publicKey());
-
-  // The invoking identity may differ from the deployer. It is validated
-  // before any measurement so an invalid account fails before a snapshot.
-  let invocationSourceAccount = deployer.publicKey();
-  if (opts.invocationSourceAccount !== undefined) {
-    invocationSourceAccount = normalizeSourceAccount(
-      opts.invocationSourceAccount,
-    );
-    if (invocationSourceAccount !== deployer.publicKey()) {
-      console.log(`Invocation source account: ${invocationSourceAccount}`);
-    }
+  const ownedTempKeyDir =
+    opts.keyFile === undefined
+      ? fs.mkdtempSync(path.join(os.tmpdir(), "weighin-deployer-key-"))
+      : null;
+  if (ownedTempKeyDir) {
+    fs.chmodSync(ownedTempKeyDir, 0o700);
   }
+  const keyFile =
+    opts.keyFile ?? path.join(ownedTempKeyDir!, ".weighin-temp-key");
 
-  // Setup phase: commit every deployment in dependency order before any
-  // measured invocation. A failed prerequisite aborts all of its dependents.
-  const setupResults = new Map<string, SetupResult>();
-  const deployments = new Map<
-    string,
-    { contractId: string; wasmSha256: string }
-  >();
-  for (const contractSpec of setupOrder) {
-    const wasmPath = resolvedWasmPaths.get(contractSpec.wasm_path)!;
-    const wasmBytes = fs.readFileSync(wasmPath);
-    const wasmHash = crypto.createHash("sha256").update(wasmBytes).digest();
-    const wasmSha256 = wasmHash.toString("hex");
+  try {
+    const rawFixtures = fs.readFileSync(opts.fixturesPath, "utf8");
+    const fixturesSpec = parseFixtures(
+      rawFixtures,
+      opts.fixtureId ??
+        path.relative(process.cwd(), path.resolve(opts.fixturesPath)),
+    );
 
-    console.log(`WASM: ${wasmPath}`);
-    console.log(`WASM SHA256: ${wasmSha256}`);
+    // Validate dependency references, bindings and cycles before any side effect.
+    const setupOrder = planSetupOrder(
+      fixturesSpec.fixture_id,
+      fixturesSpec.contracts,
+    );
 
-    // Deterministic salt based on WASM hash — same WASM always gets same contract ID
-    const salt = crypto.createHash("sha256").update(wasmHash).digest();
-    const contractId = calculateContractId(deployer.publicKey(), salt);
+    // Preflight every configured contract WASM BEFORE funding or deploying anything (#119, #120)
+    const resolvedWasmPaths = preflightContractArtifacts(
+      fixturesDir,
+      fixturesSpec.contracts,
+      fixturesSpec.fixture_id,
+      { allowCrossTargetSubstitution: opts.allowCrossTargetSubstitution },
+    );
 
-    console.log(`Contract ID: ${contractId}`);
-    let receipt: Pick<SetupResult, "source" | "return_xdr">;
-    try {
-      receipt = await ensureContractDeployed({
-        server,
-        deployer,
-        deployerAddress,
-        wasmBytes,
-        wasmHash,
-        salt,
-        contractId,
-        rpcUrl: effectiveRpcUrl,
-        signal: opts.signal,
-      });
-    } catch (err) {
-      const aborted = dependentsOf(contractSpec, setupOrder);
-      if (opts.signal?.aborted || aborted.length === 0) throw err;
-      throw new Error(
-        `${err instanceof Error ? err.message : String(err)}\nSetup of ${contractSpec.logical_id} failed; aborted dependents: ${aborted.map((contract) => contract.logical_id).join(", ")}`,
-        { cause: err },
+    const server = new rpc.Server(effectiveRpcUrl, { allowHttp: true });
+    const deployer = await getOrInitAccount(
+      keyFile,
+      effectiveRpcUrl,
+      opts.signal,
+    );
+    const deployerAddress = Address.fromString(deployer.publicKey());
+
+    // The invoking identity may differ from the deployer. It is validated
+    // before any measurement so an invalid account fails before a snapshot.
+    let invocationSourceAccount = deployer.publicKey();
+    if (opts.invocationSourceAccount !== undefined) {
+      invocationSourceAccount = normalizeSourceAccount(
+        opts.invocationSourceAccount,
       );
+      if (invocationSourceAccount !== deployer.publicKey()) {
+        console.log(`Invocation source account: ${invocationSourceAccount}`);
+      }
     }
-    deployments.set(contractSpec.logical_id, { contractId, wasmSha256 });
-    if (contractSpec.id !== undefined) {
-      setupResults.set(contractSpec.id, {
+
+    // Setup phase: commit every deployment in dependency order before any
+    // measured invocation. A failed prerequisite aborts all of its dependents.
+    const setupResults = new Map<string, SetupResult>();
+    const deployments = new Map<
+      string,
+      { contractId: string; wasmSha256: string }
+    >();
+    for (const contractSpec of setupOrder) {
+      const wasmPath = resolvedWasmPaths.get(contractSpec.wasm_path)!;
+      const wasmBytes = fs.readFileSync(wasmPath);
+      const wasmHash = crypto.createHash("sha256").update(wasmBytes).digest();
+      const wasmSha256 = wasmHash.toString("hex");
+
+      console.log(`WASM: ${wasmPath}`);
+      console.log(`WASM SHA256: ${wasmSha256}`);
+
+      // Deterministic salt based on WASM hash — same WASM always gets same contract ID
+      const salt = crypto.createHash("sha256").update(wasmHash).digest();
+      const contractId = calculateContractId(deployer.publicKey(), salt);
+
+      console.log(`Contract ID: ${contractId}`);
+      let receipt: Pick<SetupResult, "source" | "return_xdr">;
+      try {
+        receipt = await ensureContractDeployed({
+          server,
+          deployer,
+          deployerAddress,
+          wasmBytes,
+          wasmHash,
+          salt,
+          contractId,
+          rpcUrl: effectiveRpcUrl,
+          signal: opts.signal,
+        });
+      } catch (err) {
+        const aborted = dependentsOf(contractSpec, setupOrder);
+        if (opts.signal?.aborted || aborted.length === 0) throw err;
+        throw new Error(
+          `${err instanceof Error ? err.message : String(err)}\nSetup of ${contractSpec.logical_id} failed; aborted dependents: ${aborted.map((contract) => contract.logical_id).join(", ")}`,
+          { cause: err },
+        );
+      }
+      deployments.set(contractSpec.logical_id, { contractId, wasmSha256 });
+      if (contractSpec.id !== undefined) {
+        setupResults.set(contractSpec.id, {
+          logical_id: contractSpec.logical_id,
+          contract_id: contractId,
+          ...receipt,
+        });
+      }
+    }
+
+    // Measurement phase, in fixture declaration order.
+    const results: ContractBenchmark[] = [];
+    for (const contractSpec of fixturesSpec.contracts) {
+      const { contractId, wasmSha256 } = deployments.get(
+        contractSpec.logical_id,
+      )!;
+
+      const benchmarks: BenchmarkResult[] = [];
+
+      // 3. Simulate invocations
+      for (const invokeSpec of contractSpec.invocations) {
+        if (opts.signal?.aborted) {
+          throw (
+            opts.signal.reason || new Error("Measurement cancelled by caller")
+          );
+        }
+        console.log(`Simulating ${invokeSpec.function_name}...`);
+        const invokeTx = await buildInvocationTransaction({
+          server,
+          sourceAccount: invocationSourceAccount,
+          contractId,
+          invocation: invokeSpec,
+          rpcUrl: effectiveRpcUrl,
+          signal: opts.signal,
+          setupResults,
+        });
+
+        const simRes = await server.simulateTransaction(invokeTx);
+        if (rpc.Api.isSimulationError(simRes)) {
+          throw new Error(
+            `Simulation failed for ${invokeSpec.function_name}: ${simRes.error}`,
+          );
+        }
+
+        if (!rpc.Api.isSimulationSuccess(simRes)) {
+          throw new Error(
+            `Simulation did not return transaction data for ${invokeSpec.function_name}`,
+          );
+        }
+        const helperPath = await resolveSimulationHelper(opts.helperPath);
+        const { output, provenance, limits } = await measureInvocation(
+          effectiveRpcUrl,
+          invokeTx,
+          helperPath,
+          { signal: opts.signal },
+        );
+        const metrics = metricsFromSimulation(output, limits);
+
+        benchmarks.push({
+          function_name: invokeSpec.function_name,
+          case_id: invokeSpec.case_id,
+          metrics,
+          provenance,
+          wasm_sha256: wasmSha256,
+        });
+      }
+
+      const wasmPath = resolvedWasmPaths.get(contractSpec.wasm_path)!;
+      const sorobanSdkVersion =
+        opts.sdkVersion !== undefined
+          ? opts.sdkVersion
+          : discoverSdkVersion(wasmPath);
+
+      results.push({
+        schema_version: CURRENT_RECORD_SCHEMA_VERSION,
+        fixture_id: fixturesSpec.fixture_id,
         logical_id: contractSpec.logical_id,
         contract_id: contractId,
-        ...receipt,
-      });
-    }
-  }
-
-  // Measurement phase, in fixture declaration order.
-  const results: ContractBenchmark[] = [];
-  for (const contractSpec of fixturesSpec.contracts) {
-    const { contractId, wasmSha256 } = deployments.get(
-      contractSpec.logical_id,
-    )!;
-
-    const benchmarks: BenchmarkResult[] = [];
-
-    // 3. Simulate invocations
-    for (const invokeSpec of contractSpec.invocations) {
-      if (opts.signal?.aborted) {
-        throw (
-          opts.signal.reason || new Error("Measurement cancelled by caller")
-        );
-      }
-      console.log(`Simulating ${invokeSpec.function_name}...`);
-      const invokeTx = await buildInvocationTransaction({
-        server,
-        sourceAccount: invocationSourceAccount,
-        contractId,
-        invocation: invokeSpec,
-        rpcUrl: effectiveRpcUrl,
-        signal: opts.signal,
-        setupResults,
-      });
-
-      const simRes = await server.simulateTransaction(invokeTx);
-      if (rpc.Api.isSimulationError(simRes)) {
-        throw new Error(
-          `Simulation failed for ${invokeSpec.function_name}: ${simRes.error}`,
-        );
-      }
-
-      if (!rpc.Api.isSimulationSuccess(simRes)) {
-        throw new Error(
-          `Simulation did not return transaction data for ${invokeSpec.function_name}`,
-        );
-      }
-      const helperPath = await resolveSimulationHelper(opts.helperPath);
-      const { output, provenance, limits } = await measureInvocation(
-        effectiveRpcUrl,
-        invokeTx,
-        helperPath,
-        { signal: opts.signal },
-      );
-      const metrics = metricsFromSimulation(output, limits);
-
-      benchmarks.push({
-        function_name: invokeSpec.function_name,
-        case_id: invokeSpec.case_id,
-        metrics,
-        provenance,
-        wasm_sha256: wasmSha256,
+        git_commit: opts.gitCommit,
+        soroban_sdk_version: sorobanSdkVersion,
+        timestamp: Math.floor(Date.now() / 1000),
+        benchmarks,
       });
     }
 
-    const sorobanSdkVersion =
-      opts.sdkVersion !== undefined
-        ? opts.sdkVersion
-        : discoverSdkVersion(wasmPath);
-
-    results.push({
-      schema_version: CURRENT_RECORD_SCHEMA_VERSION,
-      fixture_id: fixturesSpec.fixture_id,
-      logical_id: contractSpec.logical_id,
-      contract_id: contractId,
-      git_commit: opts.gitCommit,
-      soroban_sdk_version: sorobanSdkVersion,
-      timestamp: Math.floor(Date.now() / 1000),
-      benchmarks,
-    });
+    return results;
+  } finally {
+    if (ownedTempKeyDir) {
+      try {
+        fs.rmSync(ownedTempKeyDir, { recursive: true, force: true });
+      } catch {
+        // Ignore cleanup errors on process teardown
+      }
+    }
   }
-
-  return results;
 }
 
 export {

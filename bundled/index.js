@@ -107,11 +107,11 @@ var require_command = __commonJS({
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.issueCommand = issueCommand;
     exports2.issue = issue;
-    var os3 = __importStar(require("os"));
+    var os4 = __importStar(require("os"));
     var utils_1 = require_utils();
     function issueCommand(command, properties, message) {
       const cmd = new Command(command, properties, message);
-      process.stdout.write(cmd.toString() + os3.EOL);
+      process.stdout.write(cmd.toString() + os4.EOL);
     }
     function issue(name, message = "") {
       issueCommand(name, {}, message);
@@ -204,7 +204,7 @@ var require_file_command = __commonJS({
     exports2.prepareKeyValueMessage = prepareKeyValueMessage;
     var crypto6 = __importStar(require("crypto"));
     var fs8 = __importStar(require("fs"));
-    var os3 = __importStar(require("os"));
+    var os4 = __importStar(require("os"));
     var utils_1 = require_utils();
     function issueFileCommand(command, message) {
       const filePath = process.env[`GITHUB_${command}`];
@@ -214,7 +214,7 @@ var require_file_command = __commonJS({
       if (!fs8.existsSync(filePath)) {
         throw new Error(`Missing file at path: ${filePath}`);
       }
-      fs8.appendFileSync(filePath, `${(0, utils_1.toCommandValue)(message)}${os3.EOL}`, {
+      fs8.appendFileSync(filePath, `${(0, utils_1.toCommandValue)(message)}${os4.EOL}`, {
         encoding: "utf8"
       });
     }
@@ -227,7 +227,7 @@ var require_file_command = __commonJS({
       if (convertedValue.includes(delimiter)) {
         throw new Error(`Unexpected input: value should not contain the delimiter "${delimiter}"`);
       }
-      return `${key}<<${delimiter}${os3.EOL}${convertedValue}${os3.EOL}${delimiter}`;
+      return `${key}<<${delimiter}${os4.EOL}${convertedValue}${os4.EOL}${delimiter}`;
     }
   }
 });
@@ -20966,7 +20966,7 @@ var require_toolrunner = __commonJS({
     };
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.argStringToArray = exports2.ToolRunner = void 0;
-    var os3 = __importStar(require("os"));
+    var os4 = __importStar(require("os"));
     var events = __importStar(require("events"));
     var child = __importStar(require("child_process"));
     var path9 = __importStar(require("path"));
@@ -21021,12 +21021,12 @@ var require_toolrunner = __commonJS({
       _processLineBuffer(data, strBuffer, onLine) {
         try {
           let s = strBuffer + data.toString();
-          let n = s.indexOf(os3.EOL);
+          let n = s.indexOf(os4.EOL);
           while (n > -1) {
             const line = s.substring(0, n);
             onLine(line);
-            s = s.substring(n + os3.EOL.length);
-            n = s.indexOf(os3.EOL);
+            s = s.substring(n + os4.EOL.length);
+            n = s.indexOf(os4.EOL);
           }
           return s;
         } catch (err) {
@@ -21195,7 +21195,7 @@ var require_toolrunner = __commonJS({
             }
             const optionsNonNull = this._cloneExecOptions(this.options);
             if (!optionsNonNull.silent && optionsNonNull.outStream) {
-              optionsNonNull.outStream.write(this._getCommandString(optionsNonNull) + os3.EOL);
+              optionsNonNull.outStream.write(this._getCommandString(optionsNonNull) + os4.EOL);
             }
             const state = new ExecState(optionsNonNull, this.toolPath);
             state.on("debug", (message) => {
@@ -21724,7 +21724,7 @@ var require_core = __commonJS({
     var command_1 = require_command();
     var file_command_1 = require_file_command();
     var utils_1 = require_utils();
-    var os3 = __importStar(require("os"));
+    var os4 = __importStar(require("os"));
     var path9 = __importStar(require("path"));
     var oidc_utils_1 = require_oidc_utils();
     var ExitCode;
@@ -21786,7 +21786,7 @@ Support boolean input list: \`true | True | TRUE | false | False | FALSE\``);
       if (filePath) {
         return (0, file_command_1.issueFileCommand)("OUTPUT", (0, file_command_1.prepareKeyValueMessage)(name, value));
       }
-      process.stdout.write(os3.EOL);
+      process.stdout.write(os4.EOL);
       (0, command_1.issueCommand)("set-output", { name }, (0, utils_1.toCommandValue)(value));
     }
     function setCommandEcho(enabled) {
@@ -21812,7 +21812,7 @@ Support boolean input list: \`true | True | TRUE | false | False | FALSE\``);
       (0, command_1.issueCommand)("notice", (0, utils_1.toCommandProperties)(properties), message instanceof Error ? message.toString() : message);
     }
     function info4(message) {
-      process.stdout.write(message + os3.EOL);
+      process.stdout.write(message + os4.EOL);
     }
     function startGroup2(name) {
       (0, command_1.issue)("group", name);
@@ -31144,10 +31144,11 @@ var exec7 = __toESM(require_exec());
 init_github();
 var fs7 = __toESM(require("fs"));
 var path8 = __toESM(require("path"));
-var os2 = __toESM(require("os"));
+var os3 = __toESM(require("os"));
 
 // src/measurement.ts
 var fs3 = __toESM(require("fs"));
+var os = __toESM(require("os"));
 var path4 = __toESM(require("path"));
 var crypto3 = __toESM(require("crypto"));
 
@@ -35781,7 +35782,7 @@ function inspectMeasurementRecord(value, index) {
     diagnostics: []
   };
 }
-function validateApprovedMetricProvenance(key, metric, path7, version2, diagnostics) {
+function validateApprovedMetricProvenance(key, metric, path9, version2, diagnostics) {
   const approved = APPROVED_METRIC_PROVENANCE[key];
   const allowedFields = approved.availability === "unavailable" ? ["availability", "consumed", "limit", "reason"] : [
     "availability",
@@ -35805,7 +35806,7 @@ function validateApprovedMetricProvenance(key, metric, path7, version2, diagnost
     const expected = expectedValues[field];
     if (metric[field] !== expected && (expected !== void 0 || metric[field] !== void 0)) {
       diagnostics.push({
-        path: `${path7}.${field}`,
+        path: `${path9}.${field}`,
         version: version2,
         code: "UNAPPROVED_METRIC_PROVENANCE",
         message: `Schema 5 metric ${key} has unapproved ${field} provenance`
@@ -35814,7 +35815,7 @@ function validateApprovedMetricProvenance(key, metric, path7, version2, diagnost
   }
   if (approved.availability === "unavailable" && metric.limit !== null || approved.availability === "measured" && "limitReason" in approved && metric.limit !== null || approved.availability === "measured" && "limitSource" in approved && metric.limit === null) {
     diagnostics.push({
-      path: `${path7}.limit`,
+      path: `${path9}.limit`,
       version: version2,
       code: "UNAPPROVED_METRIC_PROVENANCE",
       message: `Schema 5 metric ${key} has an unapproved limit shape`
@@ -35823,7 +35824,7 @@ function validateApprovedMetricProvenance(key, metric, path7, version2, diagnost
   for (const field of Object.keys(metric)) {
     if (!allowedFields.includes(field)) {
       diagnostics.push({
-        path: `${path7}.${field}`,
+        path: `${path9}.${field}`,
         version: version2,
         code: "UNAPPROVED_METRIC_PROVENANCE",
         message: `Schema 5 metric ${key} contains unsupported provenance field ${field}`
@@ -55297,141 +55298,155 @@ async function runMeasurement(fixturesPathOrOptions, gitCommit, sdkVersion, rpcU
   }
   const effectiveRpcUrl = opts.rpcUrl ?? DEFAULT_RPC_URL;
   const fixturesDir = path4.dirname(path4.resolve(opts.fixturesPath));
-  const keyFile = opts.keyFile ?? path4.join(fixturesDir, ".weighin-temp-key");
-  const rawFixtures = fs3.readFileSync(opts.fixturesPath, "utf8");
-  const fixturesSpec = parseFixtures(
-    rawFixtures,
-    opts.fixtureId ?? path4.relative(process.cwd(), path4.resolve(opts.fixturesPath))
-  );
-  const setupOrder = planSetupOrder(
-    fixturesSpec.fixture_id,
-    fixturesSpec.contracts
-  );
-  const resolvedWasmPaths = preflightContractArtifacts(
-    fixturesDir,
-    fixturesSpec.contracts,
-    fixturesSpec.fixture_id,
-    { allowCrossTargetSubstitution: opts.allowCrossTargetSubstitution }
-  );
-  const server = new rpc_exports.Server(effectiveRpcUrl, { allowHttp: true });
-  const deployer = await getOrInitAccount(
-    keyFile,
-    effectiveRpcUrl,
-    opts.signal
-  );
-  const deployerAddress = Address.fromString(deployer.publicKey());
-  let invocationSourceAccount = deployer.publicKey();
-  if (opts.invocationSourceAccount !== void 0) {
-    invocationSourceAccount = normalizeSourceAccount(
-      opts.invocationSourceAccount
-    );
-    if (invocationSourceAccount !== deployer.publicKey()) {
-      console.log(`Invocation source account: ${invocationSourceAccount}`);
-    }
+  const ownedTempKeyDir = opts.keyFile === void 0 ? fs3.mkdtempSync(path4.join(os.tmpdir(), "weighin-deployer-key-")) : null;
+  if (ownedTempKeyDir) {
+    fs3.chmodSync(ownedTempKeyDir, 448);
   }
-  const setupResults = /* @__PURE__ */ new Map();
-  const deployments = /* @__PURE__ */ new Map();
-  for (const contractSpec of setupOrder) {
-    const wasmPath = resolvedWasmPaths.get(contractSpec.wasm_path);
-    const wasmBytes = fs3.readFileSync(wasmPath);
-    const wasmHash = crypto3.createHash("sha256").update(wasmBytes).digest();
-    const wasmSha256 = wasmHash.toString("hex");
-    console.log(`WASM: ${wasmPath}`);
-    console.log(`WASM SHA256: ${wasmSha256}`);
-    const salt = crypto3.createHash("sha256").update(wasmHash).digest();
-    const contractId = calculateContractId(deployer.publicKey(), salt);
-    console.log(`Contract ID: ${contractId}`);
-    let receipt;
-    try {
-      receipt = await ensureContractDeployed({
-        server,
-        deployer,
-        deployerAddress,
-        wasmBytes,
-        wasmHash,
-        salt,
-        contractId,
-        rpcUrl: effectiveRpcUrl,
-        signal: opts.signal
-      });
-    } catch (err) {
-      const aborted = dependentsOf(contractSpec, setupOrder);
-      if (opts.signal?.aborted || aborted.length === 0) throw err;
-      throw new Error(
-        `${err instanceof Error ? err.message : String(err)}
-Setup of ${contractSpec.logical_id} failed; aborted dependents: ${aborted.map((contract) => contract.logical_id).join(", ")}`,
-        { cause: err }
+  const keyFile = opts.keyFile ?? path4.join(ownedTempKeyDir, ".weighin-temp-key");
+  try {
+    const rawFixtures = fs3.readFileSync(opts.fixturesPath, "utf8");
+    const fixturesSpec = parseFixtures(
+      rawFixtures,
+      opts.fixtureId ?? path4.relative(process.cwd(), path4.resolve(opts.fixturesPath))
+    );
+    const setupOrder = planSetupOrder(
+      fixturesSpec.fixture_id,
+      fixturesSpec.contracts
+    );
+    const resolvedWasmPaths = preflightContractArtifacts(
+      fixturesDir,
+      fixturesSpec.contracts,
+      fixturesSpec.fixture_id,
+      { allowCrossTargetSubstitution: opts.allowCrossTargetSubstitution }
+    );
+    const server = new rpc_exports.Server(effectiveRpcUrl, { allowHttp: true });
+    const deployer = await getOrInitAccount(
+      keyFile,
+      effectiveRpcUrl,
+      opts.signal
+    );
+    const deployerAddress = Address.fromString(deployer.publicKey());
+    let invocationSourceAccount = deployer.publicKey();
+    if (opts.invocationSourceAccount !== void 0) {
+      invocationSourceAccount = normalizeSourceAccount(
+        opts.invocationSourceAccount
       );
+      if (invocationSourceAccount !== deployer.publicKey()) {
+        console.log(`Invocation source account: ${invocationSourceAccount}`);
+      }
     }
-    deployments.set(contractSpec.logical_id, { contractId, wasmSha256 });
-    if (contractSpec.id !== void 0) {
-      setupResults.set(contractSpec.id, {
+    const setupResults = /* @__PURE__ */ new Map();
+    const deployments = /* @__PURE__ */ new Map();
+    for (const contractSpec of setupOrder) {
+      const wasmPath = resolvedWasmPaths.get(contractSpec.wasm_path);
+      const wasmBytes = fs3.readFileSync(wasmPath);
+      const wasmHash = crypto3.createHash("sha256").update(wasmBytes).digest();
+      const wasmSha256 = wasmHash.toString("hex");
+      console.log(`WASM: ${wasmPath}`);
+      console.log(`WASM SHA256: ${wasmSha256}`);
+      const salt = crypto3.createHash("sha256").update(wasmHash).digest();
+      const contractId = calculateContractId(deployer.publicKey(), salt);
+      console.log(`Contract ID: ${contractId}`);
+      let receipt;
+      try {
+        receipt = await ensureContractDeployed({
+          server,
+          deployer,
+          deployerAddress,
+          wasmBytes,
+          wasmHash,
+          salt,
+          contractId,
+          rpcUrl: effectiveRpcUrl,
+          signal: opts.signal
+        });
+      } catch (err) {
+        const aborted = dependentsOf(contractSpec, setupOrder);
+        if (opts.signal?.aborted || aborted.length === 0) throw err;
+        throw new Error(
+          `${err instanceof Error ? err.message : String(err)}
+Setup of ${contractSpec.logical_id} failed; aborted dependents: ${aborted.map((contract) => contract.logical_id).join(", ")}`,
+          { cause: err }
+        );
+      }
+      deployments.set(contractSpec.logical_id, { contractId, wasmSha256 });
+      if (contractSpec.id !== void 0) {
+        setupResults.set(contractSpec.id, {
+          logical_id: contractSpec.logical_id,
+          contract_id: contractId,
+          ...receipt
+        });
+      }
+    }
+    const results = [];
+    for (const contractSpec of fixturesSpec.contracts) {
+      const { contractId, wasmSha256 } = deployments.get(
+        contractSpec.logical_id
+      );
+      const benchmarks = [];
+      for (const invokeSpec of contractSpec.invocations) {
+        if (opts.signal?.aborted) {
+          throw opts.signal.reason || new Error("Measurement cancelled by caller");
+        }
+        console.log(`Simulating ${invokeSpec.function_name}...`);
+        const invokeTx = await buildInvocationTransaction({
+          server,
+          sourceAccount: invocationSourceAccount,
+          contractId,
+          invocation: invokeSpec,
+          rpcUrl: effectiveRpcUrl,
+          signal: opts.signal,
+          setupResults
+        });
+        const simRes = await server.simulateTransaction(invokeTx);
+        if (rpc_exports.Api.isSimulationError(simRes)) {
+          throw new Error(
+            `Simulation failed for ${invokeSpec.function_name}: ${simRes.error}`
+          );
+        }
+        if (!rpc_exports.Api.isSimulationSuccess(simRes)) {
+          throw new Error(
+            `Simulation did not return transaction data for ${invokeSpec.function_name}`
+          );
+        }
+        const helperPath = await resolveSimulationHelper(opts.helperPath);
+        const { output, provenance, limits } = await measureInvocation(
+          effectiveRpcUrl,
+          invokeTx,
+          helperPath,
+          { signal: opts.signal }
+        );
+        const metrics = metricsFromSimulation(output, limits);
+        benchmarks.push({
+          function_name: invokeSpec.function_name,
+          case_id: invokeSpec.case_id,
+          metrics,
+          provenance,
+          wasm_sha256: wasmSha256
+        });
+      }
+      const wasmPath = resolvedWasmPaths.get(contractSpec.wasm_path);
+      const sorobanSdkVersion = opts.sdkVersion !== void 0 ? opts.sdkVersion : discoverSdkVersion(wasmPath);
+      results.push({
+        schema_version: CURRENT_RECORD_SCHEMA_VERSION,
+        fixture_id: fixturesSpec.fixture_id,
         logical_id: contractSpec.logical_id,
         contract_id: contractId,
-        ...receipt
+        git_commit: opts.gitCommit,
+        soroban_sdk_version: sorobanSdkVersion,
+        timestamp: Math.floor(Date.now() / 1e3),
+        benchmarks
       });
     }
-  }
-  const results = [];
-  for (const contractSpec of fixturesSpec.contracts) {
-    const { contractId, wasmSha256 } = deployments.get(
-      contractSpec.logical_id
-    );
-    const benchmarks = [];
-    for (const invokeSpec of contractSpec.invocations) {
-      if (opts.signal?.aborted) {
-        throw opts.signal.reason || new Error("Measurement cancelled by caller");
+    return results;
+  } finally {
+    if (ownedTempKeyDir) {
+      try {
+        fs3.rmSync(ownedTempKeyDir, { recursive: true, force: true });
+      } catch {
       }
-      console.log(`Simulating ${invokeSpec.function_name}...`);
-      const invokeTx = await buildInvocationTransaction({
-        server,
-        sourceAccount: invocationSourceAccount,
-        contractId,
-        invocation: invokeSpec,
-        rpcUrl: effectiveRpcUrl,
-        signal: opts.signal,
-        setupResults
-      });
-      const simRes = await server.simulateTransaction(invokeTx);
-      if (rpc_exports.Api.isSimulationError(simRes)) {
-        throw new Error(
-          `Simulation failed for ${invokeSpec.function_name}: ${simRes.error}`
-        );
-      }
-      if (!rpc_exports.Api.isSimulationSuccess(simRes)) {
-        throw new Error(
-          `Simulation did not return transaction data for ${invokeSpec.function_name}`
-        );
-      }
-      const helperPath = await resolveSimulationHelper(opts.helperPath);
-      const { output, provenance, limits } = await measureInvocation(
-        effectiveRpcUrl,
-        invokeTx,
-        helperPath,
-        { signal: opts.signal }
-      );
-      const metrics = metricsFromSimulation(output, limits);
-      benchmarks.push({
-        function_name: invokeSpec.function_name,
-        case_id: invokeSpec.case_id,
-        metrics,
-        provenance,
-        wasm_sha256: wasmSha256
-      });
     }
-    const sorobanSdkVersion = opts.sdkVersion !== void 0 ? opts.sdkVersion : discoverSdkVersion(wasmPath);
-    results.push({
-      schema_version: CURRENT_RECORD_SCHEMA_VERSION,
-      fixture_id: fixturesSpec.fixture_id,
-      logical_id: contractSpec.logical_id,
-      contract_id: contractId,
-      git_commit: opts.gitCommit,
-      soroban_sdk_version: sorobanSdkVersion,
-      timestamp: Math.floor(Date.now() / 1e3),
-      benchmarks
-    });
   }
-  return results;
 }
 
 // src/threshold.ts
@@ -56280,7 +56295,7 @@ var exec3 = __toESM(require_exec());
 // src/build.ts
 var fs4 = __toESM(require("fs"));
 var path5 = __toESM(require("path"));
-var os = __toESM(require("os"));
+var os2 = __toESM(require("os"));
 var import_crypto = require("crypto");
 var exec = __toESM(require_exec());
 var CargoTargetSchema = external_exports.object({
@@ -56704,7 +56719,7 @@ async function buildContracts(fixturesPathOrOptions, workspaceRoot, rustToolchai
     if (!wasm) {
       let outputDir;
       try {
-        outputDir = fs4.mkdtempSync(path5.join(os.tmpdir(), "weighin-build-"));
+        outputDir = fs4.mkdtempSync(path5.join(os2.tmpdir(), "weighin-build-"));
       } catch (error2) {
         throw new Error(
           `Cannot create build temporary storage: ${error2.message}`
@@ -57216,7 +57231,7 @@ async function checkoutRef(repoRoot, ref, label) {
   await exec7.exec("git", ["fetch", "--depth=1", "origin", ref], {
     cwd: repoRoot
   });
-  const dir = fs7.mkdtempSync(path8.join(os2.tmpdir(), `weighin-${label}-`));
+  const dir = fs7.mkdtempSync(path8.join(os3.tmpdir(), `weighin-${label}-`));
   core3.info(`Checking out ${ref} into ${dir}`);
   try {
     await exec7.exec("git", ["worktree", "add", "--detach", dir, "FETCH_HEAD"], {
@@ -57279,7 +57294,7 @@ async function run() {
     }
     const baseRef = baseRefInput.trim() || context2.payload.pull_request?.base?.ref || "main";
     await validateBaseRef(headWorkspace, baseRef);
-    keyDir = fs7.mkdtempSync(path8.join(os2.tmpdir(), "weighin-key-"));
+    keyDir = fs7.mkdtempSync(path8.join(os3.tmpdir(), "weighin-key-"));
     fs7.chmodSync(keyDir, 448);
     sharedKeyFile = path8.join(keyDir, "weighin-deployer.key");
     core3.info(`Base ref:   ${baseRef}`);
