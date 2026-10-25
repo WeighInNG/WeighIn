@@ -45,3 +45,27 @@ test('CLI stdout failure emits error on stderr and nothing on stdout',()=>{
     assert.equal(r.stdout,'');
   }finally{fs.rmSync(temporary,{recursive:true,force:true});}
 });
+
+test('CLI --list-identities outputs parser-derived logical identity tuples offline (#231)', () => {
+  const temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'weighin-identities-cli-'));
+  try {
+    const pkg = require('../package.json');
+    const bin = path.resolve(__dirname, '..', pkg.bin.weighin);
+    const f1 = path.join(temporary, 'f1.json');
+    fs.writeFileSync(f1, JSON.stringify({
+      id: 'suite-a',
+      contracts: [{ id: 'vault', wasm_path: 'a/b/vault.wasm', invocations: [{ id: 'deposit-1', function_name: 'deposit', args: [] }] }]
+    }));
+    const res = spawnSync(process.execPath, [bin, 'f1.json', '--list-identities', '--json-stdout'], { cwd: temporary, encoding: 'utf8', timeout: 5000 });
+    assert.equal(res.status, 0);
+    const tuples = JSON.parse(res.stdout);
+    assert.deepEqual(tuples, [{
+      fixture_id: 'id:suite-a',
+      logical_id: 'id:vault',
+      function_name: 'deposit',
+      case_id: 'id:deposit-1',
+    }]);
+  } finally {
+    fs.rmSync(temporary, { recursive: true, force: true });
+  }
+});
