@@ -21,6 +21,7 @@ export interface CliOptions {
   rpcUrl: string;
   jsonStdout: boolean;
   allowCrossTargetSubstitution: boolean;
+  helperPath?: string;
 }
 
 export function parseArgs(
@@ -31,11 +32,18 @@ export function parseArgs(
   let jsonStdout = false;
   let rpcUrl = "http://localhost:8000/rpc";
   let allowCrossTargetSubstitution = false;
+  let helperPath: string | undefined;
 
   for (let i = 0; i < rawArgs.length; i++) {
     const arg = rawArgs[i];
     if (arg === "--rpc-url" && rawArgs[i + 1]) {
       rpcUrl = rawArgs[++i];
+    } else if (arg === "--helper-path" || arg === "--helper") {
+      const next = rawArgs[i + 1];
+      if (!next || next.startsWith("--") || !next.trim()) {
+        throw new Error(`Missing value for ${arg}`);
+      }
+      helperPath = rawArgs[++i];
     } else if (arg === "--output" && rawArgs[i + 1]) {
       const target = rawArgs[++i];
       if (target === "-") {
@@ -80,6 +88,7 @@ export function parseArgs(
     rpcUrl,
     jsonStdout,
     allowCrossTargetSubstitution,
+    ...(helperPath !== undefined ? { helperPath } : {}),
   };
 }
 
@@ -92,7 +101,7 @@ async function main() {
     process.exit(1);
   }
 
-  const { fixturesPath, outputPath, rpcUrl, jsonStdout } = options;
+  const { fixturesPath, outputPath, rpcUrl, jsonStdout, helperPath } = options;
   const gitCommit = getGitCommit();
 
   // When stdout mode is requested, route diagnostic and progress logs to stderr.
@@ -151,6 +160,7 @@ async function main() {
       gitCommit,
       rpcUrl,
       allowCrossTargetSubstitution: options.allowCrossTargetSubstitution,
+      ...(helperPath !== undefined ? { helperPath } : {}),
     });
 
     if (jsonStdout) {

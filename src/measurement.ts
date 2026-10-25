@@ -1140,6 +1140,7 @@ export async function runMeasurement(
       });
     }
 
+    const wasmPath = resolvedWasmPaths.get(contractSpec.wasm_path)!;
     const sorobanSdkVersion =
       opts.sdkVersion !== undefined
         ? opts.sdkVersion

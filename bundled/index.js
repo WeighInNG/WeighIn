@@ -35781,7 +35781,7 @@ function inspectMeasurementRecord(value, index) {
     diagnostics: []
   };
 }
-function validateApprovedMetricProvenance(key, metric, path7, version2, diagnostics) {
+function validateApprovedMetricProvenance(key, metric, path9, version2, diagnostics) {
   const approved = APPROVED_METRIC_PROVENANCE[key];
   const allowedFields = approved.availability === "unavailable" ? ["availability", "consumed", "limit", "reason"] : [
     "availability",
@@ -35805,7 +35805,7 @@ function validateApprovedMetricProvenance(key, metric, path7, version2, diagnost
     const expected = expectedValues[field];
     if (metric[field] !== expected && (expected !== void 0 || metric[field] !== void 0)) {
       diagnostics.push({
-        path: `${path7}.${field}`,
+        path: `${path9}.${field}`,
         version: version2,
         code: "UNAPPROVED_METRIC_PROVENANCE",
         message: `Schema 5 metric ${key} has unapproved ${field} provenance`
@@ -35814,7 +35814,7 @@ function validateApprovedMetricProvenance(key, metric, path7, version2, diagnost
   }
   if (approved.availability === "unavailable" && metric.limit !== null || approved.availability === "measured" && "limitReason" in approved && metric.limit !== null || approved.availability === "measured" && "limitSource" in approved && metric.limit === null) {
     diagnostics.push({
-      path: `${path7}.limit`,
+      path: `${path9}.limit`,
       version: version2,
       code: "UNAPPROVED_METRIC_PROVENANCE",
       message: `Schema 5 metric ${key} has an unapproved limit shape`
@@ -35823,7 +35823,7 @@ function validateApprovedMetricProvenance(key, metric, path7, version2, diagnost
   for (const field of Object.keys(metric)) {
     if (!allowedFields.includes(field)) {
       diagnostics.push({
-        path: `${path7}.${field}`,
+        path: `${path9}.${field}`,
         version: version2,
         code: "UNAPPROVED_METRIC_PROVENANCE",
         message: `Schema 5 metric ${key} contains unsupported provenance field ${field}`
@@ -55419,6 +55419,7 @@ Setup of ${contractSpec.logical_id} failed; aborted dependents: ${aborted.map((c
         wasm_sha256: wasmSha256
       });
     }
+    const wasmPath = resolvedWasmPaths.get(contractSpec.wasm_path);
     const sorobanSdkVersion = opts.sdkVersion !== void 0 ? opts.sdkVersion : discoverSdkVersion(wasmPath);
     results.push({
       schema_version: CURRENT_RECORD_SCHEMA_VERSION,

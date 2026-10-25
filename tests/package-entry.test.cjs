@@ -45,3 +45,10 @@ test('CLI stdout failure emits error on stderr and nothing on stdout',()=>{
     assert.equal(r.stdout,'');
   }finally{fs.rmSync(temporary,{recursive:true,force:true});}
 });
+
+test('CLI parses --helper-path and forwards helperPath to runMeasurement (#232)', () => {
+  const { parseArgs } = require('../dist/cli');
+  const parsed = parseArgs(['fixtures.json', '--helper-path', '/custom/soroban-sim-helper']);
+  assert.equal(parsed.helperPath, '/custom/soroban-sim-helper');
+  assert.throws(() => parseArgs(['fixtures.json', '--helper-path']), /Missing value for --helper-path/);
+});
