@@ -53,3 +53,18 @@ the files it describes are present in the normal npm package.
 This is a reproducible component and provenance inventory. It is not
 vulnerability clearance, a license/legal certification, or a claim that every
 locked component is statically reachable at runtime.
+
+## Reusable deployer-key file policy
+
+When `runMeasurement` receives an existing deployer key path (or reuses the
+private runner key file between BASE and HEAD measurements), `getOrInitAccount`
+inspects the path with `fs.lstatSync` before reading any secret material or
+contacting RPC/Friendbot:
+
+- Symbolic links (including dangling links) and non-regular files (directories,
+  FIFOs, sockets, device nodes) are rejected immediately.
+- On POSIX platforms (`process.platform !== "win32"`), the file must be owned by
+  the current process UID (`stats.uid === process.getuid()`) and must not grant
+  any group or world permission bits (`(stats.mode & 0o077) === 0`, such as
+  `0600` or `0400`).
+- Newly generated deployer key files are written with mode `0600`.
