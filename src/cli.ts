@@ -21,6 +21,7 @@ export interface CliOptions {
   rpcUrl: string;
   jsonStdout: boolean;
   allowCrossTargetSubstitution: boolean;
+  listIdentities?: boolean;
 }
 
 export function parseArgs(
@@ -29,6 +30,7 @@ export function parseArgs(
   let fixturesPath: string | null = null;
   let explicitOutputFile: string | null = null;
   let jsonStdout = false;
+  let listIdentities = false;
   let rpcUrl = "http://localhost:8000/rpc";
   let allowCrossTargetSubstitution = false;
 
@@ -47,6 +49,8 @@ export function parseArgs(
       jsonStdout = true;
     } else if (arg === "--allow-cross-target-substitution") {
       allowCrossTargetSubstitution = true;
+    } else if (arg === "--list-identities") {
+      listIdentities = true;
     } else if (!arg.startsWith("--")) {
       // Positional argument
       if (fixturesPath === null) {
@@ -80,6 +84,7 @@ export function parseArgs(
     rpcUrl,
     jsonStdout,
     allowCrossTargetSubstitution,
+    ...(listIdentities ? { listIdentities: true } : {}),
   };
 }
 
@@ -103,6 +108,36 @@ async function main() {
   if (jsonStdout) {
     console.log = (...args: any[]) => console.error(...args);
     console.info = (...args: any[]) => console.error(...args);
+  }
+
+  if (options.listIdentities) {
+    try {
+      const raw = fs.readFileSync(fixturesPath, "utf8");
+      const parsed = parseFixtures(raw, fixturesPath);
+      const tuples = parsed.contracts.flatMap((contract) =>
+        contract.invocations.map((inv) => ({
+          fixture_id: parsed.fixture_id,
+          logical_id: contract.logical_id,
+          function_name: inv.function_name,
+          case_id: inv.case_id,
+        })),
+      );
+      if (jsonStdout) {
+        process.stdout.write(JSON.stringify(tuples, null, 2) + "\n");
+      } else {
+        for (const t of tuples) {
+          console.log(
+            `${t.fixture_id} :: ${t.logical_id} :: ${t.function_name} :: ${t.case_id}`,
+          );
+        }
+      }
+      return;
+    } catch (err: any) {
+      console.error(
+        `Identity listing failed (${fixturesPath}): ${err?.message ?? err}`,
+      );
+      process.exit(1);
+    }
   }
 
   // Best-effort: resolve each fixture artifact to its owning Cargo
