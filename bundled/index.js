@@ -35781,7 +35781,7 @@ function inspectMeasurementRecord(value, index) {
     diagnostics: []
   };
 }
-function validateApprovedMetricProvenance(key, metric, path7, version2, diagnostics) {
+function validateApprovedMetricProvenance(key, metric, path9, version2, diagnostics) {
   const approved = APPROVED_METRIC_PROVENANCE[key];
   const allowedFields = approved.availability === "unavailable" ? ["availability", "consumed", "limit", "reason"] : [
     "availability",
@@ -35805,7 +35805,7 @@ function validateApprovedMetricProvenance(key, metric, path7, version2, diagnost
     const expected = expectedValues[field];
     if (metric[field] !== expected && (expected !== void 0 || metric[field] !== void 0)) {
       diagnostics.push({
-        path: `${path7}.${field}`,
+        path: `${path9}.${field}`,
         version: version2,
         code: "UNAPPROVED_METRIC_PROVENANCE",
         message: `Schema 5 metric ${key} has unapproved ${field} provenance`
@@ -35814,7 +35814,7 @@ function validateApprovedMetricProvenance(key, metric, path7, version2, diagnost
   }
   if (approved.availability === "unavailable" && metric.limit !== null || approved.availability === "measured" && "limitReason" in approved && metric.limit !== null || approved.availability === "measured" && "limitSource" in approved && metric.limit === null) {
     diagnostics.push({
-      path: `${path7}.limit`,
+      path: `${path9}.limit`,
       version: version2,
       code: "UNAPPROVED_METRIC_PROVENANCE",
       message: `Schema 5 metric ${key} has an unapproved limit shape`
@@ -35823,7 +35823,7 @@ function validateApprovedMetricProvenance(key, metric, path7, version2, diagnost
   for (const field of Object.keys(metric)) {
     if (!allowedFields.includes(field)) {
       diagnostics.push({
-        path: `${path7}.${field}`,
+        path: `${path9}.${field}`,
         version: version2,
         code: "UNAPPROVED_METRIC_PROVENANCE",
         message: `Schema 5 metric ${key} contains unsupported provenance field ${field}`
@@ -55419,6 +55419,7 @@ Setup of ${contractSpec.logical_id} failed; aborted dependents: ${aborted.map((c
         wasm_sha256: wasmSha256
       });
     }
+    const wasmPath = resolvedWasmPaths.get(contractSpec.wasm_path);
     const sorobanSdkVersion = opts.sdkVersion !== void 0 ? opts.sdkVersion : discoverSdkVersion(wasmPath);
     results.push({
       schema_version: CURRENT_RECORD_SCHEMA_VERSION,
@@ -55556,7 +55557,81 @@ var GLOBAL_RULE_MAP = [
     toRule: (v) => v
   }
 ];
+function validatePolicyDiffInput(diff) {
+  if (!diff || typeof diff !== "object" || !Array.isArray(diff.contracts)) {
+    throw new Error("Invalid policy diff input: contracts must be an array");
+  }
+  for (const contract of diff.contracts) {
+    if (!contract || typeof contract !== "object" || typeof contract.contract_id !== "string" || !contract.contract_id.trim() || !Array.isArray(contract.functions)) {
+      throw new Error(
+        "Invalid policy diff input: contract record is malformed"
+      );
+    }
+    for (const fn of contract.functions) {
+      if (!fn || typeof fn !== "object" || typeof fn.function_name !== "string" || !fn.function_name.trim() || !Array.isArray(fn.metrics)) {
+        throw new Error(
+          `Invalid policy diff input: function record in ${contract.contract_id} is malformed`
+        );
+      }
+      for (const m of fn.metrics) {
+        if (!m || typeof m !== "object" || !METRIC_KEYS.includes(m.key)) {
+          throw new Error(
+            `Invalid policy diff input: unknown metric key in ${contract.contract_id}::${fn.function_name}`
+          );
+        }
+        if (!m.base || typeof m.base !== "object" || !m.head || typeof m.head !== "object") {
+          throw new Error(
+            `Invalid policy diff input: missing base/head metric envelope for ${m.key}`
+          );
+        }
+        if (m.availability === "unavailable") {
+          if (m.base.consumed !== null && m.head.consumed !== null) {
+            throw new Error(
+              `Invalid policy diff input: ${m.key} marked unavailable but both BASE and HEAD have measured values`
+            );
+          }
+          if (m.delta !== null || m.pct !== null || m.regression !== false) {
+            throw new Error(
+              `Invalid policy diff input: unavailable metric ${m.key} must have null delta/pct and regression=false`
+            );
+          }
+          continue;
+        }
+        const baseConsumed = m.base.consumed;
+        const headConsumed = m.head.consumed;
+        if (typeof baseConsumed !== "number" || !Number.isFinite(baseConsumed) || baseConsumed < 0 || typeof headConsumed !== "number" || !Number.isFinite(headConsumed) || headConsumed < 0) {
+          throw new Error(
+            `Invalid policy diff input: comparable metric ${m.key} requires non-negative finite BASE and HEAD consumed values`
+          );
+        }
+        const expectedDelta = headConsumed - baseConsumed;
+        if (typeof m.delta !== "number" || !Number.isFinite(m.delta) || m.delta !== expectedDelta) {
+          throw new Error(
+            `Invalid policy diff input: ${m.key} delta (${m.delta}) does not match head - base (${expectedDelta})`
+          );
+        }
+        const expectedRegression = expectedDelta > 0;
+        if (typeof m.regression !== "boolean" || m.regression !== expectedRegression) {
+          throw new Error(
+            `Invalid policy diff input: ${m.key} regression flag (${m.regression}) contradicts delta (${expectedDelta})`
+          );
+        }
+        if (baseConsumed === 0 && m.pct !== null) {
+          throw new Error(
+            `Invalid policy diff input: ${m.key} pct must be null when base.consumed is 0`
+          );
+        }
+        if (m.pct !== null && (typeof m.pct !== "number" || !Number.isFinite(m.pct))) {
+          throw new Error(
+            `Invalid policy diff input: ${m.key} pct must be a finite number or null`
+          );
+        }
+      }
+    }
+  }
+}
 function enforceThresholds(diff, config2) {
+  validatePolicyDiffInput(diff);
   if (config2 !== null) config2 = validateConfig(config2);
   if (!config2?.thresholds && !config2?.limits && !config2?.aggregates) return [];
   const global2 = config2?.thresholds?.global ?? {};

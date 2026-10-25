@@ -304,10 +304,120 @@ const GLOBAL_RULE_MAP: Array<{
  * Enforce all threshold rules against a DiffResult.
  * Returns the list of violations (empty = pass).
  */
+
+export function validatePolicyDiffInput(diff: DiffResult): void {
+  if (!diff || typeof diff !== "object" || !Array.isArray(diff.contracts)) {
+    throw new Error("Invalid policy diff input: contracts must be an array");
+  }
+  for (const contract of diff.contracts) {
+    if (
+      !contract ||
+      typeof contract !== "object" ||
+      typeof contract.contract_id !== "string" ||
+      !contract.contract_id.trim() ||
+      !Array.isArray(contract.functions)
+    ) {
+      throw new Error(
+        "Invalid policy diff input: contract record is malformed",
+      );
+    }
+    for (const fn of contract.functions) {
+      if (
+        !fn ||
+        typeof fn !== "object" ||
+        typeof fn.function_name !== "string" ||
+        !fn.function_name.trim() ||
+        !Array.isArray(fn.metrics)
+      ) {
+        throw new Error(
+          `Invalid policy diff input: function record in ${contract.contract_id} is malformed`,
+        );
+      }
+      for (const m of fn.metrics) {
+        if (!m || typeof m !== "object" || !METRIC_KEYS.includes(m.key)) {
+          throw new Error(
+            `Invalid policy diff input: unknown metric key in ${contract.contract_id}::${fn.function_name}`,
+          );
+        }
+        if (
+          !m.base ||
+          typeof m.base !== "object" ||
+          !m.head ||
+          typeof m.head !== "object"
+        ) {
+          throw new Error(
+            `Invalid policy diff input: missing base/head metric envelope for ${m.key}`,
+          );
+        }
+        if (m.availability === "unavailable") {
+          if (m.base.consumed !== null && m.head.consumed !== null) {
+            throw new Error(
+              `Invalid policy diff input: ${m.key} marked unavailable but both BASE and HEAD have measured values`,
+            );
+          }
+          if (m.delta !== null || m.pct !== null || m.regression !== false) {
+            throw new Error(
+              `Invalid policy diff input: unavailable metric ${m.key} must have null delta/pct and regression=false`,
+            );
+          }
+          continue;
+        }
+        const baseConsumed = m.base.consumed;
+        const headConsumed = m.head.consumed;
+        if (
+          typeof baseConsumed !== "number" ||
+          !Number.isFinite(baseConsumed) ||
+          baseConsumed < 0 ||
+          typeof headConsumed !== "number" ||
+          !Number.isFinite(headConsumed) ||
+          headConsumed < 0
+        ) {
+          throw new Error(
+            `Invalid policy diff input: comparable metric ${m.key} requires non-negative finite BASE and HEAD consumed values`,
+          );
+        }
+        const expectedDelta = headConsumed - baseConsumed;
+        if (
+          typeof m.delta !== "number" ||
+          !Number.isFinite(m.delta) ||
+          m.delta !== expectedDelta
+        ) {
+          throw new Error(
+            `Invalid policy diff input: ${m.key} delta (${m.delta}) does not match head - base (${expectedDelta})`,
+          );
+        }
+        const expectedRegression = expectedDelta > 0;
+        if (
+          typeof m.regression !== "boolean" ||
+          m.regression !== expectedRegression
+        ) {
+          throw new Error(
+            `Invalid policy diff input: ${m.key} regression flag (${m.regression}) contradicts delta (${expectedDelta})`,
+          );
+        }
+        if (baseConsumed === 0 && m.pct !== null) {
+          throw new Error(
+            `Invalid policy diff input: ${m.key} pct must be null when base.consumed is 0`,
+          );
+        }
+        if (
+          m.pct !== null &&
+          (typeof m.pct !== "number" || !Number.isFinite(m.pct))
+        ) {
+          throw new Error(
+            `Invalid policy diff input: ${m.key} pct must be a finite number or null`,
+          );
+        }
+      }
+    }
+  }
+}
+
 export function enforceThresholds(
   diff: DiffResult,
   config: WeighinConfig | null,
 ): Violation[] {
+  validatePolicyDiffInput(diff);
   if (config !== null) config = validateConfig(config);
   if (!config?.thresholds && !config?.limits && !config?.aggregates) return [];
 
