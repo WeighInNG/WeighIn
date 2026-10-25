@@ -35781,7 +35781,7 @@ function inspectMeasurementRecord(value, index) {
     diagnostics: []
   };
 }
-function validateApprovedMetricProvenance(key, metric, path7, version2, diagnostics) {
+function validateApprovedMetricProvenance(key, metric, path9, version2, diagnostics) {
   const approved = APPROVED_METRIC_PROVENANCE[key];
   const allowedFields = approved.availability === "unavailable" ? ["availability", "consumed", "limit", "reason"] : [
     "availability",
@@ -35805,7 +35805,7 @@ function validateApprovedMetricProvenance(key, metric, path7, version2, diagnost
     const expected = expectedValues[field];
     if (metric[field] !== expected && (expected !== void 0 || metric[field] !== void 0)) {
       diagnostics.push({
-        path: `${path7}.${field}`,
+        path: `${path9}.${field}`,
         version: version2,
         code: "UNAPPROVED_METRIC_PROVENANCE",
         message: `Schema 5 metric ${key} has unapproved ${field} provenance`
@@ -35814,7 +35814,7 @@ function validateApprovedMetricProvenance(key, metric, path7, version2, diagnost
   }
   if (approved.availability === "unavailable" && metric.limit !== null || approved.availability === "measured" && "limitReason" in approved && metric.limit !== null || approved.availability === "measured" && "limitSource" in approved && metric.limit === null) {
     diagnostics.push({
-      path: `${path7}.limit`,
+      path: `${path9}.limit`,
       version: version2,
       code: "UNAPPROVED_METRIC_PROVENANCE",
       message: `Schema 5 metric ${key} has an unapproved limit shape`
@@ -35823,7 +35823,7 @@ function validateApprovedMetricProvenance(key, metric, path7, version2, diagnost
   for (const field of Object.keys(metric)) {
     if (!allowedFields.includes(field)) {
       diagnostics.push({
-        path: `${path7}.${field}`,
+        path: `${path9}.${field}`,
         version: version2,
         code: "UNAPPROVED_METRIC_PROVENANCE",
         message: `Schema 5 metric ${key} contains unsupported provenance field ${field}`
@@ -36440,6 +36440,80 @@ function validateLargeInt(type, val) {
   }
   return null;
 }
+var U32_MIN = 0;
+var U32_MAX = 4294967295;
+var I32_MIN = -2147483648;
+var I32_MAX = 2147483647;
+var SCSYMBOL_LIMIT = 32;
+function validateBool(val) {
+  if (typeof val !== "boolean") {
+    return "Invalid value for bool: must be boolean";
+  }
+  return null;
+}
+function validateU32(val) {
+  if (typeof val !== "number" || !Number.isFinite(val)) {
+    return "Invalid value for u32: must be number";
+  }
+  if (!Number.isInteger(val)) {
+    return "Invalid value for u32: must be integer";
+  }
+  if (val < U32_MIN || val > U32_MAX) {
+    return `Invalid value for u32: out of bounds (expected ${U32_MIN}..${U32_MAX})`;
+  }
+  return null;
+}
+function validateI32(val) {
+  if (typeof val !== "number" || !Number.isFinite(val)) {
+    return "Invalid value for i32: must be number";
+  }
+  if (!Number.isInteger(val)) {
+    return "Invalid value for i32: must be integer";
+  }
+  if (val < I32_MIN || val > I32_MAX) {
+    return `Invalid value for i32: out of bounds (expected ${I32_MIN}..${I32_MAX})`;
+  }
+  return null;
+}
+function validateString(val) {
+  if (typeof val !== "string") {
+    return "Invalid value for string: must be string";
+  }
+  return null;
+}
+function validateSymbol(val) {
+  if (typeof val !== "string") {
+    return "Invalid value for symbol: must be string";
+  }
+  if (Buffer.byteLength(val, "utf8") > SCSYMBOL_LIMIT) {
+    return `Invalid value for symbol: length exceeds maximum ${SCSYMBOL_LIMIT} bytes (got ${Buffer.byteLength(val, "utf8")})`;
+  }
+  if (!/^[a-zA-Z0-9_]*$/.test(val)) {
+    return "Invalid value for symbol: contains invalid characters (allowed: [a-zA-Z0-9_])";
+  }
+  return null;
+}
+function validatePrimitiveArg(type, val) {
+  switch (type.toLowerCase()) {
+    case "bool":
+      return validateBool(val);
+    case "u32":
+      return validateU32(val);
+    case "i32":
+      return validateI32(val);
+    case "string":
+      return validateString(val);
+    case "symbol":
+      return validateSymbol(val);
+    case "u64":
+    case "i64":
+    case "u128":
+    case "i128":
+      return validateLargeInt(type, val);
+    default:
+      return null;
+  }
+}
 var INVOCATION_ARG_TYPES = [
   "symbol",
   "string",
@@ -36463,15 +36537,13 @@ var InvocationArgSchema = external_exports.lazy(
     ),
     value: external_exports.any()
   }).strict().superRefine((data, ctx) => {
-    if (["u64", "i64", "u128", "i128"].includes(data.type)) {
-      const err = validateLargeInt(data.type, data.value);
-      if (err) {
-        ctx.addIssue({
-          code: external_exports.ZodIssueCode.custom,
-          message: err,
-          path: ["value"]
-        });
-      }
+    const primitiveErr = validatePrimitiveArg(data.type, data.value);
+    if (primitiveErr) {
+      ctx.addIssue({
+        code: external_exports.ZodIssueCode.custom,
+        message: primitiveErr,
+        path: ["value"]
+      });
     } else if (data.type === "vec") {
       if (!Array.isArray(data.value)) {
         ctx.addIssue({
@@ -36603,15 +36675,17 @@ function canonical(value) {
   return value;
 }
 function parseFixtures(raw, fixturePath) {
-  let fixtures;
+  let parsedJson;
   try {
-    fixtures = FixturesSpecSchema.parse(JSON.parse(raw));
+    parsedJson = JSON.parse(raw);
   } catch (err) {
-    if (err instanceof ZodError) {
-      throw new Error(formatZodError(err, fixturePath));
-    }
-    throw err;
+    throw new Error(`Invalid JSON in ${fixturePath}: ${err.message}`);
   }
+  const parsed = FixturesSpecSchema.safeParse(parsedJson);
+  if (!parsed.success) {
+    throw new Error(formatZodError(parsed.error, fixturePath));
+  }
+  const fixtures = parsed.data;
   const fixture_id = fixtures.id === void 0 ? `path:${relativePath(fixturePath)}` : `id:${fixtures.id}`;
   const contractIds = /* @__PURE__ */ new Set();
   const contracts = fixtures.contracts.map((contract) => {
@@ -39231,7 +39305,7 @@ function config(fn, types2 = {}) {
 
 // node_modules/@stellar/stellar-sdk/lib/esm/base/generated/curr_generated.js
 var types = config((xdr) => {
-  const SCSYMBOL_LIMIT = 32;
+  const SCSYMBOL_LIMIT2 = 32;
   const SC_SPEC_DOC_LIMIT = 1024;
   xdr.typedef("Value", xdr.varOpaque());
   xdr.struct("ScpBallot", [
@@ -42421,7 +42495,7 @@ var types = config((xdr) => {
   xdr.typedef("ScMap", xdr.varArray(xdr.lookup("ScMapEntry"), 2147483647));
   xdr.typedef("ScBytes", xdr.varOpaque());
   xdr.typedef("ScString", xdr.string());
-  xdr.typedef("ScSymbol", xdr.string(SCSYMBOL_LIMIT));
+  xdr.typedef("ScSymbol", xdr.string(SCSYMBOL_LIMIT2));
   xdr.struct("ScNonceKey", [["nonce", xdr.lookup("Int64")]]);
   xdr.struct("ScContractInstance", [
     ["executable", xdr.lookup("ContractExecutable")],
@@ -51449,20 +51523,20 @@ var TransactionBuilder = class _TransactionBuilder {
     }
     if (sorobanFees) {
       const { instructions, readBytes, writeBytes, resourceFee } = sorobanFees;
-      const U32_MAX = 4294967295;
-      if (instructions <= 0 || instructions > U32_MAX) {
+      const U32_MAX2 = 4294967295;
+      if (instructions <= 0 || instructions > U32_MAX2) {
         throw new Error(
-          `instructions must be greater than 0 and at most ${U32_MAX}`
+          `instructions must be greater than 0 and at most ${U32_MAX2}`
         );
       }
-      if (readBytes <= 0 || readBytes > U32_MAX) {
+      if (readBytes <= 0 || readBytes > U32_MAX2) {
         throw new Error(
-          `readBytes must be greater than 0 and at most ${U32_MAX}`
+          `readBytes must be greater than 0 and at most ${U32_MAX2}`
         );
       }
-      if (writeBytes <= 0 || writeBytes > U32_MAX) {
+      if (writeBytes <= 0 || writeBytes > U32_MAX2) {
         throw new Error(
-          `writeBytes must be greater than 0 and at most ${U32_MAX}`
+          `writeBytes must be greater than 0 and at most ${U32_MAX2}`
         );
       }
       if (resourceFee <= 0n || resourceFee > HYPER_MAX_VALUE) {
@@ -54814,16 +54888,31 @@ function toScVal(arg) {
   const type = arg.type.toLowerCase();
   const val = arg.value;
   switch (type) {
-    case "symbol":
+    case "symbol": {
+      const err = validateSymbol(val);
+      if (err) throw new Error(err);
       return types.ScVal.scvSymbol(val);
-    case "string":
+    }
+    case "string": {
+      const err = validateString(val);
+      if (err) throw new Error(err);
       return types.ScVal.scvString(val);
-    case "u32":
+    }
+    case "u32": {
+      const err = validateU32(val);
+      if (err) throw new Error(err);
       return types.ScVal.scvU32(val);
-    case "i32":
+    }
+    case "i32": {
+      const err = validateI32(val);
+      if (err) throw new Error(err);
       return types.ScVal.scvI32(val);
-    case "bool":
+    }
+    case "bool": {
+      const err = validateBool(val);
+      if (err) throw new Error(err);
       return types.ScVal.scvBool(val);
+    }
     case "u64":
     case "i64":
     case "u128":
@@ -55374,6 +55463,7 @@ Setup of ${contractSpec.logical_id} failed; aborted dependents: ${aborted.map((c
   }
   const results = [];
   for (const contractSpec of fixturesSpec.contracts) {
+    const wasmPath = resolvedWasmPaths.get(contractSpec.wasm_path);
     const { contractId, wasmSha256 } = deployments.get(
       contractSpec.logical_id
     );
@@ -57316,6 +57406,7 @@ async function run() {
     if (!fs7.existsSync(headFixturesPath)) {
       throw new Error(`fixtures-path not found: ${headFixturesPath}`);
     }
+    parseFixtures(fs7.readFileSync(headFixturesPath, "utf8"), fixtureId);
     core3.startGroup("Building + measuring HEAD");
     const headSha = await getHeadSha(headWorkspace);
     core3.info(`HEAD SHA: ${headSha}`);
@@ -57374,29 +57465,29 @@ Commit or stash changes before running benchmarks.`
       );
       if (!fs7.existsSync(baseFixturesPath)) {
         throw new Error("fixtures-path not found in base ref");
-      } else {
-        await buildForRevision(
-          baseFixturesPath,
-          baseDir,
-          rustToolchain,
-          buildCommand,
-          skipBuild
-        );
-        baseResults = await runMeasurement({
-          fixturesPath: baseFixturesPath,
-          fixtureId,
-          gitCommit: baseSha,
-          sdkVersion: getSdkVersion(baseDir),
-          rpcUrl,
-          keyFile: sharedKeyFile,
-          allowCrossTargetSubstitution
-        });
-        for (const contract of baseResults) {
-          for (const bench of contract.benchmarks) {
-            core3.info(
-              `[BASE] WASM SHA256 (${bench.function_name}): ${bench.wasm_sha256}`
-            );
-          }
+      }
+      parseFixtures(fs7.readFileSync(baseFixturesPath, "utf8"), fixtureId);
+      await buildForRevision(
+        baseFixturesPath,
+        baseDir,
+        rustToolchain,
+        buildCommand,
+        skipBuild
+      );
+      baseResults = await runMeasurement({
+        fixturesPath: baseFixturesPath,
+        fixtureId,
+        gitCommit: baseSha,
+        sdkVersion: getSdkVersion(baseDir),
+        rpcUrl,
+        keyFile: sharedKeyFile,
+        allowCrossTargetSubstitution
+      });
+      for (const contract of baseResults) {
+        for (const bench of contract.benchmarks) {
+          core3.info(
+            `[BASE] WASM SHA256 (${bench.function_name}): ${bench.wasm_sha256}`
+          );
         }
       }
     } catch (err) {
