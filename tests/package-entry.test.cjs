@@ -45,3 +45,27 @@ test('CLI stdout failure emits error on stderr and nothing on stdout',()=>{
     assert.equal(r.stdout,'');
   }finally{fs.rmSync(temporary,{recursive:true,force:true});}
 });
+
+test('CLI --validate-fixtures validates fixtures offline without RPC or helper provisioning (#230)', () => {
+  const temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'weighin-validate-cli-'));
+  try {
+    const pkg = require('../package.json');
+    const bin = path.resolve(__dirname, '..', pkg.bin.weighin);
+    const validFile = path.join(temporary, 'valid.json');
+    fs.writeFileSync(validFile, JSON.stringify({
+      contracts: [{ id: 'token', wasm_path: 'contract/target/wasm32v1-none/release/token.wasm', invocations: [{ id: 'init', function_name: 'init', args: [] }] }]
+    }));
+    const ok = spawnSync(process.execPath, [bin, 'valid.json', '--validate-fixtures', '--json-stdout'], { cwd: temporary, encoding: 'utf8', timeout: 5000 });
+    assert.equal(ok.status, 0);
+    const out = JSON.parse(ok.stdout);
+    assert.equal(out.contracts[0].logical_id, 'id:token');
+
+    const badFile = path.join(temporary, 'bad.json');
+    fs.writeFileSync(badFile, JSON.stringify({ contracts: [] }));
+    const bad = spawnSync(process.execPath, [bin, 'bad.json', '--validate-fixtures'], { cwd: temporary, encoding: 'utf8', timeout: 5000 });
+    assert.equal(bad.status, 1);
+    assert.match(bad.stderr, /Fixture validation failed/);
+  } finally {
+    fs.rmSync(temporary, { recursive: true, force: true });
+  }
+});
