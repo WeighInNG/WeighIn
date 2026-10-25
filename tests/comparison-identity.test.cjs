@@ -343,3 +343,22 @@ test('vec and map payloads with valid typed-argument contents parse successfully
   const mapResult = parseFixtures(mapFixture, 'weighin-fixtures.json');
   assert.ok(mapResult.contracts[0], 'map fixture should parse to a contract');
 });
+
+test('rejects current-schema contract records with zero benchmark cases across matched, new, and removed contracts (#227)', () => {
+  const valid = measurement();
+  const emptyContract = { ...valid[0], benchmarks: [] };
+  assert.throws(
+    () => diffBenchmarks([emptyContract], valid),
+    /id:greeting.*must contain at least one benchmark case/,
+  );
+  const emptyNew = { ...valid[0], logical_id: 'id:new_empty', benchmarks: [] };
+  assert.throws(
+    () => diffBenchmarks(valid, [...valid, emptyNew]),
+    /id:new_empty.*must contain at least one benchmark case/,
+  );
+  const emptyRemoved = { ...valid[0], logical_id: 'id:removed_empty', benchmarks: [] };
+  assert.throws(
+    () => diffBenchmarks([...valid, emptyRemoved], valid),
+    /id:removed_empty.*must contain at least one benchmark case/,
+  );
+});
