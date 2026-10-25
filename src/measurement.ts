@@ -352,13 +352,73 @@ export function calculateContractId(
  *                 runs so both measurements use the same on-chain account.
  * @param rpcUrl   Used to derive the friendbot URL for initial funding.
  */
+export interface ValidateDeployerKeyOptions {
+  platform?: NodeJS.Platform;
+  getuid?: (() => number) | undefined;
+}
+
+/**
+ * Validate an existing reusable deployer private-key file before reading its
+ * secret material or initiating RPC/Friendbot network requests.
+ *
+ * Rejects symbolic links, non-regular files (directories, FIFOs, sockets),
+ * and on POSIX platforms rejects files not owned by the current effective UID
+ * or files carrying any group/other permission bits (mode & 0o077 !== 0).
+ */
+export function validateReusableDeployerKeyFile(
+  keyFile: string,
+  stats?: fs.Stats,
+  options?: ValidateDeployerKeyOptions,
+): void {
+  const lstat = stats ?? fs.lstatSync(keyFile);
+  if (lstat.isSymbolicLink()) {
+    throw new Error(
+      `Invalid deployer key file ${keyFile}: symbolic links are not permitted`,
+    );
+  }
+  if (!lstat.isFile()) {
+    throw new Error(
+      `Invalid deployer key file ${keyFile}: path must be a regular file`,
+    );
+  }
+  const platform = options?.platform ?? process.platform;
+  if (platform !== "win32") {
+    const getuid =
+      options && "getuid" in options ? options.getuid : process.getuid;
+    if (typeof getuid === "function") {
+      const expectedUid = getuid.call(process);
+      if (lstat.uid !== expectedUid) {
+        throw new Error(
+          `Invalid deployer key file ${keyFile}: owner uid ${lstat.uid} does not match current uid ${expectedUid}`,
+        );
+      }
+    }
+    const mode = lstat.mode & 0o777;
+    if ((mode & 0o077) !== 0) {
+      throw new Error(
+        `Invalid deployer key file ${keyFile}: insecure permissions 0${mode.toString(8)} (group/other access bits must be 0, e.g. 0600)`,
+      );
+    }
+  }
+}
+
 export async function getOrInitAccount(
   keyFile: string,
   rpcUrl: string,
   signal?: AbortSignal,
 ): Promise<Keypair> {
+  let lstat: fs.Stats | undefined;
+  try {
+    lstat = fs.lstatSync(keyFile);
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code !== "ENOENT") {
+      throw err;
+    }
+  }
+
   let keypair: Keypair;
-  if (fs.existsSync(keyFile)) {
+  if (lstat !== undefined) {
+    validateReusableDeployerKeyFile(keyFile, lstat);
     const secret = fs.readFileSync(keyFile, "utf8").trim();
     keypair = Keypair.fromSecret(secret);
   } else {
@@ -1140,6 +1200,7 @@ export async function runMeasurement(
       });
     }
 
+    const wasmPath = resolvedWasmPaths.get(contractSpec.wasm_path)!;
     const sorobanSdkVersion =
       opts.sdkVersion !== undefined
         ? opts.sdkVersion

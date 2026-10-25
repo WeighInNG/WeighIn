@@ -35781,7 +35781,7 @@ function inspectMeasurementRecord(value, index) {
     diagnostics: []
   };
 }
-function validateApprovedMetricProvenance(key, metric, path7, version2, diagnostics) {
+function validateApprovedMetricProvenance(key, metric, path9, version2, diagnostics) {
   const approved = APPROVED_METRIC_PROVENANCE[key];
   const allowedFields = approved.availability === "unavailable" ? ["availability", "consumed", "limit", "reason"] : [
     "availability",
@@ -35805,7 +35805,7 @@ function validateApprovedMetricProvenance(key, metric, path7, version2, diagnost
     const expected = expectedValues[field];
     if (metric[field] !== expected && (expected !== void 0 || metric[field] !== void 0)) {
       diagnostics.push({
-        path: `${path7}.${field}`,
+        path: `${path9}.${field}`,
         version: version2,
         code: "UNAPPROVED_METRIC_PROVENANCE",
         message: `Schema 5 metric ${key} has unapproved ${field} provenance`
@@ -35814,7 +35814,7 @@ function validateApprovedMetricProvenance(key, metric, path7, version2, diagnost
   }
   if (approved.availability === "unavailable" && metric.limit !== null || approved.availability === "measured" && "limitReason" in approved && metric.limit !== null || approved.availability === "measured" && "limitSource" in approved && metric.limit === null) {
     diagnostics.push({
-      path: `${path7}.limit`,
+      path: `${path9}.limit`,
       version: version2,
       code: "UNAPPROVED_METRIC_PROVENANCE",
       message: `Schema 5 metric ${key} has an unapproved limit shape`
@@ -35823,7 +35823,7 @@ function validateApprovedMetricProvenance(key, metric, path7, version2, diagnost
   for (const field of Object.keys(metric)) {
     if (!allowedFields.includes(field)) {
       diagnostics.push({
-        path: `${path7}.${field}`,
+        path: `${path9}.${field}`,
         version: version2,
         code: "UNAPPROVED_METRIC_PROVENANCE",
         message: `Schema 5 metric ${key} contains unsupported provenance field ${field}`
@@ -54907,9 +54907,49 @@ function calculateContractId(deployerAddress, salt) {
   const contractIdBytes = hash(hashIdPreimage.toXDR());
   return StrKey.encodeContract(contractIdBytes);
 }
+function validateReusableDeployerKeyFile(keyFile, stats, options) {
+  const lstat = stats ?? fs3.lstatSync(keyFile);
+  if (lstat.isSymbolicLink()) {
+    throw new Error(
+      `Invalid deployer key file ${keyFile}: symbolic links are not permitted`
+    );
+  }
+  if (!lstat.isFile()) {
+    throw new Error(
+      `Invalid deployer key file ${keyFile}: path must be a regular file`
+    );
+  }
+  const platform = options?.platform ?? process.platform;
+  if (platform !== "win32") {
+    const getuid = options && "getuid" in options ? options.getuid : process.getuid;
+    if (typeof getuid === "function") {
+      const expectedUid = getuid.call(process);
+      if (lstat.uid !== expectedUid) {
+        throw new Error(
+          `Invalid deployer key file ${keyFile}: owner uid ${lstat.uid} does not match current uid ${expectedUid}`
+        );
+      }
+    }
+    const mode = lstat.mode & 511;
+    if ((mode & 63) !== 0) {
+      throw new Error(
+        `Invalid deployer key file ${keyFile}: insecure permissions 0${mode.toString(8)} (group/other access bits must be 0, e.g. 0600)`
+      );
+    }
+  }
+}
 async function getOrInitAccount(keyFile, rpcUrl, signal) {
+  let lstat;
+  try {
+    lstat = fs3.lstatSync(keyFile);
+  } catch (err) {
+    if (err.code !== "ENOENT") {
+      throw err;
+    }
+  }
   let keypair;
-  if (fs3.existsSync(keyFile)) {
+  if (lstat !== void 0) {
+    validateReusableDeployerKeyFile(keyFile, lstat);
     const secret = fs3.readFileSync(keyFile, "utf8").trim();
     keypair = Keypair.fromSecret(secret);
   } else {
@@ -55419,6 +55459,7 @@ Setup of ${contractSpec.logical_id} failed; aborted dependents: ${aborted.map((c
         wasm_sha256: wasmSha256
       });
     }
+    const wasmPath = resolvedWasmPaths.get(contractSpec.wasm_path);
     const sorobanSdkVersion = opts.sdkVersion !== void 0 ? opts.sdkVersion : discoverSdkVersion(wasmPath);
     results.push({
       schema_version: CURRENT_RECORD_SCHEMA_VERSION,
