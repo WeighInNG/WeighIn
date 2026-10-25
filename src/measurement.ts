@@ -496,6 +496,33 @@ async function submitAndConfirm(
   return confirmed;
 }
 
+const DEPLOYER_SEQUENCE_LOCKS = new Map<string, Promise<void>>();
+
+export async function withDeployerSequenceLock<T>(
+  networkKey: string,
+  publicKey: string,
+  task: () => Promise<T>,
+): Promise<T> {
+  const key = `${networkKey}::${publicKey}`;
+  const previous = DEPLOYER_SEQUENCE_LOCKS.get(key) ?? Promise.resolve();
+  let release!: () => void;
+  const current = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const chained = previous.then(() => current);
+  DEPLOYER_SEQUENCE_LOCKS.set(key, chained);
+
+  await previous;
+  try {
+    return await task();
+  } finally {
+    release();
+    if (DEPLOYER_SEQUENCE_LOCKS.get(key) === chained) {
+      DEPLOYER_SEQUENCE_LOCKS.delete(key);
+    }
+  }
+}
+
 // Check if contract is already deployed
 export async function isContractDeployed(
   server: rpc.Server,
@@ -659,79 +686,85 @@ export async function ensureContractDeployed(options: {
 }): Promise<Pick<SetupResult, "source" | "return_xdr">> {
   const { server, deployer, deployerAddress, wasmBytes, wasmHash, salt } =
     options;
-  const deployed = await isContractDeployed(server, options.contractId);
-  if (deployed) {
-    console.log(`Already deployed at ${options.contractId}`);
-    return {
-      source: "existing_instance",
-      return_xdr: Address.fromString(options.contractId)
-        .toScVal()
-        .toXDR("base64"),
-    };
-  }
-
-  console.log(`Installing WASM...`);
-  let account = await server.getAccount(deployer.publicKey());
-
-  // 1. Upload WASM
-  const uploadTx = new TransactionBuilder(account, {
-    fee: "1000000",
-    networkPassphrase: SUPPORTED_NETWORK_PASSPHRASE,
-  })
-    .addOperation(Operation.uploadContractWasm({ wasm: wasmBytes }))
-    .setTimeout(30)
-    .build();
-
-  let preparedUpload;
-  try {
-    preparedUpload = await server.prepareTransaction(uploadTx);
-  } catch (err: any) {
-    console.error(
-      `WASM upload preparation failed at ${sanitizeEndpoint(options.rpcUrl)}: ${redactEndpointSecrets(String(err?.message ?? err), options.rpcUrl)}`,
-    );
-    throw err;
-  }
-  preparedUpload.sign(deployer);
-  await submitAndConfirm(
-    server,
-    preparedUpload,
-    "WASM upload",
+  return withDeployerSequenceLock(
     options.rpcUrl,
-    options.signal,
+    deployer.publicKey(),
+    async () => {
+      const deployed = await isContractDeployed(server, options.contractId);
+      if (deployed) {
+        console.log(`Already deployed at ${options.contractId}`);
+        return {
+          source: "existing_instance",
+          return_xdr: Address.fromString(options.contractId)
+            .toScVal()
+            .toXDR("base64"),
+        };
+      }
+
+      console.log(`Installing WASM...`);
+      let account = await server.getAccount(deployer.publicKey());
+
+      // 1. Upload WASM
+      const uploadTx = new TransactionBuilder(account, {
+        fee: "1000000",
+        networkPassphrase: SUPPORTED_NETWORK_PASSPHRASE,
+      })
+        .addOperation(Operation.uploadContractWasm({ wasm: wasmBytes }))
+        .setTimeout(30)
+        .build();
+
+      let preparedUpload;
+      try {
+        preparedUpload = await server.prepareTransaction(uploadTx);
+      } catch (err: any) {
+        console.error(
+          `WASM upload preparation failed at ${sanitizeEndpoint(options.rpcUrl)}: ${redactEndpointSecrets(String(err?.message ?? err), options.rpcUrl)}`,
+        );
+        throw err;
+      }
+      preparedUpload.sign(deployer);
+      await submitAndConfirm(
+        server,
+        preparedUpload,
+        "WASM upload",
+        options.rpcUrl,
+        options.signal,
+      );
+
+      console.log(`WASM installed. Deploying contract instance...`);
+      account = await server.getAccount(deployer.publicKey());
+
+      // 2. Create contract instance
+      const createTx = new TransactionBuilder(account, {
+        fee: "1000000",
+        networkPassphrase: SUPPORTED_NETWORK_PASSPHRASE,
+      })
+        .addOperation(
+          Operation.createCustomContract({
+            wasmHash,
+            address: deployerAddress,
+            salt,
+          }),
+        )
+        .setTimeout(30)
+        .build();
+
+      const preparedCreate = await server.prepareTransaction(createTx);
+      preparedCreate.sign(deployer);
+      const created = await submitAndConfirm(
+        server,
+        preparedCreate,
+        "contract creation",
+        options.rpcUrl,
+        options.signal,
+      );
+      console.log(`Deployed at ${options.contractId}`);
+      return {
+        source: "created",
+        return_xdr: created.returnValue?.toXDR("base64"),
+      };
+    },
   );
-
-  console.log(`WASM installed. Deploying contract instance...`);
-  account = await server.getAccount(deployer.publicKey());
-
-  // 2. Create contract instance
-  const createTx = new TransactionBuilder(account, {
-    fee: "1000000",
-    networkPassphrase: SUPPORTED_NETWORK_PASSPHRASE,
-  })
-    .addOperation(
-      Operation.createCustomContract({
-        wasmHash,
-        address: deployerAddress,
-        salt,
-      }),
-    )
-    .setTimeout(30)
-    .build();
-
-  const preparedCreate = await server.prepareTransaction(createTx);
-  preparedCreate.sign(deployer);
-  const created = await submitAndConfirm(
-    server,
-    preparedCreate,
-    "contract creation",
-    options.rpcUrl,
-    options.signal,
-  );
-  console.log(`Deployed at ${options.contractId}`);
-  return {
-    source: "created",
-    return_xdr: created.returnValue?.toXDR("base64"),
-  };
 }
 
 /** Build the simulated invocation transaction for one contract case.
@@ -1140,6 +1173,7 @@ export async function runMeasurement(
       });
     }
 
+    const wasmPath = resolvedWasmPaths.get(contractSpec.wasm_path)!;
     const sorobanSdkVersion =
       opts.sdkVersion !== undefined
         ? opts.sdkVersion
