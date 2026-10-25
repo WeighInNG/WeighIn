@@ -424,3 +424,25 @@ test('preserves explicit rust-toolchain override for both crate checks and build
   assert.ok(stellarContractCalls.length > 0);
   assert.ok(stellarContractCalls.every(c => c.env && c.env.RUSTUP_TOOLCHAIN === 'nightly-2024-11-01'));
 }));
+
+test('runEnvironmentDoctor reports read-only tool/target/storage checks and redacts RPC credentials (#236)', async () => {
+  const { runEnvironmentDoctor } = require('../dist/build');
+  const passReport = await runEnvironmentDoctor({
+    rpcUrl: 'https://user:supersecret@soroban-rpc.example.org:8000/rpc?api_key=secret123',
+    probeTool: async (tool, args) => {
+      if (tool === 'rustc' && args[0] === '--version') return { ok: true, output: 'rustc 1.95.0 (stable)' };
+      if (tool === 'rustc' && args[0] === '--print') return { ok: true, output: 'wasm32-unknown-unknown\nwasm32v1-none' };
+      if (tool === 'stellar') return { ok: true, output: 'stellar 28.1.0' };
+      return { ok: false, output: 'unknown' };
+    },
+  });
+  assert.equal(passReport.ok, true);
+  assert.ok(!JSON.stringify(passReport).includes('supersecret'));
+  assert.ok(!JSON.stringify(passReport).includes('secret123'));
+
+  const failReport = await runEnvironmentDoctor({
+    probeTool: async () => ({ ok: false, output: 'command not found' }),
+  });
+  assert.equal(failReport.ok, false);
+  assert.ok(failReport.checks.some((c) => !c.ok && c.action));
+});
