@@ -83,6 +83,32 @@ export function parseArgs(
   };
 }
 
+export function writeResultsFile(outputPath: string, results: unknown): void {
+  const targetDir = path.dirname(outputPath);
+  if (targetDir && targetDir !== ".") {
+    fs.mkdirSync(targetDir, { recursive: true });
+  }
+
+  const tempPath = path.join(
+    targetDir,
+    `.weighin-results-${process.pid}-${Date.now()}-${Math.random().toString(16).slice(2)}.json`,
+  );
+
+  try {
+    fs.writeFileSync(tempPath, JSON.stringify(results, null, 2), "utf8");
+    fs.renameSync(tempPath, outputPath);
+  } catch (error) {
+    try {
+      fs.rmSync(tempPath, { force: true, recursive: true });
+    } catch {
+      /* ignore own temporary cleanup failure */
+    }
+
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Output write failed for ${outputPath}: ${message}`);
+  }
+}
+
 async function main() {
   let options: CliOptions;
   try {
@@ -152,6 +178,14 @@ async function main() {
       rpcUrl,
       allowCrossTargetSubstitution: options.allowCrossTargetSubstitution,
     });
+    writeResultsFile(outputPath, results);
+    console.log(`Done. Results written to ${outputPath}`);
+  } catch (error: any) {
+    if (error instanceof Error && /Output write failed/.test(error.message)) {
+      console.error(error.message);
+      process.exit(1);
+    }
+    console.error(`Benchmarking failed:`, error);
 
     if (jsonStdout) {
       process.stdout.write(JSON.stringify(results, null, 2) + "\n");
