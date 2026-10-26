@@ -1,6 +1,7 @@
 import * as path from "path";
+import { ZodError } from "zod";
 import type { FixturesSpec, ContractSpec, InvocationSpec } from "./measurement";
-import { FixturesSpecSchema } from "./config";
+import { FixturesSpecSchema, formatZodError } from "./config";
 
 export interface IdentifiedInvocation extends InvocationSpec {
   case_id: string;
@@ -47,7 +48,15 @@ export function parseFixtures(
   raw: string,
   fixturePath: string,
 ): IdentifiedFixtures {
-  const fixtures = FixturesSpecSchema.parse(JSON.parse(raw));
+  let fixtures: ReturnType<typeof FixturesSpecSchema.parse>;
+  try {
+    fixtures = FixturesSpecSchema.parse(JSON.parse(raw));
+  } catch (err) {
+    if (err instanceof ZodError) {
+      throw new Error(formatZodError(err, fixturePath));
+    }
+    throw err;
+  }
   const fixture_id =
     fixtures.id === undefined
       ? `path:${relativePath(fixturePath)}`
@@ -67,10 +76,13 @@ export function parseFixtures(
 
     const caseIds = new Set<string>();
     const invocations = contract.invocations.map((invocation) => {
-      const args = invocation.args.map((arg) => ({
-        type: arg.type.toLowerCase(),
-        value: canonical(arg.value),
-      }));
+      // A bound argument is identified by its declared reference, never by the
+      // runtime value it resolves to, so case identity survives redeployment.
+      const args = invocation.args.map((arg) =>
+        "binding" in arg
+          ? { type: arg.type.toLowerCase(), binding: canonical(arg.binding) }
+          : { type: arg.type.toLowerCase(), value: canonical(arg.value) },
+      );
       const case_id =
         invocation.id === undefined
           ? `args:${JSON.stringify(args)}`
@@ -88,50 +100,3 @@ export function parseFixtures(
   });
   return { ...fixtures, fixture_id, contracts };
 }
-
-function formatJsonPath(segments: Array<string | number>): string {
-  if (segments.length === 0) return "root";
-  return segments.reduce<string>(
-    (acc, seg) =>
-      typeof seg === "number"
-        ? `${acc}[${seg}]`
-        : acc
-          ? `${acc}.${seg}`
-          : String(seg),
-    "",
-  );
-}
-
-function formatFixtureError(error: any): string {
-  const lines = ["Invalid fixture declaration:"];
-  for (const issue of error?.issues ?? []) {
-    if (issue.code === "unrecognized_keys" && Array.isArray(issue.keys)) {
-      for (const key of issue.keys) {
-        const segments = [...issue.path, key];
-        const dotPath = segments.join(".");
-        const bracketPath = formatJsonPath(segments);
-        const pathLabel =
-          bracketPath !== dotPath ? `${dotPath} (${bracketPath})` : dotPath;
-        lines.push(
-          `- ${pathLabel}: Unrecognized key "${key}" (${issue.message})`,
-        );
-      }
-    } else {
-      const segments = issue.path ?? [];
-      const dotPath = segments.join(".") || "root";
-      const bracketPath = formatJsonPath(segments);
-      const pathLabel =
-        bracketPath !== dotPath ? `${dotPath} (${bracketPath})` : dotPath;
-      lines.push(`- ${pathLabel}: ${issue.message}`);
-    }
-  }
-  return lines.join("\n");
-}
-
-FixturesSpecSchema.parse = ((data: unknown, params?: any) => {
-  const parsed = FixturesSpecSchema.safeParse(data, params);
-  if (!parsed.success) {
-    throw new Error(formatFixtureError(parsed.error));
-  }
-  return parsed.data;
-}) as typeof FixturesSpecSchema.parse;
