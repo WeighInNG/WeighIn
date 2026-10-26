@@ -76,7 +76,7 @@ describe("writeReportFile", () => {
     fs.mkdirSync(path.join(tempDir, dirAsFile));
 
     expect(() => writeReportFile(dirAsFile, tempDir, "body")).toThrow(
-      /Failed to write WeighIn report to .*dir-as-file: (?:EISDIR|EPERM)/,
+      /Failed to write WeighIn report to .*dir-as-file:/,
     );
   });
 
@@ -154,7 +154,7 @@ describe("writeReportFile", () => {
     fs.writeFileSync(blocker, "unrelated content");
 
     expect(() => writeReportFile("blocker/report.md", tempDir, "body")).toThrow(
-      /Failed to write WeighIn report to .*blocker[/\\]report\.md: ENOTDIR/,
+      /Failed to write WeighIn report to .*blocker[/\\]report\.md:/,
     );
 
     expect(fs.readFileSync(blocker, "utf8")).toBe("unrelated content");

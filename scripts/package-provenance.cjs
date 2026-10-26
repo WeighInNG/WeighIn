@@ -19,7 +19,7 @@ const tracked = [
 function files(value) {
   const absolute = path.join(root, value);
   if (!fs.existsSync(absolute)) return [];
-  if (fs.statSync(absolute).isFile()) return [value];
+  if (fs.statSync(absolute).isFile()) return [value.split(path.sep).join("/")];
   return fs
     .readdirSync(absolute, { withFileTypes: true })
     .flatMap((entry) => files(path.posix.join(value, entry.name)));
