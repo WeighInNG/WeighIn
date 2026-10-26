@@ -72896,17 +72896,43 @@ function writeFileAtomically(targetPath, body) {
     throw error63;
   }
 }
-function writeReportFile(reportPathInput, headWorkspace, body) {
+function writeReportFile(reportPathInput, headWorkspace, body, fsOps) {
   if (!reportPathInput) return;
   const targetPath = path7.resolve(headWorkspace, reportPathInput);
+  const write = fsOps?.writeFileSync ?? fs6.writeFileSync;
+  const rename = fsOps?.renameSync ?? fs6.renameSync;
+  const unlink = fsOps?.unlinkSync ?? fs6.unlinkSync;
+  let tempPath = null;
   try {
+    if (fs6.existsSync(targetPath) && fs6.statSync(targetPath).isDirectory()) {
+      const dirErr = new Error(
+        `EISDIR: illegal operation on a directory, open '${targetPath}'`
+      );
+      dirErr.code = "EISDIR";
+      throw dirErr;
+    }
     const parentDir = path7.dirname(targetPath);
     if (!fs6.existsSync(parentDir)) {
       fs6.mkdirSync(parentDir, { recursive: true });
     }
-    writeFileAtomically(targetPath, body);
+    if (fsOps) {
+      const baseName = path7.basename(targetPath);
+      const uniqueSuffix = `${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      tempPath = path7.join(parentDir, `.${baseName}.weighin-${uniqueSuffix}.tmp`);
+      write(tempPath, body, { encoding: "utf8", flag: "wx" });
+      rename(tempPath, targetPath);
+      tempPath = null;
+    } else {
+      writeFileAtomically(targetPath, body);
+    }
     core2.info(`Wrote Markdown report to ${targetPath}`);
   } catch (err) {
+    if (tempPath) {
+      try {
+        unlink(tempPath);
+      } catch {
+      }
+    }
     throw new Error(
       `Failed to write WeighIn report to ${targetPath}: ${err.message}`
     );
