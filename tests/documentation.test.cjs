@@ -78,3 +78,17 @@ test('documented Action inputs, outputs and workflow snippets use supported name
   for (const file of mainDocs) for (const match of read(file).matchAll(/npm run ([a-z][a-z0-9:-]*)/g)) assert.ok(scripts[match[1]], `${file}: ${match[1]}`);
   for (const workflow of fs.readdirSync(path.join(root, '.github/workflows'))) yaml.parse(read(`.github/workflows/${workflow}`));
 });
+
+test('temporary-storage expiry boundary documentation and evidence links resolve cleanly', () => {
+  const expiryDoc = 'docs/temporary-storage-expiry.md';
+  const text = read(expiryDoc);
+  assert.doesNotMatch(text, /WEIGHIN_PROGRESS|DRIPS_APPEAL_CONTEXT|Drips|appeal preparation/);
+  for (const match of text.matchAll(/\[[^\]]*\]\(([^)]+)\)/g)) {
+    const target = match[1].split('#')[0];
+    if (!target || /^https?:/.test(target)) continue;
+    assert.ok(fs.existsSync(path.resolve(root, path.dirname(expiryDoc), target)), `${expiryDoc}: ${target}`);
+  }
+  assert.ok(read('docs/KNOWN_LIMITATIONS.md').includes('(temporary-storage-expiry.md)'));
+  assert.ok(read('docs/EVIDENCE.md').includes('(temporary-storage-expiry.md)'));
+  assert.ok(read('docs/native-measurement.md').includes('(temporary-storage-expiry.md)'));
+});

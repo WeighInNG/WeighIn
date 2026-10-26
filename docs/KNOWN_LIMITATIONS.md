@@ -43,3 +43,12 @@ see [Evidence](EVIDENCE.md), [metric provenance](metric-provenance.md) and
 See [dependency security review](DEPENDENCY_SECURITY.md) for the dated npm audit,
 resolved advisory paths, actual execution exposure and validation. Audit results
 are a snapshot, not a guarantee against future advisories.
+
+## Temporary-storage expiry boundary
+
+See [temporary-storage expiry boundary proof](temporary-storage-expiry.md) for
+controlled evidence across live (`live_until >= header.ledger_seq`), exact
+inclusive boundary (`live_until == header.ledger_seq`), post-expiry evicted
+(`ledger_seq > live_until`, `xdr: null`), and fail-closed stale-entry
+(`live_until < header.ledger_seq`, rejected with `archived ledger state is unsupported`)
+snapshots.

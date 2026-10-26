@@ -471,3 +471,23 @@ incompatible instead of being compared.
 See [Known limitations](KNOWN_LIMITATIONS.md). [Hosted external validation](hosted-soroban-forge.md)
 covers one empty escrow view in the permitted WeighInNG fork; full stateful Forge
 coverage and upstream adoption are not claimed.
+
+## Temporary-storage expiry boundary validation
+
+The [controlled temporary-storage expiry boundary proof](temporary-storage-expiry.md) makes
+temporary-storage (`ContractDataDurability.temporary()`) TTL expiry behavior and measurement
+boundaries explicit across controlled ledgers (`940`, `949`, `950`, `951`, `960`) around
+`live_until = 950` while keeping contract source, compiled WASM
+(`8b732e17decc370b0a57def5ba14546f48c788158aae520fffa5708117dc6c73`), runtime address,
+PRNG seed, and cost calibration fixed. Durable evidence in
+[temporary-storage-expiry](experiments/temporary-storage-expiry/) verifies:
+- Pre-expiry snapshots (`940 → 949`) and the exact inclusive TTL boundary (`940 → 950`, where
+  `ledger_seq == live_until`) remain live with zero resource deltas and zero threshold violations.
+- Advancing past expiry (`950 → 951`) evicts the temporary entry (`xdr: null`), triggering the
+  contract's re-initialization path (+40,872 CPU, +64,512 memory, +1 write entry, +84 write bytes,
+  +20 event+return bytes) and enforcing all 5 configured policy violations on the unchanged WASM.
+- Rejected boundary paths (`stale_expired_temporary_entry_snapshot` with `live_until = 950 < 951`,
+  `required_expired_temporary_entry_rpc_failure`, `cross_boundary_rpc_native_parity_mismatch`, and
+  `persistent_cross_boundary_ledger_drift_exhaustion`) fail closed without emitting fabricated
+  measurements or manipulating claimed provenance, while single cross-boundary drift (`950 → 951`)
+  discards the partial pre-expiry read and recaptures authentic `ledger: 951` provenance.

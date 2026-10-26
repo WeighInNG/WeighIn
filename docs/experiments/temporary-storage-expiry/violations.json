@@ -1,0 +1,62 @@
+[
+  {
+    "contract_id": "CCCJJJDJ5HS676PYT6DCMY4RJVOAQMUOWBG5OQBVYTXNLWOFX4UF2ZKJ",
+    "function_name": "hello",
+    "metric": "cpu_instructions",
+    "delta": 40872,
+    "pct": 14.669968773554432,
+    "rule": "strict_zero_tolerance",
+    "message": "cpu_instructions increased by 40872 (strict zero tolerance)",
+    "fixture_id": "id:temporary-storage-expiry-suite",
+    "logical_id": "id:reference-contract",
+    "case_id": "id:world"
+  },
+  {
+    "fixture_id": "id:temporary-storage-expiry-suite",
+    "logical_id": "id:reference-contract",
+    "case_id": "id:world",
+    "contract_id": "CCCJJJDJ5HS676PYT6DCMY4RJVOAQMUOWBG5OQBVYTXNLWOFX4UF2ZKJ",
+    "function_name": "hello",
+    "metric": "memory_bytes",
+    "delta": 64512,
+    "pct": 5.696926880960791,
+    "rule": "fail_on_any_regression",
+    "message": "memory_bytes increased by 64512 (fail_on_any_regression)"
+  },
+  {
+    "fixture_id": "id:temporary-storage-expiry-suite",
+    "logical_id": "id:reference-contract",
+    "case_id": "id:world",
+    "contract_id": "CCCJJJDJ5HS676PYT6DCMY4RJVOAQMUOWBG5OQBVYTXNLWOFX4UF2ZKJ",
+    "function_name": "hello",
+    "metric": "ledger_write_entries",
+    "delta": 1,
+    "pct": null,
+    "rule": "fail_on_any_regression",
+    "message": "ledger_write_entries increased by 1 (fail_on_any_regression)"
+  },
+  {
+    "fixture_id": "id:temporary-storage-expiry-suite",
+    "logical_id": "id:reference-contract",
+    "case_id": "id:world",
+    "contract_id": "CCCJJJDJ5HS676PYT6DCMY4RJVOAQMUOWBG5OQBVYTXNLWOFX4UF2ZKJ",
+    "function_name": "hello",
+    "metric": "ledger_write_bytes",
+    "delta": 84,
+    "pct": null,
+    "rule": "fail_on_any_regression",
+    "message": "ledger_write_bytes increased by 84 (fail_on_any_regression)"
+  },
+  {
+    "fixture_id": "id:temporary-storage-expiry-suite",
+    "logical_id": "id:reference-contract",
+    "case_id": "id:world",
+    "contract_id": "CCCJJJDJ5HS676PYT6DCMY4RJVOAQMUOWBG5OQBVYTXNLWOFX4UF2ZKJ",
+    "function_name": "hello",
+    "metric": "event_data_bytes",
+    "delta": 20,
+    "pct": 35.714285714285715,
+    "rule": "fail_on_any_regression",
+    "message": "event_data_bytes increased by 20 (fail_on_any_regression)"
+  }
+]
