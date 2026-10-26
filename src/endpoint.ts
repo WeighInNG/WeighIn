@@ -15,6 +15,74 @@
 export const REDACTED_VALUE = "REDACTED";
 export const INVALID_ENDPOINT = "[invalid endpoint]";
 
+export interface JsonRpcErrorObject {
+  code: number;
+  message: string;
+  data?: unknown;
+}
+
+export type JsonRpcResponse =
+  | { jsonrpc: "2.0"; id: string | number; result: unknown }
+  | { jsonrpc: "2.0"; id: string | number; error: JsonRpcErrorObject };
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+/** Parse and validate a JSON-RPC 2.0 response against the issued request ID. */
+export function parseJsonRpcResponse(
+  rawBody: string,
+  expectedId: string | number,
+): JsonRpcResponse {
+  let value: unknown;
+  try {
+    value = JSON.parse(rawBody);
+  } catch {
+    throw new Error("Malformed JSON-RPC response: invalid JSON");
+  }
+  if (!isRecord(value)) {
+    throw new Error("Malformed JSON-RPC response: expected an object");
+  }
+  if (value.jsonrpc !== "2.0") {
+    throw new Error("Malformed JSON-RPC response: unsupported jsonrpc version");
+  }
+  if (!Object.hasOwn(value, "id") || value.id !== expectedId) {
+    throw new Error(
+      "Malformed JSON-RPC response: response ID does not match request",
+    );
+  }
+
+  const hasResult = Object.hasOwn(value, "result");
+  const hasError = Object.hasOwn(value, "error");
+  if (hasResult === hasError) {
+    throw new Error(
+      "Malformed JSON-RPC response: expected exactly one of result or error",
+    );
+  }
+  const allowedKeys = new Set([
+    "jsonrpc",
+    "id",
+    hasResult ? "result" : "error",
+  ]);
+  if (Object.keys(value).some((key) => !allowedKeys.has(key))) {
+    throw new Error("Malformed JSON-RPC response: unexpected envelope field");
+  }
+
+  if (hasResult) {
+    return value as JsonRpcResponse;
+  }
+  const error = value.error;
+  if (
+    !isRecord(error) ||
+    !Number.isInteger(error.code) ||
+    typeof error.message !== "string" ||
+    Object.keys(error).some((key) => !["code", "message", "data"].includes(key))
+  ) {
+    throw new Error("Malformed JSON-RPC response: invalid error object");
+  }
+  return value as JsonRpcResponse;
+}
+
 export function sanitizeEndpoint(rawUrl: string): string {
   let url: URL;
   try {
