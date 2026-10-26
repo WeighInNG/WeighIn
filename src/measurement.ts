@@ -498,10 +498,18 @@ async function submitAndConfirm(
 }
 
 // Check if contract is already deployed
-export async function isContractDeployed(
+export interface ContractInstanceProbe {
+  deployed: boolean;
+  /** Ledger through which the instance entry is live (when deployed). */
+  liveUntilLedgerSeq?: number;
+  /** Latest ledger reported by the RPC for this probe. */
+  latestLedger?: number;
+}
+
+export async function probeContractInstance(
   server: rpc.Server,
   contractId: string,
-): Promise<boolean> {
+): Promise<ContractInstanceProbe> {
   const contractScAddress = Address.fromString(contractId).toScAddress();
   const ledgerKey = xdr.LedgerKey.contractData(
     new xdr.LedgerKeyContractData({
@@ -523,7 +531,9 @@ export async function isContractDeployed(
       );
     }
 
-    if (res.entries.length === 0) return false;
+    if (res.entries.length === 0) {
+      return { deployed: false, latestLedger: (res as any).latestLedger };
+    }
     if (res.entries.length > 1) {
       throw new Error(
         `Deployment probe returned ${res.entries.length} entries for ${contractId}; expected at most one matching contract instance`,
@@ -599,7 +609,11 @@ export async function isContractDeployed(
       );
     }
 
-    return true;
+    return {
+      deployed: true,
+      liveUntilLedgerSeq: entry.liveUntilLedgerSeq,
+      latestLedger: (res as any).latestLedger,
+    };
   } catch (error: any) {
     if (
       error instanceof Error &&
@@ -613,6 +627,14 @@ export async function isContractDeployed(
       }`,
     );
   }
+}
+
+/** Presence-only check; see probeContractInstance for TTL metadata. */
+export async function isContractDeployed(
+  server: rpc.Server,
+  contractId: string,
+): Promise<boolean> {
+  return (await probeContractInstance(server, contractId)).deployed;
 }
 
 /** Resolve a declared wasm_path against the fixtures directory.
@@ -642,6 +664,68 @@ export function resolveContractWasmPath(
   return resolved;
 }
 
+/** Minimum remaining TTL (ledgers) a reused contract must have before a
+ *  benchmark is invoked. 17,280 ledgers is about one day at 5s per ledger. */
+export const DEFAULT_MIN_CONTRACT_TTL_LEDGERS = 17_280;
+
+/** Reject an unusable minimum TTL window before any network work. */
+export function assertValidMinTtl(value: unknown): void {
+  if (typeof value !== "number" || !Number.isInteger(value) || value < 0) {
+    throw new Error(`Invalid minimum contract TTL window: ${String(value)}`);
+  }
+}
+
+export function assertReusableTtl(args: {
+  label: string;
+  contractId: string;
+  liveUntilLedgerSeq: unknown;
+  latestLedger: unknown;
+  minTtlLedgers: number;
+}): void {
+  const { label, contractId, liveUntilLedgerSeq, latestLedger, minTtlLedgers } =
+    args;
+  assertValidMinTtl(minTtlLedgers);
+  if (
+    typeof liveUntilLedgerSeq !== "number" ||
+    typeof latestLedger !== "number"
+  ) {
+    throw new Error(
+      `Deployment probe returned no TTL metadata for the ${label} of ${contractId}; cannot verify the ${minTtlLedgers}-ledger minimum window`,
+    );
+  }
+  const remaining = liveUntilLedgerSeq - latestLedger;
+  if (remaining < minTtlLedgers) {
+    throw new Error(
+      `Reusable contract ${contractId} ${label} expires too soon: live until ledger ${liveUntilLedgerSeq}, latest ledger ${latestLedger} (${remaining} ledgers remaining, minimum ${minTtlLedgers}). Refusing to benchmark; WeighIn does not extend TTLs or restore archived state. Extend the TTL externally or deploy under a different deployer key.`,
+    );
+  }
+}
+
+async function probeContractCode(
+  server: rpc.Server,
+  wasmHash: Buffer,
+  contractId: string,
+): Promise<{ liveUntilLedgerSeq: unknown; latestLedger: unknown }> {
+  const key = xdr.LedgerKey.contractCode(
+    new xdr.LedgerKeyContractCode({ hash: wasmHash }),
+  );
+  const res: any = await server.getLedgerEntries(key);
+  if (!res || !Array.isArray(res.entries)) {
+    throw new Error(
+      `Deployment probe returned an invalid ledger response for the contract code of ${contractId}`,
+    );
+  }
+  if (res.entries.length !== 1) {
+    throw new Error(
+      `Deployment probe found ${res.entries.length} contract code entries for ${contractId}; expected exactly one (the code entry may be expired or archived)`,
+    );
+  }
+  return {
+    liveUntilLedgerSeq: res.entries[0].liveUntilLedgerSeq,
+    latestLedger: res.latestLedger,
+  };
+}
+
 /** Upload the WASM and create the contract instance when it is not deployed.
  *  Deployment always uses the deployer account, never an invocation source.
  *  Returns the committed create return XDR, or the verified instance address
@@ -657,11 +741,32 @@ export async function ensureContractDeployed(options: {
   contractId: string;
   rpcUrl: string;
   signal?: AbortSignal;
+  /** Minimum remaining TTL (ledgers) for a reused instance and its code. */
+  minTtlLedgers?: number;
 }): Promise<Pick<SetupResult, "source" | "return_xdr">> {
   const { server, deployer, deployerAddress, wasmBytes, wasmHash, salt } =
     options;
-  const deployed = await isContractDeployed(server, options.contractId);
-  if (deployed) {
+  if (options.minTtlLedgers !== undefined) {
+    assertValidMinTtl(options.minTtlLedgers);
+  }
+  const probe = await probeContractInstance(server, options.contractId);
+  if (probe.deployed) {
+    const minTtlLedgers =
+      options.minTtlLedgers ?? DEFAULT_MIN_CONTRACT_TTL_LEDGERS;
+    assertReusableTtl({
+      label: "instance",
+      contractId: options.contractId,
+      liveUntilLedgerSeq: probe.liveUntilLedgerSeq,
+      latestLedger: probe.latestLedger,
+      minTtlLedgers,
+    });
+    const code = await probeContractCode(server, wasmHash, options.contractId);
+    assertReusableTtl({
+      label: "code",
+      contractId: options.contractId,
+      ...code,
+      minTtlLedgers,
+    });
     console.log(`Already deployed at ${options.contractId}`);
     return {
       source: "existing_instance",
@@ -824,6 +929,8 @@ export interface RunMeasurementOptions {
    * private temporary key that is removed when the run finishes or fails.
    */
   keyFile?: string;
+  /** Minimum remaining TTL (ledgers) required to reuse a deployed contract. */
+  minTtlLedgers?: number;
   /** Executable override; otherwise build the bundled pinned helper on Linux x64. */
   helperPath?: string;
   /**
@@ -988,6 +1095,12 @@ export async function runMeasurement(
     throw opts.signal.reason || new Error("Measurement cancelled by caller");
   }
 
+  // Reject an unusable TTL window before reading fixtures, creating a key or
+  // touching the network.
+  if (opts.minTtlLedgers !== undefined) {
+    assertValidMinTtl(opts.minTtlLedgers);
+  }
+
   const lease = await acquireDeployerKey(opts.keyFile);
   try {
     return await measureWithKeyFile(opts, lease.keyFile);
@@ -1077,6 +1190,7 @@ async function measureWithKeyFile(
         contractId,
         rpcUrl: effectiveRpcUrl,
         signal: opts.signal,
+        minTtlLedgers: opts.minTtlLedgers,
       });
     } catch (err) {
       const aborted = dependentsOf(contractSpec, setupOrder);
