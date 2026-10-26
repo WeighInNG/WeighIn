@@ -247,3 +247,21 @@ The temporary HEAD preserves `hello(Env, Symbol)` and adds a persistent write
 before its unchanged return. Private deployer keys remain in temporary directories
 and are never copied into evidence. Frozen-snapshot native tests replay the prior
 captured proof offline; they do not establish clean-build/live-network determinism.
+
+## Reusing an existing deployment
+
+The contract ID is derived from the deployer account and the WASM hash, so each
+run first looks for an existing instance. If none exists, WeighIn deploys as
+before. If one exists, WeighIn reads the remaining TTL of both the contract
+instance and its WASM code entry and requires each to stay live for at least
+`minTtlLedgers` more ledgers (a `runMeasurement` option; default 17,280, about
+one day at 5 s per ledger; it must be a non-negative integer).
+
+If either entry is below that window, the code entry is missing or archived, or
+TTL metadata is unavailable, the run fails with an error naming the entry, the
+latest ledger, its live-until ledger and the required window. The check runs
+before any transaction is prepared or any simulation starts. WeighIn does not
+extend TTLs, redeploy over the existing contract, or restore archived state, so
+caller-owned ledger state is never modified to hide an expiry. To proceed, extend
+the TTL yourself, or use a different deployer key (`keyFile`), which yields a new
+contract ID.
