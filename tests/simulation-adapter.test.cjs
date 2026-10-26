@@ -55,3 +55,34 @@ test('helper diagnostic events cannot be accepted as charged contract events', a
 test('missing helper is an explicit provisioning failure', async () => {
   await assert.rejects(resolveSimulationHelper('/missing/weighin-helper'), /missing or not executable/);
 });
+test('absent snapshot entries without metadata are valid while present-entry metadata on absent entries is rejected', async t => {
+  const { validateSnapshotEntry } = require('../dist/simulation');
+  const absentKey = xdr.LedgerKey.account(
+    new xdr.LedgerKeyAccount({ accountId: xdr.PublicKey.publicKeyTypeEd25519(Buffer.alloc(32, 7)) })
+  ).toXDR('base64');
+  assert.doesNotThrow(() => validateSnapshotEntry({ key: absentKey, xdr: null }));
+  for (const invalid of [
+    { key: absentKey, xdr: null, extension_xdr: input.entries[0].extension_xdr },
+    { key: absentKey, xdr: null, last_modified: 229 },
+    { key: absentKey, xdr: null, live_until: 500 },
+    { key: absentKey, xdr: null, live_until: null },
+  ]) {
+    assert.throws(
+      () => validateSnapshotEntry(invalid),
+      /Absent snapshot entry must not include extension, last-modified, or live-until metadata/
+    );
+  }
+  const withValidAbsent = { ...input, entries: [...input.entries, { key: absentKey, xdr: null }] };
+  t.mock.method(childProcess, 'execFile', (file, args, options, callback) => {
+    const stdin = new EventEmitter();
+    stdin.end = data => {
+      const parsed = JSON.parse(data);
+      const added = parsed.entries.find(row => row.key === absentKey);
+      assert.deepEqual(added, { key: absentKey, xdr: null });
+      setImmediate(() => callback(null, JSON.stringify(valid()), ''));
+    };
+    return { stdin };
+  });
+  const output = await simulateSnapshot(withValidAbsent, '/test/helper');
+  assert.equal(output.cpu_instructions_consumed, 270219);
+});
