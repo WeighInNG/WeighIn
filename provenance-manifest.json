@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
   "purpose": "verifiable WeighIn package build provenance",
-  "source_revision": "06e6b94301a0b0e341ebb3ece1b256d125b14503",
+  "source_revision": "01f09d4c7294af34a995c32d3bcecea3c1db5406",
   "tools": {
-    "node": "v22.23.2",
-    "npm": "10.9.8"
+    "node": "v24.14.1",
+    "npm": "unavailable"
   },
   "inputs": [
     {

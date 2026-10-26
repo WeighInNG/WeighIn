@@ -247,6 +247,10 @@ The temporary HEAD preserves `hello(Env, Symbol)` and adds a persistent write
 before its unchanged return. Private deployer keys remain in temporary directories
 and are never copied into evidence. Frozen-snapshot native tests replay the prior
 captured proof offline; they do not establish clean-build/live-network determinism.
+See [discarded simulation writes proof](discarded-simulation-writes.md) for the
+controlled write-then-read sequence proving that simulated invocation writes are
+discarded and subsequent cases read committed ledger state.
+
 
 ## Reusing an existing deployment
 

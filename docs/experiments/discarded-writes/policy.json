@@ -1,0 +1,16 @@
+{
+  "thresholds": {
+    "functions": {
+      "hello": {
+        "cpu_instructions": "strict_zero_tolerance",
+        "memory_bytes": "strict_zero_tolerance",
+        "ledger_read_entries": "strict_zero_tolerance",
+        "ledger_read_bytes": "strict_zero_tolerance",
+        "ledger_write_entries": "strict_zero_tolerance",
+        "ledger_write_bytes": "strict_zero_tolerance",
+        "events_count": "strict_zero_tolerance",
+        "event_data_bytes": "strict_zero_tolerance"
+      }
+    }
+  }
+}

@@ -43,3 +43,7 @@ see [Evidence](EVIDENCE.md), [metric provenance](metric-provenance.md) and
 See [dependency security review](DEPENDENCY_SECURITY.md) for the dated npm audit,
 resolved advisory paths, actual execution exposure and validation. Audit results
 are a snapshot, not a guarantee against future advisories.
+
+For the controlled write-then-read experiment proving that benchmark simulation
+writes are discarded and subsequent cases observe committed state (`#172`), see
+[discarded simulation writes proof](discarded-simulation-writes.md).
