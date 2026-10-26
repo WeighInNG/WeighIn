@@ -173,8 +173,14 @@ Explicit `ignore` opts out. Numeric caps equal to HEAD consumption pass.
 
 `src/comment.ts::renderComment` renders logical identities, both runtime addresses,
 metric sources/caps, both revisions' provenance, deltas, additions/removals and
-violations. `src/report.ts` writes optional Markdown and PR metadata; metadata
-is written only for PR events. The same report goes to `GITHUB_STEP_SUMMARY`.
+violations. `src/report.ts` (`validateOutputPaths`, `writeReportFile`, and
+`writeMetadataFile`) preflights and normalizes optional Markdown and PR metadata
+output paths before RPC checks or writes, rejecting collisions between
+`report-path` and `metadata-path`, collisions with `fixtures-path`,
+`config-path`, or `trusted-policy-path`, workspace-root targets, and existing
+symlink or symlinked-directory aliases while preserving legitimate separate
+nested output paths; metadata is written only for PR events. The same report
+goes to `GITHUB_STEP_SUMMARY`.
 
 The Markdown report is delivered atomically. `src/report.ts` writes the complete
 body to a temporary file it creates exclusively (`O_CREAT | O_EXCL`) in the

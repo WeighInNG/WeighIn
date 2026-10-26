@@ -13,7 +13,6 @@ jobs:
     permissions:
       pull-requests: write
       actions: read
-      contents: read
 
     steps:
       - name: Checkout Action
