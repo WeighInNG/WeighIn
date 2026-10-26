@@ -131,7 +131,7 @@ Measurement and helper operations accept an optional `signal?: AbortSignal` acro
 - **RPC calls and polling**: `callRpc`, `waitForTransaction`, and `submitAndConfirm` link the caller's cancellation signal with internal timeouts via `AbortSignal.any`. Polling intervals abort promptly on signal trigger.
 - **Native helper execution**: `simulateSnapshot` and `execute` pass `signal` to Node's `execFile`, which terminates the spawned native helper child process promptly (`SIGTERM` / `SIGKILL`) on abort.
 - **Simulation and transient recovery**: `measureInvocation` aborts transient captive-core retry delays immediately upon cancellation and halts retry loops.
-- **Resource protection**: Caller-provided key files (`keyFile`) are preserved on cancellation; temporary deployment keys and scratch files are cleaned up.
+- **Resource protection**: Caller-provided key files (`keyFile`) are never created, modified or deleted by the API, whether a run succeeds, fails or is cancelled. When no `keyFile` is given, the API creates a private temporary directory for the deployer key and removes it when the run finishes, fails or is cancelled, so each such run uses a fresh deployer account. Scratch files are cleaned up.
 - **Fail-closed guarantees**: Cancelled measurements throw explicit cancellation errors (`AbortError`) and never produce synthetic zero or fallback benchmarks.
 
 ## Schema migration
@@ -247,3 +247,21 @@ The temporary HEAD preserves `hello(Env, Symbol)` and adds a persistent write
 before its unchanged return. Private deployer keys remain in temporary directories
 and are never copied into evidence. Frozen-snapshot native tests replay the prior
 captured proof offline; they do not establish clean-build/live-network determinism.
+
+## Reusing an existing deployment
+
+The contract ID is derived from the deployer account and the WASM hash, so each
+run first looks for an existing instance. If none exists, WeighIn deploys as
+before. If one exists, WeighIn reads the remaining TTL of both the contract
+instance and its WASM code entry and requires each to stay live for at least
+`minTtlLedgers` more ledgers (a `runMeasurement` option; default 17,280, about
+one day at 5 s per ledger; it must be a non-negative integer).
+
+If either entry is below that window, the code entry is missing or archived, or
+TTL metadata is unavailable, the run fails with an error naming the entry, the
+latest ledger, its live-until ledger and the required window. The check runs
+before any transaction is prepared or any simulation starts. WeighIn does not
+extend TTLs, redeploy over the existing contract, or restore archived state, so
+caller-owned ledger state is never modified to hide an expiry. To proceed, extend
+the TTL yourself, or use a different deployer key (`keyFile`), which yields a new
+contract ID.

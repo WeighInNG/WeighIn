@@ -288,14 +288,14 @@ function formatZodIssueMessage(issue: z.ZodError["issues"][number]): string {
     "values" in issue &&
     Array.isArray(issue.values)
   ) {
-    return "Invalid enum value";
+    return "Invalid option";
   }
   if (
     issue.code === "too_small" &&
     issue.origin === "number" &&
     issue.minimum === 0
   ) {
-    return "Number must be greater than or equal to 0";
+    return "Number must be >= 0";
   }
   return issue.message;
 }

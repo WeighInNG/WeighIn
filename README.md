@@ -179,6 +179,8 @@ another repository and malformed PR-number/SHA fields all fail before mutation.
 These checks only validate the artifact shape and repository identity; they do
 not prove the run belongs to the PR.
 
+**Stale reports are skipped.** After validating the metadata, the consumer compares three revisions before it touches any comment. The *producer* revision is `workflow_run.head_sha` from the trusted `workflow_run` event, which for a `pull_request` run is the pull request head the report was measured at. The *metadata* revision is `headSha` from the artifact; because `actions/checkout` checks out the synthetic merge commit on `pull_request` events, it must be either the producer revision or a merge commit that has it as a parent, and anything else is rejected before mutation. The *current* revision is the live pull request head read from the API. When the producer revision is not the current head, the consumer exits successfully without creating or updating a comment and reports `Skipped stale report` as a job warning and summary entry, so an older job that finishes late never overwrites a newer result. A missing or malformed event revision, or a failing lookup, fails before mutation. The consumer reads the pull request and a commit, so its job needs `contents: read` in addition to `pull-requests: write`. The immutable pin in `weighin-comment.yml` predates this check and only gains it when moved to a revision that includes it.
+
 Producer and consumer versions must be paired. **Producer v1 (this revision)
 requires consumer v1 (this revision), and the v1 consumer rejects legacy
 unversioned metadata; it never infers a missing repository.** The previously
@@ -204,8 +206,8 @@ All supported inputs are declared in [action.yml](action.yml):
 | `build-command` | Custom shell build command in each revision; replaces default build guarantees |
 | `allow-cross-target-substitution` | Opt in to using a WASM artifact built for a different target when the declared target artifact is missing; disabled by default |
 | `skip-build` | `true` uses prebuilt fixture WASMs in both revisions; incompatible with `build-command`. Accepts YAML 1.2 boolean spellings (`true`, `True`, `TRUE`, `false`, `False`, `FALSE`); defaults to `false`. Non-boolean values are rejected |
-| `report-path` | Optional Markdown report destination; replaced atomically, so an interrupted write keeps the previously published report |
-| `metadata-path` | Optional versioned PR-number/HEAD-SHA JSON destination; emitted only in a PR context |
+| `report-path` | Optional Markdown report destination; replaced atomically, so an interrupted write keeps the previously published report; must not resolve to the same file as `metadata-path`, `fixtures-path` or `config-path` (symlinks and hardlinks are rejected) |
+| `metadata-path` | Optional versioned PR-number/HEAD-SHA JSON destination; emitted only in a PR context; must not resolve to the same file as `report-path`, `fixtures-path` or `config-path` |
 | `github-token` | Optional direct PR-comment token; omit for the separate comment workflow |
 | `comment-author-mode` | Which identity owns the report comment: `github-actions` (default, canonical GitHub Actions bot ID 41898282) or `authenticated-user` (resolves the authenticated user via `GET /user`). Unsupported values fail the action before any comment mutation. Custom installation-token writers and arbitrary third-party GitHub App identities are not supported by either mode. |
 

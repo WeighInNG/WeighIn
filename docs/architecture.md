@@ -70,6 +70,14 @@ An explicit ID is the caller's assertion of continuity across revisions.
 `src/measurement.ts::runMeasurement` hashes the WASM. That hash determines the
 deployment salt; the address also depends on the deployer and standalone network
 ID. The same WASM may reuse a deployment; changed WASM can change the address.
+A reused deployment is checked before any benchmark is invoked: its instance
+entry and its contract-code entry must each have at least `minTtlLedgers`
+ledgers of TTL remaining (default 17,280, about one day at 5 s per ledger). A
+shorter window, a missing code entry or missing TTL metadata fails the run with
+an explicit error before any transaction is submitted. WeighIn does not extend
+TTLs, restore archived state or redeploy over an existing instance, so
+caller-owned state is never changed to hide an expiry. Extend the TTL
+externally or use a different deployer key.
 Upload and creation transactions are real submitted transactions. A generated
 private deployer key is shared across BASE/HEAD in a private temporary file.
 Submission classifies the RPC `sendTransaction` status before polling: `ERROR`
@@ -185,6 +193,8 @@ records the base repository. The consumer validates the version, repository
 PR number and 40-character hexadecimal SHA before any API mutation. Legacy
 unversioned metadata is explicitly rejected rather than inferred, so producer and
 consumer versions must be paired.
+
+Before posting, the consumer (`src/comment-action.ts`, using `src/pr-freshness.ts`) compares the trusted `workflow_run.head_sha` with the live pull request head and skips a stale report with a visible reason. The artifact's `headSha` is only a consistency check: on `pull_request` events the producer measures the synthetic merge commit, so it must equal the run head or be a merge commit having it as a parent. It is never the trust anchor.
 
 The Action emits `result` and `diff-json` before failing a valid policy violation.
 It retains a validated diff if a later report-file or job-summary write fails,

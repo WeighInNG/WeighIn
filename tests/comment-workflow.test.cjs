@@ -25,22 +25,70 @@ function shouldRun(condition, run) {
 }
 const successfulPr = { conclusion: 'success', event: 'pull_request' };
 const validMetadata = { schemaVersion: 1, repository: 'WeighInNG/WeighIn', prNumber: 27, headSha: 'f'.repeat(40) };
-async function execute(order, metadata = true, run = successfulPr, condition = commentJob.if) {
+async function execute(order, metadata = true, run = successfulPr, condition = commentJob.if, scenario = {}) {
   if (!shouldRun(condition, run)) return { skipped: true, executedSteps: [], calls: [] };
   const temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'weighin-comment-test-'));
-  const workspace = path.join(temporary, 'caller'), actionInstall = path.join(temporary, 'action-install'), calls = [];
+  const workspace = path.join(temporary, 'caller'), actionInstall = path.join(temporary, 'action-install'), calls = [], lookups = [];
   assert.notEqual(workspace, root);
   assert.notEqual(actionInstall, workspace);
+  const producerHead = scenario.producerHead ?? validMetadata.headSha, currentHead = scenario.currentHead ?? producerHead;
+  const eventPath = path.join(temporary, 'event.json');
+  fs.writeFileSync(eventPath, JSON.stringify(scenario.event ?? { workflow_run: { event: 'pull_request', head_sha: producerHead } }));
   const server = http.createServer((request, response) => {
     let raw = ''; request.on('data', data => raw += data);
     request.on('end', () => {
-      if (request.url !== '/repos/WeighInNG/WeighIn/issues/27/comments' || !['GET', 'POST'].includes(request.method)) {
-        response.writeHead(400); response.end('Unexpected test API request'); return;
-      }
+      const url = new URL(request.url, `http://${request.headers.host || '127.0.0.1'}`);
       const body = raw ? JSON.parse(raw) : undefined;
-      calls.push({ method: request.method, body });
-      response.writeHead(request.method === 'GET' ? 200 : 201, { 'content-type': 'application/json' });
-      response.end(JSON.stringify(request.method === 'GET' ? [] : { id: 42, body: body.body }));
+      const send = (status, value, headers = {}) => {
+        response.writeHead(status, { 'content-type': 'application/json', ...headers });
+        response.end(JSON.stringify(value));
+      };
+
+      if (request.method === 'GET' && url.pathname === '/repos/WeighInNG/WeighIn/pulls/27') {
+        lookups.push(request.url);
+        return scenario.pullStatus
+          ? send(scenario.pullStatus, { message: 'scenario failure' })
+          : send(200, { head: { sha: currentHead } });
+      }
+
+      if (request.method === 'GET' && url.pathname.startsWith('/repos/WeighInNG/WeighIn/git/commits/')) {
+        lookups.push(request.url);
+        const sha = url.pathname.split('/').pop();
+        const parents = scenario.parents && scenario.parents[sha];
+        return parents
+          ? send(200, { sha, parents: parents.map(parent => ({ sha: parent })) })
+          : send(404, { message: 'Not Found' });
+      }
+
+      if (url.pathname === '/repos/WeighInNG/WeighIn/issues/27/comments' && request.method === 'GET') {
+        const page = parseInt(url.searchParams.get('page') || '1', 10);
+        calls.push({ method: 'GET', url: request.url, page, body });
+        if (scenario.pages) {
+          const pageIndex = page - 1;
+          const pageEntry = scenario.pages[pageIndex];
+          if (pageEntry && pageEntry.status && pageEntry.status >= 400) {
+            return send(pageEntry.status, { message: pageEntry.message || 'API error' });
+          }
+          const headers = pageIndex + 1 < scenario.pages.length
+            ? { link: `<http://${request.headers.host}${url.pathname}?page=${page + 1}>; rel="next"` }
+            : {};
+          return send(200, pageEntry ?? [], headers);
+        }
+        return send(200, scenario.existingComments || []);
+      }
+
+      if (url.pathname === '/repos/WeighInNG/WeighIn/issues/27/comments' && request.method === 'POST') {
+        calls.push({ method: 'POST', url: request.url, body });
+        return send(201, { id: 42, body: body.body });
+      }
+
+      const patchMatch = url.pathname.match(/^\/repos\/WeighInNG\/WeighIn\/issues\/comments\/(\d+)$/);
+      if (patchMatch && request.method === 'PATCH') {
+        const commentId = parseInt(patchMatch[1], 10);
+        calls.push({ method: 'PATCH', url: request.url, commentId, body });
+        return send(200, { id: commentId, body: body.body });
+      }
+      response.writeHead(400); response.end('Unexpected test API request');
     });
   });
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
@@ -80,7 +128,7 @@ async function execute(order, metadata = true, run = successfulPr, condition = c
         result = await new Promise((resolve, reject) => {
           const child = spawn(process.execPath, ['--require', path.join(root, 'tests/support/comment-transport-hook.cjs'), entrypoint], {
             cwd: workspace, timeout: 15000,
-            env: { ...process.env, GITHUB_REPOSITORY: 'WeighInNG/WeighIn', GITHUB_EVENT_PATH: '', GITHUB_API_URL: apiUrl,
+            env: { ...process.env, GITHUB_REPOSITORY: 'WeighInNG/WeighIn', GITHUB_EVENT_PATH: eventPath, GITHUB_API_URL: apiUrl,
               HTTP_PROXY: '', HTTPS_PROXY: '', ALL_PROXY: '', http_proxy: '', https_proxy: '', all_proxy: '', NO_PROXY: '127.0.0.1', no_proxy: '127.0.0.1',
               'INPUT_REPORT-PATH': step.with['report-path'], 'INPUT_METADATA-PATH': step.with['metadata-path'], 'INPUT_GITHUB-TOKEN': 'unit-test-token' },
           });
@@ -92,7 +140,7 @@ async function execute(order, metadata = true, run = successfulPr, condition = c
       } else throw new Error(`Unmodeled workflow step: ${step.uses}`);
     }
     assert.ok(result, 'Workflow must execute the comment Action');
-    return { ...result, skipped: false, executedSteps: order.map(step => step.name), calls };
+    return { ...result, skipped: false, executedSteps: order.map(step => step.name), calls, lookups };
   } finally { await new Promise(resolve => server.close(resolve)); fs.rmSync(temporary, { recursive: true, force: true }); }
 }
 test('installed comment Action uses caller artifacts from a separate working directory and sends the report', async () => {
@@ -144,7 +192,7 @@ test('missing downloaded metadata fails before any posting request', async () =>
 });
 test('comment delivery retains trusted checkout and triggering-run artifact selection', () => {
   assert.deepEqual(workflow.on.workflow_run.workflows, ['WeighIn CI']);
-  assert.deepEqual(workflow.jobs['post-comment'].permissions, { 'pull-requests': 'write', actions: 'read' });
+  assert.deepEqual(workflow.jobs['post-comment'].permissions, { 'pull-requests': 'write', actions: 'read', contents: 'read' });
   const checkout = steps.find(step => step.uses === 'actions/checkout@v4');
   assert.equal(checkout.with?.ref, undefined, 'Do not execute triggering PR code with comment permissions');
 });
@@ -185,6 +233,72 @@ test('a successful fork PR uses the same comment delivery path', async () => {
   assert.equal(result.calls[1].body.body, report);
 });
 
+test('a report on page two is updated and no new comment is created', async () => {
+  const pages = [
+    [{ id: 101, body: 'Discussion comment 1' }],
+    [{ id: 102, body: '<!-- weighin-report -->\nOld benchmark report', user: { id: 41898282 } }],
+    [{ id: 103, body: 'Discussion comment 2' }],
+  ];
+  const result = await execute(steps, true, successfulPr, commentJob.if, { pages });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.deepEqual(result.calls.map(c => c.method), ['GET', 'GET', 'PATCH']);
+  assert.deepEqual(result.calls.filter(c => c.method === 'GET').map(c => c.page), [1, 2]);
+  assert.equal(result.calls[2].commentId, 102);
+  assert.equal(result.calls[2].body.body, report);
+});
+
+test('lookup reaches exhaustion before creating a report when none exists', async () => {
+  const pages = [
+    [{ id: 201, body: 'Discussion comment 1' }],
+    [{ id: 202, body: 'Discussion comment 2' }],
+    [{ id: 203, body: 'Discussion comment 3' }],
+  ];
+  const result = await execute(steps, true, successfulPr, commentJob.if, { pages });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.deepEqual(result.calls.map(c => c.method), ['GET', 'GET', 'GET', 'POST']);
+  assert.deepEqual(result.calls.filter(c => c.method === 'GET').map(c => c.page), [1, 2, 3]);
+  assert.equal(result.calls[3].body.body, report);
+});
+
+test('empty first page followed by non-matching page then matching report updates exactly one comment', async () => {
+  const pages = [
+    [],
+    [{ id: 301, body: 'Discussion comment 1' }],
+    [{ id: 302, body: '<!-- weighin-report -->\nFound on page 3', user: { id: 41898282 } }],
+  ];
+  const result = await execute(steps, true, successfulPr, commentJob.if, { pages });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.deepEqual(result.calls.map(c => c.method), ['GET', 'GET', 'GET', 'PATCH']);
+  assert.deepEqual(result.calls.filter(c => c.method === 'GET').map(c => c.page), [1, 2, 3]);
+  assert.equal(result.calls[3].commentId, 302);
+  assert.equal(result.calls[3].body.body, report);
+});
+
+test('preserves existing selection behavior when multiple markers exist on the same page', async () => {
+  const pages = [
+    [
+      { id: 401, body: '<!-- weighin-report -->\nFirst marker', user: { id: 41898282 } },
+      { id: 402, body: '<!-- weighin-report -->\nSecond marker', user: { id: 41898282 } },
+    ],
+    [{ id: 403, body: '<!-- weighin-report -->\nThird marker', user: { id: 41898282 } }],
+  ];
+  const result = await execute(steps, true, successfulPr, commentJob.if, { pages });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.deepEqual(result.calls.map(c => c.method), ['GET', 'PATCH']);
+  assert.equal(result.calls[1].commentId, 401);
+  assert.equal(result.calls[1].body.body, report);
+});
+
+test('an API failure during pagination stops execution and creates no comment', async () => {
+  const pages = [
+    [{ id: 501, body: 'Discussion comment' }],
+    { status: 500, message: 'Server error from GitHub API' },
+  ];
+  const result = await execute(steps, true, successfulPr, commentJob.if, { pages });
+  assert.equal(result.status, 1, 'API failure must cause non-zero exit');
+  assert.match(result.stdout + result.stderr, /Server error from GitHub API/);
+  assert.deepEqual(result.calls.map(c => c.method), ['GET', 'GET']);
+});
 // ---------------------------------------------------------------------------
 // Author-mode regression tests (issue #16)
 // ---------------------------------------------------------------------------
@@ -219,6 +333,9 @@ async function executeAuthorMode({
   const temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'weighin-author-mode-test-'));
   const workspace  = path.join(temporary, 'workspace');
   const calls      = [];
+  const headSha = (metadata && typeof metadata === 'object' && metadata.headSha) || validMetadata.headSha;
+  const eventPath = path.join(temporary, 'event.json');
+  fs.writeFileSync(eventPath, JSON.stringify({ workflow_run: { event: 'pull_request', head_sha: headSha } }));
 
   const server = http.createServer((request, response) => {
     let raw = '';
@@ -238,6 +355,12 @@ async function executeAuthorMode({
         }
         response.writeHead(200, { 'content-type': 'application/json' });
         response.end(JSON.stringify(authenticatedUser));
+        return;
+      }
+
+      if (request.method === 'GET' && request.url === '/repos/WeighInNG/WeighIn/pulls/27') {
+        response.writeHead(200, { 'content-type': 'application/json' });
+        response.end(JSON.stringify({ head: { sha: headSha } }));
         return;
       }
 
@@ -303,7 +426,7 @@ async function executeAuthorMode({
           env: {
             ...process.env,
             GITHUB_REPOSITORY: 'WeighInNG/WeighIn',
-            GITHUB_EVENT_PATH: '',
+            GITHUB_EVENT_PATH: eventPath,
             GITHUB_API_URL: apiUrl,
             HTTP_PROXY: '', HTTPS_PROXY: '', ALL_PROXY: '',
             http_proxy: '', https_proxy: '', all_proxy: '',
@@ -521,3 +644,55 @@ test('author-mode: comment with null user is not matched as owned by expected au
   assert.ok(patch, 'must PATCH the bot-owned comment');
   assert.equal(patch.commentId, 81, 'must select the comment with a matching user.id, not the null-user one');
 });
+
+// Issue #205: a stale-head report must never overwrite the current PR result.
+const freshHead = validMetadata.headSha, newerHead = 'e'.repeat(40), mergeCommit = 'c'.repeat(40), baseTip = 'b'.repeat(40), unrelated = 'd'.repeat(40);
+const deliver = (scenario, metadata = true) => execute(steps, metadata, successfulPr, commentJob.if, scenario);
+const output = result => result.stdout + result.stderr;
+const newerComment = [{ id: 7, body: '<!-- weighin-report -->\n# Newer head result', user: { id: GITHUB_ACTIONS_BOT_ID, login: 'github-actions[bot]', type: 'Bot' } }];
+const pullLookup = '/repos/WeighInNG/WeighIn/pulls/27';
+test('a fresh report checks the live pull request head before posting', async () => {
+  const result = await deliver({});
+  assert.equal(result.status, 0, output(result));
+  assert.deepEqual(result.lookups, [pullLookup]);
+  assert.deepEqual(result.calls.map(call => call.method), ['GET', 'POST']);
+});
+test('a fresh report still updates the existing comment', async () => {
+  const result = await deliver({ existingComments: newerComment });
+  assert.equal(result.status, 0, output(result));
+  assert.deepEqual(result.calls.map(call => call.method), ['GET', 'PATCH']);
+  assert.equal(result.calls[1].body.body, report);
+});
+test('a report built from an older head is skipped with a visible reason and no comment calls', async () => {
+  const result = await deliver({ currentHead: newerHead });
+  assert.equal(result.status, 0, output(result));
+  assert.match(output(result), /Skipped stale report/);
+  assert.deepEqual(result.calls, []);
+});
+test('an older job finishing late leaves the newer comment unchanged', async () => {
+  const result = await deliver({ currentHead: newerHead, existingComments: newerComment });
+  assert.equal(result.status, 0, output(result));
+  assert.match(output(result), /Skipped stale report/);
+  assert.deepEqual(result.calls, [], 'no list, update or create call may be made');
+});
+test('metadata naming the synthetic merge commit of the producing head is accepted', async () => {
+  const result = await deliver({ parents: { [mergeCommit]: [baseTip, freshHead] } }, { ...validMetadata, headSha: mergeCommit });
+  assert.equal(result.status, 0, output(result));
+  assert.deepEqual(result.lookups, [`/repos/WeighInNG/WeighIn/git/commits/${mergeCommit}`, pullLookup]);
+  assert.deepEqual(result.calls.map(call => call.method), ['GET', 'POST']);
+});
+for (const [label, scenario, metadata, pattern] of [
+  ['an event without a workflow run head', { event: {} }, true, /workflow run head SHA must be a 40-character/],
+  ['a malformed workflow run head', { event: { workflow_run: { head_sha: 'abc123' } } }, true, /workflow run head SHA must be a 40-character/],
+  ['metadata that is neither the run head nor its merge commit', { parents: { [unrelated]: [baseTip] } }, { ...validMetadata, headSha: unrelated }, /neither the producing run's head/],
+  ['metadata whose commit cannot be looked up', {}, { ...validMetadata, headSha: unrelated }, /Not Found/],
+  ['a missing pull request', { pullStatus: 404 }, true, /scenario failure/],
+  ['a failing pull request lookup', { pullStatus: 500 }, true, /scenario failure/],
+]) {
+  test(`the bundled consumer fails closed on ${label} with zero comment calls`, async () => {
+    const result = await deliver(scenario, metadata);
+    assert.equal(result.status, 1, `${label} unexpectedly succeeded`);
+    assert.match(output(result), pattern);
+    assert.deepEqual(result.calls, []);
+  });
+}
