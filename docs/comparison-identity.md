@@ -10,15 +10,19 @@ fields can name the fixture document, each contract, and each invocation:
 ```json
 {
   "id": "reference-suite",
-  "contracts": [{
-    "id": "greeting",
-    "wasm_path": "contract/target/wasm32v1-none/release/contract_test.wasm",
-    "invocations": [{
-      "id": "world",
-      "function_name": "hello",
-      "args": [{"type": "Symbol", "value": "world"}]
-    }]
-  }]
+  "contracts": [
+    {
+      "id": "greeting",
+      "wasm_path": "contract/target/wasm32v1-none/release/contract_test.wasm",
+      "invocations": [
+        {
+          "id": "world",
+          "function_name": "hello",
+          "args": [{ "type": "Symbol", "value": "world" }]
+        }
+      ]
+    }
+  ]
 }
 ```
 
@@ -39,6 +43,14 @@ explicit ID, the benchmark is deliberately reported as removed/new.
 Adding or changing an explicit ID also changes identity: configure the same IDs
 on both revisions when expecting them to pair. No filename/address inference
 bridges an ID change.
+Fixture declaration objects are validated strictly at the fixture root, contract,
+invocation, and top-level typed argument (`args[]`) levels: unknown or misspelled
+declaration fields (including previously ignored extension fields or misspelled
+optional `id` keys) are rejected before contract build, funding, deployment, or
+simulation with an error identifying the fixture file and the JSON path to the
+offending key, rather than silently falling back to derived path or argument
+identities. Argument payload contents inside `args[].value` (including structured
+`vec` and `map` payloads) remain unrestricted by declaration-level key checks.
 For the reference's historical path migration, the temporary
 [two-step fixture bridge](fixture-migration.md) preserves the exact old declaration
 while introducing a stable contract ID. It uses existing matching behavior and
