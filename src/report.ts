@@ -1,309 +1,109 @@
+import * as crypto from "crypto";
 import * as fs from "fs";
 import * as path from "path";
 import * as core from "@actions/core";
 
-export interface OutputPathValidationOptions {
-  headWorkspace: string;
-  reportPath?: string;
-  metadataPath?: string;
-  fixturesPath?: string;
-  configPath?: string;
-  trustedPolicyPath?: string;
+/**
+ * Bounded number of attempts to allocate an exclusively created temporary
+ * report file.
+ *
+ * The temporary name already carries a random component, so a collision is
+ * practically impossible. The bounded loop only guarantees that a name clash
+ * (for example a pre-created file with the same name) cannot fail the write
+ * on its own.
+ */
+const TEMPORARY_FILE_ATTEMPTS = 5;
+
+/** A temporary file this write operation created and therefore owns. */
+interface OwnedTemporaryFile {
+  path: string;
+  fd: number;
 }
 
-export interface CanonicalPathInfo {
-  rawPath: string;
-  lexicalPath: string;
-  canonicalPath: string;
-  symlinkPath: string | null;
+/**
+ * Build a unique temporary path in the destination directory.
+ *
+ * The temporary file has to live in the same directory as the final report so
+ * that the replacement is a same-filesystem rename.
+ */
+function temporaryReportPath(targetPath: string): string {
+  const unique = `${process.pid.toString(36)}-${crypto
+    .randomBytes(8)
+    .toString("hex")}`;
+  return path.join(
+    path.dirname(targetPath),
+    `.${path.basename(targetPath)}.${unique}.tmp`,
+  );
 }
 
-function lstatOrNull(targetPath: string): fs.Stats | null {
+/**
+ * Create the temporary file used for this write operation.
+ *
+ * `wx` maps to `O_CREAT | O_EXCL | O_WRONLY`, so creation is exclusive: the
+ * returned path cannot belong to another writer. A failed exclusive creation
+ * leaves nothing behind and never removes a file owned by somebody else.
+ */
+function createOwnedTemporaryFile(targetPath: string): OwnedTemporaryFile {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < TEMPORARY_FILE_ATTEMPTS; attempt++) {
+    const candidate = temporaryReportPath(targetPath);
+    try {
+      const fd = fs.openSync(candidate, "wx", 0o666);
+      return { path: candidate, fd };
+    } catch (error) {
+      lastError = error;
+      if ((error as NodeJS.ErrnoException)?.code !== "EEXIST") throw error;
+    }
+  }
+  throw lastError;
+}
+
+/**
+ * Remove the temporary file this operation created.
+ *
+ * Cleanup failures are reported but never mask the original write or rename
+ * error, and only the path this operation created is touched.
+ */
+function removeOwnedTemporaryFile(temporaryPath: string): void {
   try {
-    return fs.lstatSync(targetPath);
-  } catch {
-    return null;
+    fs.unlinkSync(temporaryPath);
+  } catch (error: any) {
+    if (error?.code === "ENOENT") return;
+    core.warning(
+      `Could not remove temporary report file ${temporaryPath}: ${error.message}`,
+    );
   }
 }
 
-function normalizeForComparison(filePath: string): string {
-  const normalized = path.normalize(filePath);
-  return process.platform === "win32" ? normalized.toLowerCase() : normalized;
-}
-
-function isSameOrParentPath(
-  pathA: string,
-  pathB: string,
-): "same" | "parent" | null {
-  const normA = normalizeForComparison(pathA);
-  const normB = normalizeForComparison(pathB);
-  if (normA === normB) return "same";
-  const prefixA = normA.endsWith(path.sep) ? normA : normA + path.sep;
-  const prefixB = normB.endsWith(path.sep) ? normB : normB + path.sep;
-  if (normB.startsWith(prefixA) || normA.startsWith(prefixB)) {
-    return "parent";
-  }
-  return null;
-}
-
-function findSymlinkAlongPath(
-  resolvedWorkspace: string,
-  lexicalPath: string,
-): string | null {
-  const normWorkspace = normalizeForComparison(resolvedWorkspace);
-  const normLexical = normalizeForComparison(lexicalPath);
-  const workspacePrefix = normWorkspace.endsWith(path.sep)
-    ? normWorkspace
-    : normWorkspace + path.sep;
-
-  if (
-    normLexical === normWorkspace ||
-    normLexical.startsWith(workspacePrefix)
-  ) {
-    const rel = path.relative(resolvedWorkspace, lexicalPath);
-    const parts = rel.split(path.sep).filter(Boolean);
-    let current = resolvedWorkspace;
-    for (const part of parts) {
-      current = path.join(current, part);
-      const stat = lstatOrNull(current);
-      if (stat?.isSymbolicLink()) {
-        return current;
+/**
+ * Write `body` to `targetPath` atomically.
+ *
+ * The complete content is written to an exclusively created temporary file in
+ * the destination directory and renamed over the target only after the write
+ * succeeded. A failed or interrupted write therefore leaves an already
+ * published report intact instead of truncating it, and never leaves a partial
+ * report behind.
+ */
+function writeFileAtomically(targetPath: string, body: string): void {
+  const temporary = createOwnedTemporaryFile(targetPath);
+  let closed = false;
+  try {
+    fs.writeFileSync(temporary.fd, body, "utf8");
+    // The handle is closed before the rename so the replacement also works on
+    // platforms that refuse to rename over an open file.
+    fs.closeSync(temporary.fd);
+    closed = true;
+    fs.renameSync(temporary.path, targetPath);
+  } catch (error) {
+    if (!closed) {
+      try {
+        fs.closeSync(temporary.fd);
+      } catch {
+        // The handle is already unusable; the original error is reported.
       }
     }
-    return null;
-  }
-
-  let current = lexicalPath;
-  while (true) {
-    const stat = lstatOrNull(current);
-    if (stat?.isSymbolicLink()) {
-      return current;
-    }
-    if (stat) {
-      break;
-    }
-    const parent = path.dirname(current);
-    if (parent === current) break;
-    current = parent;
-  }
-  return null;
-}
-
-function resolveCanonicalTargetPath(
-  targetPath: string,
-  visited: Set<string> = new Set(),
-): string {
-  const missingSuffix: string[] = [];
-  let current = path.resolve(targetPath);
-
-  while (true) {
-    const stat = lstatOrNull(current);
-    if (stat) {
-      if (stat.isSymbolicLink()) {
-        const visitKey = normalizeForComparison(current);
-        if (visited.has(visitKey)) {
-          throw new Error(
-            `Invalid output path: symlink loop detected while resolving ${targetPath}`,
-          );
-        }
-        visited.add(visitKey);
-        const linkTarget = fs.readlinkSync(current);
-        const resolvedLink = path.resolve(path.dirname(current), linkTarget);
-        const nextTarget =
-          missingSuffix.length > 0
-            ? path.join(resolvedLink, ...missingSuffix)
-            : resolvedLink;
-        return resolveCanonicalTargetPath(nextTarget, visited);
-      }
-      const realExisting = fs.realpathSync(current);
-      return missingSuffix.length > 0
-        ? path.join(realExisting, ...missingSuffix)
-        : realExisting;
-    }
-
-    const parent = path.dirname(current);
-    if (parent === current) {
-      return missingSuffix.length > 0
-        ? path.join(current, ...missingSuffix)
-        : current;
-    }
-    missingSuffix.unshift(path.basename(current));
-    current = parent;
-  }
-}
-
-export function inspectWorkspacePath(
-  headWorkspace: string,
-  rawPath: string,
-): CanonicalPathInfo {
-  const resolvedWorkspace = path.resolve(headWorkspace);
-  const lexicalPath = path.resolve(resolvedWorkspace, rawPath);
-  const symlinkPath = findSymlinkAlongPath(resolvedWorkspace, lexicalPath);
-  const canonicalPath = resolveCanonicalTargetPath(lexicalPath);
-  return {
-    rawPath,
-    lexicalPath,
-    canonicalPath,
-    symlinkPath,
-  };
-}
-
-function checkPairCollision(
-  outputLabel: string,
-  outputInfo: CanonicalPathInfo,
-  otherLabel: string,
-  otherInfo: CanonicalPathInfo,
-): void {
-  const lexicalRelation = isSameOrParentPath(
-    outputInfo.lexicalPath,
-    otherInfo.lexicalPath,
-  );
-  const canonicalRelation = isSameOrParentPath(
-    outputInfo.canonicalPath,
-    otherInfo.canonicalPath,
-  );
-  const relation = canonicalRelation ?? lexicalRelation;
-  if (!relation) return;
-
-  const viaSymlink =
-    outputInfo.symlinkPath || otherInfo.symlinkPath
-      ? ` via existing symlink (${outputInfo.symlinkPath ?? otherInfo.symlinkPath})`
-      : "";
-
-  if (relation === "same") {
-    throw new Error(
-      `Colliding output path: ${outputLabel} (${outputInfo.rawPath}) and ${otherLabel} (${otherInfo.rawPath}) resolve to the same destination (${outputInfo.canonicalPath})${viaSymlink}`,
-    );
-  }
-  throw new Error(
-    `Colliding output path: ${outputLabel} (${outputInfo.rawPath}) and ${otherLabel} (${otherInfo.rawPath}) conflict as parent/child paths (${outputInfo.canonicalPath} vs ${otherInfo.canonicalPath})${viaSymlink}`,
-  );
-}
-
-export function validateOutputPaths(options: OutputPathValidationOptions): {
-  report: CanonicalPathInfo | null;
-  metadata: CanonicalPathInfo | null;
-} {
-  const resolvedWorkspace = path.resolve(options.headWorkspace);
-  const canonicalWorkspace = resolveCanonicalTargetPath(resolvedWorkspace);
-
-  const reportRaw = options.reportPath ?? "";
-  const metadataRaw = options.metadataPath ?? "";
-
-  if (reportRaw.length > 0 && reportRaw.trim() === "") {
-    throw new Error(
-      "Invalid output path: report-path must not be blank or whitespace-only",
-    );
-  }
-  if (metadataRaw.length > 0 && metadataRaw.trim() === "") {
-    throw new Error(
-      "Invalid output path: metadata-path must not be blank or whitespace-only",
-    );
-  }
-
-  const reportInfo = reportRaw
-    ? inspectWorkspacePath(resolvedWorkspace, reportRaw)
-    : null;
-  const metadataInfo = metadataRaw
-    ? inspectWorkspacePath(resolvedWorkspace, metadataRaw)
-    : null;
-
-  const fixturesRaw =
-    options.fixturesPath ||
-    core.getInput("fixtures-path") ||
-    "weighin-fixtures.json";
-  const configRaw =
-    options.configPath || core.getInput("config-path") || "weighin.toml";
-  const trustedPolicyRaw =
-    options.trustedPolicyPath || core.getInput("trusted-policy-path") || "";
-
-  const inputSpecs: Array<{ label: string; info: CanonicalPathInfo }> = [
-    {
-      label: "fixtures-path",
-      info: inspectWorkspacePath(resolvedWorkspace, fixturesRaw),
-    },
-    {
-      label: "config-path",
-      info: inspectWorkspacePath(resolvedWorkspace, configRaw),
-    },
-  ];
-  if (trustedPolicyRaw.trim()) {
-    inputSpecs.push({
-      label: "trusted-policy-path",
-      info: inspectWorkspacePath(resolvedWorkspace, trustedPolicyRaw.trim()),
-    });
-  }
-
-  if (reportInfo && metadataInfo) {
-    checkPairCollision(
-      "report-path",
-      reportInfo,
-      "metadata-path",
-      metadataInfo,
-    );
-  }
-
-  for (const [outputLabel, outputInfo] of [
-    ["report-path", reportInfo],
-    ["metadata-path", metadataInfo],
-  ] as const) {
-    if (!outputInfo) continue;
-
-    if (
-      normalizeForComparison(outputInfo.canonicalPath) ===
-        normalizeForComparison(canonicalWorkspace) ||
-      normalizeForComparison(outputInfo.lexicalPath) ===
-        normalizeForComparison(resolvedWorkspace)
-    ) {
-      throw new Error(
-        `Invalid output path: ${outputLabel} (${outputInfo.rawPath}) resolves to the workspace root directory (${outputInfo.canonicalPath})`,
-      );
-    }
-
-    for (const inputSpec of inputSpecs) {
-      checkPairCollision(
-        outputLabel,
-        outputInfo,
-        inputSpec.label,
-        inputSpec.info,
-      );
-    }
-
-    if (outputInfo.symlinkPath) {
-      throw new Error(
-        `Invalid output path: ${outputLabel} (${outputInfo.rawPath}) aliases or traverses an existing symlink (${outputInfo.symlinkPath} -> ${outputInfo.canonicalPath})`,
-      );
-    }
-  }
-
-  return { report: reportInfo, metadata: metadataInfo };
-}
-
-export function writeMetadataFile(
-  metadataPathInput: string,
-  headWorkspace: string,
-  content: string,
-  options?: Omit<OutputPathValidationOptions, "headWorkspace" | "metadataPath">,
-): void {
-  if (!metadataPathInput) return;
-  const { metadata } = validateOutputPaths({
-    headWorkspace,
-    metadataPath: metadataPathInput,
-    reportPath: options?.reportPath ?? core.getInput("report-path"),
-    ...options,
-  });
-  const targetPath = metadata!.lexicalPath;
-  try {
-    const parentDir = path.dirname(targetPath);
-    if (!fs.existsSync(parentDir)) {
-      fs.mkdirSync(parentDir, { recursive: true });
-    }
-    fs.writeFileSync(targetPath, content, "utf8");
-    core.info(`Wrote PR metadata to ${targetPath}`);
-  } catch (err: any) {
-    throw new Error(
-      `Failed to write WeighIn metadata to ${targetPath}: ${err.message}`,
-    );
+    removeOwnedTemporaryFile(temporary.path);
+    throw error;
   }
 }
 
@@ -311,26 +111,42 @@ export function writeReportFile(
   reportPathInput: string,
   headWorkspace: string,
   body: string,
-  options?: Omit<OutputPathValidationOptions, "headWorkspace" | "reportPath">,
 ): void {
   if (!reportPathInput) return;
-  const { report } = validateOutputPaths({
-    headWorkspace,
-    reportPath: reportPathInput,
-    metadataPath: options?.metadataPath ?? core.getInput("metadata-path"),
-    ...options,
-  });
-  const targetPath = report!.lexicalPath;
+  const targetPath = path.resolve(headWorkspace, reportPathInput);
   try {
     const parentDir = path.dirname(targetPath);
     if (!fs.existsSync(parentDir)) {
       fs.mkdirSync(parentDir, { recursive: true });
     }
-    fs.writeFileSync(targetPath, body, "utf8");
+    writeFileAtomically(targetPath, body);
     core.info(`Wrote Markdown report to ${targetPath}`);
   } catch (err: any) {
     throw new Error(
       `Failed to write WeighIn report to ${targetPath}: ${err.message}`,
     );
   }
+}
+
+export function generateFailureReport(errorMessage: string): string {
+  return [
+    "# WeighIn Resource Benchmark: Unsuccessful Comparison",
+    "",
+    "> **Status: FAILED** — A comparison or policy result could not be established due to an execution failure.",
+    "",
+    "## Failure Details",
+    "",
+    "```",
+    errorMessage,
+    "```",
+    "",
+    "## Policy Result",
+    "",
+    "- **Policies established:** No",
+    "- **Thresholds evaluated:** None",
+    "- **Benchmark metrics:** None (not measured)",
+    "",
+    "No passing comparison, deltas, or resource consumption metrics were established.",
+    "",
+  ].join("\n");
 }
