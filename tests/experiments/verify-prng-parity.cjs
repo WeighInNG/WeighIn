@@ -207,8 +207,9 @@ async function runPrngParityExperiment(destination = defaultDestination) {
   const header = xdr.LedgerHeader.fromXDR(baseNative.input.header_xdr, 'base64');
   header.ledgerSeq(fixedLedger);
   header.scpValue().closeTime(xdr.Uint64.fromString(String(fixedTimestamp)));
+  const headerHash = createHash('sha256').update(header.toXDR()).digest();
   const historyHeaderXdr = new xdr.LedgerHeaderHistoryEntry({
-    hash: Buffer.alloc(32, 0x11),
+    hash: headerHash,
     header,
     ext: new xdr.LedgerHeaderHistoryEntryExt(0),
   }).toXDR('base64');
