@@ -52409,11 +52409,32 @@ var BoundInvocationArgSchema = external_exports.object({
     select: external_exports.array(BindingSelectorStepSchema).optional()
   }).strict()
 }).strict();
+function formatZodIssueMessage(issue2) {
+  if (issue2.code === "unrecognized_keys") {
+    return `Unrecognized key(s) in object: ${issue2.keys.map((key) => `'${key}'`).join(", ")}`;
+  }
+  if (issue2.code === "invalid_type" && issue2.message.endsWith("received undefined")) {
+    return "Required";
+  }
+  if (issue2.code === "invalid_value" && "values" in issue2 && Array.isArray(issue2.values)) {
+    return "Invalid option";
+  }
+  if (issue2.code === "too_small" && issue2.origin === "number" && issue2.minimum === 0) {
+    return "Number must be >= 0";
+  }
+  return issue2.message;
+}
 var TopLevelInvocationArgSchema = external_exports.unknown().transform((val, ctx) => {
   const schema = val !== null && typeof val === "object" && "binding" in val ? BoundInvocationArgSchema : InvocationArgSchema;
   const result = schema.safeParse(val);
   if (!result.success) {
-    result.error.issues.forEach((issue2) => ctx.addIssue({ ...issue2 }));
+    result.error.issues.forEach(
+      (issue2) => ctx.addIssue({
+        code: "custom",
+        path: issue2.path,
+        message: formatZodIssueMessage(issue2)
+      })
+    );
     return external_exports.NEVER;
   }
   return result.data;
@@ -52437,7 +52458,7 @@ function formatZodError(error63, fileName) {
   const lines = [`Invalid WeighIn configuration in ${fileName}:`];
   for (const issue2 of error63.issues) {
     const path10 = issue2.path.join(".");
-    lines.push(`- ${path10 || "root"}: ${issue2.message}`);
+    lines.push(`- ${path10 || "root"}: ${formatZodIssueMessage(issue2)}`);
   }
   return lines.join("\n");
 }

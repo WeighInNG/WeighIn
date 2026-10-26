@@ -37,7 +37,7 @@
     },
     {
       "path": "package.json",
-      "sha256": "a7da4852596dc31f0ae3e4e5567e83c700bc082da865a859fd162295106bb604"
+      "sha256": "d3d5133289aacbd22b1e2cbadb4763e2768701a25710c43b907329ebcce37f59"
     },
     {
       "path": "src/account.ts",
@@ -73,7 +73,7 @@
     },
     {
       "path": "src/config.ts",
-      "sha256": "746c4ffe83b85d9f3bf6b2c8ee5f285894c4a5e37d084af97ac142ce0c768f48"
+      "sha256": "637bd5ebb7ae9333d4857253817717087e7565e25f77a594e29a2f8d0b301007"
     },
     {
       "path": "src/dependency-inventory.ts",
