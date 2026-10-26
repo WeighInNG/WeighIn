@@ -208,6 +208,99 @@ test('argument object key order and type capitalization do not alter default cas
   assert.equal(diffBenchmarks(measurement(input), measurement(reordered)).contracts[0].functions.length, 1);
 });
 
+test('nested vec and map argument type capitalization normalizes consistently without altering string payloads or unrelated objects', () => {
+  const baseVec = fixture([{
+    function_name: 'batch',
+    args: [{
+      type: 'Vec',
+      value: [
+        { type: 'Symbol', value: 'Symbol' },
+        { type: 'VEC', value: [{ type: 'U32', value: 7 }] },
+      ],
+    }],
+  }]);
+  const headVec = fixture([{
+    function_name: 'batch',
+    args: [{
+      type: 'vec',
+      value: [
+        { value: 'Symbol', type: 'symbol' },
+        { value: [{ value: 7, type: 'u32' }], type: 'vec' },
+      ],
+    }],
+  }]);
+  assert.equal(diffBenchmarks(measurement(baseVec), measurement(headVec)).contracts[0].functions.length, 1);
+
+  const distinctPayloadCase = fixture([{
+    function_name: 'batch',
+    args: [{
+      type: 'vec',
+      value: [
+        { type: 'symbol', value: 'symbol' },
+        { type: 'vec', value: [{ type: 'u32', value: 7 }] },
+      ],
+    }],
+  }]);
+  assert.equal(diffBenchmarks(measurement(baseVec), measurement(distinctPayloadCase)).contracts[0].functions.length, 0);
+
+  const baseMap = fixture([{
+    function_name: 'configure',
+    args: [{
+      type: 'Map',
+      value: [{
+        key: { type: 'Symbol', value: 'KeyName' },
+        value: {
+          type: 'MAP',
+          value: [{
+            key: { type: 'STRING', value: 'Type' },
+            value: { type: 'Vec', value: [{ type: 'I128', value: '42' }] },
+          }],
+        },
+      }],
+    }],
+  }]);
+  const headMap = fixture([{
+    function_name: 'configure',
+    args: [{
+      type: 'map',
+      value: [{
+        value: {
+          value: [{
+            value: { value: [{ value: '42', type: 'i128' }], type: 'vec' },
+            key: { value: 'Type', type: 'string' },
+          }],
+          type: 'map',
+        },
+        key: { value: 'KeyName', type: 'symbol' },
+      }],
+    }],
+  }]);
+  assert.equal(diffBenchmarks(measurement(baseMap), measurement(headMap)).contracts[0].functions.length, 1);
+
+  // Unrelated objects inside non-vec/map args keep their literal string fields untouched
+  const rawObjUpper = parseFixtures(JSON.stringify(fixture([{
+    function_name: 'custom',
+    args: [{ type: 'Symbol', value: { type: 'Symbol', value: 'KeepCase' } }],
+  }])), 'weighin-fixtures.json');
+  const rawObjLower = parseFixtures(JSON.stringify(fixture([{
+    function_name: 'custom',
+    args: [{ type: 'symbol', value: { type: 'symbol', value: 'KeepCase' } }],
+  }])), 'weighin-fixtures.json');
+  assert.notEqual(
+    rawObjUpper.contracts[0].invocations[0].case_id,
+    rawObjLower.contracts[0].invocations[0].case_id,
+  );
+
+  // Duplicate benchmark identity when nested types differ only by case is rejected
+  assert.throws(
+    () => measurement(fixture([
+      { function_name: 'batch', args: [{ type: 'Vec', value: [{ type: 'Symbol', value: 'x' }] }] },
+      { function_name: 'batch', args: [{ type: 'vec', value: [{ type: 'symbol', value: 'x' }] }] },
+    ])),
+    /Duplicate benchmark identity/,
+  );
+});
+
 test('duplicate logical contracts or cases are rejected instead of overwritten', () => {
   const input = fixture();
   input.contracts.push(structuredClone(input.contracts[0]));
