@@ -471,3 +471,9 @@ incompatible instead of being compared.
 See [Known limitations](KNOWN_LIMITATIONS.md). [Hosted external validation](hosted-soroban-forge.md)
 covers one empty escrow view in the permitted WeighInNG fork; full stateful Forge
 coverage and upstream adoption are not claimed.
+
+## Issue #154 Evidence: Percentage Boundary Precision
+
+- **Problem Addressed:** Eliminated floating-point rounding anomalies in `diffMetrics` when comparing percentage increases against decimal thresholds.
+- **Implementation Mechanism:** Replaced direct float comparison with integer basis-point scaling (`(diff * 1000000n) / base`), ensuring nonrepresentable thirds (e.g. 1/3 increases) and safe-integer boundary values evaluate deterministically.
+- **Separation of Concerns:** Display percentage strings (`toFixed(2)`) are computed purely for reporting and are completely decoupled from policy pass/fail evaluation logic.
