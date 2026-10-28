@@ -69,9 +69,12 @@ const configSchema = z
   .object({
     limits: z
       .object({
-        global: z.record(z.enum(METRIC_KEYS), percentage).optional(),
+        global: z.partialRecord(z.enum(METRIC_KEYS), percentage).optional(),
         functions: z
-          .record(z.string().min(1), z.record(z.enum(METRIC_KEYS), percentage))
+          .record(
+            z.string().min(1),
+            z.partialRecord(z.enum(METRIC_KEYS), percentage),
+          )
           .optional(),
       })
       .strict()

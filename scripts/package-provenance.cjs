@@ -15,6 +15,7 @@ const tracked = [
   "native/simulation/src",
   "bundled/index.js",
   "bundled/comment-action.js",
+  "scripts/package-provenance.cjs",
 ];
 function files(value) {
   const absolute = path.join(root, value);
@@ -40,10 +41,14 @@ function command(name, args) {
 const entries = [...new Set(tracked.flatMap(files))]
   .sort()
   .map((file) => ({ path: file, sha256: sha256(file) }));
+const sourceTreeSha256 = crypto
+  .createHash("sha256")
+  .update(JSON.stringify(entries))
+  .digest("hex");
 const manifest = {
-  schema_version: 1,
+  schema_version: 2,
   purpose: "verifiable WeighIn package build provenance",
-  source_revision: command("git", ["rev-parse", "HEAD"]),
+  source_tree_sha256: sourceTreeSha256,
   tools: { node: process.version, npm: command("npm", ["--version"]) },
   inputs: entries,
 };

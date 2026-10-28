@@ -1,7 +1,7 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "purpose": "verifiable WeighIn package build provenance",
-  "source_revision": "96bfddaa324d16c3a05d6ac23585b436f2417bb8",
+  "source_tree_sha256": "9fa39c2242fd610ac3433e4c154964cd2adad84ab1d6247fe0578e962028bade",
   "tools": {
     "node": "v24.19.0",
     "npm": "11.17.0"
@@ -13,11 +13,11 @@
     },
     {
       "path": "bundled/comment-action.js",
-      "sha256": "afac41bf65d49309065f622bbd370a73aed1387231dae3ca6300498efcca1d52"
+      "sha256": "ea6da4ced5001be91a536b28c1f2f6233af50509bdad1babcc60b4cf0307c336"
     },
     {
       "path": "bundled/index.js",
-      "sha256": "342660d246f6f05c5f4f8c8678985c02bfb6ec8bca780b3cb4654b17a28a36bc"
+      "sha256": "1ae71da303e80fbcb76d1f1c0abae311caaaaf08d6759fe4bb3db33251edb647"
     },
     {
       "path": "native/simulation/Cargo.lock",
@@ -33,11 +33,15 @@
     },
     {
       "path": "package-lock.json",
-      "sha256": "492e3e9b1bec64039b8ab30976b30ee6dee0b6a1dfdbce6231d49a9e03d7076c"
+      "sha256": "d9076b1c056b6514c0f624d20974ee2ae74e30aa529eb79497f48b499c546bae"
     },
     {
       "path": "package.json",
-      "sha256": "e2b8b3253ac8920648171b0193453ba8d69d1d1bdde55a71c7fd1ba4db3fbbf9"
+      "sha256": "22a58ed5651f7496a0f5805082f1155a7af3ee71b72a6ae186353f81e6c8dde7"
+    },
+    {
+      "path": "scripts/package-provenance.cjs",
+      "sha256": "841386071ca0db27658bf387fef3c364c1859bed0deebb8f08af013e736ab95a"
     },
     {
       "path": "src/account.ts",
@@ -73,7 +77,7 @@
     },
     {
       "path": "src/config.ts",
-      "sha256": "ddc8c4849b30eb8b2db1e80d48b8f2f5426c3183a50e15a7fe5292e1c79aa9d0"
+      "sha256": "7aade5c1b831de626539b2ecbe86c2409997ffe78a41cbdbb4c955f3d657f4f9"
     },
     {
       "path": "src/dependency-inventory.ts",
@@ -117,7 +121,7 @@
     },
     {
       "path": "src/threshold.ts",
-      "sha256": "0a337cb0dbb56a1214394933db6dea8ddd7b294adb31e46587a854da0ba2eb53"
+      "sha256": "55452f55f0ad40065530cfff58ad6a66a8549e67d7c41a2c6e0a9716e6e0b64d"
     }
   ]
 }

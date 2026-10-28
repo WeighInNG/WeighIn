@@ -23,10 +23,13 @@ and does not justify `pull_request_target` secret access.
 
 `npm run bundle` creates `provenance-manifest.json`, a deterministic manifest
 covering package metadata, lockfiles, action metadata, TypeScript sources,
-native helper sources, and both generated bundles. It records the source commit
-and Node/npm identities. `npm run provenance` independently recomputes and
-verifies every listed digest from a clean checkout. A stale bundle, changed
-lockfile, missing helper source, or altered package input fails verification.
+native helper sources, the provenance generator, and both generated bundles.
+It records a digest of the covered source tree and Node/npm identities.
+`npm run provenance` independently recomputes and verifies every listed digest
+from a clean checkout. A stale bundle, changed lockfile, missing helper source,
+or altered package input fails verification. The manifest does not embed a Git
+commit ID because changing the manifest changes that commit ID; use the
+containing Git commit or CI metadata for commit identity.
 
 The manifest is evidence, not a signature. A release system should sign this
 manifest or attach it using the platform's standard artifact-attestation

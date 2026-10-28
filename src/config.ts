@@ -30,17 +30,17 @@ export const GlobalThresholdsSchema = z
   })
   .strict();
 
-export const GlobalLimitsSchema = z.record(
+export const GlobalLimitsSchema = z.partialRecord(
   z.enum(METRIC_KEYS),
   z.number().nonnegative(),
 );
 
-export const FunctionLimitsSchema = z.record(
+export const FunctionLimitsSchema = z.partialRecord(
   z.enum(METRIC_KEYS),
   z.number().nonnegative(),
 );
 
-export const FunctionThresholdsSchema = z.record(
+export const FunctionThresholdsSchema = z.partialRecord(
   z.enum(METRIC_KEYS),
   RuleValueSchema,
 );
