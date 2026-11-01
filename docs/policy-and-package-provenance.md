@@ -23,28 +23,17 @@ and does not justify `pull_request_target` secret access.
 
 `npm run bundle` creates `provenance-manifest.json`, a deterministic manifest
 covering package metadata, lockfiles, action metadata, TypeScript sources,
-native helper sources, and both generated bundles. It records the Git revision
-observed when the bundle was generated and Node/npm identities. Because a
-committed manifest cannot contain the hash of the commit that contains it,
-`npm run provenance` validates the revision field's shape and independently
-recomputes every listed input digest rather than requiring that build-time
-revision to equal the later commit containing the manifest. A stale bundle,
-changed lockfile, missing helper source, or altered package input fails
+native helper sources, and both generated bundles. Git HEAD and local Node/npm
+versions are excluded: HEAD changes when the manifest is committed, and runtime
+versions vary between a local build and CI without changing these inputs.
+Record those observations separately in build or experiment receipts.
+`npm run provenance` independently recomputes every listed digest. A stale
+bundle, changed lockfile, missing helper source, or altered package input fails
 verification.
-
-The recorded `source_revision` and the `tools` block describe the checkout and
-the toolchain that produced the manifest. They are informational and are not
-compared during verification: a pull request is verified from a merge commit
-whose SHA the committed manifest cannot contain, and CI runs a different
-Node/npm patch release than the machine that generated the committed manifest.
-Every recorded digest is still compared, so a stale bundle, changed lockfile,
-missing helper source, or altered package input fails verification.
 
 CI verifies the committed manifest with `npm run provenance` before it
 regenerates the bundles, and then requires the regenerated `bundled/` output to
-be byte-identical to the committed bundles. The manifest is rewritten by
-`npm run bundle`, so its informational fields are not expected to match the
-checkout that CI performs.
+be byte-identical to the committed bundles.
 
 The manifest is evidence, not a signature. A release system should sign this
 manifest or attach it using the platform's standard artifact-attestation

@@ -262,7 +262,7 @@ benchmarks; a configured global cap fails with an actionable error if there are
 no matched benchmarks, rather than silently passing. New or removed cases alone
 do not evaluate absolute caps. An absent policy and an explicitly empty global
 limits table remain report-only. Prefer targeted rules as in the quick start.
-Omitting `config-path` still loads the default file if it exists.
+Omitting `config-path` still loads the default file if it exists. An empty or omitted `config-path` still protects the default `weighin.toml` from being used as `report-path` or `metadata-path`: output paths are validated before any RPC or build, and failure reports are never written to unvalidated paths.
 
 ## Benchmark Identity
 

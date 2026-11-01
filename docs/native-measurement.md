@@ -33,6 +33,14 @@ validated for executable access and versioned output; the binary's SHA256 is
 recorded. Missing binaries, malformed output, host failures and unsupported
 protocols produce errors, not measurements containing zero.
 
+Structured native failures use their validated protocol status for the public
+diagnostic, rather than the helper's generic stderr: `Native helper <status>:
+<protocol message>`. Uncaptured state also carries `UNCAPTURED_KEY`; host
+failures report only the fixed `host invocation failed` detail, never the
+host's debug output. Ledger keys and the full envelope stay on the attached
+structured stdout for bounded snapshot recapture, and are never placed in the
+thrown message.
+
 Helper executable identity is strictly bound to actual execution: the executable
 file's content SHA256 is captured before invocation, re-verified immediately after
 process termination, validated across retry attempts, and checked before emitting

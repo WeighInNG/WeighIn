@@ -52320,7 +52320,8 @@ var InvocationArgSchema = external_exports.lazy(
       (val) => typeof val === "string" ? val.toLowerCase() : val,
       external_exports.enum(INVOCATION_ARG_TYPES)
     ),
-    value: external_exports.any()
+    // Zod 4 requires z.any() keys; preserve omitted argument values.
+    value: external_exports.any().optional()
   }).strict().superRefine((data, ctx) => {
     if (["u64", "i64", "u128", "i128"].includes(data.type)) {
       const err = validateLargeInt(data.type, data.value);
@@ -69813,11 +69814,14 @@ function parseHelperFailure(error63) {
     if (parsed.status === "uncaptured" && (!Array.isArray(parsed.keys) || parsed.keys.length === 0))
       throw new Error("uncaptured envelope has no keys");
     return parsed;
-  } catch (parseError) {
-    throw new Error(
-      `Invalid native helper failure protocol: ${parseError instanceof Error ? parseError.message : parseError}`
-    );
+  } catch {
+    throw new Error("Invalid native helper failure protocol");
   }
+}
+function helperFailureMessage(envelope) {
+  const detail = envelope.status === "host_failure" ? "host invocation failed" : envelope.message;
+  const code = envelope.status === "uncaptured" ? " (UNCAPTURED_KEY)" : "";
+  return `Native helper ${envelope.status}: ${detail}${code}`;
 }
 var provisioned;
 async function resolveSimulationHelper(explicitPath, customBuild) {
@@ -69909,8 +69913,8 @@ async function simulateSnapshot(input2, helperPath, signal) {
     );
   } catch (failure2) {
     const envelope = parseHelperFailure(failure2);
-    if (envelope) {
-      throw new Error(`Native helper ${envelope.status}: ${envelope.message}`);
+    if (envelope && failure2 instanceof Error) {
+      failure2.message = helperFailureMessage(envelope);
     }
     throw failure2;
   }
@@ -70359,9 +70363,7 @@ async function measureInvocation(rpcUrl, transaction, helperPath, options) {
       const envelope = parseHelperFailure(failure2);
       if (envelope) {
         if (envelope.status !== "uncaptured")
-          throw new Error(
-            `Native helper ${envelope.status}: ${envelope.message}`
-          );
+          throw new Error(helperFailureMessage(envelope));
         const additional2 = (envelope.keys ?? []).filter(
           (key) => !keys.has(key)
         );
@@ -71428,7 +71430,7 @@ Setup of ${contractSpec.logical_id} failed; aborted dependents: ${aborted2.map((
         wasm_sha256: wasmSha256
       });
     }
-    const sorobanSdkVersion = opts.sdkVersion !== void 0 ? opts.sdkVersion : discoverSdkVersion(wasmPath);
+    const sorobanSdkVersion = opts.sdkVersion !== void 0 ? opts.sdkVersion : discoverSdkVersion(resolvedWasmPaths.get(contractSpec.wasm_path));
     results.push({
       schema_version: CURRENT_RECORD_SCHEMA_VERSION,
       fixture_id: fixturesSpec.fixture_id,
@@ -73074,7 +73076,8 @@ async function getHeadSha(dir) {
 
 // src/action.ts
 var configuredRpcUrl = "";
-var outputPathsRejected = false;
+var DEFAULT_CONFIG_PATH = "weighin.toml";
+var outputPathsValidated = false;
 var validatedDiffJson = null;
 var RpcCompatibilityError = class extends Error {
 };
@@ -73195,7 +73198,10 @@ function resolveRevisionFixturesPath(worktreeRoot, fixturesPathInput, revision) 
 }
 async function loadPolicy(repoDir, configPathRel, trustedRef, trustedPath) {
   if (!trustedRef && !trustedPath) {
-    const configPath = path9.resolve(repoDir, configPathRel || "weighin.toml");
+    const configPath = path9.resolve(
+      repoDir,
+      configPathRel || DEFAULT_CONFIG_PATH
+    );
     const content2 = fs8.existsSync(configPath) ? fs8.readFileSync(configPath, "utf8") : "";
     return {
       config: content2 ? loadConfigContent(content2, configPath) : null,
@@ -73325,14 +73331,12 @@ async function run() {
     core3.info(`RPC URL:    ${sanitizeEndpoint(rpcUrl)}`);
     core3.info(`Fixtures:   ${fixturesPathRel}`);
     core3.info(`Key file:   ${sharedKeyFile}`);
-    await assertRpcHealthy(rpcUrl);
     const headFixturesPath = resolveRevisionFixturesPath(
       headWorkspace,
       fixturesPathRel,
       "HEAD"
     );
     const fixtureId = path9.relative(path9.resolve(headWorkspace), headFixturesPath).split(path9.sep).join("/");
-    outputPathsRejected = true;
     assertDistinctOutputPaths({
       workspace: headWorkspace,
       outputs: {
@@ -73341,10 +73345,11 @@ async function run() {
       },
       inputs: {
         "fixtures-path": headFixturesPath,
-        "config-path": configPathRel
+        "config-path": configPathRel || DEFAULT_CONFIG_PATH
       }
     });
-    outputPathsRejected = false;
+    outputPathsValidated = true;
+    await assertRpcHealthy(rpcUrl);
     const policy = await loadPolicy(
       headWorkspace,
       configPathRel,
@@ -73544,7 +73549,7 @@ run().catch(async (error63) => {
   core3.setFailed(message);
   const reportPathInput = core3.getInput("report-path");
   const headWorkspace = process.env["GITHUB_WORKSPACE"] ?? process.cwd();
-  if (reportPathInput && !outputPathsRejected) {
+  if (reportPathInput && outputPathsValidated) {
     try {
       const failureReport = generateFailureReport(message);
       writeReportFile(reportPathInput, headWorkspace, failureReport);

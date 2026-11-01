@@ -30,6 +30,7 @@ export const GlobalThresholdsSchema = z
   })
   .strict();
 
+// Zod 4 enum-keyed z.record is exhaustive; metric keys are optional.
 export const GlobalLimitsSchema = z.partialRecord(
   z.enum(METRIC_KEYS),
   z.number().nonnegative(),
@@ -165,7 +166,8 @@ export const InvocationArgSchema: z.ZodType<any> = z.lazy(() =>
         (val) => (typeof val === "string" ? val.toLowerCase() : val),
         z.enum(INVOCATION_ARG_TYPES),
       ),
-      value: z.any(),
+      // Zod 4 requires z.any() keys; preserve omitted argument values.
+      value: z.any().optional(),
     })
     .strict()
     .superRefine((data, ctx) => {

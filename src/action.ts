@@ -42,7 +42,8 @@ import {
 // The configured endpoint is tracked only so the terminal failure path can
 // redact any credential it may contain before reporting.
 let configuredRpcUrl = "";
-let outputPathsRejected = false;
+const DEFAULT_CONFIG_PATH = "weighin.toml";
+let outputPathsValidated = false;
 let validatedDiffJson: string | null = null;
 
 class RpcCompatibilityError extends Error {}
@@ -218,7 +219,10 @@ async function loadPolicy(
   trustedPath: string,
 ): Promise<{ config: ReturnType<typeof loadConfig>; origin: PolicyOrigin }> {
   if (!trustedRef && !trustedPath) {
-    const configPath = path.resolve(repoDir, configPathRel || "weighin.toml");
+    const configPath = path.resolve(
+      repoDir,
+      configPathRel || DEFAULT_CONFIG_PATH,
+    );
     const content = fs.existsSync(configPath)
       ? fs.readFileSync(configPath, "utf8")
       : "";
@@ -397,10 +401,7 @@ async function run(): Promise<void> {
     core.info(`Fixtures:   ${fixturesPathRel}`);
     core.info(`Key file:   ${sharedKeyFile}`);
 
-    // 1. RPC health check — fail fast with a clear message
-    await assertRpcHealthy(rpcUrl);
-
-    // 2. Resolve paths from the HEAD workspace (fixtures, config live there)
+    // 1. Resolve paths from the HEAD workspace (fixtures, config live there)
     const headFixturesPath = resolveRevisionFixturesPath(
       headWorkspace,
       fixturesPathRel,
@@ -410,7 +411,8 @@ async function run(): Promise<void> {
       .relative(path.resolve(headWorkspace), headFixturesPath)
       .split(path.sep)
       .join("/");
-    outputPathsRejected = true;
+    // Reject colliding outputs before any RPC call or build. An empty
+    // config-path reads DEFAULT_CONFIG_PATH, so guard that same file.
     assertDistinctOutputPaths({
       workspace: headWorkspace,
       outputs: {
@@ -419,10 +421,14 @@ async function run(): Promise<void> {
       },
       inputs: {
         "fixtures-path": headFixturesPath,
-        "config-path": configPathRel,
+        "config-path": configPathRel || DEFAULT_CONFIG_PATH,
       },
     });
-    outputPathsRejected = false;
+    outputPathsValidated = true;
+
+    // 2. RPC health check — fail fast with a clear message
+    await assertRpcHealthy(rpcUrl);
+
     const policy = await loadPolicy(
       headWorkspace,
       configPathRel,
@@ -649,7 +655,7 @@ run().catch(async (error: Error) => {
 
   const reportPathInput = core.getInput("report-path");
   const headWorkspace = process.env["GITHUB_WORKSPACE"] ?? process.cwd();
-  if (reportPathInput && !outputPathsRejected) {
+  if (reportPathInput && outputPathsValidated) {
     try {
       const failureReport = generateFailureReport(message);
       writeReportFile(reportPathInput, headWorkspace, failureReport);
