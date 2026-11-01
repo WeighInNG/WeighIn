@@ -114,6 +114,7 @@ function action(
   fixturesPath = "fixtures.json",
   setupFiles,
   baseRefInput = "main",
+  configPathInput = "weighin.toml",
 ) {
   const temporary =
     tmpRoot ?? fs.mkdtempSync(path.join(os.tmpdir(), "weighin-action-unit-"));
@@ -180,7 +181,7 @@ function action(
           GITHUB_OUTPUT: output,
           GITHUB_STEP_SUMMARY: summary,
           "INPUT_FIXTURES-PATH": fixturesPath,
-          "INPUT_CONFIG-PATH": "weighin.toml",
+          "INPUT_CONFIG-PATH": configPathInput,
           "INPUT_GITHUB-TOKEN": "",
           "INPUT_BASE-REF": baseRefInput,
           "INPUT_REPORT-PATH": reportPath || "",
@@ -530,14 +531,6 @@ test("Action does not invent a diff when failure occurs before comparison", () =
   assert.deepEqual(JSON.parse(outputValue(result.output, "diff-json")), {});
 });
 
-test("Action preserves primary error when writing report-path fails due to invalid output path", () => {
-  // Pass an invalid path that cannot be created as a file
-  const res = action("rpc-unhealthy", policy, null, "fixtures.json"); // fixtures.json already exists as a file, but let's test a directory path as file
-  assert.equal(res.status, 1);
-  assert.match(res.output, /fail/);
-  assert.match(res.summary, /RPC has not reported healthy/);
-});
-
 // ---------------------------------------------------------------------------
 // Unknown fixture declaration field rejection (strict schema)
 // ---------------------------------------------------------------------------
@@ -698,4 +691,13 @@ test("Action rejects report-path and metadata-path that resolve to the same file
   } finally {
     delete process.env["INPUT_METADATA-PATH"];
   }
+});
+
+test("Action guards default weighin.toml when config-path is empty and leaves its bytes intact", () => {
+  const result = action("measurement", policy, null, "weighin.toml", "fixtures.json", undefined, "main", "");
+  assert.equal(result.status, 1);
+  assert.match(result.summary, /must not resolve to the same path/, result.stdout + result.stderr);
+  assert.equal(result.reportContent, policy);
+  assert.doesNotMatch(result.stdout, /Checking RPC health/);
+  assert.deepEqual(result.builds, []);
 });

@@ -441,6 +441,12 @@ describe("upsertPrComment public API with paginated transport", () => {
 
   let server: http.Server;
   const calls: RecordedCall[] = [];
+  const validReport = renderComment(
+    createMockDiff(false),
+    [],
+    "main",
+    "abcdef123",
+  );
   let origUrl: string | undefined;
   let origRepo: string | undefined;
 
@@ -582,27 +588,23 @@ describe("upsertPrComment public API with paginated transport", () => {
 
   it("updates report on page 2 without creating a new comment", async () => {
     calls.length = 0;
-    await upsertPrComment(
-      "test-token",
-      91,
-      `New report body ${COMMENT_MARKER}`,
-    );
+    await upsertPrComment("test-token", 91, validReport);
     expect(calls.map((c) => c.method)).toEqual(["GET", "GET", "PATCH"]);
     expect(calls[2].commentId).toBe(102);
-    expect(calls[2].body.body).toBe(`New report body ${COMMENT_MARKER}`);
+    expect(calls[2].body.body).toBe(validReport);
   });
 
   it("reaches exhaustion before creating a new report when no marker exists", async () => {
     calls.length = 0;
-    await upsertPrComment("test-token", 92, `Created report ${COMMENT_MARKER}`);
+    await upsertPrComment("test-token", 92, validReport);
     expect(calls.map((c) => c.method)).toEqual(["GET", "GET", "POST"]);
-    expect(calls[2].body.body).toBe(`Created report ${COMMENT_MARKER}`);
+    expect(calls[2].body.body).toBe(validReport);
   });
 
   it("fails closed on API error without creating or updating comment", async () => {
     calls.length = 0;
     await expect(
-      upsertPrComment("test-token", 93, `Report ${COMMENT_MARKER}`),
+      upsertPrComment("test-token", 93, validReport),
     ).rejects.toThrow();
     expect(calls.map((c) => c.method)).toEqual(["GET"]);
   });

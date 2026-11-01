@@ -178,6 +178,11 @@ hexadecimal SHA. Malformed JSON, a missing or unsupported `schemaVersion`,
 another repository and malformed PR-number/SHA fields all fail before mutation.
 These checks only validate the artifact shape and repository identity; they do
 not prove the run belongs to the PR.
+The comment consumer also rejects empty or whitespace-only reports and reports
+missing the exact `<!-- weighin-report -->` marker or `WeighIn Benchmark Report`
+heading before looking up comments. These marker and heading checks validate
+only basic report shape; they are not authentication and do not establish that a
+report came from a trusted producer.
 
 **Stale reports are skipped.** After validating the metadata, the consumer compares three revisions before it touches any comment. The *producer* revision is `workflow_run.head_sha` from the trusted `workflow_run` event, which for a `pull_request` run is the pull request head the report was measured at. The *metadata* revision is `headSha` from the artifact; because `actions/checkout` checks out the synthetic merge commit on `pull_request` events, it must be either the producer revision or a merge commit that has it as a parent, and anything else is rejected before mutation. The *current* revision is the live pull request head read from the API. When the producer revision is not the current head, the consumer exits successfully without creating or updating a comment and reports `Skipped stale report` as a job warning and summary entry, so an older job that finishes late never overwrites a newer result. A missing or malformed event revision, or a failing lookup, fails before mutation. The consumer reads the pull request and a commit, so its job needs `contents: read` in addition to `pull-requests: write`. The immutable pin in `weighin-comment.yml` predates this check and only gains it when moved to a revision that includes it.
 
@@ -262,7 +267,7 @@ benchmarks; a configured global cap fails with an actionable error if there are
 no matched benchmarks, rather than silently passing. New or removed cases alone
 do not evaluate absolute caps. An absent policy and an explicitly empty global
 limits table remain report-only. Prefer targeted rules as in the quick start.
-Omitting `config-path` still loads the default file if it exists.
+Omitting `config-path` still loads the default file if it exists. An empty or omitted `config-path` still protects the default `weighin.toml` from being used as `report-path` or `metadata-path`: output paths are validated before any RPC or build, and failure reports are never written to unvalidated paths.
 
 ## Benchmark Identity
 

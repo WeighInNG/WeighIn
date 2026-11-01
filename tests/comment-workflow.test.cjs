@@ -8,7 +8,18 @@ const root = path.resolve(__dirname, '..');
 const workflow = YAML.parse(fs.readFileSync(path.join(root, '.github/workflows/comment.yml'), 'utf8'));
 const commentJob = workflow.jobs['post-comment'];
 const steps = commentJob.steps;
-const report = '<!-- weighin-comment -->\n# Resource report\nCPU instructions: 565371\n';
+const { renderComment } = require('../dist/comment.js');
+const report = renderComment({
+  contracts: [{
+    fixture_id: 'path:fixtures.json', logical_id: 'id:contract-a', contract_id: 'contract-a',
+    base_contract_id: 'base-contract-a', head_contract_id: 'contract-a', base_commit: 'base', head_commit: 'head',
+    hasRegression: false, newFunctions: [], removedFunctions: [], newBenchmarks: [], removedBenchmarks: [],
+    functions: [{ function_name: 'test-fn', hasRegression: false, metrics: [
+      { key: 'cpu_instructions', base: { consumed: 100, limit: 1000 }, head: { consumed: 100, limit: 1000 }, delta: 0, pct: 0, regression: false },
+    ] }],
+  }],
+  hasRegression: false, newContracts: [], removedContracts: [],
+}, [], 'base', 'head');
 function git(directory, ...args) {
   const result = spawnSync('git', args, { cwd: directory, encoding: 'utf8' });
   assert.equal(result.status, 0, result.stdout + result.stderr); return result.stdout;
@@ -113,7 +124,7 @@ async function execute(order, metadata = true, run = successfulPr, condition = c
         assert.equal(step.with.name, 'weighin-artifacts');
         assert.equal(step.with['run-id'], '${{ github.event.workflow_run.id }}');
         const post = order.find(step => step.uses === './comment');
-        fs.writeFileSync(path.join(workspace, post.with['report-path']), report);
+        fs.writeFileSync(path.join(workspace, post.with['report-path']), scenario.reportBody ?? report);
         if (metadata !== false) {
           const value = metadata === true ? validMetadata : metadata;
           const text = typeof value === 'string' ? value : JSON.stringify(value);
@@ -150,6 +161,28 @@ test('installed comment Action uses caller artifacts from a separate working dir
   assert.deepEqual(result.calls.map(call => call.method), ['GET', 'POST']);
   assert.equal(result.calls[1].body.body, report);
 });
+test('a valid rendered report is sent unchanged when updating an existing comment', async () => {
+  const result = await execute(steps, true, successfulPr, commentJob.if, {
+    existingComments: [{ id: 42, body: report, user: { id: 41898282, login: 'github-actions[bot]', type: 'Bot' } }],
+  });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.deepEqual(result.calls.map(call => call.method), ['GET', 'PATCH']);
+  assert.equal(result.calls[1].body.body, report);
+});
+for (const [label, invalidReport] of [
+  ['zero-byte report', ''],
+  ['whitespace-only report', ' \n\t '],
+  ['marker-only report', '<!-- weighin-report -->'],
+  ['missing report marker', report.replace('<!-- weighin-report -->', '')],
+  ['unrelated marker', report.replace('<!-- weighin-report -->', '<!-- weighin-comment -->')],
+  ['missing WeighIn Benchmark Report heading', report.replace('WeighIn Benchmark Report', 'Unrelated Report')],
+]) {
+  test(`the bundled consumer rejects ${label} before any GitHub API access`, async () => {
+    const result = await execute(steps, true, successfulPr, commentJob.if, { reportBody: invalidReport });
+    assert.equal(result.status, 1, `${label} unexpectedly succeeded`);
+    assert.deepEqual(result.calls, []);
+  });
+}
 test('a case-insensitive repository match is accepted by the bundled consumer', async () => {
   const result = await execute(steps, { ...validMetadata, repository: 'weighinng/weighin' });
   assert.equal(result.status, 0, result.stdout + result.stderr);
