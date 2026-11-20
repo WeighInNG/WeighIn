@@ -712,3 +712,48 @@ export function diffBenchmarks(
 
   return diff;
 }
+
+/**
+ * Issue #154: Evaluate percentage boundaries without floating-point rounding changing policy decisions.
+ */
+export interface PercentageRuleResult {
+  passed: boolean;
+  actualBasisPoints: number;
+  thresholdBasisPoints: number;
+  displayPercentage: string;
+}
+
+export function evaluatePercentageBoundary(
+  baseValue: number,
+  headValue: number,
+  allowedPercentIncrease: number
+): PercentageRuleResult {
+  if (baseValue === 0) {
+    const passed = headValue === 0 || allowedPercentIncrease === 0;
+    return {
+      passed,
+      actualBasisPoints: headValue > 0 ? 1000000 : 0,
+      thresholdBasisPoints: Math.round(allowedPercentIncrease * 100),
+      displayPercentage: headValue > 0 ? "Infinity%" : "0.00%",
+    };
+  }
+
+  const baseBi = BigInt(baseValue);
+  const headBi = BigInt(headValue);
+  const diffBi = headBi - baseBi;
+
+  const actualBasisPointsNum = Number((diffBi * 1000000n) / baseBi);
+  const thresholdBasisPoints = Math.round(allowedPercentIncrease * 100);
+
+  const passed = actualBasisPointsNum <= thresholdBasisPoints;
+
+  const displayVal = actualBasisPointsNum / 100;
+  const displayPercentage = `${displayVal >= 0 ? "+" : ""}${displayVal.toFixed(2)}%`;
+
+  return {
+    passed,
+    actualBasisPoints: actualBasisPointsNum,
+    thresholdBasisPoints,
+    displayPercentage,
+  };
+}
