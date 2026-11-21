@@ -69891,6 +69891,69 @@ async function acquireDeployerKey(suppliedKeyFile) {
 var SUPPORTED_NETWORK_PASSPHRASE = "Standalone Network ; February 2017";
 var SUPPORTED_PROTOCOL_VERSION = 28;
 
+// src/deployer-lock.ts
+function formatLockKey(network, publicAccount) {
+  return `${network}:${publicAccount}`;
+}
+var DeployerLockManager = class {
+  activeLocks = /* @__PURE__ */ new Map();
+  /**
+   * Acquire an exclusive lock for the given network and public account.
+   * Returns a release function that MUST be called when done (e.g. in a finally block).
+   */
+  async acquire(network, publicAccount) {
+    const key = formatLockKey(network, publicAccount);
+    let releaseCurrent;
+    const lockPromise = new Promise((resolve9) => {
+      releaseCurrent = resolve9;
+    });
+    const previousLock = this.activeLocks.get(key) ?? Promise.resolve();
+    const currentWait = previousLock.then(
+      () => lockPromise,
+      () => lockPromise
+    );
+    this.activeLocks.set(key, currentWait);
+    try {
+      await previousLock;
+    } catch {
+    }
+    let released = false;
+    return () => {
+      if (!released) {
+        released = true;
+        releaseCurrent();
+        if (this.activeLocks.get(key) === currentWait) {
+          this.activeLocks.delete(key);
+        }
+      }
+    };
+  }
+  /**
+   * Execute an asynchronous action with exclusive ownership for the given
+   * network and public account. Guarantees release even if action rejects or fails.
+   */
+  async withLock(network, publicAccount, action) {
+    const release = await this.acquire(network, publicAccount);
+    try {
+      return await action();
+    } finally {
+      release();
+    }
+  }
+  /** Inspect the number of active lock chains (for diagnostics and testing). */
+  getActiveLockCount() {
+    return this.activeLocks.size;
+  }
+  /** Reset all locks (for testing environments). */
+  clear() {
+    this.activeLocks.clear();
+  }
+};
+var deployerLockManager = new DeployerLockManager();
+async function withDeployerLock(network, publicAccount, action) {
+  return deployerLockManager.withLock(network, publicAccount, action);
+}
+
 // src/simulation.ts
 var fs4 = __toESM(require("fs"));
 var path5 = __toESM(require("path"));
@@ -71359,14 +71422,14 @@ async function ensureContractDeployed(options) {
   if (options.minTtlLedgers !== void 0) {
     assertValidMinTtl(options.minTtlLedgers);
   }
-  const probe = await probeContractInstance(server, options.contractId);
-  if (probe.deployed) {
-    const minTtlLedgers = options.minTtlLedgers ?? DEFAULT_MIN_CONTRACT_TTL_LEDGERS;
+  const minTtlLedgers = options.minTtlLedgers ?? DEFAULT_MIN_CONTRACT_TTL_LEDGERS;
+  const initialProbe = await probeContractInstance(server, options.contractId);
+  if (initialProbe.deployed) {
     assertReusableTtl({
       label: "instance",
       contractId: options.contractId,
-      liveUntilLedgerSeq: probe.liveUntilLedgerSeq,
-      latestLedger: probe.latestLedger,
+      liveUntilLedgerSeq: initialProbe.liveUntilLedgerSeq,
+      latestLedger: initialProbe.latestLedger,
       minTtlLedgers
     });
     const code = await probeContractCode(server, wasmHash, options.contractId);
@@ -71382,62 +71445,91 @@ async function ensureContractDeployed(options) {
       return_xdr: Address.fromString(options.contractId).toScVal().toXDR("base64")
     };
   }
-  console.log(`Installing WASM...`);
-  let account = await server.getAccount(deployer.publicKey());
-  const uploadTx = new TransactionBuilder(account, {
-    fee: "1000000",
-    networkPassphrase: SUPPORTED_NETWORK_PASSPHRASE
-  }).addOperation(Operation.uploadContractWasm({ wasm: wasmBytes })).setTimeout(30).build();
-  let preparedUpload;
-  try {
-    preparedUpload = await server.prepareTransaction(uploadTx);
-  } catch (err) {
-    console.error(
-      `WASM upload preparation failed at ${sanitizeEndpoint(options.rpcUrl)}: ${redactEndpointSecrets(String(err?.message ?? err), options.rpcUrl)}`
+  const network = options.networkPassphrase ?? SUPPORTED_NETWORK_PASSPHRASE;
+  return await withDeployerLock(network, deployer.publicKey(), async () => {
+    const lockedProbe = await probeContractInstance(server, options.contractId);
+    if (lockedProbe.deployed) {
+      assertReusableTtl({
+        label: "instance",
+        contractId: options.contractId,
+        liveUntilLedgerSeq: lockedProbe.liveUntilLedgerSeq,
+        latestLedger: lockedProbe.latestLedger,
+        minTtlLedgers
+      });
+      const code = await probeContractCode(
+        server,
+        wasmHash,
+        options.contractId
+      );
+      assertReusableTtl({
+        label: "code",
+        contractId: options.contractId,
+        ...code,
+        minTtlLedgers
+      });
+      console.log(`Already deployed at ${options.contractId}`);
+      return {
+        source: "existing_instance",
+        return_xdr: Address.fromString(options.contractId).toScVal().toXDR("base64")
+      };
+    }
+    console.log(`Installing WASM...`);
+    let account = await server.getAccount(deployer.publicKey());
+    const uploadTx = new TransactionBuilder(account, {
+      fee: "1000000",
+      networkPassphrase: network
+    }).addOperation(Operation.uploadContractWasm({ wasm: wasmBytes })).setTimeout(30).build();
+    let preparedUpload;
+    try {
+      preparedUpload = await server.prepareTransaction(uploadTx);
+    } catch (err) {
+      console.error(
+        `WASM upload preparation failed at ${sanitizeEndpoint(options.rpcUrl)}: ${redactEndpointSecrets(String(err?.message ?? err), options.rpcUrl)}`
+      );
+      throw err;
+    }
+    preparedUpload.sign(deployer);
+    await submitAndConfirm(
+      server,
+      preparedUpload,
+      "WASM upload",
+      options.rpcUrl,
+      options.signal
     );
-    throw err;
-  }
-  preparedUpload.sign(deployer);
-  await submitAndConfirm(
-    server,
-    preparedUpload,
-    "WASM upload",
-    options.rpcUrl,
-    options.signal
-  );
-  console.log(`WASM installed. Deploying contract instance...`);
-  account = await server.getAccount(deployer.publicKey());
-  const createTx = new TransactionBuilder(account, {
-    fee: "1000000",
-    networkPassphrase: SUPPORTED_NETWORK_PASSPHRASE
-  }).addOperation(
-    Operation.createCustomContract({
-      wasmHash,
-      address: deployerAddress,
-      salt
-    })
-  ).setTimeout(30).build();
-  const preparedCreate = await server.prepareTransaction(createTx);
-  preparedCreate.sign(deployer);
-  const created = await submitAndConfirm(
-    server,
-    preparedCreate,
-    "contract creation",
-    options.rpcUrl,
-    options.signal
-  );
-  const result = created.returnValue;
-  const observedAddress = result instanceof types.ScVal && result.switch().name === "scvAddress" ? Address.fromScVal(result).toString() : void 0;
-  if (!result || observedAddress !== options.contractId) {
-    throw new Error(
-      `Contract creation receipt address mismatch (expected=${options.contractId}, observed=${observedAddress ?? "no address"})`
+    console.log(`WASM installed. Deploying contract instance...`);
+    account = await server.getAccount(deployer.publicKey());
+    const createTx = new TransactionBuilder(account, {
+      fee: "1000000",
+      networkPassphrase: network
+    }).addOperation(
+      Operation.createCustomContract({
+        wasmHash,
+        address: deployerAddress,
+        salt
+      })
+    ).setTimeout(30).build();
+    const preparedCreate = await server.prepareTransaction(createTx);
+    preparedCreate.sign(deployer);
+    const created = await submitAndConfirm(
+      server,
+      preparedCreate,
+      "contract creation",
+      options.rpcUrl,
+      options.signal
     );
-  }
-  console.log(`Deployed at ${options.contractId}`);
-  return {
-    source: "created",
-    return_xdr: result.toXDR("base64")
-  };
+    const result = created.returnValue;
+    const observedAddress = result instanceof types.ScVal && result.switch().name === "scvAddress" ? Address.fromScVal(result).toString() : void 0;
+    if (!result || observedAddress !== options.contractId) {
+      throw new Error(
+        `Contract creation receipt address mismatch (expected=${options.contractId}, observed=${observedAddress ?? "no address"})`
+      );
+    }
+    console.log(`Deployed at ${options.contractId}`);
+    return {
+      source: "created",
+      return_xdr: result.toXDR("base64")
+    };
+  });
 }
 async function buildInvocationTransaction(options) {
   const { server, sourceAccount, contractId, invocation } = options;
@@ -71646,7 +71738,8 @@ async function measureWithKeyFile(opts, keyFile) {
         contractId,
         rpcUrl: effectiveRpcUrl,
         signal: opts.signal,
-        minTtlLedgers: opts.minTtlLedgers
+        minTtlLedgers: opts.minTtlLedgers,
+        networkPassphrase: opts.networkPassphrase ?? SUPPORTED_NETWORK_PASSPHRASE
       });
     } catch (err) {
       const aborted2 = dependentsOf(contractSpec, setupOrder);
@@ -72463,13 +72556,15 @@ function fmt(n) {
   return n.toLocaleString("en-US");
 }
 function fmtDelta(delta) {
-  if (delta === 0) return "\xB10";
+  if (delta === 0 || Object.is(delta, -0)) return "\xB10";
   return delta > 0 ? `+${fmt(delta)}` : fmt(delta);
 }
 function fmtPct(pct) {
   if (pct === null) return "\u2014 (BASE 0)";
-  if (pct === 0) return "\u2014";
-  return pct > 0 ? `+${pct.toFixed(1)}%` : `${pct.toFixed(1)}%`;
+  if (pct === 0 || Object.is(pct, -0)) return "\u2014";
+  const formatted = pct.toFixed(1);
+  if (formatted === "0.0" || formatted === "-0.0") return "\u2014";
+  return pct > 0 ? `+${formatted}%` : `${formatted}%`;
 }
 function trend(delta) {
   if (delta > 0) return "\u{1F534}";

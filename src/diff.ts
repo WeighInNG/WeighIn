@@ -712,3 +712,59 @@ export function diffBenchmarks(
 
   return diff;
 }
+
+/** Alias for diffBenchmarks matching conventional diff calculation API */
+export const calculateDiff = diffBenchmarks;
+
+/**
+ * Format a resource delta and percentage change for display.
+ * For zero deltas, cleanly displays zero changes without confusing signs or rounding artifacts.
+ * Delta of 0 is formatted as "0 (0.00%)" or "-" (when zeroAsDash is requested), and negative zero is never displayed.
+ */
+export function formatDiffDelta(
+  delta: number | null,
+  pct: number | null,
+  options?: { zeroAsDash?: boolean; precision?: number },
+): string {
+  if (delta === null) return "Unavailable";
+  if (delta === 0 || Object.is(delta, -0)) {
+    return options?.zeroAsDash ? "-" : "0 (0.00%)";
+  }
+  const precision = options?.precision ?? 2;
+  const sign = delta > 0 ? "+" : "";
+  if (pct === null) {
+    return `${sign}${delta.toLocaleString("en-US")}`;
+  }
+  const safePct = Object.is(pct, -0) ? 0 : pct;
+  const formattedPct = safePct.toFixed(precision);
+  const normalizedPct =
+    formattedPct === "-0.00" || formattedPct === "-0.0" ? "0.00" : formattedPct;
+  const pctSign = safePct > 0 ? "+" : "";
+  return `${sign}${delta.toLocaleString("en-US")} (${pctSign}${normalizedPct}%)`;
+}
+
+/**
+ * Return status indicator badge:
+ * - Reductions in CPU/Memory receive green improvement badge ("🟢").
+ * - Minor/zero changes receive neutral indicator ("⚪" or "▫️" / "-").
+ * - Regressions within threshold receive warning indicator ("⚠️").
+ * - Regressions exceeding threshold receive failure alert badge ("🔴").
+ */
+export function getMetricBadge(
+  delta: number | null,
+  options?: {
+    withinThreshold?: boolean;
+    style?: "emoji" | "neutral_symbol";
+  },
+): string {
+  if (delta === null) return options?.style === "neutral_symbol" ? "▫️" : "⚪";
+  if (delta === 0 || Object.is(delta, -0)) {
+    return options?.style === "neutral_symbol" ? "▫️" : "⚪";
+  }
+  if (delta < 0) return "🟢";
+  // delta > 0 (regression)
+  if (options?.withinThreshold === true) {
+    return "⚠️";
+  }
+  return "🔴";
+}

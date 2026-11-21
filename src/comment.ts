@@ -264,38 +264,40 @@ function metricLabel(metric: MetricDiff): string {
 }
 
 // Format a numeric value with thousands separators
-function fmt(n: number | null): string {
+export function fmt(n: number | null): string {
   if (n === null) return "Unavailable";
   return n.toLocaleString("en-US");
 }
 
 // Format a delta with sign
-function fmtDelta(delta: number): string {
-  if (delta === 0) return "±0";
+export function fmtDelta(delta: number): string {
+  if (delta === 0 || Object.is(delta, -0)) return "±0";
   return delta > 0 ? `+${fmt(delta)}` : fmt(delta);
 }
 
 // Format a percentage change
-function fmtPct(pct: number | null): string {
+export function fmtPct(pct: number | null): string {
   if (pct === null) return "— (BASE 0)";
-  if (pct === 0) return "—";
-  return pct > 0 ? `+${pct.toFixed(1)}%` : `${pct.toFixed(1)}%`;
+  if (pct === 0 || Object.is(pct, -0)) return "—";
+  const formatted = pct.toFixed(1);
+  if (formatted === "0.0" || formatted === "-0.0") return "—";
+  return pct > 0 ? `+${formatted}%` : `${formatted}%`;
 }
 
 // Trend emoji: regression, improvement, or unchanged
-function trend(delta: number): string {
+export function trend(delta: number): string {
   if (delta > 0) return "🔴";
   if (delta < 0) return "🟢";
   return "⚪";
 }
 
-function benchmarkLabel(fn: BenchmarkIdentity): string {
+export function benchmarkLabel(fn: BenchmarkIdentity): string {
   return fn.case_id === undefined
     ? fn.function_name
     : `${fn.function_name} / ${fn.case_id}`;
 }
 
-function renderFunctionTable(fn: FunctionDiff): string {
+export function renderFunctionTable(fn: FunctionDiff): string {
   const rows = fn.metrics.map((m) => {
     if (m.availability === "unavailable") {
       return `| ⚪ | ${metricLabel(m)} | ${fmt(m.base.consumed)} | ${fmt(m.head.consumed)} | Unavailable | — | ${fmt(m.head.limit)} |`;

@@ -8,6 +8,12 @@ import { acquireDeployerKey } from "./deployer-key";
 import { redactEndpointSecrets, sanitizeEndpoint } from "./endpoint";
 import { validateLargeInt } from "./config";
 import { SUPPORTED_NETWORK_PASSPHRASE } from "./network";
+import {
+  withDeployerLock,
+  acquireDeployerLock,
+  deployerLockManager,
+  DeployerLockManager,
+} from "./deployer-lock";
 import { CURRENT_RECORD_SCHEMA_VERSION } from "./record-schema";
 import {
   measureInvocation,
@@ -731,7 +737,7 @@ async function probeContractCode(
  *  Returns the committed create return XDR, or the verified instance address
  *  when the instance already existed.
  */
-export async function ensureContractDeployed(options: {
+export interface EnsureContractDeployedOptions {
   server: rpc.Server;
   deployer: Keypair;
   deployerAddress: Address;
@@ -743,21 +749,29 @@ export async function ensureContractDeployed(options: {
   signal?: AbortSignal;
   /** Minimum remaining TTL (ledgers) for a reused instance and its code. */
   minTtlLedgers?: number;
-}): Promise<Pick<SetupResult, "source" | "return_xdr">> {
+  /** Network passphrase used for transaction construction and deployer locking. */
+  networkPassphrase?: string;
+}
+
+export async function ensureContractDeployed(
+  options: EnsureContractDeployedOptions,
+): Promise<Pick<SetupResult, "source" | "return_xdr">> {
   const { server, deployer, deployerAddress, wasmBytes, wasmHash, salt } =
     options;
   if (options.minTtlLedgers !== undefined) {
     assertValidMinTtl(options.minTtlLedgers);
   }
-  const probe = await probeContractInstance(server, options.contractId);
-  if (probe.deployed) {
-    const minTtlLedgers =
-      options.minTtlLedgers ?? DEFAULT_MIN_CONTRACT_TTL_LEDGERS;
+  const minTtlLedgers =
+    options.minTtlLedgers ?? DEFAULT_MIN_CONTRACT_TTL_LEDGERS;
+
+  // Probe before lock: if already deployed and healthy, return immediately
+  const initialProbe = await probeContractInstance(server, options.contractId);
+  if (initialProbe.deployed) {
     assertReusableTtl({
       label: "instance",
       contractId: options.contractId,
-      liveUntilLedgerSeq: probe.liveUntilLedgerSeq,
-      latestLedger: probe.latestLedger,
+      liveUntilLedgerSeq: initialProbe.liveUntilLedgerSeq,
+      latestLedger: initialProbe.latestLedger,
       minTtlLedgers,
     });
     const code = await probeContractCode(server, wasmHash, options.contractId);
@@ -776,78 +790,112 @@ export async function ensureContractDeployed(options: {
     };
   }
 
-  console.log(`Installing WASM...`);
-  let account = await server.getAccount(deployer.publicKey());
-
-  // 1. Upload WASM
-  const uploadTx = new TransactionBuilder(account, {
-    fee: "1000000",
-    networkPassphrase: SUPPORTED_NETWORK_PASSPHRASE,
-  })
-    .addOperation(Operation.uploadContractWasm({ wasm: wasmBytes }))
-    .setTimeout(30)
-    .build();
-
-  let preparedUpload;
-  try {
-    preparedUpload = await server.prepareTransaction(uploadTx);
-  } catch (err: any) {
-    console.error(
-      `WASM upload preparation failed at ${sanitizeEndpoint(options.rpcUrl)}: ${redactEndpointSecrets(String(err?.message ?? err), options.rpcUrl)}`,
-    );
-    throw err;
-  }
-  preparedUpload.sign(deployer);
-  await submitAndConfirm(
-    server,
-    preparedUpload,
-    "WASM upload",
-    options.rpcUrl,
-    options.signal,
-  );
-
-  console.log(`WASM installed. Deploying contract instance...`);
-  account = await server.getAccount(deployer.publicKey());
-
-  // 2. Create contract instance
-  const createTx = new TransactionBuilder(account, {
-    fee: "1000000",
-    networkPassphrase: SUPPORTED_NETWORK_PASSPHRASE,
-  })
-    .addOperation(
-      Operation.createCustomContract({
+  // Not deployed yet: serialize deployment sequence for this deployer and network
+  const network = options.networkPassphrase ?? SUPPORTED_NETWORK_PASSPHRASE;
+  return await withDeployerLock(network, deployer.publicKey(), async () => {
+    // Re-check probe inside lock in case another concurrent deployment completed
+    const lockedProbe = await probeContractInstance(server, options.contractId);
+    if (lockedProbe.deployed) {
+      assertReusableTtl({
+        label: "instance",
+        contractId: options.contractId,
+        liveUntilLedgerSeq: lockedProbe.liveUntilLedgerSeq,
+        latestLedger: lockedProbe.latestLedger,
+        minTtlLedgers,
+      });
+      const code = await probeContractCode(
+        server,
         wasmHash,
-        address: deployerAddress,
-        salt,
-      }),
-    )
-    .setTimeout(30)
-    .build();
+        options.contractId,
+      );
+      assertReusableTtl({
+        label: "code",
+        contractId: options.contractId,
+        ...code,
+        minTtlLedgers,
+      });
+      console.log(`Already deployed at ${options.contractId}`);
+      return {
+        source: "existing_instance",
+        return_xdr: Address.fromString(options.contractId)
+          .toScVal()
+          .toXDR("base64"),
+      };
+    }
 
-  const preparedCreate = await server.prepareTransaction(createTx);
-  preparedCreate.sign(deployer);
-  const created = await submitAndConfirm(
-    server,
-    preparedCreate,
-    "contract creation",
-    options.rpcUrl,
-    options.signal,
-  );
-  const result = created.returnValue;
-  const observedAddress =
-    result instanceof xdr.ScVal && result.switch().name === "scvAddress"
-      ? Address.fromScVal(result).toString()
-      : undefined;
-  if (!result || observedAddress !== options.contractId) {
-    throw new Error(
-      `Contract creation receipt address mismatch (expected=${options.contractId}, observed=${observedAddress ?? "no address"})`,
+    console.log(`Installing WASM...`);
+    let account = await server.getAccount(deployer.publicKey());
+
+    // 1. Upload WASM
+    const uploadTx = new TransactionBuilder(account, {
+      fee: "1000000",
+      networkPassphrase: network,
+    })
+      .addOperation(Operation.uploadContractWasm({ wasm: wasmBytes }))
+      .setTimeout(30)
+      .build();
+
+    let preparedUpload;
+    try {
+      preparedUpload = await server.prepareTransaction(uploadTx);
+    } catch (err: any) {
+      console.error(
+        `WASM upload preparation failed at ${sanitizeEndpoint(options.rpcUrl)}: ${redactEndpointSecrets(String(err?.message ?? err), options.rpcUrl)}`,
+      );
+      throw err;
+    }
+    preparedUpload.sign(deployer);
+    await submitAndConfirm(
+      server,
+      preparedUpload,
+      "WASM upload",
+      options.rpcUrl,
+      options.signal,
     );
-  }
-  console.log(`Deployed at ${options.contractId}`);
-  return {
-    source: "created",
-    return_xdr: result.toXDR("base64"),
-  };
+
+    console.log(`WASM installed. Deploying contract instance...`);
+    account = await server.getAccount(deployer.publicKey());
+
+    // 2. Create contract instance
+    const createTx = new TransactionBuilder(account, {
+      fee: "1000000",
+      networkPassphrase: network,
+    })
+      .addOperation(
+        Operation.createCustomContract({
+          wasmHash,
+          address: deployerAddress,
+          salt,
+        }),
+      )
+      .setTimeout(30)
+      .build();
+
+    const preparedCreate = await server.prepareTransaction(createTx);
+    preparedCreate.sign(deployer);
+    const created = await submitAndConfirm(
+      server,
+      preparedCreate,
+      "contract creation",
+      options.rpcUrl,
+      options.signal,
+    );
+    const result = created.returnValue;
+    const observedAddress =
+      result instanceof xdr.ScVal && result.switch().name === "scvAddress"
+        ? Address.fromScVal(result).toString()
+        : undefined;
+    if (!result || observedAddress !== options.contractId) {
+      throw new Error(
+        `Contract creation receipt address mismatch (expected=${options.contractId}, observed=${observedAddress ?? "no address"})`,
+      );
+    }
+    console.log(`Deployed at ${options.contractId}`);
+    return {
+      source: "created",
+      return_xdr: result.toXDR("base64"),
+    };
+  });
 }
 
 /** Build the simulated invocation transaction for one contract case.
@@ -954,6 +1002,8 @@ export interface RunMeasurementOptions {
   /** Optional cancellation signal. */
   signal?: AbortSignal;
   allowCrossTargetSubstitution?: boolean;
+  /** Optional network passphrase override. Defaults to SUPPORTED_NETWORK_PASSPHRASE. */
+  networkPassphrase?: string;
 }
 
 const WASM_MAGIC = Buffer.from([
@@ -1201,6 +1251,8 @@ async function measureWithKeyFile(
         rpcUrl: effectiveRpcUrl,
         signal: opts.signal,
         minTtlLedgers: opts.minTtlLedgers,
+        networkPassphrase:
+          opts.networkPassphrase ?? SUPPORTED_NETWORK_PASSPHRASE,
       });
     } catch (err) {
       const aborted = dependentsOf(contractSpec, setupOrder);
@@ -1322,3 +1374,9 @@ export {
   parseSdkVersionsFromLock,
   readSdkVersionsFromLock,
 } from "./sdk-version";
+export {
+  withDeployerLock,
+  acquireDeployerLock,
+  deployerLockManager,
+  DeployerLockManager,
+} from "./deployer-lock";

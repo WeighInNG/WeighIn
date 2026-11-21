@@ -10,6 +10,22 @@ import * as fs from "fs";
 
 vi.mock("fs");
 
+function createCompleteMetrics(consumed: number, limit = 1000) {
+  return {
+    cpu_instructions: { consumed, limit },
+    memory_bytes: { consumed, limit },
+    ledger_read_entries: { consumed, limit },
+    ledger_read_bytes: { consumed, limit },
+    ledger_write_entries: { consumed, limit },
+    ledger_write_bytes: { consumed, limit },
+    historical_data_read_bytes: { consumed, limit },
+    contract_data_hard_limit: { consumed, limit },
+    tx_size_bytes: { consumed, limit },
+    events_count: { consumed, limit },
+    event_data_bytes: { consumed, limit },
+  };
+}
+
 describe("loadConfig (TOML parsing & Zod Validation)", () => {
   it("returns null if file does not exist", () => {
     vi.mocked(fs.existsSync).mockReturnValue(false);
@@ -152,6 +168,147 @@ describe("loadConfig (TOML parsing & Zod Validation)", () => {
       tx_size_bytes = -1
     `);
     expect(() => loadConfig("weighin.toml")).toThrow(/>=\s?0/);
+  });
+
+  describe("weighin.toml threshold parsing with edge cases (#315)", () => {
+    it("parses empty config file and defaults to permissive mode without violations", async () => {
+      vi.mocked(fs.existsSync).mockReturnValue(true);
+      vi.mocked(fs.readFileSync).mockReturnValue("");
+
+      const config = loadConfig("weighin.toml");
+      expect(
+        config,
+        "empty file should parse to an empty configuration object",
+      ).toEqual({});
+
+      // Permissive mode verification: enforceThresholds with empty config yields 0 violations
+      const base = [
+        {
+          contract_id: "test-contract",
+          git_commit: "base",
+          soroban_sdk_version: "1.0",
+          timestamp: 0,
+          benchmarks: [
+            {
+              function_name: "test-fn",
+              wasm_sha256: "w1",
+              metrics: createCompleteMetrics(100),
+            },
+          ],
+        },
+      ];
+      const head = [
+        {
+          contract_id: "test-contract",
+          git_commit: "head",
+          soroban_sdk_version: "1.0",
+          timestamp: 1,
+          benchmarks: [
+            {
+              function_name: "test-fn",
+              wasm_sha256: "w1",
+              metrics: createCompleteMetrics(150),
+            },
+          ],
+        },
+      ];
+      const diff = diffBenchmarks(base, head);
+      const violations = enforceThresholds(diff, config!);
+      expect(
+        violations,
+        "permissive empty config must not flag regressions as violations",
+      ).toEqual([]);
+    });
+
+    it("throws descriptive errors on invalid percentage strings", () => {
+      vi.mocked(fs.existsSync).mockReturnValue(true);
+
+      // Raw percentage string like 'abc%' or '50%'
+      vi.mocked(fs.readFileSync).mockReturnValue(`
+        [thresholds.functions.transfer]
+        cpu_instructions = "abc%"
+      `);
+      expect(
+        () => loadConfig("weighin.toml"),
+        "invalid rule string 'abc%' must be rejected with descriptive message",
+      ).toThrow(/Unsupported threshold rule/);
+
+      // Malformed allow percentage string
+      vi.mocked(fs.readFileSync).mockReturnValue(`
+        [thresholds.functions.transfer]
+        cpu_instructions = "allow_abc_percent_increase"
+      `);
+      expect(
+        () => loadConfig("weighin.toml"),
+        "malformed rule string 'allow_abc_percent_increase' must throw descriptive error",
+      ).toThrow(/Unsupported threshold rule/);
+
+      // Invalid standalone percent
+      vi.mocked(fs.readFileSync).mockReturnValue(`
+        [thresholds.global]
+        max_allowed_cpu_increase_pct = "invalid_pct"
+      `);
+      expect(
+        () => loadConfig("weighin.toml"),
+        "string in numeric percentage field must throw type error",
+      ).toThrow(/expected number|Invalid WeighIn configuration/i);
+    });
+
+    it("rejects negative values in absolute thresholds and limits", () => {
+      vi.mocked(fs.existsSync).mockReturnValue(true);
+
+      // Negative global absolute limit
+      vi.mocked(fs.readFileSync).mockReturnValue(`
+        [limits.global]
+        cpu_instructions = -500
+      `);
+      expect(
+        () => loadConfig("weighin.toml"),
+        "negative global limit must be rejected",
+      ).toThrow(/>=\s?0|Too small/);
+
+      // Negative per-function limit
+      vi.mocked(fs.readFileSync).mockReturnValue(`
+        [limits.functions.deposit]
+        memory_bytes = -10
+      `);
+      expect(
+        () => loadConfig("weighin.toml"),
+        "negative per-function limit must be rejected",
+      ).toThrow(/>=\s?0|Too small/);
+
+      // Negative percentage threshold in global
+      vi.mocked(fs.readFileSync).mockReturnValue(`
+        [thresholds.global]
+        max_allowed_cpu_increase_pct = -5
+      `);
+      expect(
+        () => loadConfig("weighin.toml"),
+        "negative max_allowed_cpu_increase_pct must be rejected",
+      ).toThrow(/>=\s?0|Too small/);
+    });
+
+    it("triggers validation errors on unknown top-level sections", () => {
+      vi.mocked(fs.existsSync).mockReturnValue(true);
+
+      vi.mocked(fs.readFileSync).mockReturnValue(`
+        [custom_section]
+        enabled = true
+      `);
+      expect(
+        () => loadConfig("weighin.toml"),
+        "unknown section [custom_section] must trigger strict validation error",
+      ).toThrow(/custom_section/);
+
+      vi.mocked(fs.readFileSync).mockReturnValue(`
+        [settings]
+        retries = 3
+      `);
+      expect(
+        () => loadConfig("weighin.toml"),
+        "unknown section [settings] must trigger strict validation error",
+      ).toThrow(/settings/);
+    });
   });
 });
 

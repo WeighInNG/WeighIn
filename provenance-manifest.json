@@ -73,7 +73,7 @@
     },
     {
       "path": "src/comment.ts",
-      "sha256": "d9b0f4ac6df4e0debb9b8049c61f9eab20f1a16350df1f55799af218c30c84ef"
+      "sha256": "91c63143e8d2672ccb6bbf9080d945f5baeaf009346ee9f0342d3b2b1fd41422"
     },
     {
       "path": "src/config.ts",
@@ -88,8 +88,12 @@
       "sha256": "ccf3a9840e0240153491beb5e1d4868eaaea8ea05477574090b39ca7e6408c35"
     },
     {
+      "path": "src/deployer-lock.ts",
+      "sha256": "30d797ac6dc9cb4c3f2407c8386f29cfe39a83c3af23136270bfa7329245258e"
+    },
+    {
       "path": "src/diff.ts",
-      "sha256": "71951faad895affbf131eba11cb0ceee2769000d6fa3016444996de812839524"
+      "sha256": "d5343442dbaaa1d25797049385a9aa91483c09c84105bfd7ec05c095de65dc5f"
     },
     {
       "path": "src/endpoint.ts",
@@ -105,7 +109,7 @@
     },
     {
       "path": "src/measurement.ts",
-      "sha256": "6240208516fe22c36b0cb470702a43c0b4052710d79ead7c832025845814ee81"
+      "sha256": "0921639b1c093595007944765dac428283b3d4d8a046d90cde7614ad7e8e1df8"
     },
     {
       "path": "src/network.ts",
