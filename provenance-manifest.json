@@ -65,7 +65,7 @@
     },
     {
       "path": "src/cli.ts",
-      "sha256": "b5037db124c2e990938050b0d9dd4db164035eb19902d6e4e84cd2a23fa76c6a"
+      "sha256": "04cef0a39b88cf7b75fb02872cb3bf9cff3876e2238d03f8cbe80c436823a1a5"
     },
     {
       "path": "src/comment-action.ts",
@@ -101,7 +101,7 @@
     },
     {
       "path": "src/identity.ts",
-      "sha256": "987c2136e2a777328bf8383b2d321572230f88c61ed27d2c2ae88a60925e5f7d"
+      "sha256": "b5681c3837afe34981a48a25476aa115a670600281c743a9e99a0c1cd20a4e8f"
     },
     {
       "path": "src/measurement.ts",

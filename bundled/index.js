@@ -52458,7 +52458,18 @@ var ContractSpecSchema = external_exports.object({
 }).strict();
 var FixturesSpecSchema = external_exports.object({
   id: idSchema.optional(),
-  contracts: external_exports.array(ContractSpecSchema).min(1)
+  contracts: external_exports.array(ContractSpecSchema).min(1),
+  // Optional fixture-level setup declarations.
+  // When present, setup is executed in deterministic topological order
+  // before any measured invocations. A failed prerequisite aborts its
+  // transitive dependents. Each declaration references a contract by its
+  // explicit id and may list dependencies on other contracts.
+  setup: external_exports.array(
+    external_exports.object({
+      contract_id: idSchema,
+      depends_on: external_exports.array(idSchema).optional()
+    })
+  ).optional()
 }).strict();
 function getFixturesJsonSchema() {
   const schema = external_exports.toJSONSchema(FixturesSpecSchema, {
@@ -52547,6 +52558,20 @@ function parseFixtures(raw, fixturePath) {
   }
   const fixture_id = fixtures.id === void 0 ? `path:${relativePath(fixturePath)}` : `id:${fixtures.id}`;
   const contractIds = /* @__PURE__ */ new Set();
+  const setupRaw = fixtures.setup ?? [];
+  const setupDecls = setupRaw.map((s) => ({
+    contract_id: s.contract_id,
+    depends_on: s.depends_on ?? []
+  }));
+  const setupIdSet = new Set(setupDecls.map((d) => d.contract_id));
+  if (setupIdSet.size !== setupDecls.length) {
+    const dups = setupDecls.filter(
+      (d, i) => setupDecls.findIndex((x) => x.contract_id === d.contract_id) !== i
+    ).map((d) => d.contract_id);
+    throw new Error(
+      `Duplicate setup contract identity${dups.length > 1 ? "s" : ""}: ${dups.join(", ")}`
+    );
+  }
   const contracts = fixtures.contracts.map((contract) => {
     const logical_id = contract.id === void 0 ? `wasm:${relativePath(contract.wasm_path)}` : `id:${contract.id}`;
     if (contractIds.has(logical_id)) {
@@ -52555,6 +52580,13 @@ function parseFixtures(raw, fixturePath) {
       );
     }
     contractIds.add(logical_id);
+    for (const sd of setupDecls) {
+      if (sd.contract_id === contract.id) {
+        throw new Error(
+          `Setup contract identity "${sd.contract_id}" collides with contract explicit id in ${fixture_id}`
+        );
+      }
+    }
     const caseIds = /* @__PURE__ */ new Set();
     const invocations = contract.invocations.map((invocation) => {
       const args = invocation.args.map(
@@ -52572,7 +52604,12 @@ function parseFixtures(raw, fixturePath) {
     });
     return { ...contract, logical_id, invocations };
   });
-  return { ...fixtures, fixture_id, contracts };
+  return {
+    ...fixtures,
+    fixture_id,
+    contracts,
+    setup_declarations: setupDecls.length > 0 ? setupDecls : void 0
+  };
 }
 
 // src/sdk-version.ts

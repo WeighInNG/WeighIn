@@ -168,7 +168,6 @@ export function parseArgs(
       } else {
         // baseFixturesPath already set (comparison mode); second positional is
         // ignored for output but still tracked as a positional argument.
-        ;
       }
     } else if (positionalCount === 3 && baseFixturesPath) {
       // Third positional is the output path

@@ -352,6 +352,19 @@ export const FixturesSpecSchema = z
   .object({
     id: idSchema.optional(),
     contracts: z.array(ContractSpecSchema).min(1),
+    // Optional fixture-level setup declarations.
+    // When present, setup is executed in deterministic topological order
+    // before any measured invocations. A failed prerequisite aborts its
+    // transitive dependents. Each declaration references a contract by its
+    // explicit id and may list dependencies on other contracts.
+    setup: z
+      .array(
+        z.object({
+          contract_id: idSchema,
+          depends_on: z.array(idSchema).optional(),
+        }),
+      )
+      .optional(),
   })
   .strict();
 
