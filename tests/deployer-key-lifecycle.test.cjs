@@ -218,12 +218,10 @@ function stubSuccessfulMeasurement(t, sandbox) {
     async () => "/stub/helper",
   );
   t.mock.method(simulation, "measureInvocation", async () => {
-    probe.entriesDuringRun = fs
-      .readdirSync(sandbox)
-      .map((name) => ({
-        name,
-        files: fs.readdirSync(path.join(sandbox, name)),
-      }));
+    probe.entriesDuringRun = fs.readdirSync(sandbox).map((name) => ({
+      name,
+      files: fs.readdirSync(path.join(sandbox, name)),
+    }));
     return {
       output: {
         cpu_instructions_consumed: 1,

@@ -1,0 +1,377 @@
+{
+  "cold": {
+    "cpu_instructions": {
+      "availability": "measured",
+      "limit": 400000000,
+      "range": [
+        266842,
+        266842
+      ],
+      "samples": [
+        266842,
+        266842
+      ]
+    },
+    "memory_bytes": {
+      "availability": "measured",
+      "limit": 41943040,
+      "range": [
+        1123942,
+        1123942
+      ],
+      "samples": [
+        1123942,
+        1123942
+      ]
+    },
+    "ledger_read_entries": {
+      "availability": "measured",
+      "limit": 400,
+      "range": [
+        2,
+        2
+      ],
+      "samples": [
+        2,
+        2
+      ]
+    },
+    "ledger_read_bytes": {
+      "availability": "measured",
+      "limit": 200000,
+      "range": [
+        0,
+        0
+      ],
+      "samples": [
+        0,
+        0
+      ]
+    },
+    "ledger_write_entries": {
+      "availability": "measured",
+      "limit": 200,
+      "range": [
+        0,
+        0
+      ],
+      "samples": [
+        0,
+        0
+      ]
+    },
+    "ledger_write_bytes": {
+      "availability": "measured",
+      "limit": 132096,
+      "range": [
+        0,
+        0
+      ],
+      "samples": [
+        0,
+        0
+      ]
+    },
+    "historical_data_read_bytes": {
+      "availability": "unavailable",
+      "limit": null,
+      "range": null,
+      "samples": [
+        null,
+        null
+      ]
+    },
+    "contract_data_hard_limit": {
+      "availability": "unavailable",
+      "limit": null,
+      "range": null,
+      "samples": [
+        null,
+        null
+      ]
+    },
+    "tx_size_bytes": {
+      "availability": "unavailable",
+      "limit": null,
+      "range": null,
+      "samples": [
+        null,
+        null
+      ]
+    },
+    "events_count": {
+      "availability": "measured",
+      "limit": null,
+      "range": [
+        0,
+        0
+      ],
+      "samples": [
+        0,
+        0
+      ]
+    },
+    "event_data_bytes": {
+      "availability": "measured",
+      "limit": 16384,
+      "range": [
+        44,
+        44
+      ],
+      "samples": [
+        44,
+        44
+      ]
+    }
+  },
+  "uploaded": {
+    "cpu_instructions": {
+      "availability": "measured",
+      "limit": 400000000,
+      "range": [
+        266842,
+        266842
+      ],
+      "samples": [
+        266842,
+        266842
+      ]
+    },
+    "memory_bytes": {
+      "availability": "measured",
+      "limit": 41943040,
+      "range": [
+        1123942,
+        1123942
+      ],
+      "samples": [
+        1123942,
+        1123942
+      ]
+    },
+    "ledger_read_entries": {
+      "availability": "measured",
+      "limit": 400,
+      "range": [
+        2,
+        2
+      ],
+      "samples": [
+        2,
+        2
+      ]
+    },
+    "ledger_read_bytes": {
+      "availability": "measured",
+      "limit": 200000,
+      "range": [
+        0,
+        0
+      ],
+      "samples": [
+        0,
+        0
+      ]
+    },
+    "ledger_write_entries": {
+      "availability": "measured",
+      "limit": 200,
+      "range": [
+        0,
+        0
+      ],
+      "samples": [
+        0,
+        0
+      ]
+    },
+    "ledger_write_bytes": {
+      "availability": "measured",
+      "limit": 132096,
+      "range": [
+        0,
+        0
+      ],
+      "samples": [
+        0,
+        0
+      ]
+    },
+    "historical_data_read_bytes": {
+      "availability": "unavailable",
+      "limit": null,
+      "range": null,
+      "samples": [
+        null,
+        null
+      ]
+    },
+    "contract_data_hard_limit": {
+      "availability": "unavailable",
+      "limit": null,
+      "range": null,
+      "samples": [
+        null,
+        null
+      ]
+    },
+    "tx_size_bytes": {
+      "availability": "unavailable",
+      "limit": null,
+      "range": null,
+      "samples": [
+        null,
+        null
+      ]
+    },
+    "events_count": {
+      "availability": "measured",
+      "limit": null,
+      "range": [
+        0,
+        0
+      ],
+      "samples": [
+        0,
+        0
+      ]
+    },
+    "event_data_bytes": {
+      "availability": "measured",
+      "limit": 16384,
+      "range": [
+        44,
+        44
+      ],
+      "samples": [
+        44,
+        44
+      ]
+    }
+  },
+  "reused": {
+    "cpu_instructions": {
+      "availability": "measured",
+      "limit": 400000000,
+      "range": [
+        266842,
+        266842
+      ],
+      "samples": [
+        266842,
+        266842
+      ]
+    },
+    "memory_bytes": {
+      "availability": "measured",
+      "limit": 41943040,
+      "range": [
+        1123942,
+        1123942
+      ],
+      "samples": [
+        1123942,
+        1123942
+      ]
+    },
+    "ledger_read_entries": {
+      "availability": "measured",
+      "limit": 400,
+      "range": [
+        2,
+        2
+      ],
+      "samples": [
+        2,
+        2
+      ]
+    },
+    "ledger_read_bytes": {
+      "availability": "measured",
+      "limit": 200000,
+      "range": [
+        0,
+        0
+      ],
+      "samples": [
+        0,
+        0
+      ]
+    },
+    "ledger_write_entries": {
+      "availability": "measured",
+      "limit": 200,
+      "range": [
+        0,
+        0
+      ],
+      "samples": [
+        0,
+        0
+      ]
+    },
+    "ledger_write_bytes": {
+      "availability": "measured",
+      "limit": 132096,
+      "range": [
+        0,
+        0
+      ],
+      "samples": [
+        0,
+        0
+      ]
+    },
+    "historical_data_read_bytes": {
+      "availability": "unavailable",
+      "limit": null,
+      "range": null,
+      "samples": [
+        null,
+        null
+      ]
+    },
+    "contract_data_hard_limit": {
+      "availability": "unavailable",
+      "limit": null,
+      "range": null,
+      "samples": [
+        null,
+        null
+      ]
+    },
+    "tx_size_bytes": {
+      "availability": "unavailable",
+      "limit": null,
+      "range": null,
+      "samples": [
+        null,
+        null
+      ]
+    },
+    "events_count": {
+      "availability": "measured",
+      "limit": null,
+      "range": [
+        0,
+        0
+      ],
+      "samples": [
+        0,
+        0
+      ]
+    },
+    "event_data_bytes": {
+      "availability": "measured",
+      "limit": 16384,
+      "range": [
+        44,
+        44
+      ],
+      "samples": [
+        44,
+        44
+      ]
+    }
+  }
+}

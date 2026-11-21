@@ -51,11 +51,9 @@ test("successful work exits normally after terminating children and owned cleanu
   );
 
   try {
-    const result = await runWithCancellation(
-      scope,
-      async () => "completed",
-      { reportFailure: false },
-    );
+    const result = await runWithCancellation(scope, async () => "completed", {
+      reportFailure: false,
+    });
     assert.equal(result, "completed");
     assert.equal(scope.aborted, false);
     await exited;
@@ -195,7 +193,9 @@ test("SIGTERM produces nonzero outcome, kills child, cleans owned paths and keep
   try {
     await waitFor(() => fs.existsSync(readyPath));
     child.kill("SIGTERM");
-    const exitCode = await new Promise((resolve) => child.once("exit", resolve));
+    const exitCode = await new Promise((resolve) =>
+      child.once("exit", resolve),
+    );
     const result = JSON.parse(fs.readFileSync(resultPath, "utf8"));
 
     assert.notEqual(exitCode, 0);

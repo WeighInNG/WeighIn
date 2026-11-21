@@ -86,7 +86,8 @@ test("findOwningLock prefers contract/Cargo.lock over a root lock", () => {
       "Cargo.lock": cargoLock("29.0.0"),
       "contract/Cargo.toml": crateToml,
       "contract/Cargo.lock": cargoLock("27.0.0"),
-      "contract/target/wasm32v1-none/release/contract_test.wasm": "\x00\x61\x73\x6d\x01\x00\x00\x00",
+      "contract/target/wasm32v1-none/release/contract_test.wasm":
+        "\x00\x61\x73\x6d\x01\x00\x00\x00",
     });
     const assoc = discoverSdkAssociations([
       path.join(
@@ -107,7 +108,8 @@ test("findOwningLock reports missing locks honestly", () => {
   try {
     writeFiles(root, {
       "contract/Cargo.toml": crateToml,
-      "contract/target/wasm32v1-none/release/contract_test.wasm": "\x00\x61\x73\x6d\x01\x00\x00\x00",
+      "contract/target/wasm32v1-none/release/contract_test.wasm":
+        "\x00\x61\x73\x6d\x01\x00\x00\x00",
     });
     const { manifestPath, lockPath } = findOwningLock(
       path.join(
@@ -209,7 +211,8 @@ function sdkFixturesTree(root, lockContent) {
       ],
     }),
     "contract/Cargo.toml": crateToml,
-    "contract/target/wasm32v1-none/release/contract_test.wasm": "\x00\x61\x73\x6d\x01\x00\x00\x00",
+    "contract/target/wasm32v1-none/release/contract_test.wasm":
+      "\x00\x61\x73\x6d\x01\x00\x00\x00",
   };
   if (lockContent !== undefined) entries["contract/Cargo.lock"] = lockContent;
   writeFiles(root, entries);

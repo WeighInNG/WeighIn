@@ -194,7 +194,8 @@ test("isContractDeployed returns false for empty ledger entries and propagates l
 const cp = require("node:child_process");
 const { EventEmitter } = require("node:events");
 const { metricsFromSimulation } = require("../dist/measurement");
-const nativeRecord = require("../docs/experiments/repeatability/completed/run-1-native.json")[0];
+const nativeRecord =
+  require("../docs/experiments/repeatability/completed/run-1-native.json")[0];
 
 // Replay captured responses through the public measurement entry point.
 // RPC transport is isolated here; these tests do not claim a live measurement.
@@ -205,10 +206,7 @@ async function replay(t, response, options = {}) {
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   const keypair = Keypair.random();
   fs.writeFileSync(path.join(dir, "key"), keypair.secret(), { mode: 0o600 });
-  fs.writeFileSync(
-    path.join(dir, "contract.wasm"),
-    TEST_WASM,
-  );
+  fs.writeFileSync(path.join(dir, "contract.wasm"), TEST_WASM);
   fs.writeFileSync(
     path.join(dir, "fixtures.json"),
     JSON.stringify({
@@ -227,10 +225,7 @@ async function replay(t, response, options = {}) {
       ],
     }),
   );
-  const wasmHash = crypto
-    .createHash("sha256")
-    .update(TEST_WASM)
-    .digest();
+  const wasmHash = crypto.createHash("sha256").update(TEST_WASM).digest();
   const salt = crypto.createHash("sha256").update(wasmHash).digest();
   const contractId = calculateContractId(keypair.publicKey(), salt);
   const contractAddress = Address.fromString(contractId).toScAddress();
@@ -324,7 +319,9 @@ async function replay(t, response, options = {}) {
       const rawResult = response?.raw ? response.raw.result : response;
       const ledger =
         options.ledgerSeq ??
-        (activeSimulationLedger ?? (rawResult?.latestLedger ?? 100));
+        activeSimulationLedger ??
+        rawResult?.latestLedger ??
+        100;
       const entries = nativeRecord.input.entries
         .filter((row) => keys.includes(row.key))
         .map((row) => ({
@@ -357,7 +354,9 @@ async function replay(t, response, options = {}) {
       const rawResult = response?.raw ? response.raw.result : response;
       const ledger =
         options.ledgerSeq ??
-        (activeSimulationLedger ?? (rawResult?.latestLedger ?? 100));
+        activeSimulationLedger ??
+        rawResult?.latestLedger ??
+        100;
       const header = xdr.LedgerHeader.fromXDR(
         nativeRecord.input.header_xdr,
         "base64",
@@ -378,9 +377,7 @@ async function replay(t, response, options = {}) {
           jsonrpc: "2.0",
           id: req.id,
           result: {
-            ledgers: [
-              { sequence: ledger, headerXdr: history.toXDR("base64") },
-            ],
+            ledgers: [{ sequence: ledger, headerXdr: history.toXDR("base64") }],
           },
         }),
       );
@@ -408,7 +405,9 @@ async function replay(t, response, options = {}) {
 
   const helperPath =
     options.helperPath ??
-    (options.useValidHelper ? process.execPath : path.join(dir, "missing-helper"));
+    (options.useValidHelper
+      ? process.execPath
+      : path.join(dir, "missing-helper"));
   return runMeasurement({
     fixturesPath: path.join(dir, "fixtures.json"),
     fixtureId: "fixtures.json",
@@ -678,7 +677,9 @@ test("proven: stable successful path makes exactly one simulation request withou
     rpc.Server.prototype,
     "simulateTransaction",
     async () => {
-      throw new Error("Preliminary server.simulateTransaction must NOT be called");
+      throw new Error(
+        "Preliminary server.simulateTransaction must NOT be called",
+      );
     },
   );
 
@@ -727,10 +728,7 @@ test("deployment probe failures do not masquerade as an absent contract", async 
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   const keypair = Keypair.random();
   fs.writeFileSync(path.join(dir, "key"), keypair.secret(), { mode: 0o600 });
-  fs.writeFileSync(
-    path.join(dir, "contract.wasm"),
-    TEST_WASM,
-  );
+  fs.writeFileSync(path.join(dir, "contract.wasm"), TEST_WASM);
   fs.writeFileSync(
     path.join(dir, "fixtures.json"),
     JSON.stringify({

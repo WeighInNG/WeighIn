@@ -626,7 +626,9 @@ for (const [label, createResult, observed] of [
   ["a missing value", () => undefined, () => "no address"],
 ]) {
   test(`a successful create returning ${label} aborts setup before simulation`, async (t) => {
-    const { ids, created, simulated, sends, run } = scenario(t, { createResult });
+    const { ids, created, simulated, sends, run } = scenario(t, {
+      createResult,
+    });
     await assert.rejects(run(), (error) => {
       assert.ok(
         error.message.includes(

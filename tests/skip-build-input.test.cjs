@@ -6,8 +6,16 @@ const path = require("node:path");
 const { spawnSync } = require("node:child_process");
 
 const actionEntries = [
-  { name: "bundled", file: path.resolve(__dirname, "../bundled/index.js"), useHook: false },
-  { name: "compiled", file: path.resolve(__dirname, "../dist/action.js"), useHook: true },
+  {
+    name: "bundled",
+    file: path.resolve(__dirname, "../bundled/index.js"),
+    useHook: false,
+  },
+  {
+    name: "compiled",
+    file: path.resolve(__dirname, "../dist/action.js"),
+    useHook: true,
+  },
 ];
 
 function runActionWithInputs({
@@ -18,7 +26,9 @@ function runActionWithInputs({
   fixturesPath = "fixtures.json",
   rpcUrl = "http://localhost:9999/unreachable-rpc",
 }) {
-  const temporary = fs.mkdtempSync(path.join(os.tmpdir(), "weighin-skip-build-test-"));
+  const temporary = fs.mkdtempSync(
+    path.join(os.tmpdir(), "weighin-skip-build-test-"),
+  );
   const headDir = path.join(temporary, "head");
   fs.mkdirSync(headDir, { recursive: true });
 
@@ -34,7 +44,10 @@ function runActionWithInputs({
       ],
     }),
   );
-  fs.writeFileSync(path.join(headDir, "contract.wasm"), Buffer.from([0, 97, 115, 109, 1, 0, 0, 0]));
+  fs.writeFileSync(
+    path.join(headDir, "contract.wasm"),
+    Buffer.from([0, 97, 115, 109, 1, 0, 0, 0]),
+  );
 
   const outputFile = path.join(temporary, "output");
   const summaryFile = path.join(temporary, "summary");
@@ -63,11 +76,17 @@ function runActionWithInputs({
 
   const args = [];
   if (useHook) {
-    args.push("--require", path.resolve(__dirname, "support/action-unit-hook.cjs"));
+    args.push(
+      "--require",
+      path.resolve(__dirname, "support/action-unit-hook.cjs"),
+    );
     env.WEIGHIN_UNIT_MODE = "control";
     env.WEIGHIN_UNIT_BASE = path.join(temporary, "base");
     fs.mkdirSync(env.WEIGHIN_UNIT_BASE, { recursive: true });
-    fs.writeFileSync(path.join(env.WEIGHIN_UNIT_BASE, fixturesPath), fs.readFileSync(fixturesFile));
+    fs.writeFileSync(
+      path.join(env.WEIGHIN_UNIT_BASE, fixturesPath),
+      fs.readFileSync(fixturesFile),
+    );
   }
   args.push(entryFile);
 
@@ -78,11 +97,17 @@ function runActionWithInputs({
       env,
     });
 
-    const outputContent = fs.existsSync(outputFile) ? fs.readFileSync(outputFile, "utf8") : "";
-    const summaryContent = fs.existsSync(summaryFile) ? fs.readFileSync(summaryFile, "utf8") : "";
+    const outputContent = fs.existsSync(outputFile)
+      ? fs.readFileSync(outputFile, "utf8")
+      : "";
+    const summaryContent = fs.existsSync(summaryFile)
+      ? fs.readFileSync(summaryFile, "utf8")
+      : "";
 
     // Check if any deployer key directories were created in temporary TMPDIR
-    const createdKeyDirs = fs.readdirSync(temporary).filter((name) => name.startsWith("weighin-key-"));
+    const createdKeyDirs = fs
+      .readdirSync(temporary)
+      .filter((name) => name.startsWith("weighin-key-"));
 
     return {
       status: proc.status,
@@ -100,7 +125,16 @@ function runActionWithInputs({
 
 for (const entry of actionEntries) {
   test(`${entry.name} Action rejects non-boolean skip-build values early with actionable schema error and zero side effects`, () => {
-    const invalidValues = ["yes", "no", "0", "1", "maybe", "flase", "ture", "ENABLED"];
+    const invalidValues = [
+      "yes",
+      "no",
+      "0",
+      "1",
+      "maybe",
+      "flase",
+      "ture",
+      "ENABLED",
+    ];
 
     for (const val of invalidValues) {
       const res = runActionWithInputs({
@@ -109,7 +143,11 @@ for (const entry of actionEntries) {
         skipBuildInput: val,
       });
 
-      assert.equal(res.status, 1, `Expected status 1 for invalid value "${val}"`);
+      assert.equal(
+        res.status,
+        1,
+        `Expected status 1 for invalid value "${val}"`,
+      );
       assert.match(
         res.combinedOutput,
         /Input does not meet YAML 1\.2 "Core Schema" specification: skip-build/,
@@ -141,7 +179,11 @@ for (const entry of actionEntries) {
         buildCommandInput: "echo conflict",
       });
 
-      assert.equal(res.status, 1, `Expected status 1 for conflicting options with skip-build="${validTrue}"`);
+      assert.equal(
+        res.status,
+        1,
+        `Expected status 1 for conflicting options with skip-build="${validTrue}"`,
+      );
       assert.match(
         res.combinedOutput,
         /build-command and skip-build cannot be used together/,

@@ -214,7 +214,10 @@ the Action installation, independently of the caller's current working
 directory. Report and metadata paths are resolved from the caller's working
 directory. It reads and validates downloaded report/PR metadata, then creates or
 updates the comment carrying `<!-- weighin-report -->`. It fails on missing
-artifacts, invalid metadata or API failure. The example consumer runs only after
+artifacts, invalid metadata or API failure. The Node behavior suite copies only the Action definition and bundle into a
+separate installation and runs the entrypoint from the caller directory.
+A loopback GitHub transport verifies posting, invalid inputs and a rejected
+write. The example consumer runs only after
 successful PR producers, on trusted default-branch workflow code; it does not
 execute downloaded PR code. Failed policy reports remain in producer artifacts
 and summaries. Hosted expected-negative proof jobs separately assert genuine

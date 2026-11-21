@@ -33,7 +33,12 @@ git diff --check
 npm audit
 ```
 
-`lint` checks Prettier formatting in `src` and `test`; `typecheck` checks TypeScript.
+`npm run lint` checks Prettier formatting in `src`, `test`, the top-level
+`tests/*.test.cjs` suite, and maintained CommonJS files under `tests/support`,
+`tests/experiments`, and `tests/native`. CI runs the same command.
+The scope excludes `tests/fixtures`, archived captures and original source
+snapshots under `docs/experiments`, generated bundles, and binary WASMs.
+`npm run typecheck` checks TypeScript.
 `npm test` builds TypeScript, runs Node behavior/evidence tests under `tests`, and
 runs Vitest tests under `test`. `npm run test:watch` starts Vitest watch mode.
 Use `npm run format` for intentional formatting changes.

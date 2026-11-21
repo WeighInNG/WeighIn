@@ -136,7 +136,10 @@ test("missing TTL metadata fails closed", async () => {
 
 test("minTtlLedgers is honored in both directions", async () => {
   const live = LATEST + 50;
-  const { server } = makeServer({ instanceLiveUntil: live, codeLiveUntil: live });
+  const { server } = makeServer({
+    instanceLiveUntil: live,
+    codeLiveUntil: live,
+  });
   await run(server, { minTtlLedgers: 50 });
   await assert.rejects(
     () => run(server, { minTtlLedgers: 51 }),

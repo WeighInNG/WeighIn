@@ -1,0 +1,2 @@
+"sha256:4f8dfd693deba57fddef7f0bc722e4782c2e606c8675e3adc5438cebae249295" "stellar/quickstart@sha256:4f8dfd693deba57fddef7f0bc722e4782c2e606c8675e3adc5438cebae249295" ["--local","--enable-soroban-rpc","--protocol-version","28"]
+"sha256:4f8dfd693deba57fddef7f0bc722e4782c2e606c8675e3adc5438cebae249295" "stellar/quickstart@sha256:4f8dfd693deba57fddef7f0bc722e4782c2e606c8675e3adc5438cebae249295" ["--local","--enable-soroban-rpc","--protocol-version","28"]
