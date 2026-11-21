@@ -6,6 +6,7 @@ function diff(consumed, availability = 'comparable') {
   const metrics = {};
   for (const key of require('../dist/diff').METRIC_KEYS) {
     const unavailable = key === 'historical_data_read_bytes' || key === 'contract_data_hard_limit' || key === 'tx_size_bytes';
+    const metricUnavailable = unavailable || (key === 'cpu_instructions' && availability === 'unavailable');
     metrics[key] = { key, base: { availability: unavailable ? 'unavailable' : 'measured', consumed: unavailable ? null : 10, limit: null },
       head: { availability: unavailable || (key === 'cpu_instructions' && availability === 'unavailable') ? 'unavailable' : 'measured',
         consumed: unavailable || (key === 'cpu_instructions' && availability === 'unavailable') ? null : key === 'cpu_instructions' ? consumed : 10,
@@ -13,13 +14,15 @@ function diff(consumed, availability = 'comparable') {
       availability: unavailable || (key === 'cpu_instructions' && availability === 'unavailable') ? 'unavailable' : 'comparable',
       reason: unavailable || (key === 'cpu_instructions' && availability === 'unavailable') ? 'not available' : undefined,
       delta: unavailable || (key === 'cpu_instructions' && availability === 'unavailable') ? null : key === 'cpu_instructions' ? consumed - 10 : 0,
-      pct: null, regression: key === 'cpu_instructions' && consumed > 10 };
+      pct: metricUnavailable ? null : key === 'cpu_instructions' ? ((consumed - 10) / 10) * 100 : 0,
+      regression: !metricUnavailable && key === 'cpu_instructions' && consumed > 10 };
   }
+  const hasRegression = Object.values(metrics).some(metric => metric.regression);
   return { contracts: [{ fixture_id: 'path:fixtures.json', logical_id: 'id:contract', contract_id: 'CA',
-    base_contract_id: 'CB', head_contract_id: 'CA', base_commit: 'base', head_commit: 'head', hasRegression: false,
+    base_contract_id: 'CB', head_contract_id: 'CA', base_commit: 'base', head_commit: 'head', hasRegression,
     newFunctions: [], removedFunctions: [], newBenchmarks: [], removedBenchmarks: [],
-    functions: [{ function_name: 'run', case_id: 'args:[]', metrics: Object.values(metrics), hasRegression: false }] }],
-    hasRegression: false, newContracts: [], removedContracts: [] };
+    functions: [{ function_name: 'run', case_id: 'args:[]', metrics: Object.values(metrics), hasRegression }] }],
+    hasRegression, newContracts: [], removedContracts: [] };
 }
 
 test('absolute limits report values above the cap and pass at the cap', () => {
@@ -48,7 +51,7 @@ test('global absolute limits fail closed when the comparison has no matched benc
     /global policy or limits: no matched BASE\/HEAD benchmarks/);
 
   const unmatchedCases = {
-    contracts: [{ functions: [], newBenchmarks: [{ function_name: 'added', case_id: 'args:[]' }] }],
+    contracts: [{ functions: [], hasRegression: false, newBenchmarks: [{ function_name: 'added', case_id: 'args:[]' }] }],
     hasRegression: false,
     newContracts: [],
     removedContracts: [],

@@ -87,6 +87,7 @@ Adapt the WASM basename to your Cargo package and the function/arguments to your
 contract interface. The path is relative to the fixture file. The default
 builder finds the owning Cargo manifest; merely renaming an unrelated artifact
 is not supported.
+See the [fixture schema and valid/invalid editor examples](docs/fixture-schema.md).
 
 A contract that calls another deployed contract declares it in `depends_on`
 (explicit contract ids) and takes its address from the committed setup instead

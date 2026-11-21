@@ -1,7 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
-import { loadConfig } from "../src/threshold";
+import { loadConfig, validateConfig } from "../src/threshold";
 import {
   WeighinConfigSchema,
+  RuleValueSchema,
   FixturesSpecSchema,
   formatZodError,
 } from "../src/config";
@@ -13,6 +14,50 @@ describe("loadConfig (TOML parsing & Zod Validation)", () => {
   it("returns null if file does not exist", () => {
     vi.mocked(fs.existsSync).mockReturnValue(false);
     expect(loadConfig("missing.toml")).toBeNull();
+    expect(loadConfig("custom/missing-policy.toml")).toBeNull();
+  });
+
+  it("names the actual requested policy path and failing key on schema errors", () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+
+    // First custom filename
+    vi.mocked(fs.readFileSync).mockReturnValue(`
+      [limits.global]
+      tx_size_bytes = -1
+    `);
+    expect(() => loadConfig("policies/production.toml")).toThrowError(
+      /Invalid WeighIn configuration in policies\/production\.toml:\n- limits\.global\.tx_size_bytes: Number must be >= 0/,
+    );
+
+    // Second custom filename
+    vi.mocked(fs.readFileSync).mockReturnValue(`
+      [thresholds.functions.hello]
+      cpu_instructions = "allow_1.2.3_percent_increase"
+    `);
+    expect(() => loadConfig("custom-weighin.toml")).toThrowError(
+      /Invalid WeighIn configuration in custom-weighin\.toml:\n- thresholds\.functions\.hello\.cpu_instructions: Unsupported threshold rule/,
+    );
+  });
+
+  it("preserves TOML syntax error message and actual file path", () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+    vi.mocked(fs.readFileSync).mockReturnValue(`
+      [thresholds.global
+      missing_bracket = true
+    `);
+    expect(() => loadConfig("policies/syntax-error.toml")).toThrowError(
+      /Failed to parse TOML in policies\/syntax-error\.toml:/,
+    );
+  });
+
+  it("supports optional filename in validateConfig without breaking default weighin.toml", () => {
+    const invalid = { limits: { global: { tx_size_bytes: -1 } } };
+    expect(() => validateConfig(invalid)).toThrowError(
+      /Invalid WeighIn configuration in weighin\.toml:\n- limits\.global\.tx_size_bytes: Number must be >= 0/,
+    );
+    expect(() => validateConfig(invalid, "custom-policy.toml")).toThrowError(
+      /Invalid WeighIn configuration in custom-policy\.toml:\n- limits\.global\.tx_size_bytes: Number must be >= 0/,
+    );
   });
 
   it("parses a valid minimal weighin.toml", () => {
@@ -269,5 +314,229 @@ describe("FixturesSpecSchema", () => {
         ],
       }).success,
     ).toBe(false);
+  });
+});
+
+describe("policy schema agreement (WeighinConfigSchema and validateConfig)", () => {
+  const policyCases: Array<{
+    name: string;
+    input: unknown;
+    valid: boolean;
+  }> = [
+    {
+      name: "minimal valid config",
+      input: { thresholds: { global: { fail_on_any_regression: true } } },
+      valid: true,
+    },
+    {
+      name: "valid scientific notation in global thresholds",
+      input: { thresholds: { global: { max_allowed_cpu_increase_pct: 1e-4 } } },
+      valid: true,
+    },
+    {
+      name: "valid scientific notation in function threshold",
+      input: {
+        thresholds: { functions: { hello: { cpu_instructions: 1e-5 } } },
+      },
+      valid: true,
+    },
+    {
+      name: "valid named decimal percentage",
+      input: {
+        thresholds: {
+          functions: {
+            hello: { cpu_instructions: "allow_2.5_percent_increase" },
+          },
+        },
+      },
+      valid: true,
+    },
+    {
+      name: "valid named zero tolerance and ignore",
+      input: {
+        thresholds: {
+          functions: {
+            hello: {
+              cpu_instructions: "strict_zero_tolerance",
+              memory_bytes: "ignore",
+            },
+          },
+        },
+      },
+      valid: true,
+    },
+    {
+      name: "valid absolute limits with scientific notation",
+      input: {
+        limits: {
+          global: { tx_size_bytes: 1e5 },
+          functions: { hello: { cpu_instructions: 50000 } },
+        },
+      },
+      valid: true,
+    },
+    {
+      name: "valid aggregate budget with members and thresholds",
+      input: {
+        aggregates: {
+          group1: {
+            members: [{ function_name: "hello" }],
+            limits: { cpu_instructions: 1000 },
+            thresholds: { cpu_instructions: "allow_5_percent_increase" },
+          },
+        },
+      },
+      valid: true,
+    },
+    // Rejections
+    {
+      name: "rejects malformed named percentage with multiple decimals",
+      input: {
+        thresholds: {
+          functions: {
+            hello: { cpu_instructions: "allow_1.2.3_percent_increase" },
+          },
+        },
+      },
+      valid: false,
+    },
+    {
+      name: "rejects malformed named percentage with no digits",
+      input: {
+        thresholds: {
+          functions: {
+            hello: { cpu_instructions: "allow_.._percent_increase" },
+          },
+        },
+      },
+      valid: false,
+    },
+    {
+      name: "rejects negative named percentage",
+      input: {
+        thresholds: {
+          functions: {
+            hello: { cpu_instructions: "allow_-1_percent_increase" },
+          },
+        },
+      },
+      valid: false,
+    },
+    {
+      name: "rejects unknown rule string",
+      input: {
+        thresholds: {
+          functions: { hello: { cpu_instructions: "allow_magic" } },
+        },
+      },
+      valid: false,
+    },
+    {
+      name: "rejects negative numeric threshold rule",
+      input: { thresholds: { functions: { hello: { cpu_instructions: -1 } } } },
+      valid: false,
+    },
+    {
+      name: "rejects non-finite Infinity numeric threshold rule",
+      input: {
+        thresholds: { functions: { hello: { cpu_instructions: Infinity } } },
+      },
+      valid: false,
+    },
+    {
+      name: "rejects non-finite NaN numeric threshold rule",
+      input: {
+        thresholds: { functions: { hello: { cpu_instructions: NaN } } },
+      },
+      valid: false,
+    },
+    {
+      name: "rejects negative global threshold percentage",
+      input: { thresholds: { global: { max_allowed_cpu_increase_pct: -5 } } },
+      valid: false,
+    },
+    {
+      name: "rejects negative limit value",
+      input: { limits: { global: { tx_size_bytes: -10 } } },
+      valid: false,
+    },
+    {
+      name: "rejects blank function selector in thresholds",
+      input: { thresholds: { functions: { "": { cpu_instructions: 10 } } } },
+      valid: false,
+    },
+    {
+      name: "rejects blank function selector in limits",
+      input: { limits: { functions: { "": { tx_size_bytes: 10 } } } },
+      valid: false,
+    },
+    {
+      name: "rejects unknown top-level key",
+      input: { unknown_key: true },
+      valid: false,
+    },
+    {
+      name: "rejects unknown metric key in function thresholds",
+      input: {
+        thresholds: { functions: { hello: { unknown_metric: 10 } } },
+      },
+      valid: false,
+    },
+    {
+      name: "rejects unknown metric key in global limits",
+      input: { limits: { global: { unknown_metric: 10 } } },
+      valid: false,
+    },
+  ];
+
+  for (const { name, input, valid } of policyCases) {
+    it(`agrees on ${name} (valid=${valid})`, () => {
+      const parsed = WeighinConfigSchema.safeParse(input);
+      expect(parsed.success).toBe(valid);
+
+      if (valid) {
+        expect(() => validateConfig(input)).not.toThrow();
+        const validated = validateConfig(input);
+        expect(validated).toBeDefined();
+      } else {
+        expect(() => validateConfig(input)).toThrow();
+      }
+    });
+  }
+});
+
+describe("RuleValueSchema directly validates supported and rejected policies", () => {
+  it("accepts valid rule values", () => {
+    for (const val of [
+      0,
+      10,
+      1e-5,
+      2.5e3,
+      "ignore",
+      "strict_zero_tolerance",
+      "allow_0_percent_increase",
+      "allow_2.5_percent_increase",
+      "allow_100_percent_increase",
+    ]) {
+      expect(RuleValueSchema.safeParse(val).success).toBe(true);
+    }
+  });
+
+  it("rejects invalid rule values", () => {
+    for (const val of [
+      -1,
+      -0.01,
+      Infinity,
+      -Infinity,
+      NaN,
+      "allow_magic",
+      "allow_1.2.3_percent_increase",
+      "allow_-5_percent_increase",
+      "allow_.._percent_increase",
+      "allow__percent_increase",
+      "",
+    ]) {
+      expect(RuleValueSchema.safeParse(val).success).toBe(false);
+    }
   });
 });

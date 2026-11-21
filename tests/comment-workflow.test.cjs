@@ -4,11 +4,12 @@ const fs = require('node:fs'), os = require('node:os'), path = require('node:pat
 const { spawnSync, spawn } = require('node:child_process');
 const http = require('node:http');
 const YAML = require('yaml');
+const { renderComment } = require('../dist/comment');
 const root = path.resolve(__dirname, '..');
 const workflow = YAML.parse(fs.readFileSync(path.join(root, '.github/workflows/comment.yml'), 'utf8'));
 const commentJob = workflow.jobs['post-comment'];
 const steps = commentJob.steps;
-const report = '<!-- weighin-comment -->\n# Resource report\nCPU instructions: 565371\n';
+const report = renderComment({ contracts: [], hasRegression: false, newContracts: [], removedContracts: [] }, [], 'main', 'f'.repeat(40));
 function git(directory, ...args) {
   const result = spawnSync('git', args, { cwd: directory, encoding: 'utf8' });
   assert.equal(result.status, 0, result.stdout + result.stderr); return result.stdout;
@@ -113,7 +114,7 @@ async function execute(order, metadata = true, run = successfulPr, condition = c
         assert.equal(step.with.name, 'weighin-artifacts');
         assert.equal(step.with['run-id'], '${{ github.event.workflow_run.id }}');
         const post = order.find(step => step.uses === './comment');
-        fs.writeFileSync(path.join(workspace, post.with['report-path']), report);
+        fs.writeFileSync(path.join(workspace, post.with['report-path']), scenario.report ?? report);
         if (metadata !== false) {
           const value = metadata === true ? validMetadata : metadata;
           const text = typeof value === 'string' ? value : JSON.stringify(value);
@@ -150,6 +151,21 @@ test('installed comment Action uses caller artifacts from a separate working dir
   assert.deepEqual(result.calls.map(call => call.method), ['GET', 'POST']);
   assert.equal(result.calls[1].body.body, report);
 });
+for (const [label, invalidReport, pattern] of [
+  ['zero-byte', '', /empty or contains only whitespace/],
+  ['whitespace-only', ' \n\t ', /empty or contains only whitespace/],
+  ['marker-only', '<!-- weighin-report -->', /missing the required heading/],
+  ['missing marker', '## WeighIn Benchmark Report\nContent', /missing the required .* marker/],
+  ['unrelated marker', '<!-- weighin-comment -->\n## WeighIn Benchmark Report\nContent', /missing the required .* marker/],
+]) {
+  test(`the bundled consumer rejects ${label} report before API calls`, async () => {
+    const result = await execute(steps, true, successfulPr, commentJob.if, { report: invalidReport });
+    assert.equal(result.status, 1, result.stdout + result.stderr);
+    assert.match(result.stdout + result.stderr, pattern);
+    assert.deepEqual(result.calls, []);
+    assert.deepEqual(result.lookups, []);
+  });
+}
 test('a case-insensitive repository match is accepted by the bundled consumer', async () => {
   const result = await execute(steps, { ...validMetadata, repository: 'weighinng/weighin' });
   assert.equal(result.status, 0, result.stdout + result.stderr);

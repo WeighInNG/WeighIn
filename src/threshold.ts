@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as TOML from "toml";
 import { z } from "zod";
-import { formatZodError } from "./config";
+import { formatZodError, WeighinConfigSchema, parseAllowPct } from "./config";
 import {
   DiffResult,
   METRIC_KEYS,
@@ -79,86 +79,13 @@ export interface EffectivePolicyReport {
   rules: ResolvedRule[];
 }
 
-const percentage = z.number().finite().nonnegative();
-const ruleSchema = z.union([
-  percentage,
-  z
-    .string()
-    .refine(
-      (value) =>
-        value === "ignore" ||
-        value === "strict_zero_tolerance" ||
-        parseAllowPct(value) !== null,
-      "Unsupported threshold rule",
-    ),
-]);
-const metricRules = z
-  .object(
-    Object.fromEntries(METRIC_KEYS.map((key) => [key, ruleSchema.optional()])),
-  )
-  .strict();
-const benchmarkSelectorSchema = z
-  .object({
-    fixture_id: z.string().min(1).optional(),
-    logical_id: z.string().min(1).optional(),
-    function_name: z.string().min(1),
-    case_id: z.string().min(1).optional(),
-  })
-  .strict();
-const aggregateBudgetConfigSchema = z
-  .object({
-    description: z.string().optional(),
-    members: z.array(benchmarkSelectorSchema).min(1),
-    limits: z.partialRecord(z.enum(METRIC_KEYS), percentage).optional(),
-    thresholds: metricRules.optional(),
-  })
-  .strict();
-const configSchema = z
-  .object({
-    limits: z
-      .object({
-        global: z.partialRecord(z.enum(METRIC_KEYS), percentage).optional(),
-        functions: z
-          .record(
-            z.string().min(1),
-            z.partialRecord(z.enum(METRIC_KEYS), percentage),
-          )
-          .optional(),
-        aggregates: z
-          .record(
-            z.string().min(1),
-            z.partialRecord(z.enum(METRIC_KEYS), percentage),
-          )
-          .optional(),
-      })
-      .strict()
-      .optional(),
-    thresholds: z
-      .object({
-        global: z
-          .object({
-            fail_on_any_regression: z.boolean().optional(),
-            max_allowed_cpu_increase_pct: percentage.optional(),
-            max_allowed_memory_increase_pct: percentage.optional(),
-          })
-          .strict()
-          .optional(),
-        functions: z.record(z.string().min(1), metricRules).optional(),
-        aggregates: z.record(z.string().min(1), metricRules).optional(),
-      })
-      .strict()
-      .optional(),
-    aggregates: z
-      .record(z.string().min(1), aggregateBudgetConfigSchema)
-      .optional(),
-  })
-  .strict();
-
 /** Validate policies independently of whether a benchmark happened to regress. */
-export function validateConfig(value: unknown): WeighinConfig {
-  const parsed = configSchema.safeParse(value);
-  if (!parsed.success)
-    throw new Error(formatZodError(parsed.error, "weighin.toml"));
+export function validateConfig(
+  value: unknown,
+  filename = "weighin.toml",
+): WeighinConfig {
+  const parsed = WeighinConfigSchema.safeParse(value);
+  if (!parsed.success) throw new Error(formatZodError(parsed.error, filename));
   return parsed.data as WeighinConfig;
 }
 
@@ -176,7 +103,7 @@ export function loadConfig(configPath: string): WeighinConfig | null {
   }
   const raw = fs.readFileSync(configPath, "utf8");
   try {
-    return validateConfig(TOML.parse(raw));
+    return validateConfig(TOML.parse(raw), configPath);
   } catch (error: any) {
     if (
       error instanceof Error &&
@@ -193,7 +120,7 @@ export function loadConfigContent(
   sourcePath: string,
 ): WeighinConfig {
   try {
-    return validateConfig(TOML.parse(content));
+    return validateConfig(TOML.parse(content), sourcePath);
   } catch (error: any) {
     if (
       error instanceof Error &&
@@ -225,13 +152,6 @@ export interface Violation {
   rule: string;
   rule_source?: string;
   message: string;
-}
-
-function parseAllowPct(rule: string): number | null {
-  // Matches "allow_10_percent_increase", "allow_2.5_percent_increase", etc.
-  const m = rule.match(/^allow_(\d+(?:\.\d+)?)_percent_increase$/);
-  const value = m ? Number(m[1]) : NaN;
-  return Number.isFinite(value) ? value : null;
 }
 
 function evaluateRule(
@@ -324,6 +244,7 @@ export function enforceThresholds(
   diff: DiffResult,
   config: WeighinConfig | null,
 ): Violation[] {
+  validateThresholdDiff(diff);
   if (config !== null) config = validateConfig(config);
   if (!config?.thresholds && !config?.limits && !config?.aggregates) return [];
 
@@ -595,6 +516,212 @@ export function enforceThresholds(
   }
 
   return violations;
+}
+
+/** Validate every derived metric at the public policy boundary. Callers may
+ * pass a DiffResult directly, so policy must not trust its derived flags.
+ */
+function validateThresholdDiff(diff: DiffResult): void {
+  const invalid = (path: string, detail: string): never => {
+    throw new Error(`Invalid DiffResult at ${path}: ${detail}`);
+  };
+  if (!diff || typeof diff !== "object" || !Array.isArray(diff.contracts)) {
+    invalid("contracts", "expected an array");
+  }
+  const contractRegressions: boolean[] = [];
+  diff.contracts.forEach((contract, ci) => {
+    if (
+      !contract ||
+      typeof contract !== "object" ||
+      !Array.isArray(contract.functions)
+    ) {
+      invalid(`contracts[${ci}].functions`, "expected an array");
+    }
+    const functionRegressions: boolean[] = [];
+    contract.functions.forEach((fn, fi) => {
+      if (!fn || typeof fn !== "object" || !Array.isArray(fn.metrics)) {
+        invalid(
+          `contracts[${ci}].functions[${fi}].metrics`,
+          "expected an array",
+        );
+      }
+      const byKey = new Map<MetricKey, MetricDiff>();
+      fn.metrics.forEach((metric, mi) => {
+        const path = `contracts[${ci}].functions[${fi}].metrics[${mi}]`;
+        if (
+          !metric ||
+          !METRIC_KEYS.includes(metric.key) ||
+          byKey.has(metric.key)
+        ) {
+          invalid(`${path}.key`, "expected one unique supported metric key");
+        }
+        byKey.set(metric.key, metric);
+        for (const side of ["base", "head"] as const) {
+          const value = metric[side];
+          if (
+            !value ||
+            !(
+              value.consumed === null ||
+              (typeof value.consumed === "number" &&
+                Number.isFinite(value.consumed) &&
+                value.consumed >= 0)
+            ) ||
+            !(
+              value.limit === null ||
+              (typeof value.limit === "number" &&
+                Number.isFinite(value.limit) &&
+                value.limit >= 0)
+            )
+          ) {
+            invalid(
+              `${path}.${side}`,
+              "consumed and limit must be finite nonnegative numbers or null",
+            );
+          }
+          if (
+            value.availability !== undefined &&
+            ((value.availability !== "measured" &&
+              value.availability !== "unavailable") ||
+              (value.availability === "measured") !== (value.consumed !== null))
+          ) {
+            invalid(
+              `${path}.${side}.availability`,
+              "must agree with whether consumed is measured or unavailable",
+            );
+          }
+        }
+        const base = metric.base.consumed;
+        const head = metric.head.consumed;
+        const comparable = base !== null && head !== null;
+        const expectedDelta = comparable ? head - base : null;
+        const expectedPct =
+          comparable && base !== 0 ? (expectedDelta! / base) * 100 : null;
+        const expectedAvailability = comparable ? "comparable" : "unavailable";
+        const problems: string[] = [];
+        if (metric.availability !== expectedAvailability)
+          problems.push("availability");
+        if (metric.delta !== expectedDelta) problems.push("delta");
+        if (metric.pct !== expectedPct) problems.push("pct");
+        if (metric.regression !== (comparable && expectedDelta! > 0))
+          problems.push("regression");
+        if (problems.length)
+          invalid(
+            path,
+            `${problems.join(", ")} contradict base/head consumed values`,
+          );
+        if (!comparable && typeof metric.reason !== "string") {
+          invalid(`${path}.reason`, "unavailable metrics require a reason");
+        }
+      });
+      if (
+        byKey.size !== METRIC_KEYS.length ||
+        METRIC_KEYS.some((key) => !byKey.has(key))
+      ) {
+        invalid(
+          `contracts[${ci}].functions[${fi}].metrics`,
+          "all supported metrics are required exactly once",
+        );
+      }
+      const hasRegression = fn.metrics.some((metric) => metric.regression);
+      if (fn.hasRegression !== hasRegression) {
+        invalid(
+          `contracts[${ci}].functions[${fi}].hasRegression`,
+          "does not match metric regression flags",
+        );
+      }
+      functionRegressions.push(hasRegression);
+    });
+    const hasRegression = functionRegressions.some(Boolean);
+    if (contract.hasRegression !== hasRegression) {
+      invalid(
+        `contracts[${ci}].hasRegression`,
+        "does not match function regression flags",
+      );
+    }
+    contractRegressions.push(hasRegression);
+  });
+  if (diff.aggregates !== undefined && !Array.isArray(diff.aggregates)) {
+    invalid("aggregates", "expected an array when present");
+  }
+  const aggregateRegressions = (diff.aggregates ?? []).map((aggregate, ai) => {
+    const aggregatePath = `aggregates[${ai}]`;
+    if (
+      !aggregate ||
+      typeof aggregate !== "object" ||
+      !Array.isArray(aggregate.metrics)
+    ) {
+      invalid(`${aggregatePath}.metrics`, "expected an array");
+    }
+    const byKey = new Map<MetricKey, (typeof aggregate.metrics)[number]>();
+    aggregate.metrics.forEach((metric, mi) => {
+      const path = `${aggregatePath}.metrics[${mi}]`;
+      if (
+        !metric ||
+        !METRIC_KEYS.includes(metric.key) ||
+        byKey.has(metric.key)
+      ) {
+        invalid(`${path}.key`, "expected one unique supported metric key");
+      }
+      byKey.set(metric.key, metric);
+      const base = metric.base_consumed;
+      const head = metric.head_consumed;
+      const comparable = base !== null && head !== null;
+      if (
+        !(base === null || (Number.isFinite(base) && base >= 0)) ||
+        !(head === null || (Number.isFinite(head) && head >= 0))
+      ) {
+        invalid(
+          path,
+          "base/head consumed values must be finite nonnegative numbers or null",
+        );
+      }
+      const expectedDelta = comparable ? head - base : null;
+      const expectedPct = comparable
+        ? base === 0
+          ? expectedDelta! > 0
+            ? null
+            : 0
+          : (expectedDelta! / base) * 100
+        : null;
+      const expectedAvailability = comparable ? "comparable" : "unavailable";
+      if (
+        metric.availability !== expectedAvailability ||
+        metric.delta !== expectedDelta ||
+        metric.pct !== expectedPct ||
+        metric.regression !== (comparable && expectedDelta! > 0)
+      ) {
+        invalid(
+          path,
+          "availability, delta, pct, or regression contradict aggregate base/head values",
+        );
+      }
+      if (!comparable && typeof metric.reason !== "string") {
+        invalid(`${path}.reason`, "unavailable metrics require a reason");
+      }
+    });
+    if (
+      byKey.size !== METRIC_KEYS.length ||
+      METRIC_KEYS.some((key) => !byKey.has(key))
+    ) {
+      invalid(
+        `${aggregatePath}.metrics`,
+        "all supported metrics are required exactly once",
+      );
+    }
+    const hasRegression = aggregate.metrics.some((metric) => metric.regression);
+    if (aggregate.hasRegression !== hasRegression) {
+      invalid(
+        `${aggregatePath}.hasRegression`,
+        "does not match metric regression flags",
+      );
+    }
+    return hasRegression;
+  });
+  const hasRegression =
+    contractRegressions.some(Boolean) || aggregateRegressions.some(Boolean);
+  if (diff.hasRegression !== hasRegression) {
+    invalid("hasRegression", "does not match nested regression flags");
+  }
 }
 
 /**
