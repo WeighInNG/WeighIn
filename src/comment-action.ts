@@ -6,6 +6,25 @@ import { evaluateReportFreshness } from "./pr-freshness";
 import { createOctokitRevisionSource } from "./pr-revision-source";
 import { upsertPrComment, CommentAuthorMode } from "./comment";
 
+const REPORT_MARKER = "<!-- weighin-report -->";
+const REPORT_HEADING = "WeighIn Benchmark Report";
+
+function validateReportBody(reportBody: string): void {
+  if (!reportBody.trim()) {
+    throw new Error("Report file is empty or contains only whitespace");
+  }
+  if (!reportBody.includes(REPORT_MARKER)) {
+    throw new Error(
+      `Report file is missing the required ${REPORT_MARKER} marker`,
+    );
+  }
+  if (!reportBody.includes(REPORT_HEADING)) {
+    throw new Error(
+      `Report file is missing the required heading: ${REPORT_HEADING}`,
+    );
+  }
+}
+
 async function reportSkipped(reason: string): Promise<void> {
   core.warning(reason);
   if (process.env.GITHUB_STEP_SUMMARY) {
@@ -42,6 +61,7 @@ async function run(): Promise<void> {
     }
 
     const reportBody = fs.readFileSync(reportPath, "utf8");
+    validateReportBody(reportBody);
     const metadataRaw = fs.readFileSync(metadataPath, "utf8");
     const { owner, repo } = github.context.repo;
     const metadata = parsePrMetadata(metadataRaw, `${owner}/${repo}`);

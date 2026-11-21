@@ -146,6 +146,51 @@ test("deployment probe accepts the SDK-parsed ledger entry XDR objects", async (
   assert.equal(await isContractDeployed(server, contractId), true);
 });
 
+test("isContractDeployed returns false for empty ledger entries and propagates lookup failures", async () => {
+  const keypair = Keypair.random();
+  const contractId = calculateContractId(
+    keypair.publicKey(),
+    crypto.createHash("sha256").update("lookup-failure-test").digest(),
+  );
+
+  // 1. Valid empty entries means absent (false)
+  const emptyServer = {
+    getLedgerEntries: async () => ({ entries: [] }),
+  };
+  assert.equal(await isContractDeployed(emptyServer, contractId), false);
+
+  // 2. Transport failure propagates
+  const failingServer = {
+    getLedgerEntries: async () => {
+      throw new Error("RPC connection refused");
+    },
+  };
+  await assert.rejects(
+    () => isContractDeployed(failingServer, contractId),
+    /Deployment probe failed for contract .*: RPC connection refused/,
+  );
+
+  // 3. Malformed entries response propagates
+  const malformedServer = {
+    getLedgerEntries: async () => ({ entries: "not-an-array" }),
+  };
+  await assert.rejects(
+    () => isContractDeployed(malformedServer, contractId),
+    /Deployment probe returned an invalid ledger response/,
+  );
+
+  // 4. Unrelated entry key is rejected
+  const unrelatedServer = {
+    getLedgerEntries: async () => ({
+      entries: [{ key: "unrelated-key", xdr: "AAAA" }],
+    }),
+  };
+  await assert.rejects(
+    () => isContractDeployed(unrelatedServer, contractId),
+    /Deployment probe returned an unrelated ledger entry/,
+  );
+});
+
 const cp = require("node:child_process");
 const { EventEmitter } = require("node:events");
 const { metricsFromSimulation } = require("../dist/measurement");
@@ -757,6 +802,13 @@ test("deployment probe failures do not masquerade as an absent contract", async 
       throw new Error("should not prepare upload or create transaction");
     },
   );
+  const simulateTransaction = t.mock.method(
+    rpc.Server.prototype,
+    "simulateTransaction",
+    async () => {
+      throw new Error("should not simulate benchmark transaction");
+    },
+  );
   await assert.rejects(
     () =>
       runMeasurement({
@@ -771,4 +823,5 @@ test("deployment probe failures do not masquerade as an absent contract", async 
   );
   assert.equal(sendTransaction.mock.callCount(), 0);
   assert.equal(prepareTransaction.mock.callCount(), 0);
+  assert.equal(simulateTransaction.mock.callCount(), 0);
 });

@@ -4,7 +4,7 @@ import {
   GlobalThresholds,
   WeighinConfig,
 } from "../src/threshold";
-import { DiffResult, MetricKey } from "../src/diff";
+import { DiffResult, METRIC_KEYS, MetricKey } from "../src/diff";
 
 function createMockDiff(
   key: MetricKey,
@@ -25,16 +25,27 @@ function createMockDiff(
           {
             function_name: "test-fn",
             hasRegression: regression,
-            metrics: [
-              {
-                key,
-                base: { consumed: 100, limit: 0 },
-                head: { consumed: 100 + delta, limit: 0 },
-                delta,
-                pct,
-                regression,
-              },
-            ],
+            metrics: METRIC_KEYS.map((metricKey) =>
+              metricKey === key
+                ? {
+                    key: metricKey,
+                    base: { consumed: 100, limit: 0 },
+                    head: { consumed: 100 + delta, limit: 0 },
+                    delta,
+                    pct,
+                    regression,
+                    availability: "comparable" as const,
+                  }
+                : {
+                    key: metricKey,
+                    base: { consumed: 100, limit: 0 },
+                    head: { consumed: 100, limit: 0 },
+                    delta: 0,
+                    pct: 0,
+                    regression: false,
+                    availability: "comparable" as const,
+                  },
+            ),
           },
         ],
       },
@@ -46,6 +57,40 @@ function createMockDiff(
 }
 
 describe("enforceThresholds", () => {
+  it("accepts a complete diff whose derived policy metrics agree", () => {
+    expect(
+      enforceThresholds(createMockDiff("cpu_instructions", 10, 10, true), null),
+    ).toEqual([]);
+  });
+
+  it("rejects contradictory and incomplete public DiffResult metrics", () => {
+    const contradictory = createMockDiff("cpu_instructions", 10, 10, true);
+    contradictory.contracts[0].functions[0].metrics[0].delta = 99;
+    expect(() => enforceThresholds(contradictory, null)).toThrow(
+      /delta contradict base\/head consumed values/,
+    );
+
+    const inconsistentAvailability = createMockDiff(
+      "cpu_instructions",
+      10,
+      10,
+      true,
+    );
+    inconsistentAvailability.contracts[0].functions[0].metrics[0].base.availability =
+      "unavailable";
+    expect(() => enforceThresholds(inconsistentAvailability, null)).toThrow(
+      /availability.*must agree/,
+    );
+
+    const incomplete = createMockDiff("cpu_instructions", 10, 10, true);
+    incomplete.contracts[0].functions[0].metrics.pop();
+    expect(() =>
+      enforceThresholds(incomplete, {
+        thresholds: { global: { fail_on_any_regression: true } },
+      }),
+    ).toThrow(/all supported metrics are required/);
+  });
+
   it("returns empty violations if config or thresholds are empty", () => {
     const diff = createMockDiff("cpu_instructions", 10, 10, true);
     expect(enforceThresholds(diff, null)).toEqual([]);
@@ -163,7 +208,9 @@ describe("enforceThresholds", () => {
   });
 
   it("handles Infinity percentage (division by zero) correctly", () => {
-    const diff = createMockDiff("cpu_instructions", 10, null, true); // pct = null
+    const diff = createMockDiff("cpu_instructions", 10, null, true);
+    diff.contracts[0].functions[0].metrics[0].base.consumed = 0;
+    diff.contracts[0].functions[0].metrics[0].head.consumed = 10;
     const config: WeighinConfig = {
       thresholds: { global: { max_allowed_cpu_increase_pct: 100 } },
     };
@@ -181,28 +228,10 @@ describe("enforceThresholds", () => {
           },
         },
       };
-      const diff = {
-        contracts: [
-          {
-            contract_id: "c1",
-            functions: [
-              {
-                function_name: "test",
-                metrics: [
-                  {
-                    key: "cpu_instructions",
-                    base: { consumed: 10, limit: 100 },
-                    head: { consumed: 51, limit: 100 },
-                    delta: 41,
-                    pct: 410,
-                    regression: true,
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      };
+      const diff = createMockDiff("cpu_instructions", 41, 410, true);
+      diff.contracts[0].functions[0].metrics[0].base.consumed = 10;
+      diff.contracts[0].functions[0].metrics[0].head.consumed = 51;
+      diff.contracts[0].functions[0].metrics[0].pct = (41 / 10) * 100;
 
       const v = enforceThresholds(diff as any, config as any);
       expect(v).toHaveLength(1);
@@ -217,42 +246,26 @@ describe("enforceThresholds", () => {
             cpu_instructions: 51,
           },
           functions: {
-            test: {
+            "test-fn": {
               memory_bytes: 50,
             },
           },
         },
       };
-      const diff = {
-        contracts: [
-          {
-            contract_id: "c1",
-            functions: [
-              {
-                function_name: "test",
-                metrics: [
-                  {
-                    key: "cpu_instructions",
-                    base: { consumed: 0, limit: 100 },
-                    head: { consumed: 51, limit: 100 },
-                    delta: 51,
-                    pct: null,
-                    regression: true,
-                  },
-                  {
-                    key: "memory_bytes",
-                    base: { consumed: 0, limit: 100 },
-                    head: { consumed: 40, limit: 100 },
-                    delta: 40,
-                    pct: null,
-                    regression: true,
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      };
+      const diff = createMockDiff("cpu_instructions", 51, null, true);
+      const cpu = diff.contracts[0].functions[0].metrics.find(
+        (metric) => metric.key === "cpu_instructions",
+      )!;
+      cpu.base.consumed = 0;
+      cpu.head.consumed = 51;
+      const memory = diff.contracts[0].functions[0].metrics.find(
+        (metric) => metric.key === "memory_bytes",
+      )!;
+      memory.base.consumed = 0;
+      memory.head.consumed = 40;
+      memory.delta = 40;
+      memory.pct = null;
+      memory.regression = true;
 
       const v = enforceThresholds(diff as any, config as any);
       expect(v).toHaveLength(0);
@@ -267,28 +280,10 @@ describe("enforceThresholds", () => {
           global: { max_allowed_cpu_increase_pct: 10 },
         },
       };
-      const diff = {
-        contracts: [
-          {
-            contract_id: "c1",
-            functions: [
-              {
-                function_name: "test",
-                metrics: [
-                  {
-                    key: "cpu_instructions",
-                    base: { consumed: 10, limit: 100 },
-                    head: { consumed: 51, limit: 100 },
-                    delta: 41,
-                    pct: 410,
-                    regression: true,
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      };
+      const diff = createMockDiff("cpu_instructions", 41, 410, true);
+      diff.contracts[0].functions[0].metrics[0].base.consumed = 10;
+      diff.contracts[0].functions[0].metrics[0].head.consumed = 51;
+      diff.contracts[0].functions[0].metrics[0].pct = (41 / 10) * 100;
       const v = enforceThresholds(diff as any, config as any);
       expect(v).toHaveLength(2);
       expect(v[0].rule).toBe("absolute_limit(50)");

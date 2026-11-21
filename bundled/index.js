@@ -52208,29 +52208,35 @@ function diffBenchmarks(base, head, config3) {
 }
 
 // src/config.ts
+var PercentageSchema = external_exports.number().finite().nonnegative();
+function parseAllowPct(rule) {
+  const m = rule.match(/^allow_(\d+(?:\.\d+)?)_percent_increase$/);
+  const value = m ? Number(m[1]) : NaN;
+  return Number.isFinite(value) ? value : null;
+}
 var RuleValueSchema = external_exports.union([
-  external_exports.number(),
+  PercentageSchema,
   external_exports.string().refine(
     (val) => {
-      return val === "ignore" || val === "strict_zero_tolerance" || /^allow_[\d.]+_percent_increase$/.test(val);
+      return val === "ignore" || val === "strict_zero_tolerance" || parseAllowPct(val) !== null;
     },
     {
-      message: "Invalid rule string. Must be 'ignore', 'strict_zero_tolerance', or 'allow_X_percent_increase'"
+      message: "Unsupported threshold rule"
     }
   )
 ]);
 var GlobalThresholdsSchema = external_exports.object({
   fail_on_any_regression: external_exports.boolean().optional(),
-  max_allowed_cpu_increase_pct: external_exports.number().optional(),
-  max_allowed_memory_increase_pct: external_exports.number().optional()
+  max_allowed_cpu_increase_pct: PercentageSchema.optional(),
+  max_allowed_memory_increase_pct: PercentageSchema.optional()
 }).strict();
 var GlobalLimitsSchema = external_exports.partialRecord(
   external_exports.enum(METRIC_KEYS),
-  external_exports.number().nonnegative()
+  PercentageSchema
 );
 var FunctionLimitsSchema = external_exports.partialRecord(
   external_exports.enum(METRIC_KEYS),
-  external_exports.number().nonnegative()
+  PercentageSchema
 );
 var FunctionThresholdsSchema = external_exports.partialRecord(
   external_exports.enum(METRIC_KEYS),
@@ -52245,21 +52251,21 @@ var BenchmarkSelectorSchema = external_exports.object({
 var AggregateBudgetConfigSchema = external_exports.object({
   description: external_exports.string().optional(),
   members: external_exports.array(BenchmarkSelectorSchema).min(1),
-  limits: external_exports.partialRecord(external_exports.enum(METRIC_KEYS), external_exports.number().nonnegative()).optional(),
-  thresholds: external_exports.partialRecord(external_exports.enum(METRIC_KEYS), RuleValueSchema).optional()
+  limits: external_exports.partialRecord(external_exports.enum(METRIC_KEYS), PercentageSchema).optional(),
+  thresholds: FunctionThresholdsSchema.optional()
 }).strict();
 var WeighinConfigSchema = external_exports.object({
-  thresholds: external_exports.object({
-    global: GlobalThresholdsSchema.optional(),
-    functions: external_exports.record(external_exports.string(), FunctionThresholdsSchema).optional(),
-    aggregates: external_exports.record(external_exports.string(), FunctionThresholdsSchema).optional()
-  }).strict().optional(),
   limits: external_exports.object({
     global: GlobalLimitsSchema.optional(),
-    functions: external_exports.record(external_exports.string(), FunctionLimitsSchema).optional(),
-    aggregates: external_exports.record(external_exports.string(), FunctionLimitsSchema).optional()
+    functions: external_exports.record(external_exports.string().min(1), FunctionLimitsSchema).optional(),
+    aggregates: external_exports.record(external_exports.string().min(1), FunctionLimitsSchema).optional()
   }).strict().optional(),
-  aggregates: external_exports.record(external_exports.string(), AggregateBudgetConfigSchema).optional()
+  thresholds: external_exports.object({
+    global: GlobalThresholdsSchema.optional(),
+    functions: external_exports.record(external_exports.string().min(1), FunctionThresholdsSchema).optional(),
+    aggregates: external_exports.record(external_exports.string().min(1), FunctionThresholdsSchema).optional()
+  }).strict().optional(),
+  aggregates: external_exports.record(external_exports.string().min(1), AggregateBudgetConfigSchema).optional()
 }).strict();
 var U64_MAX = 18446744073709551615n;
 var I64_MIN = -9223372036854775808n;
@@ -52465,6 +52471,53 @@ var FixturesSpecSchema = external_exports.object({
     })
   ).optional()
 }).strict();
+function getFixturesJsonSchema() {
+  const schema = external_exports.toJSONSchema(FixturesSpecSchema, {
+    unrepresentable: "any"
+  });
+  const properties = schema.properties;
+  const contracts = properties.contracts;
+  const contractItem = contracts.items;
+  const invocationItems = contractItem.properties.invocations;
+  const invocationItem = invocationItems.items;
+  const nonBlank = (node2) => {
+    if (!node2) return;
+    node2.minLength = 1;
+    node2.pattern = "\\S";
+  };
+  nonBlank(properties.id);
+  const contractProperties = contractItem.properties;
+  nonBlank(contractProperties.id);
+  const dependsOn = contractProperties.depends_on;
+  if (dependsOn) nonBlank(dependsOn.items);
+  const invocationProperties = invocationItem.properties;
+  nonBlank(invocationProperties.id);
+  const args = invocationItem.properties.args;
+  const literal2 = external_exports.toJSONSchema(InvocationArgSchema, {
+    unrepresentable: "any"
+  });
+  const binding = external_exports.toJSONSchema(BoundInvocationArgSchema, {
+    unrepresentable: "any"
+  });
+  delete literal2.$schema;
+  delete binding.$schema;
+  const bindingProperties = binding.properties;
+  const bindingObject = bindingProperties.binding;
+  nonBlank(
+    bindingObject.properties.contract
+  );
+  args.items = { anyOf: [literal2, binding] };
+  schema.$id = "https://raw.githubusercontent.com/WeighInNG/WeighIn/main/docs/schemas/weighin-fixtures.schema.json";
+  schema.title = "WeighIn fixture declarations";
+  schema.description = "Input contract for weighin-fixtures.json. Invocation values are checked by the matching runtime argument validator.";
+  schema["x-weighin-identities"] = {
+    fixture: "Explicit top-level id becomes fixture_id; otherwise the normalized relative fixture path becomes path:<path>.",
+    contract: "Explicit contract id becomes logical_id; otherwise normalized wasm_path becomes wasm:<path>.",
+    invocation: "Explicit invocation id becomes case_id; otherwise canonicalized typed arguments become args:<json>."
+  };
+  return schema;
+}
+var WEIGHIN_FIXTURES_JSON_SCHEMA = getFixturesJsonSchema();
 function formatZodError(error63, fileName) {
   const lines = [`Invalid WeighIn configuration in ${fileName}:`];
   for (const issue2 of error63.issues) {
@@ -71763,61 +71816,14 @@ function comparePercentageToLimit(delta, base, limit) {
 
 // src/threshold.ts
 var crypto4 = __toESM(require("crypto"));
-var percentage = external_exports.number().finite().nonnegative();
-var ruleSchema = external_exports.union([
-  percentage,
-  external_exports.string().refine(
-    (value) => value === "ignore" || value === "strict_zero_tolerance" || parseAllowPct(value) !== null,
-    "Unsupported threshold rule"
-  )
-]);
-var metricRules = external_exports.object(
-  Object.fromEntries(METRIC_KEYS.map((key) => [key, ruleSchema.optional()]))
-).strict();
-var benchmarkSelectorSchema = external_exports.object({
-  fixture_id: external_exports.string().min(1).optional(),
-  logical_id: external_exports.string().min(1).optional(),
-  function_name: external_exports.string().min(1),
-  case_id: external_exports.string().min(1).optional()
-}).strict();
-var aggregateBudgetConfigSchema = external_exports.object({
-  description: external_exports.string().optional(),
-  members: external_exports.array(benchmarkSelectorSchema).min(1),
-  limits: external_exports.partialRecord(external_exports.enum(METRIC_KEYS), percentage).optional(),
-  thresholds: metricRules.optional()
-}).strict();
-var configSchema = external_exports.object({
-  limits: external_exports.object({
-    global: external_exports.partialRecord(external_exports.enum(METRIC_KEYS), percentage).optional(),
-    functions: external_exports.record(
-      external_exports.string().min(1),
-      external_exports.partialRecord(external_exports.enum(METRIC_KEYS), percentage)
-    ).optional(),
-    aggregates: external_exports.record(
-      external_exports.string().min(1),
-      external_exports.partialRecord(external_exports.enum(METRIC_KEYS), percentage)
-    ).optional()
-  }).strict().optional(),
-  thresholds: external_exports.object({
-    global: external_exports.object({
-      fail_on_any_regression: external_exports.boolean().optional(),
-      max_allowed_cpu_increase_pct: percentage.optional(),
-      max_allowed_memory_increase_pct: percentage.optional()
-    }).strict().optional(),
-    functions: external_exports.record(external_exports.string().min(1), metricRules).optional(),
-    aggregates: external_exports.record(external_exports.string().min(1), metricRules).optional()
-  }).strict().optional(),
-  aggregates: external_exports.record(external_exports.string().min(1), aggregateBudgetConfigSchema).optional()
-}).strict();
-function validateConfig(value) {
-  const parsed = configSchema.safeParse(value);
-  if (!parsed.success)
-    throw new Error(formatZodError(parsed.error, "weighin.toml"));
+function validateConfig(value, filename = "weighin.toml") {
+  const parsed = WeighinConfigSchema.safeParse(value);
+  if (!parsed.success) throw new Error(formatZodError(parsed.error, filename));
   return parsed.data;
 }
 function loadConfigContent(content, sourcePath) {
   try {
-    return validateConfig(TOML.parse(content));
+    return validateConfig(TOML.parse(content), sourcePath);
   } catch (error63) {
     if (error63 instanceof Error && error63.message.startsWith("Invalid WeighIn configuration"))
       throw error63;
@@ -71826,11 +71832,6 @@ function loadConfigContent(content, sourcePath) {
 }
 function policyContentSha256(content) {
   return crypto4.createHash("sha256").update(content, "utf8").digest("hex");
-}
-function parseAllowPct(rule) {
-  const m = rule.match(/^allow_(\d+(?:\.\d+)?)_percent_increase$/);
-  const value = m ? Number(m[1]) : NaN;
-  return Number.isFinite(value) ? value : null;
 }
 function evaluateRule(rule, diff, contractId, functionName) {
   const ruleStr = typeof rule === "number" ? `allow_${rule}_percent_increase` : rule;
@@ -71897,6 +71898,7 @@ var GLOBAL_RULE_MAP = [
   }
 ];
 function enforceThresholds(diff, config3) {
+  validateThresholdDiff(diff);
   if (config3 !== null) config3 = validateConfig(config3);
   if (!config3?.thresholds && !config3?.limits && !config3?.aggregates) return [];
   const global2 = config3?.thresholds?.global ?? {};
@@ -72110,6 +72112,151 @@ function enforceThresholds(diff, config3) {
     }
   }
   return violations;
+}
+function validateThresholdDiff(diff) {
+  const invalid = (path11, detail) => {
+    throw new Error(`Invalid DiffResult at ${path11}: ${detail}`);
+  };
+  if (!diff || typeof diff !== "object" || !Array.isArray(diff.contracts)) {
+    invalid("contracts", "expected an array");
+  }
+  const contractRegressions = [];
+  diff.contracts.forEach((contract, ci) => {
+    if (!contract || typeof contract !== "object" || !Array.isArray(contract.functions)) {
+      invalid(`contracts[${ci}].functions`, "expected an array");
+    }
+    const functionRegressions = [];
+    contract.functions.forEach((fn, fi) => {
+      if (!fn || typeof fn !== "object" || !Array.isArray(fn.metrics)) {
+        invalid(
+          `contracts[${ci}].functions[${fi}].metrics`,
+          "expected an array"
+        );
+      }
+      const byKey = /* @__PURE__ */ new Map();
+      fn.metrics.forEach((metric, mi) => {
+        const path11 = `contracts[${ci}].functions[${fi}].metrics[${mi}]`;
+        if (!metric || !METRIC_KEYS.includes(metric.key) || byKey.has(metric.key)) {
+          invalid(`${path11}.key`, "expected one unique supported metric key");
+        }
+        byKey.set(metric.key, metric);
+        for (const side of ["base", "head"]) {
+          const value = metric[side];
+          if (!value || !(value.consumed === null || typeof value.consumed === "number" && Number.isFinite(value.consumed) && value.consumed >= 0) || !(value.limit === null || typeof value.limit === "number" && Number.isFinite(value.limit) && value.limit >= 0)) {
+            invalid(
+              `${path11}.${side}`,
+              "consumed and limit must be finite nonnegative numbers or null"
+            );
+          }
+          if (value.availability !== void 0 && (value.availability !== "measured" && value.availability !== "unavailable" || value.availability === "measured" !== (value.consumed !== null))) {
+            invalid(
+              `${path11}.${side}.availability`,
+              "must agree with whether consumed is measured or unavailable"
+            );
+          }
+        }
+        const base = metric.base.consumed;
+        const head = metric.head.consumed;
+        const comparable = base !== null && head !== null;
+        const expectedDelta = comparable ? head - base : null;
+        const expectedPct = comparable && base !== 0 ? expectedDelta / base * 100 : null;
+        const expectedAvailability = comparable ? "comparable" : "unavailable";
+        const problems = [];
+        if (metric.availability !== expectedAvailability)
+          problems.push("availability");
+        if (metric.delta !== expectedDelta) problems.push("delta");
+        if (metric.pct !== expectedPct) problems.push("pct");
+        if (metric.regression !== (comparable && expectedDelta > 0))
+          problems.push("regression");
+        if (problems.length)
+          invalid(
+            path11,
+            `${problems.join(", ")} contradict base/head consumed values`
+          );
+        if (!comparable && typeof metric.reason !== "string") {
+          invalid(`${path11}.reason`, "unavailable metrics require a reason");
+        }
+      });
+      if (byKey.size !== METRIC_KEYS.length || METRIC_KEYS.some((key) => !byKey.has(key))) {
+        invalid(
+          `contracts[${ci}].functions[${fi}].metrics`,
+          "all supported metrics are required exactly once"
+        );
+      }
+      const hasRegression3 = fn.metrics.some((metric) => metric.regression);
+      if (fn.hasRegression !== hasRegression3) {
+        invalid(
+          `contracts[${ci}].functions[${fi}].hasRegression`,
+          "does not match metric regression flags"
+        );
+      }
+      functionRegressions.push(hasRegression3);
+    });
+    const hasRegression2 = functionRegressions.some(Boolean);
+    if (contract.hasRegression !== hasRegression2) {
+      invalid(
+        `contracts[${ci}].hasRegression`,
+        "does not match function regression flags"
+      );
+    }
+    contractRegressions.push(hasRegression2);
+  });
+  if (diff.aggregates !== void 0 && !Array.isArray(diff.aggregates)) {
+    invalid("aggregates", "expected an array when present");
+  }
+  const aggregateRegressions = (diff.aggregates ?? []).map((aggregate, ai) => {
+    const aggregatePath = `aggregates[${ai}]`;
+    if (!aggregate || typeof aggregate !== "object" || !Array.isArray(aggregate.metrics)) {
+      invalid(`${aggregatePath}.metrics`, "expected an array");
+    }
+    const byKey = /* @__PURE__ */ new Map();
+    aggregate.metrics.forEach((metric, mi) => {
+      const path11 = `${aggregatePath}.metrics[${mi}]`;
+      if (!metric || !METRIC_KEYS.includes(metric.key) || byKey.has(metric.key)) {
+        invalid(`${path11}.key`, "expected one unique supported metric key");
+      }
+      byKey.set(metric.key, metric);
+      const base = metric.base_consumed;
+      const head = metric.head_consumed;
+      const comparable = base !== null && head !== null;
+      if (!(base === null || Number.isFinite(base) && base >= 0) || !(head === null || Number.isFinite(head) && head >= 0)) {
+        invalid(
+          path11,
+          "base/head consumed values must be finite nonnegative numbers or null"
+        );
+      }
+      const expectedDelta = comparable ? head - base : null;
+      const expectedPct = comparable ? base === 0 ? expectedDelta > 0 ? null : 0 : expectedDelta / base * 100 : null;
+      const expectedAvailability = comparable ? "comparable" : "unavailable";
+      if (metric.availability !== expectedAvailability || metric.delta !== expectedDelta || metric.pct !== expectedPct || metric.regression !== (comparable && expectedDelta > 0)) {
+        invalid(
+          path11,
+          "availability, delta, pct, or regression contradict aggregate base/head values"
+        );
+      }
+      if (!comparable && typeof metric.reason !== "string") {
+        invalid(`${path11}.reason`, "unavailable metrics require a reason");
+      }
+    });
+    if (byKey.size !== METRIC_KEYS.length || METRIC_KEYS.some((key) => !byKey.has(key))) {
+      invalid(
+        `${aggregatePath}.metrics`,
+        "all supported metrics are required exactly once"
+      );
+    }
+    const hasRegression2 = aggregate.metrics.some((metric) => metric.regression);
+    if (aggregate.hasRegression !== hasRegression2) {
+      invalid(
+        `${aggregatePath}.hasRegression`,
+        "does not match metric regression flags"
+      );
+    }
+    return hasRegression2;
+  });
+  const hasRegression = contractRegressions.some(Boolean) || aggregateRegressions.some(Boolean);
+  if (diff.hasRegression !== hasRegression) {
+    invalid("hasRegression", "does not match nested regression flags");
+  }
 }
 function resolveEffectivePolicy(diff, config3, origin) {
   if (!config3) {

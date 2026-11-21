@@ -210,6 +210,11 @@ function action(
     const reportContent = reportFilePath && fs.existsSync(reportFilePath)
       ? fs.readFileSync(reportFilePath, "utf8")
       : null;
+    for (const kp of keyPaths) {
+      if (kp.dirPath) {
+        kp.dirExistsAfter = fs.existsSync(kp.dirPath);
+      }
+    }
     return {
       ...processResult,
       output: fs.readFileSync(output, "utf8"),
@@ -473,6 +478,34 @@ test("Concurrent action invocations receive different private key directories", 
   assert.equal(first.keyPaths[0].dirMode & 0o777, 0o700);
   assert.equal(second.keyPaths[0].dirMode & 0o777, 0o700);
   fs.rmSync(sharedRoot, { recursive: true, force: true });
+});
+test("Action removes owned deployer key directory on success, baseline failure, policy failure, and report-delivery failure", () => {
+  for (const failureMode of [
+    "control",
+    "build",
+    "regression",
+    "summary-delivery-failure",
+  ]) {
+    const sharedRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), `weighin-cleanup-${failureMode}-`),
+    );
+    const result = action(failureMode, policy, sharedRoot);
+    if (failureMode === "control") {
+      assert.equal(result.status, 0);
+    } else {
+      assert.equal(result.status, 1);
+    }
+    assert.ok(
+      result.keyPaths.length >= 1,
+      `expected key paths for ${failureMode}`,
+    );
+    assert.equal(
+      result.keyPaths[0].dirExistsAfter,
+      false,
+      `owned key directory must be removed on ${failureMode}`,
+    );
+    fs.rmSync(sharedRoot, { recursive: true, force: true });
+  }
 });
 test("Action unchanged control and optional absent policy still pass; regression fails", () => {
   assert.equal(action("control").status, 0);
