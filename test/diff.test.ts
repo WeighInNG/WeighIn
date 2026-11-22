@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { diffBenchmarks } from "../src/diff";
+import { diffBenchmarks, formatByteCount } from "../src/diff";
 import { ContractBenchmark, Metrics } from "../src/measurement";
 
 function createMetrics(consumed: number, limit: number = 0): Metrics {
@@ -252,5 +252,11 @@ describe("diffBenchmarks", () => {
     expect(diff.contracts[0].contract_id).toBe("contract-shared");
     expect(diff.contracts[0].newFunctions).toEqual(["new-fn"]);
     expect(diff.contracts[0].removedFunctions).toEqual(["removed-fn"]);
+  });
+
+  it("formats byte counts correctly", () => {
+    expect(formatByteCount(500)).toBe("500 B");
+    expect(formatByteCount(2048)).toBe("2.00 KB");
+    expect(formatByteCount(10485760)).toBe("10.00 MB");
   });
 });

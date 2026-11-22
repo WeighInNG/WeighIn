@@ -712,3 +712,12 @@ export function diffBenchmarks(
 
   return diff;
 }
+
+export function formatByteCount(bytes: number): string {
+  if (!Number.isFinite(bytes) || bytes < 0) {
+    throw new RangeError("Byte count must be a finite non-negative number");
+  }
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1048576) return `${(bytes / 1024).toFixed(2)} KB`;
+  return `${(bytes / 1048576).toFixed(2)} MB`;
+}
