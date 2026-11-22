@@ -9,6 +9,72 @@ in pull requests.
 SDK 28.0.0, Stellar CLI 28.1.0 and Rust 1.95.0. See
 [verified evidence](docs/EVIDENCE.md) and [known limitations](docs/KNOWN_LIMITATIONS.md).
 
+## Table of Contents
+
+- [Key Features](#key-features)
+- [Installation](#installation)
+- [Quickstart](#quick-start)
+- [Configuration](#configuration)
+- [Troubleshooting](#troubleshooting)
+
+## Key Features
+
+- **Repeatable Resource Benchmarking:** Measures official native Soroban simulation resources (CPU cost-model instructions, memory cost units, ledger footprints, disk read/write bytes, and event counts) across BASE and HEAD revisions.
+- **Independent Benchmark Identity:** Pairs logical contract functions using stable identity tuples `(fixture_id, logical_id, function_name, case_id)` regardless of runtime contract address changes or WASM hash changes.
+- **Automated CI Enforcement:** Enforces configurable regression thresholds (e.g., `strict_zero_tolerance`, percentage limits) and absolute caps via a GitHub Action step.
+- **Multi-Contract Setup & Dependency Resolution:** Deploys contract dependencies in topological order and passes committed deployment addresses into dependent invocation arguments.
+- **Atomic & Secure Reporting:** Generates atomic Markdown reports, diff JSON, and PR metadata for secure posting via an isolated `workflow_run` comment workflow.
+- **Standalone CLI:** Provides a standalone CLI for measuring prebuilt contract WASMs against a compatible RPC network, with offline support for help and version commands.
+
+## Installation
+
+WeighIn is used primarily as a GitHub Action in CI workflows, but its measurement CLI and repository tooling can also be run locally.
+
+### Prerequisites
+
+**Requirements for using WeighIn:**
+- **OS / Architecture:** Linux x64
+- **Rust Toolchain:** Rust 1.95.0 with `wasm32v1-none` target (for contract builds)
+- **Stellar CLI:** Stellar CLI 28.1.0 (for default contract compilation)
+- **Network / RPC:** Protocol-28 standalone Stellar network and RPC (e.g. `stellar/quickstart`)
+
+**Requirements for local development and native testing:**
+- **Node.js:** Node 24 and npm
+- **Rust Toolchain:** Pinned Rust 1.95.0 toolchain and crates for the native simulation helper
+- **Docker:** Required for running the local standalone network container during integration testing
+
+### Local Setup
+
+Clone the repository and install dependencies using the checked-in package lockfile:
+
+```bash
+git clone https://github.com/WeighInNG/WeighIn.git
+cd WeighIn
+npm ci
+```
+
+For native simulation replay and helper builds:
+
+```bash
+rustup toolchain install 1.95.0
+rustup target add wasm32v1-none --toolchain 1.95.0
+npm run test:native
+```
+
+### GitHub Action Setup
+
+In your workflow, add the WeighIn Action step after checkout, tool installation, and standalone network provisioning (see [weighin.yml](.github/workflows/weighin.yml)):
+
+```yaml
+- uses: WeighInNG/WeighIn@bbbe9001bbd375fd6a1ff75be5da2593c86fff20
+  with:
+    fixtures-path: weighin-fixtures.json
+    config-path: weighin.toml
+    rpc-url: http://localhost:8000/rpc
+    report-path: weighin-report.md
+    metadata-path: pr-metadata.json
+```
+
 ## Why WeighIn
 
 A contract change can preserve its interface while increasing metered compute,
@@ -366,6 +432,38 @@ ledger header without editing TTL fields.
 
 [Known limitations](docs/KNOWN_LIMITATIONS.md) covers protocol/platform scope,
 state/auth/randomness, custom builds, fixture types, CLI and GitHub behavior.
+
+## Troubleshooting
+
+Common issues and solutions based on [known limitations](docs/KNOWN_LIMITATIONS.md), [contributing guidelines](CONTRIBUTING.md), and [evidence](docs/EVIDENCE.md):
+
+- **Platform rejection (`Unsupported outside tested path`):**
+  - *Cause:* The native simulation helper is restricted to Linux x64 and Rust 1.95.0. Running on other platforms or architectures fails in `src/simulation.ts`.
+  - *Solution:* Run benchmarks in a Linux x64 environment or container (e.g. `runs-on: ubuntu-latest`).
+
+- **RPC connection or health failures:**
+  - *Cause:* WeighIn requires a reachable RPC endpoint backed by a standalone Stellar network configured with protocol 28 and the standalone passphrase.
+  - *Solution:* Confirm the standalone network container is running, verify RPC responsiveness (such as checking `getHealth`), and ensure the network matches protocol 28 and standalone passphrase requirements.
+
+- **Workspace dirty errors (`HEAD workspace has modified tracked files`):**
+  - *Cause:* WeighIn requires that the HEAD workspace has no modified tracked files before measurement to ensure benchmarks match the committed ref.
+  - *Solution:* Commit or stash modified tracked files before running (`git status`). Untracked files do not block execution.
+
+- **Missing baseline or unmatched benchmark cases:**
+  - *Cause:* Logical benchmarks pair by identity tuples `(fixture_id, logical_id, function_name, case_id)`. The Action fails if no benchmarks match across BASE and HEAD.
+  - *Solution:* Ensure matching fixtures with stable IDs are committed in both the baseline ref and HEAD.
+
+- **WASM preflight errors (`invalid WASM binary magic header` or missing files):**
+  - *Cause:* Declared WASM paths must exist, be regular files, and contain valid WASM magic bytes (`\0asm\x01\x00\x00\x00`).
+  - *Solution:* Check relative paths in your fixtures file and ensure contract builds output valid `wasm32v1-none` WASM. If using `wasm32-unknown-unknown`, set `allow-cross-target-substitution: true`.
+
+- **Policy failure on unavailable metrics:**
+  - *Cause:* `historical_data_read_bytes`, `contract_data_hard_limit`, and `tx_size_bytes` are unavailable in simulation (`null`); policies requiring them fail.
+  - *Solution:* When enabling broad policies (e.g. `fail_on_any_regression = true`), configure explicit per-function `ignore` rules for unavailable metrics in `weighin.toml`.
+
+- **Stale PR comments skipped in GitHub Actions:**
+  - *Cause:* The comment consumer skips reports when the workflow run SHA does not match the current PR HEAD commit.
+  - *Solution:* Expected behavior when newer commits are pushed while older runs are in flight; only the latest result updates the PR comment.
 
 ## Development
 
