@@ -73,5 +73,8 @@ test("formats decrease, regression, unchanged, and unavailable metrics", () => {
 });
 
 test("rejects invalid diff JSON", () => {
-  assert.throws(() => formatDiff({}), /expected an object with a contracts array/);
+  assert.throws(
+    () => formatDiff({}),
+    /expected an object with a contracts array/,
+  );
 });

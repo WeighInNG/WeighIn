@@ -70,7 +70,7 @@ describe("loadConfig (TOML parsing & Zod Validation)", () => {
     expect(config?.thresholds?.global?.fail_on_any_regression).toBe(true);
   });
 
-   it("parses TOML comments and preserves # in quoted function names", () => {
+  it("parses TOML comments and preserves # in quoted function names", () => {
     vi.mocked(fs.existsSync).mockReturnValue(true);
     vi.mocked(fs.readFileSync).mockReturnValue(`
       # Global benchmark policy
@@ -91,21 +91,19 @@ describe("loadConfig (TOML parsing & Zod Validation)", () => {
 
     expect(config?.thresholds?.global?.fail_on_any_regression).toBe(false);
 
-    expect(
-      config?.thresholds?.functions?.["swap#v2"]?.cpu_instructions,
-    ).toBe("strict_zero_tolerance");
+    expect(config?.thresholds?.functions?.["swap#v2"]?.cpu_instructions).toBe(
+      "strict_zero_tolerance",
+    );
 
-    expect(
-      config?.thresholds?.functions?.["swap#v2"]?.memory_bytes,
-    ).toBe("ignore");
+    expect(config?.thresholds?.functions?.["swap#v2"]?.memory_bytes).toBe(
+      "ignore",
+    );
 
-    expect(
-      config?.thresholds?.functions?.transfer?.events_count,
-    ).toBe("allow_10_percent_increase");
+    expect(config?.thresholds?.functions?.transfer?.events_count).toBe(
+      "allow_10_percent_increase",
+    );
   });
 
-
-  
   it("throws on malformed toml", () => {
     vi.mocked(fs.existsSync).mockReturnValue(true);
     vi.mocked(fs.readFileSync).mockReturnValue(`
