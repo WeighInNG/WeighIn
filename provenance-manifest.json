@@ -101,7 +101,7 @@
     },
     {
       "path": "src/identity.ts",
-      "sha256": "987c2136e2a777328bf8383b2d321572230f88c61ed27d2c2ae88a60925e5f7d"
+      "sha256": "b5681c3837afe34981a48a25476aa115a670600281c743a9e99a0c1cd20a4e8f"
     },
     {
       "path": "src/measurement.ts",
