@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /** The measurement implementation and native helper support this network only. */
 export const SUPPORTED_NETWORK_PASSPHRASE =
   "Standalone Network ; February 2017";

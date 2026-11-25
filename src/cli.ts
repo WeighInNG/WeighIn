@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: Apache-2.0
 import * as fs from "fs";
 import * as path from "path";
 import { execSync } from "child_process";
@@ -37,6 +38,7 @@ export interface CliOptions {
 export type CliCommand =
   | { kind: "help" }
   | { kind: "version" }
+  | { kind: "validate"; fixturePath: string }
   | { kind: "measure"; options: CliOptions };
 
 const DEFAULT_FIXTURES_PATH = "weighin-fixtures.json";
@@ -47,9 +49,12 @@ export const USAGE = "Usage: weighin [options] [fixtures.json] [results.json]";
 
 export const HELP_TEXT = `${USAGE}
 
-Measure Soroban contract resource usage from an existing fixtures file.
-The command only measures: it does not build contracts, compare BASE/HEAD
-revisions, enforce thresholds or post comments.
+The CLI only measures contracts or validates fixture files offline.
+Measurement does not build contracts, compare BASE/HEAD revisions, enforce
+thresholds or post comments.
+
+Commands:
+  validate <fixtures.json>  Validate a fixtures file without network access
 
 Positional arguments:
   fixtures.json         Fixtures file to measure (default: ${DEFAULT_FIXTURES_PATH})
@@ -61,6 +66,7 @@ Options:
   --helper-path <path>  Use an existing compatible native simulation helper
   --json-stdout         Write JSON results to stdout instead of a file
   --stdout              Alias for --json-stdout
+  --verbose             Print diagnostic and progress information
   --allow-cross-target-substitution
                         Allow cross-target WASM substitution
   --                    Treat remaining arguments as positional paths
@@ -80,6 +86,26 @@ function readPackageVersion(): string {
 export function parseArgs(
   rawArgs: string[] = process.argv.slice(2),
 ): CliCommand {
+  if (rawArgs[0] === "validate") {
+    const args = rawArgs.slice(1);
+    if (args.length === 1 && (args[0] === "--help" || args[0] === "-h")) {
+      return { kind: "help" };
+    }
+    if (args.length === 0) {
+      throw new Error("validate requires a fixtures file path");
+    }
+    if (args[0].startsWith("--")) {
+      throw new Error(`Unknown option: ${args[0]}`);
+    }
+    if (args.length > 1) {
+      if (args[1].startsWith("--")) {
+        throw new Error(`Unknown option: ${args[1]}`);
+      }
+      throw new Error(`Unexpected argument: ${args[1]}`);
+    }
+    return { kind: "validate", fixturePath: args[0] };
+  }
+
   let fixturesPath: string | null = null;
   let baseFixturesPath: string | null = null;
   let positionalOutputPath: string | null = null;
@@ -223,6 +249,41 @@ export function parseArgs(
     },
   };
 }
+
+export function validateFixtures(fixturePath: string): string {
+  let contents: string;
+  try {
+    contents = fs.readFileSync(fixturePath, "utf8");
+  } catch (error) {
+    if (error instanceof Error && "code" in error) {
+      const code = error.code;
+      if (code === "ENOENT") {
+        throw new Error(`Fixture file not found: ${fixturePath}`);
+      }
+      if (code === "EACCES" || code === "EPERM") {
+        throw new Error(`Fixture file is not readable: ${fixturePath}`);
+      }
+    }
+    throw error;
+  }
+
+  try {
+    parseFixtures(
+      contents,
+      path.relative(process.cwd(), path.resolve(fixturePath)),
+    );
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      throw new Error(
+        `Malformed JSON in fixture file "${fixturePath}": ${error.message}`,
+      );
+    }
+    throw error;
+  }
+
+  return `fixture is valid: ${fixturePath}`;
+}
+
 async function main() {
   let command: CliCommand;
   try {
@@ -245,6 +306,15 @@ async function main() {
     } catch (err: any) {
       console.error(err.message);
       process.exit(1);
+    }
+    return;
+  }
+  if (command.kind === "validate") {
+    try {
+      process.stdout.write(`${validateFixtures(command.fixturePath)}\n`);
+    } catch (error) {
+      console.error(error instanceof Error ? error.message : String(error));
+      process.exitCode = 1;
     }
     return;
   }

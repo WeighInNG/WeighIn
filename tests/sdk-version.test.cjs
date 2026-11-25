@@ -187,7 +187,15 @@ function spawnCli(fixturesPath, cwd) {
   const output = path.join(cwd, "weighin-results.json");
   const r = spawnSync(
     process.execPath,
-    [bin, fixturesPath, "--rpc-url", "http://127.0.0.1:1", "--output", output],
+    [
+      bin,
+      fixturesPath,
+      "--rpc-url",
+      "http://127.0.0.1:1",
+      "--output",
+      output,
+      "--verbose",
+    ],
     {
       cwd,
       encoding: "utf8",
@@ -282,6 +290,8 @@ test("CLI keeps stdout free of SDK diagnostics in JSON stdout mode", () => {
         "--rpc-url",
         "http://127.0.0.1:1",
         "--json-stdout",
+        "--verbose",
+        "--verbose",
       ],
       { cwd, encoding: "utf8", timeout: 8000 },
     );

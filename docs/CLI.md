@@ -44,6 +44,19 @@ npx weighin
 The CLI uses the current working directory to resolve fixture files,
 WASM paths, and output files.
 
+## Validate a Fixture
+
+Validate a fixture file without connecting to RPC, invoking Git, or building a
+contract:
+
+```bash
+weighin validate ./weighin-fixtures.json
+```
+
+The command exits with status `0` and reports that the fixture is valid when
+the file contains valid JSON matching WeighIn's fixture schema. Invalid or
+unreadable files are reported on stderr and exit with status `1`.
+
 ## Command Syntax
 
 ```bash
@@ -83,6 +96,7 @@ The following options are supported by the current CLI implementation.
 | `--helper-path <path>` | Path to an existing compatible native simulation helper | Automatically provisioned helper |
 | `--json-stdout` | Write JSON measurement results to stdout | Disabled |
 | `--stdout` | Alias for `--json-stdout` | Disabled |
+| `--verbose` | Print diagnostic and progress information | Disabled |
 | `--allow-cross-target-substitution` | Allow cross-target WASM substitution | Disabled |
 | `--help`, `-h` | Display CLI help | — |
 | `--version` | Display installed package version | — |

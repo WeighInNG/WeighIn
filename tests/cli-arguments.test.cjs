@@ -115,7 +115,12 @@ test("CLI rejects invalid usage before fixture or network side effects", (t) => 
 
 test("CLI parses an explicit default-named fixture with a legacy output", (t) => {
   const cwd = emptyDirectory(t);
-  const result = run(cwd, "weighin-fixtures.json", "legacy-results.json");
+  const result = run(
+    cwd,
+    "weighin-fixtures.json",
+    "legacy-results.json",
+    "--verbose",
+  );
   assert.ifError(result.error);
   // Measurement fails because no fixture file exists; parsing must succeed.
   assert.equal(result.status, 1);
@@ -128,14 +133,27 @@ test("CLI parses an explicit default-named fixture with a legacy output", (t) =>
 test("CLI option ordering chooses the same fixture, output and RPC paths", (t) => {
   const cwd = emptyDirectory(t);
   const argumentLists = [
-    ["fixtures.json", "out.json", "--rpc-url", "http://127.0.0.1:1"],
-    ["--rpc-url", "http://127.0.0.1:1", "fixtures.json", "out.json"],
+    [
+      "fixtures.json",
+      "out.json",
+      "--rpc-url",
+      "http://127.0.0.1:1",
+      "--verbose",
+    ],
+    [
+      "--rpc-url",
+      "http://127.0.0.1:1",
+      "fixtures.json",
+      "out.json",
+      "--verbose",
+    ],
     [
       "fixtures.json",
       "--output",
       "out.json",
       "--rpc-url",
       "http://127.0.0.1:1",
+      "--verbose",
     ],
   ];
   const selections = argumentLists.map((args) => {
@@ -157,7 +175,7 @@ test("CLI option ordering chooses the same fixture, output and RPC paths", (t) =
 
 test("CLI treats -- as end of options for dash-prefixed paths", (t) => {
   const cwd = emptyDirectory(t);
-  const result = run(cwd, "--", "--help", "dash-results.json");
+  const result = run(cwd, "--verbose", "--", "--help", "dash-results.json");
   assert.ifError(result.error);
   assert.equal(result.status, 1);
   // --help was parsed as the fixture path, not as the help command.

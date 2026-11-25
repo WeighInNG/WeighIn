@@ -54,6 +54,7 @@ test("CLI prints a sanitized RPC URL and never the credentials", () => {
     "missing-fixtures.json",
     "--rpc-url",
     secretUrl,
+    "--verbose",
   ]);
   const output = result.stdout + result.stderr;
   assert.equal(result.status, 1);
@@ -68,6 +69,7 @@ test("CLI reports a malformed endpoint as a safe placeholder", () => {
     "missing-fixtures.json",
     "--rpc-url",
     malformed,
+    "--verbose",
   ]);
   const output = result.stdout + result.stderr;
   assert.ok(output.includes("RPC URL:  [invalid endpoint]"));
@@ -93,7 +95,13 @@ test("CLI transport receives the unchanged endpoint while failures stay redacted
     }),
   );
   const { result, calls } = runEntry(
-    [path.join(root, "dist", "cli.js"), fixtures, "--rpc-url", secretUrl],
+    [
+      path.join(root, "dist", "cli.js"),
+      fixtures,
+      "--rpc-url",
+      secretUrl,
+      "--verbose",
+    ],
     {},
     directory,
   );

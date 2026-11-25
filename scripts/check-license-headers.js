@@ -11,6 +11,8 @@ const path = require("path");
 
 const SRC_DIR = path.resolve(__dirname, "..", "src");
 const LICENSES = [
+  // SPDX identifiers are the preferred short-form header.
+  /SPDX-License-Identifier:\s*Apache-2\.0/,
   // Apache-2.0 (project's LICENSE)
   /Copyright \(c\) \d{4} .*[\r\n]+[\s\S]*?Apache License[^\n]*Version 2\.0/,
   // MIT

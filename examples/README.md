@@ -4,6 +4,19 @@ Run these commands from the repository root with the [contributor toolchain](../
 and a running protocol-28 standalone network. Build the example contracts with
 the reference crate's manifest and lockfile in an ignored build directory.
 
+## Sample contract
+
+The self-contained [sample contract](sample-contract/) provides persistent
+storage reads and writes plus a recursive Fibonacci computation. Build it from
+the repository root with:
+
+```bash
+stellar contract build --locked --manifest-path examples/sample-contract/Cargo.toml
+```
+
+Its [fixture](sample-contract/weighin-fixtures.json) covers all three
+operations and points at the WASM artifact produced by that command.
+
 ```bash
 set -e
 for name in storage auth verifier; do
