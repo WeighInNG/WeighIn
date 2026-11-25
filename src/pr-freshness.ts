@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * Freshness checks for PR reports delivered by the comment consumer.
  *

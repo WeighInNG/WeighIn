@@ -72931,9 +72931,25 @@ function renderComment(diff, violations, baseRef, headSha, policyOrigin) {
       lines.push("");
     }
     const sortedFunctions = [...contract.functions].sort(compareFunctions);
-    for (const fn of sortedFunctions) {
-      lines.push(renderFunctionTable(fn));
+    const visibleFunctionCount = 10;
+    if (sortedFunctions.length > visibleFunctionCount) {
+      for (const fn of sortedFunctions.slice(0, visibleFunctionCount)) {
+        lines.push(renderFunctionTable(fn));
+        lines.push("");
+      }
+      lines.push("<details><summary>Secondary metrics</summary>");
       lines.push("");
+      for (const fn of sortedFunctions.slice(visibleFunctionCount)) {
+        lines.push(renderFunctionTable(fn));
+        lines.push("");
+      }
+      lines.push("</details>");
+      lines.push("");
+    } else {
+      for (const fn of sortedFunctions) {
+        lines.push(renderFunctionTable(fn));
+        lines.push("");
+      }
     }
   }
   lines.push("---");

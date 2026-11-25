@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 import * as path from "path";
 import { ZodError } from "zod";
 import type { FixturesSpec, ContractSpec, InvocationSpec } from "./measurement";

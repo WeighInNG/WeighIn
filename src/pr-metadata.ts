@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * Versioned PR metadata shared by the producer Action and the comment consumer.
  *

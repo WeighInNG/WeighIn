@@ -43,11 +43,6 @@ jobs:
         run: git diff --exit-code -- package-lock.json
       - name: npm audit (moderate+ advisory gate)
         run: |
-        - name: npm audit (moderate+ advisory gate)
-  run: |
-    npm audit --audit-level=moderate --json > npm-audit.json
-    EXIT=$?
-    exit $EXIT
           npm audit --audit-level=moderate --json > npm-audit.json
           EXIT=$?
           exit $EXIT

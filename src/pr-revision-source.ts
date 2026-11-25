@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 import type { getOctokit } from "@actions/github";
 import type { PrRevisionSource } from "./pr-freshness";
 

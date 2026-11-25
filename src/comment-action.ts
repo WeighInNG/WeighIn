@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 import * as core from "@actions/core";
 import * as github from "@actions/github";
 import * as fs from "fs";

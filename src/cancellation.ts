@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 import * as core from "@actions/core";
 import * as exec from "@actions/exec";
 import childProcess from "node:child_process";

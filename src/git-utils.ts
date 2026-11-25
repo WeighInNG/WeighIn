@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 import { trackedExec } from "./cancellation";
 
 /** Run a command and capture stdout. Throws on non-zero exit. */

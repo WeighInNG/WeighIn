@@ -1,0 +1,31 @@
+{
+  "id": "sample-contract",
+  "contracts": [
+    {
+      "id": "sample",
+      "wasm_path": "target/wasm32v1-none/release/sample_contract.wasm",
+      "invocations": [
+        {
+          "id": "increment-count",
+          "function_name": "increment",
+          "args": []
+        },
+        {
+          "id": "read-count",
+          "function_name": "get_count",
+          "args": []
+        },
+        {
+          "id": "fibonacci-20",
+          "function_name": "compute_fibonacci",
+          "args": [
+            {
+              "type": "u32",
+              "value": 20
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
