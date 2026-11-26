@@ -2,7 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
 import { createHash } from "crypto";
-import { z } from "zod";
+import { z } from "zod/v4";
 import { parseFixtures } from "./identity";
 import { registerOwnedTempPath, trackedExec } from "./cancellation";
 

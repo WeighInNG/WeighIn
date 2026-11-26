@@ -72,6 +72,12 @@ export const RUNTIME_RECORD_INVARIANTS = [
     description:
       "Numeric consumption, limit, timestamp, ledger, and protocol values must satisfy Number.isSafeInteger in JavaScript runtime validation.",
   },
+  {
+    id: "NONEMPTY_BENCHMARK_COLLECTION",
+    scope: "contract_record",
+    description:
+      "Current-schema ContractBenchmark records (schema_version 2/3/4/5) must contain at least one benchmark case. diffBenchmarks rejects any such record with an empty benchmarks array and identifies the affected contract before it silently enters comparison with zero functions. Legacy records without schema_version are exempt.",
+  },
 ] as const;
 
 export interface RecordValidationDiagnostic {

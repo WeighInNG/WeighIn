@@ -240,3 +240,19 @@ test("fee-only configuration/metadata changes remain visible without invalidatin
     diff.contracts[0].functions[0].head_provenance.config_sha256,
   );
 });
+
+// Issue #227 regression: empty benchmark array in current-schema record is rejected.
+test("schema 3 contract with zero benchmarks is rejected before entering comparison", () => {
+  const empty = result();
+  empty[0].benchmarks = [];
+  assert.throws(
+    () => diffBenchmarks(empty, result("head")),
+    /Contract record has zero benchmark cases/,
+  );
+  const emptyHead = result("head");
+  emptyHead[0].benchmarks = [];
+  assert.throws(
+    () => diffBenchmarks(result(), emptyHead),
+    /Contract record has zero benchmark cases/,
+  );
+});

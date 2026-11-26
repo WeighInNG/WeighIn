@@ -2,7 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as crypto from "crypto";
 import { Address, rpc, Transaction, xdr } from "@stellar/stellar-sdk";
-import { z } from "zod";
+import { z } from "zod/v4";
 import { redactEndpointSecrets } from "./endpoint";
 import { parseFixtures, IdentifiedInvocation } from "./identity";
 import {

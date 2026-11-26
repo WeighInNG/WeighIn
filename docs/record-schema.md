@@ -109,6 +109,19 @@ additional invariants enforced at runtime:
 5. `SAFE_INTEGER_BOUNDS`: numeric `consumed`, `limit`, `timestamp`, `ledger`,
    and `protocol` fields must satisfy `Number.isSafeInteger` in JavaScript
    runtime evaluation in addition to JSON integer bounds.
+6. `NONEMPTY_BENCHMARK_COLLECTION`: current-schema `ContractBenchmark` records
+   (schema versions 2–5, identified by a non-undefined `schema_version`) must
+   contain at least one benchmark case. `diffBenchmarks` rejects any record with
+   an empty `benchmarks` array and identifies the affected contract by its
+   logical label before it can silently enter comparison with zero functions.
+   Legacy records (no `schema_version`) are exempt from this check.
+
+**Empty benchmark suite vs. malformed individual contract:** a comparison where
+all contracts exist but no BASE/HEAD benchmarks match (every function is an
+addition or removal) is a distinct suite-level condition reported at the action
+level. It is separate from the per-record check above: a contract record with
+zero benchmark cases is a malformed record that fails validation; a suite where
+no matching pairs exist is a valid but unresolvable comparison.
 
 ## Source account in compute provenance
 

@@ -8,7 +8,7 @@ import {
 } from "./endpoint";
 import { execFile } from "child_process";
 import { Keypair, Transaction, xdr } from "@stellar/stellar-sdk";
-import { z } from "zod";
+import { z } from "zod/v4";
 import { SUPPORTED_PROTOCOL_VERSION } from "./network";
 import { registerChildProcess } from "./cancellation";
 

@@ -520,3 +520,84 @@ test("vec and map payloads with valid typed-argument contents parse successfully
   const mapResult = parseFixtures(mapFixture, "weighin-fixtures.json");
   assert.ok(mapResult.contracts[0], "map fixture should parse to a contract");
 });
+
+// ---------------------------------------------------------------------------
+// Issue #227 – Reject empty current-schema contract benchmark records
+// ---------------------------------------------------------------------------
+
+test("current-schema contract with no benchmark cases is rejected before comparison", () => {
+  const records = measurement();
+  records[0].benchmarks = [];
+  assert.throws(
+    () => diffBenchmarks(records, measurement()),
+    /Contract record has zero benchmark cases/,
+  );
+});
+
+test("error message identifies the affected contract by its logical label", () => {
+  const records = measurement();
+  records[0].benchmarks = [];
+  assert.throws(
+    () => diffBenchmarks(records, measurement()),
+    (err) => {
+      assert.match(err.message, /id:greeting/);
+      return true;
+    },
+  );
+});
+
+test("empty current-schema contract in head is rejected even when base is valid", () => {
+  const head = measurement();
+  head[0].benchmarks = [];
+  assert.throws(
+    () => diffBenchmarks(measurement(), head),
+    /Contract record has zero benchmark cases/,
+  );
+});
+
+test("empty current-schema contract that would be a new contract is rejected", () => {
+  // A contract present only in head (new contract) with no benchmarks is rejected.
+  const head = measurement(fixture([invocation()], "new-contract"));
+  head[0].benchmarks = [];
+  assert.throws(
+    () => diffBenchmarks(measurement(), head),
+    /Contract record has zero benchmark cases/,
+  );
+});
+
+test("empty current-schema contract that would be a removed contract is rejected", () => {
+  // A contract present only in base (removed contract) with no benchmarks is rejected.
+  const base = measurement(fixture([invocation()], "removed-contract"));
+  base[0].benchmarks = [];
+  assert.throws(
+    () => diffBenchmarks(base, measurement()),
+    /Contract record has zero benchmark cases/,
+  );
+});
+
+test("legacy contract with empty benchmarks array is not rejected", () => {
+  // Legacy records (no schema_version) must not be blocked by the new check.
+  const legacy = measurement();
+  delete legacy[0].schema_version;
+  delete legacy[0].fixture_id;
+  delete legacy[0].logical_id;
+  delete legacy[0].benchmarks[0].case_id;
+  legacy[0].benchmarks = [];
+  // Should not throw; a legacy empty-benchmark record is unusual but not explicitly
+  // classified as malformed by the current-schema rule.
+  assert.doesNotThrow(() => diffBenchmarks(legacy, []));
+});
+
+test("multiple valid contracts with benchmark cases continue to compare correctly", () => {
+  const input = fixture();
+  input.contracts.push({ ...input.contracts[0], id: "second-contract" });
+  const base = measurement(input);
+  const head = measurement(input, { address: headAddress, hash: headHash });
+  head[1].benchmarks[0].metrics.cpu_instructions.consumed = 15000;
+  const diff = diffBenchmarks(base, head);
+  assert.equal(diff.contracts.length, 2);
+  assert.equal(diff.contracts[0].functions[0].metrics[0].delta, 0);
+  assert.equal(diff.contracts[1].functions[0].metrics[0].delta, 5000);
+  assert.deepEqual(diff.newContracts, []);
+  assert.deepEqual(diff.removedContracts, []);
+});

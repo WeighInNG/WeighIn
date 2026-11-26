@@ -311,3 +311,28 @@ test("schema 4 report distinguishes footprint, disk bytes, events plus return, n
     assert.ok(report.includes(label), label);
   }
 });
+
+// Issue #227 regression: empty benchmark array in schema 4/5 record is rejected.
+test("schema 4 contract with zero benchmarks is rejected before entering comparison", () => {
+  const empty = clone(records);
+  empty[0].benchmarks = [];
+  assert.throws(
+    () => diffBenchmarks(empty, clone(records)),
+    /Contract record has zero benchmark cases/,
+  );
+  const emptyHead = clone(records);
+  emptyHead[0].benchmarks = [];
+  assert.throws(
+    () => diffBenchmarks(clone(records), emptyHead),
+    /Contract record has zero benchmark cases/,
+  );
+});
+
+test("schema 5 contract with zero benchmarks is rejected before entering comparison", () => {
+  const emptyBase = currentSchemaRecords();
+  emptyBase[0].benchmarks = [];
+  assert.throws(
+    () => diffBenchmarks(emptyBase, currentSchemaRecords()),
+    /Contract record has zero benchmark cases/,
+  );
+});

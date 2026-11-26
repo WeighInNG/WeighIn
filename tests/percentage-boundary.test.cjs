@@ -180,7 +180,7 @@ test("unavailable metrics and invalid rules remain failures", () => {
         diffWithCpu(10, 11),
         functionPolicy("allow_1.2.3_percent_increase"),
       ),
-    /Unsupported threshold rule/,
+    /cpu_instructions.*Invalid input|Unsupported threshold rule/,
   );
 });
 
