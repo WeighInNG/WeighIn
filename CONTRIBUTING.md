@@ -126,7 +126,7 @@ upgrading libraries; do not apply forced blanket upgrades.
 | `native/simulation` | Official native Soroban simulation helper |
 | `src/diff.ts`, `src/threshold.ts` | Comparable resource differences and policies |
 | `src/comment.ts`, `src/report.ts`, `src/comment-action.ts` | Markdown/artifacts and comment delivery |
-| `src/cli.ts` | Prebuilt-WASM measurement JSON command |
+| `src/cli.ts` | Prebuilt-WASM measurement JSON command and offline identity listing |
 
 ## Pull requests
 

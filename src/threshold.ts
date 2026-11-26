@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as TOML from "toml";
-import { z } from "zod";
+import { z } from "zod/v4";
 import { formatZodError, WeighinConfigSchema, parseAllowPct } from "./config";
 import {
   DiffResult,

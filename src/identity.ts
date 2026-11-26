@@ -1,5 +1,5 @@
 import * as path from "path";
-import { ZodError } from "zod";
+import { ZodError } from "zod/v4";
 import type { FixturesSpec, ContractSpec, InvocationSpec } from "./measurement";
 import { FixturesSpecSchema, formatZodError } from "./config";
 

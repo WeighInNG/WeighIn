@@ -316,6 +316,96 @@ weighin --version
 Both commands are standalone and offline. They do not require a fixture
 file, Git repository, RPC endpoint, or native simulation helper.
 
+## Subcommands
+
+### list-identities
+
+Print the resolved logical identity tuple for every invocation declared in
+a fixture file. The command is entirely offline: it reads the fixture, runs
+the same identity-resolution logic used by the measurement engine, and
+writes the results without contacting RPC, provisioning helpers, performing
+builds, or accessing any network or Git state.
+
+```bash
+weighin list-identities [--json] <fixtures.json>
+```
+
+**Positional argument:**
+
+| Argument | Description |
+|---|---|
+| `fixtures.json` | Path to the fixture file to inspect (required) |
+
+**Options:**
+
+| Option | Description |
+|---|---|
+| `--json` | Write a JSON array to stdout instead of tab-separated lines |
+| `-h`, `--help` | Show the main help text and exit |
+
+The command exits `0` on success and `1` when the fixture cannot be read
+or fails schema/identity validation.
+
+#### Tab-separated output (default)
+
+Each line corresponds to one invocation. Fields are separated by a single
+tab character in the order: `fixture_id`, `logical_id`, `function_name`,
+`case_id`.
+
+```bash
+weighin list-identities weighin-fixtures.json
+```
+
+Example output for a fixture with explicit IDs:
+
+```text
+id:greeting-suite  id:greeting  hello  id:hello-world
+id:greeting-suite  id:greeting  hello  id:hello-alice
+```
+
+The `id:` prefix indicates an explicit ID was declared. The `path:` and
+`wasm:` prefixes indicate path-derived identities, and `args:` indicates
+an argument-derived case identity.
+
+#### JSON output
+
+Pass `--json` to receive a JSON array of objects, one per invocation:
+
+```bash
+weighin list-identities --json weighin-fixtures.json
+```
+
+Each object has four string fields:
+
+```json
+[
+  {
+    "fixture_id": "id:greeting-suite",
+    "logical_id": "id:greeting",
+    "function_name": "hello",
+    "case_id": "id:hello-world"
+  },
+  {
+    "fixture_id": "id:greeting-suite",
+    "logical_id": "id:greeting",
+    "function_name": "hello",
+    "case_id": "id:hello-alice"
+  }
+]
+```
+
+#### Identity stability
+
+The comparison tuple is `(fixture_id, logical_id, function_name, case_id)`.
+When explicit `id` values are declared on fixtures, contracts and
+invocations, those IDs are stable across WASM path changes, file
+reordering and code changes. Without explicit IDs, identities are derived
+from the fixture file path, the WASM path and the canonicalized argument
+values, and change when any of those change.
+
+Use `list-identities` to confirm which identities will be used before
+running a measurement or comparing revisions.
+
 ## Exit Codes
 
 | Exit code | Meaning |

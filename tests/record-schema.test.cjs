@@ -103,7 +103,7 @@ test("public package root, diff module, and record-schema module export the stan
     assert.equal(typeof mod.getMeasurementRecordJsonSchema, "function");
     assert.equal(typeof mod.MeasurementRecordValidationError, "function");
     assert.ok(Array.isArray(mod.RUNTIME_RECORD_INVARIANTS));
-    assert.equal(mod.RUNTIME_RECORD_INVARIANTS.length, 5);
+    assert.equal(mod.RUNTIME_RECORD_INVARIANTS.length, 6);
   }
 });
 
@@ -231,6 +231,7 @@ test("machine-readable JSON Schema matches checked-in artifact and defines expli
     "HOMOGENEOUS_ENVELOPE_VERSION",
     "COMPARISON_ENVIRONMENT_COMPATIBILITY",
     "SAFE_INTEGER_BOUNDS",
+    "NONEMPTY_BENCHMARK_COLLECTION",
   ]);
 });
 

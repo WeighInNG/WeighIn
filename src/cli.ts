@@ -35,9 +35,15 @@ export interface CliOptions {
   baseFixturesPath?: string | null;
 }
 
+export interface ListIdentitiesOptions {
+  fixturesPath: string;
+  json: boolean;
+}
+
 export type CliCommand =
   | { kind: "help" }
   | { kind: "version" }
+  | { kind: "list-identities"; options: ListIdentitiesOptions }
   | { kind: "measure"; options: CliOptions };
 
 const DEFAULT_FIXTURES_PATH = "weighin-fixtures.json";
@@ -45,6 +51,9 @@ const DEFAULT_OUTPUT_PATH = "weighin-results.json";
 const DEFAULT_RPC_URL = "http://localhost:8000/rpc";
 
 export const USAGE = "Usage: weighin [options] [fixtures.json] [results.json]";
+
+export const LIST_IDENTITIES_USAGE =
+  "Usage: weighin list-identities [--json] <fixtures.json>";
 
 export const HELP_TEXT = `${USAGE}
 
@@ -67,7 +76,11 @@ Options:
   --dry-run             Validate config, fixtures, and WASM paths without RPC
   --                    Treat remaining arguments as positional paths
   -h, --help            Show this help and exit
-  --version             Show the installed package version and exit`;
+  --version             Show the installed package version and exit
+
+Subcommands:
+  list-identities       Print the resolved logical identity tuple for every
+                        invocation in a fixture file (offline; no measurement)`;
 
 function readPackageVersion(): string {
   const packagePath = path.resolve(__dirname, "..", "package.json");
@@ -82,6 +95,36 @@ function readPackageVersion(): string {
 export function parseArgs(
   rawArgs: string[] = process.argv.slice(2),
 ): CliCommand {
+  // The list-identities subcommand is dispatched before full option parsing.
+  if (rawArgs[0] === "list-identities") {
+    const subArgs = rawArgs.slice(1);
+    let fixturesPath: string | null = null;
+    let json = false;
+    for (let i = 0; i < subArgs.length; i++) {
+      const arg = subArgs[i];
+      if (arg === "--json") {
+        json = true;
+      } else if (arg === "--help" || arg === "-h") {
+        return { kind: "help" };
+      } else if (arg.startsWith("--")) {
+        throw new Error(`Unknown option: ${arg}`);
+      } else if (fixturesPath === null) {
+        fixturesPath = arg;
+      } else {
+        throw new Error(`Unexpected argument: ${arg}`);
+      }
+    }
+    if (fixturesPath === null) {
+      throw new Error(
+        `${LIST_IDENTITIES_USAGE}\nlist-identities requires a fixtures file path`,
+      );
+    }
+    return {
+      kind: "list-identities",
+      options: { fixturesPath, json },
+    };
+  }
+
   let fixturesPath: string | null = null;
   let baseFixturesPath: string | null = null;
   let positionalOutputPath: string | null = null;
@@ -282,6 +325,50 @@ async function main() {
   if (command.kind === "version") {
     try {
       process.stdout.write(`${readPackageVersion()}\n`);
+    } catch (err: any) {
+      console.error(err.message);
+      process.exit(1);
+    }
+    return;
+  }
+
+  // list-identities is an offline subcommand: reads the fixture file, resolves
+  // identities using the same parser as measurement, and writes the result.
+  // It never contacts RPC, provisions helpers, or performs builds.
+  if (command.kind === "list-identities") {
+    const { fixturesPath, json } = command.options;
+    try {
+      const raw = fs.readFileSync(fixturesPath, "utf8");
+      const fixturePath = path.relative(
+        process.cwd(),
+        path.resolve(fixturesPath),
+      );
+      const identified = parseFixtures(raw, fixturePath);
+      const tuples: Array<{
+        fixture_id: string;
+        logical_id: string;
+        function_name: string;
+        case_id: string;
+      }> = [];
+      for (const contract of identified.contracts) {
+        for (const invocation of contract.invocations) {
+          tuples.push({
+            fixture_id: identified.fixture_id,
+            logical_id: contract.logical_id,
+            function_name: invocation.function_name,
+            case_id: invocation.case_id,
+          });
+        }
+      }
+      if (json) {
+        process.stdout.write(JSON.stringify(tuples, null, 2) + "\n");
+      } else {
+        for (const t of tuples) {
+          process.stdout.write(
+            `${t.fixture_id}\t${t.logical_id}\t${t.function_name}\t${t.case_id}\n`,
+          );
+        }
+      }
     } catch (err: any) {
       console.error(err.message);
       process.exit(1);

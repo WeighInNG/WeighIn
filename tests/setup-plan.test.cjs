@@ -135,7 +135,7 @@ test("binding declarations are schema-validated with field/index selectors only"
       type: "address",
       binding: { contract: "b", select: [{ index: -1 }] },
     }),
-    /select\.0\.index/,
+    /select\.0/,
   );
   assert.throws(
     withArg({

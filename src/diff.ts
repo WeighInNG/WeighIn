@@ -297,6 +297,14 @@ function contractMap(
   const validated = validateMeasurementRecords(contracts);
   const result = new Map<string, ContractBenchmark>();
   validated.forEach((contract, index) => {
+    if (
+      contract.schema_version !== undefined &&
+      contract.benchmarks.length === 0
+    ) {
+      throw new Error(
+        `Contract record has zero benchmark cases: ${contractLabel(contract)}`,
+      );
+    }
     const key = resolveContractIdentityKey(contract, index);
     result.set(key, contract);
   });
