@@ -28,7 +28,7 @@
   },
   "dependencies": {
     "@actions/core": "2.0.0",
-    "@actions/exec": "1.1.1",
+    "@actions/exec": "3.0.0",
     "@actions/github": "9.1.1",
     "@stellar/stellar-sdk": "16.0.1",
     "toml": "5.0.1",
