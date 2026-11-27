@@ -75,6 +75,17 @@ Before establishing RPC connections, initializing deployer accounts, or submitti
 - **Multi-error aggregation**: When multiple declared WASMs are invalid across one or more contracts, WeighIn aggregates all validation failures into a single contextual error listing `[fixtureId / contractLabel]`, failing closed before funding accounts.
 - **Strict target resolution**: Cross-target substitution (e.g., falling back to `wasm32-unknown-unknown` when `wasm32v1-none` is declared) is disabled by default. If a declared path is missing, measurement fails immediately. To opt in explicitly, pass `--allow-cross-target-substitution` in the CLI, `allow-cross-target-substitution: true` in the Action, or set `WEIGHIN_ALLOW_CROSS_TARGET_SUBSTITUTION=true`.
 
+## Deployment confirmation deadline
+
+Each submitted WASM upload or contract-creation transaction has a bounded
+confirmation deadline of 30 seconds by default. Set the Action input
+`deployment-timeout-seconds`, the CLI option `--deployment-timeout-seconds`, or
+the public `RunMeasurementOptions.deploymentTimeoutSeconds` property to an
+integer from 1 through 600 seconds. The deadline covers RPC polling and a
+pending RPC response; expiry fails closed with the transaction phase, hash and
+elapsed time. The deadline applies separately to each submitted transaction,
+not to the whole measurement.
+
 ## Source and immutable state
 
 CPU comes directly from `simulated_instructions`; memory from `simulated_memory`.

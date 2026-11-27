@@ -27,7 +27,9 @@ function files(value) {
 function sha256(file) {
   return crypto
     .createHash("sha256")
-    .update(fs.readFileSync(path.join(root, file)))
+    .update(
+      fs.readFileSync(path.join(root, file), "utf8").replace(/\r\n/g, "\n"),
+    )
     .digest("hex");
 }
 function command(name, args) {

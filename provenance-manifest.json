@@ -1,23 +1,23 @@
 {
   "schema_version": 1,
   "purpose": "verifiable WeighIn package build provenance",
-  "source_revision": "889a0d54040e35c729482114ea5e445a4e71d31a",
+  "source_revision": "980cdb3063f029c3822dabdc5f32a234828e69b2",
   "tools": {
-    "node": "v24.3.0",
+    "node": "v24.22.1",
     "npm": "unavailable"
   },
   "inputs": [
     {
       "path": "action.yml",
-      "sha256": "9f825241d70cdb65fca0fa0afa623d841e515c52d0f89a15b7c8d6ed5c00cfbd"
+      "sha256": "cd4b2fd01a24a6a8bacc9e86222b1e49d3a401f96e76316637402e8d4534c99b"
     },
     {
       "path": "bundled/comment-action.js",
-      "sha256": "e5038f12f24c41bb2df8b7ec7f6d1bd6b420309c29692eb515f6faa8647a9375"
+      "sha256": "70c9da02d591246a5020f2d7223a9132f3aebd97e97c4659b665d9d4ebca1ab5"
     },
     {
       "path": "bundled/index.js",
-      "sha256": "56328e6b87fd707c5a715f3f4d72b25c8dfa2ea1abd2f7176752920c31be338f"
+      "sha256": "a6103d7546c89ed6ab962844f4bd5dbe44fa8f48f36ee87f8f07f3d2740635fa"
     },
     {
       "path": "native/simulation/Cargo.lock",
@@ -45,7 +45,7 @@
     },
     {
       "path": "src/action.ts",
-      "sha256": "6b20bce713f7c1fe6a5d25f7fd3b1f84a5987258b43f59a10e5057660007927a"
+      "sha256": "b9fb9aea9049d5e2b642654428c108b8fea9c0768f3150f3f0c901208dba15c3"
     },
     {
       "path": "src/audit-policy.ts",
@@ -65,7 +65,7 @@
     },
     {
       "path": "src/cli.ts",
-      "sha256": "0c929db050b77c7528aa26e787b592205ed9b4e56f35b1cefd5d8385d5c5cdf2"
+      "sha256": "c43842858253c0fba67ad5096abbe80de124ccad0db5c0d3adf2f12bee908f92"
     },
     {
       "path": "src/comment-action.ts",
@@ -117,7 +117,7 @@
     },
     {
       "path": "src/measurement.ts",
-      "sha256": "d9b8dc4cc1b4c45fee65a2191186734d324fe1715e3a5e2f96cd5c60dda43a73"
+      "sha256": "3ca52b782ed250310cc86f5d5c4d843531ecb21c14b35a24cf606b5b9c8d8b03"
     },
     {
       "path": "src/network.ts",
@@ -165,7 +165,7 @@
     },
     {
       "path": "src/source-account.ts",
-      "sha256": "0ea1f2b850ce6504d63b4994679f57a249b954ec7eb786a9ba2ae652df6db4c4"
+      "sha256": "df9961b35fec80598356b1c3cc89b3c7bee53a33622b71b8cf2fecc5a8b61bf0"
     },
     {
       "path": "src/threshold.ts",

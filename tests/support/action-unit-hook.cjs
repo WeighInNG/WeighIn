@@ -183,6 +183,7 @@ Module._load = function (name, parent, ...args) {
       };
     if (name === "./measurement" && mode !== "funding-exhausted")
       return {
+        ...load.call(this, name, parent, ...args),
         runMeasurement: async (options) => {
           logKeyPath(options.keyFile, options.fixtureId);
           const isBase = !options.fixturesPath.startsWith(

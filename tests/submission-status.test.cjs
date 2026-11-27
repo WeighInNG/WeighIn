@@ -7,7 +7,11 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { Account, Address, Keypair, rpc } = require("@stellar/stellar-sdk");
-const { runMeasurement } = require("../dist/measurement");
+const {
+  DEFAULT_DEPLOYMENT_TIMEOUT_SECONDS,
+  parseDeploymentTimeoutSeconds,
+  runMeasurement,
+} = require("../dist/measurement");
 
 const H1 = "1".repeat(64);
 const H2 = "2".repeat(64);
@@ -65,10 +69,17 @@ function scenario(t, options = {}) {
   t.mock.method(console, "log", () => {});
   t.mock.method(console, "warn", () => {});
   t.mock.method(console, "error", () => {});
-  if (options.fakeTimers)
-    t.mock.method(globalThis, "setTimeout", (callback) =>
-      setImmediate(callback),
+  if (options.fakeTimers) {
+    let elapsedMs = 0;
+    t.mock.method(Date, "now", () => elapsedMs);
+    t.mock.method(globalThis, "setTimeout", (callback, delay, ...args) =>
+      setImmediate(() => {
+        elapsedMs += delay;
+        callback(...args);
+      }),
     );
+    t.mock.method(globalThis, "clearTimeout", (timer) => clearImmediate(timer));
+  }
   t.mock.method(
     require("../dist/account"),
     "ensureAccountReady",
@@ -95,7 +106,7 @@ function scenario(t, options = {}) {
   t.mock.method(rpc.Server.prototype, "getTransaction", async (hash) => {
     order.push("getTransaction");
     state.poll++;
-    const status = options.poll ? options.poll(hash) : "SUCCESS";
+    const status = options.poll ? await options.poll(hash) : "SUCCESS";
     return {
       status,
       returnValue:
@@ -121,7 +132,7 @@ function scenario(t, options = {}) {
   return {
     order,
     state,
-    run: () =>
+    run: (deploymentTimeoutSeconds) =>
       runMeasurement({
         fixturesPath: path.join(dir, "fixtures.json"),
         fixtureId: "fixtures.json",
@@ -130,13 +141,40 @@ function scenario(t, options = {}) {
         sdkVersion: "16.0.1",
         rpcUrl: options.rpcUrl ?? "http://controlled.invalid/rpc",
         helperPath: path.join(dir, "missing-helper"),
+        deploymentTimeoutSeconds,
       }),
   };
 }
 
+test("deployment timeout parser keeps the default and accepts bounded integers", () => {
+  assert.equal(
+    parseDeploymentTimeoutSeconds(""),
+    DEFAULT_DEPLOYMENT_TIMEOUT_SECONDS,
+  );
+  assert.equal(parseDeploymentTimeoutSeconds("1"), 1);
+  assert.equal(parseDeploymentTimeoutSeconds("600"), 600);
+});
+
+for (const raw of ["0", "601", "1.5", "-1", "nope"])
+  test(`deployment timeout parser rejects ${raw}`, () => {
+    assert.throws(
+      () => parseDeploymentTimeoutSeconds(raw),
+      /deployment-timeout-seconds must be an integer between 1 and 600 seconds/,
+    );
+  });
+
+test("runMeasurement rejects invalid deployment deadlines before RPC work", async (t) => {
+  const { order, run } = scenario(t, { sends: [] });
+  for (const timeout of [0, 601, 1.5, Number.NaN]) {
+    await assert.rejects(run(timeout), /between 1 and 600 seconds/);
+  }
+  assert.deepEqual(order, []);
+});
+
 test("upload PENDING with a valid hash confirms before continuing to create", async (t) => {
   const { order, state, run } = scenario(t, {
     sends: [send("PENDING", H1), send("PENDING", H2)],
+    fakeTimers: true,
   });
   await assert.rejects(run(), /reached invocation/);
   assert.deepEqual(order, FULL_ORDER);
@@ -190,6 +228,7 @@ test("upload PENDING that confirms as FAILED preserves the failure", async (t) =
   const { order, state, run } = scenario(t, {
     sends: [send("PENDING", H1)],
     poll: () => "FAILED",
+    fakeTimers: true,
   });
   await assert.rejects(run(), (error) => {
     assert.match(error.message, /WASM upload transaction/);
@@ -239,15 +278,36 @@ test("create PENDING that confirms as FAILED preserves the failure", async (t) =
   assert.ok(!order.includes("simulateTransaction"));
 });
 
-test("an unanswered accepted transaction exhausts the unchanged 30-poll budget", async (t) => {
+test("an unanswered accepted transaction reports phase, hash and elapsed deadline", async (t) => {
   const { state, run } = scenario(t, {
     sends: [send("PENDING", H1)],
     poll: () => "NOT_FOUND",
     fakeTimers: true,
   });
-  await assert.rejects(run(), /not found after 30 seconds/);
-  assert.equal(state.poll, 30);
+  await assert.rejects(run(2), (error) => {
+    assert.match(error.message, /deadline expired during WASM upload/);
+    assert.match(error.message, new RegExp(`hash=${H1}`));
+    assert.match(error.message, /elapsed=2\.0s/);
+    assert.match(error.message, /timeout=2s/);
+    return true;
+  });
+  assert.equal(state.poll, 2);
   assert.equal(state.send, 1);
+});
+
+test("a stalled RPC poll is bounded by the deployment deadline", async (t) => {
+  const { state, run } = scenario(t, {
+    sends: [send("PENDING", H1)],
+    poll: () => new Promise(() => {}),
+    fakeTimers: true,
+  });
+  await assert.rejects(run(1), (error) => {
+    assert.match(error.message, /deadline expired during WASM upload/);
+    assert.match(error.message, new RegExp(`hash=${H1}`));
+    assert.match(error.message, /elapsed=1\.0s/);
+    return true;
+  });
+  assert.equal(state.poll, 1);
 });
 
 test("submission transport errors are reported without endpoint credentials", async (t) => {

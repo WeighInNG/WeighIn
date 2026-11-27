@@ -53,3 +53,24 @@ the files it describes are present in the normal npm package.
 This is a reproducible component and provenance inventory. It is not
 vulnerability clearance, a license/legal certification, or a claim that every
 locked component is statically reachable at runtime.
+
+## GitHub Actions workflow pins
+
+Active workflow Actions use full commit SHAs. The following pins resolve the
+previous moving `@v4` references to the listed upstream releases:
+
+| Original ref | Upstream release | Commit | Official upstream reference |
+|---|---|---|---|
+| `actions/checkout@v4` | `v4.2.2` | `11bd71901bbe5b1630ceea73d27597364c9af683` | [release](https://github.com/actions/checkout/releases/tag/v4.2.2), [commit](https://github.com/actions/checkout/commit/11bd71901bbe5b1630ceea73d27597364c9af683) |
+| `actions/setup-node@v4` | `v4.4.0` | `49933ea5288caeca8642d1e84afbd3f7d6820020` | [release](https://github.com/actions/setup-node/releases/tag/v4.4.0), [commit](https://github.com/actions/setup-node/commit/49933ea5288caeca8642d1e84afbd3f7d6820020) |
+| `actions/upload-artifact@v4` | `v4.6.2` | `ea165f8d65b6e75b540449e92b4886f43607fa02` | [release](https://github.com/actions/upload-artifact/releases/tag/v4.6.2), [commit](https://github.com/actions/upload-artifact/commit/ea165f8d65b6e75b540449e92b4886f43607fa02) |
+| `actions/download-artifact@v4` | `v4.3.0` | `d3f86a106a0bac45b974a628896c90dbdf5c8093` | [release](https://github.com/actions/download-artifact/releases/tag/v4.3.0), [commit](https://github.com/actions/download-artifact/commit/d3f86a106a0bac45b974a628896c90dbdf5c8093) |
+| `actions/cache@v4` | `v4.2.4` | `0400d5f644dc74513175e3cd8d07132dd4860809` | [release](https://github.com/actions/cache/releases/tag/v4.2.4), [commit](https://github.com/actions/cache/commit/0400d5f644dc74513175e3cd8d07132dd4860809) |
+
+Existing SHA-pinned Rust-toolchain and WeighIn consumer references are retained.
+To update a pin, resolve the chosen release tag through the Action's official
+repository (for example, `gh api repos/actions/checkout/commits/v4.2.2 --jq .sha`),
+review the upstream release and commit, then update the workflow SHA, adjacent
+version comment, and this table together. Keep local `uses: ./...` references
+local; the workflow test enforces full SHAs for third-party references without
+scanning historical experiment snapshots.

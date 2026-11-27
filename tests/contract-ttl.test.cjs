@@ -119,6 +119,16 @@ test("contract code below the minimum window fails before any submission", async
   assert.equal(calls.mutations, 0);
 });
 
+test("invalid deployment confirmation deadlines fail before any ledger probe", async () => {
+  const { server, calls } = makeServer();
+  await assert.rejects(
+    () => run(server, { deploymentTimeoutSeconds: 0 }),
+    /between 1 and 600 seconds/,
+  );
+  assert.equal(calls.reads, 0);
+  assert.equal(calls.mutations, 0);
+});
+
 test("a deployed instance whose code entry is gone fails without mutating", async () => {
   const { server, calls } = makeServer({
     instanceLiveUntil: HEALTHY,

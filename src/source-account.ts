@@ -15,6 +15,7 @@ import {
   metricsFromSimulation,
   normalizeSourceAccount,
   resolveContractWasmPath,
+  validateDeploymentTimeoutSeconds,
   Metrics,
 } from "./measurement";
 import {
@@ -172,6 +173,8 @@ export interface MeasureSourceAccountEffectsOptions {
   fixtureId?: string;
   /** Soroban RPC endpoint. Defaults to localhost:8000/rpc. */
   rpcUrl?: string;
+  /** Per-transaction deployment confirmation deadline in seconds (1–600; default 30). */
+  deploymentTimeoutSeconds?: number;
   /**
    * Absolute path to the deployer key file. The deployer signs deployment
    * only; it is never a measured source account unless it is also declared
@@ -337,6 +340,9 @@ export async function measureSourceAccountEffects(
   if (options.signal?.aborted) {
     throw options.signal.reason || new Error("Measurement cancelled");
   }
+  if (options.deploymentTimeoutSeconds !== undefined) {
+    validateDeploymentTimeoutSeconds(options.deploymentTimeoutSeconds);
+  }
 
   const effectiveRpcUrl = options.rpcUrl ?? "http://localhost:8000/rpc";
   const fixturesDir = path.dirname(path.resolve(options.fixturesPath));
@@ -399,6 +405,7 @@ export async function measureSourceAccountEffects(
     salt,
     contractId,
     rpcUrl: effectiveRpcUrl,
+    deploymentTimeoutSeconds: options.deploymentTimeoutSeconds,
     signal: options.signal,
   });
 

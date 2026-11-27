@@ -1,5 +1,3 @@
-// SPDX-License-Identifier: Apache-2.0
-
 import * as core from "@actions/core";
 import * as exec from "@actions/exec";
 import * as github from "@actions/github";
@@ -7,7 +5,12 @@ import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
 
-import { runMeasurement, ContractBenchmark } from "./measurement";
+import {
+  DEFAULT_DEPLOYMENT_TIMEOUT_SECONDS,
+  parseDeploymentTimeoutSeconds,
+  runMeasurement,
+  ContractBenchmark,
+} from "./measurement";
 import { diffBenchmarks, DiffResult, contractLabel } from "./diff";
 import {
   loadConfig,
@@ -371,11 +374,10 @@ async function run(
     const configPathRel = core.getInput("config-path");
     const trustedPolicyRef = core.getInput("trusted-policy-ref").trim();
     const trustedPolicyPath = core.getInput("trusted-policy-path").trim();
-    const rpcUrl =
-  core.getInput("rpc-url").trim() ||
-  process.env.WEIGHIN_RPC_URL?.trim() ||
-  "http://localhost:8000/rpc";
-    
+    const rpcUrl = core.getInput("rpc-url") || "http://localhost:8000/rpc";
+    const deploymentTimeoutSeconds = parseDeploymentTimeoutSeconds(
+      core.getInput("deployment-timeout-seconds"),
+    );
     configuredRpcUrl = rpcUrl;
     const githubToken = core.getInput("github-token");
     const commentAuthorModeRaw =
@@ -433,6 +435,9 @@ async function run(
 
     core.info(`Base ref:   ${baseRef}`);
     core.info(`RPC URL:    ${sanitizeEndpoint(rpcUrl)}`);
+    core.info(
+      `Deployment confirmation deadline: ${deploymentTimeoutSeconds}s (default ${DEFAULT_DEPLOYMENT_TIMEOUT_SECONDS}s)`,
+    );
     core.info(`Fixtures:   ${fixturesPathRel}`);
     core.info(`Key file:   ${sharedKeyFile}`);
 
@@ -503,6 +508,7 @@ async function run(
         gitCommit: headSha,
         sdkVersion: getSdkVersion(headWorkspace),
         rpcUrl,
+        deploymentTimeoutSeconds,
         keyFile: sharedKeyFile,
         allowCrossTargetSubstitution,
         signal,
@@ -555,6 +561,7 @@ async function run(
           gitCommit: baseSha,
           sdkVersion: getSdkVersion(baseDir),
           rpcUrl,
+          deploymentTimeoutSeconds,
           keyFile: sharedKeyFile,
           allowCrossTargetSubstitution,
         });
