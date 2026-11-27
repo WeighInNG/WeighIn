@@ -410,11 +410,19 @@ async function main() {
     if (jsonStdout) {
       process.stdout.write(JSON.stringify(headResults, null, 2) + "\n");
     } else if (outputPath) {
-      fs.writeFileSync(
-        outputPath,
-        JSON.stringify(headResults, null, 2),
-        "utf8",
-      );
+      try {
+        writeFileAtomically(outputPath, JSON.stringify(headResults, null, 2), {
+          onCleanupError: (temporaryPath, error) =>
+            console.error(
+              `Could not remove temporary result file ${temporaryPath}: ${error.message}`,
+            ),
+        });
+      } catch (error: any) {
+        throw new Error(
+          `Failed to write CLI results to ${outputPath}: ${error.message}`,
+          { cause: error },
+        );
+      }
       console.log(`Done. Results written to ${outputPath}`);
     }
 

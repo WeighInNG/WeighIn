@@ -48,6 +48,10 @@
       "sha256": "b9fb9aea9049d5e2b642654428c108b8fea9c0768f3150f3f0c901208dba15c3"
     },
     {
+      "path": "src/atomic-file.ts",
+      "sha256": "439c33a633217ff709b0b9f8b60bd8118305a8bff5345f6cdb1ccf1fe35e8eb8"
+    },
+    {
       "path": "src/audit-policy.ts",
       "sha256": "ab1b358b059fc45e816608af68f7a0a667a597af55ca3338faf7a06a449c5535"
     },
