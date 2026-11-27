@@ -144,6 +144,7 @@ import { diffBenchmarks } from 'weighin/dist/diff';
 
 const fixtures: FixturesSpec = { contracts: [] } as unknown as FixturesSpec;
 const run: (options: RunMeasurementOptions) => Promise<ContractBenchmark[]> = runMeasurement;
+run({ fixturesPath: 'fixtures.json', gitCommit: 'test', deploymentTimeoutSeconds: 30 });
 const records: ContractBenchmark[] = validateMeasurementRecords([]);
 const diagnostics: RecordValidationDiagnostic[] = inspectMeasurementRecord({}).diagnostics;
 const schema: object = getMeasurementRecordJsonSchema();

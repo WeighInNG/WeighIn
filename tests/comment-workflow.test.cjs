@@ -24,6 +24,9 @@ const report = renderComment(
   "main",
   "f".repeat(40),
 );
+function usesAction(step, action) {
+  return typeof step.uses === "string" && step.uses.startsWith(`${action}@`);
+}
 function git(directory, ...args) {
   const result = spawnSync("git", args, { cwd: directory, encoding: "utf8" });
   assert.equal(result.status, 0, result.stdout + result.stderr);
@@ -190,11 +193,11 @@ async function execute(
     }
     let result;
     for (const step of order) {
-      if (step.uses === "actions/checkout@v4") {
+      if (usesAction(step, "actions/checkout")) {
         // Model checkout's cleanup of caller artifacts without placing the Action there.
         git(workspace, "clean", "-ffdx");
         git(workspace, "reset", "--hard", "HEAD");
-      } else if (step.uses === "actions/download-artifact@v4") {
+      } else if (usesAction(step, "actions/download-artifact")) {
         assert.equal(step.with.name, "weighin-artifacts");
         assert.equal(
           step.with["run-id"],
@@ -417,8 +420,8 @@ for (const [label, metadata, pattern] of [
 }
 test("the historical download-before-checkout order deletes the report and fails before any posting request", async () => {
   const historical = [
-    steps.find((step) => step.uses === "actions/download-artifact@v4"),
-    steps.find((step) => step.uses === "actions/checkout@v4"),
+    steps.find((step) => usesAction(step, "actions/download-artifact")),
+    steps.find((step) => usesAction(step, "actions/checkout")),
     steps.find((step) => step.uses === "./comment"),
   ];
   const result = await execute(historical);
@@ -439,7 +442,7 @@ test("comment delivery retains trusted checkout and triggering-run artifact sele
     actions: "read",
     contents: "read",
   });
-  const checkout = steps.find((step) => step.uses === "actions/checkout@v4");
+  const checkout = steps.find((step) => usesAction(step, "actions/checkout"));
   assert.equal(
     checkout.with?.ref,
     undefined,

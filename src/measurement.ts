@@ -1,5 +1,3 @@
-// SPDX-License-Identifier: Apache-2.0
-
 import * as fs from "fs";
 import * as path from "path";
 import * as crypto from "crypto";
@@ -10,12 +8,6 @@ import { acquireDeployerKey } from "./deployer-key";
 import { redactEndpointSecrets, sanitizeEndpoint } from "./endpoint";
 import { validateLargeInt } from "./config";
 import { SUPPORTED_NETWORK_PASSPHRASE } from "./network";
-import {
-  withDeployerLock,
-  acquireDeployerLock,
-  deployerLockManager,
-  DeployerLockManager,
-} from "./deployer-lock";
 import { CURRENT_RECORD_SCHEMA_VERSION } from "./record-schema";
 import {
   measureInvocation,
@@ -42,6 +34,33 @@ import {
 } from "@stellar/stellar-sdk";
 
 const DEFAULT_RPC_URL = "http://localhost:8000/rpc";
+export const DEFAULT_DEPLOYMENT_TIMEOUT_SECONDS = 30;
+export const MIN_DEPLOYMENT_TIMEOUT_SECONDS = 1;
+export const MAX_DEPLOYMENT_TIMEOUT_SECONDS = 600;
+
+export function parseDeploymentTimeoutSeconds(raw: string): number {
+  if (!raw) return DEFAULT_DEPLOYMENT_TIMEOUT_SECONDS;
+  if (!/^\d+$/.test(raw)) {
+    throw new Error(
+      `deployment-timeout-seconds must be an integer between ${MIN_DEPLOYMENT_TIMEOUT_SECONDS} and ${MAX_DEPLOYMENT_TIMEOUT_SECONDS} seconds`,
+    );
+  }
+  const seconds = Number(raw);
+  validateDeploymentTimeoutSeconds(seconds);
+  return seconds;
+}
+
+export function validateDeploymentTimeoutSeconds(seconds: number): void {
+  if (
+    !Number.isSafeInteger(seconds) ||
+    seconds < MIN_DEPLOYMENT_TIMEOUT_SECONDS ||
+    seconds > MAX_DEPLOYMENT_TIMEOUT_SECONDS
+  ) {
+    throw new Error(
+      `deployment timeout must be an integer between ${MIN_DEPLOYMENT_TIMEOUT_SECONDS} and ${MAX_DEPLOYMENT_TIMEOUT_SECONDS} seconds`,
+    );
+  }
+}
 
 /** Schema 5 binds each metric to its approved source and cap mapping. */
 export interface MetricValue {
@@ -108,12 +127,6 @@ export interface BoundInvocationArg {
   binding: SetupBinding;
 }
 
-export interface SetupInvocationSpec {
-  id?: string;
-  function_name: string;
-  args: Array<InvocationArg | BoundInvocationArg>;
-}
-
 export interface InvocationSpec {
   id?: string;
   function_name: string;
@@ -125,8 +138,11 @@ export interface ContractSpec {
   wasm_path: string;
   /** Explicit ids of contracts that must be committed before this one. */
   depends_on?: string[];
-  /** Ordered setup calls prepared, signed, submitted, and confirmed after deployment and before measurement. */
-  setup_invocations?: SetupInvocationSpec[];
+  setup_invocations?: Array<{
+    id?: string;
+    function_name: string;
+    args: Array<InvocationArg | BoundInvocationArg>;
+  }>;
   invocations: InvocationSpec[];
 }
 
@@ -269,11 +285,8 @@ export function toScVal(arg: InvocationArg): xdr.ScVal {
       return xdr.ScVal.scvU32(val);
     case "i32":
       return xdr.ScVal.scvI32(val);
-    case "bool": {
-      if (typeof val !== "boolean")
-        throw new Error("Invalid value for bool: must be true or false");
+    case "bool":
       return xdr.ScVal.scvBool(val);
-    }
     case "u64":
     case "i64":
     case "u128":
@@ -391,40 +404,112 @@ export async function getOrInitAccount(
   return keypair;
 }
 
-// Poll transaction completion
+const TRANSACTION_POLL_INTERVAL_MS = 1000;
+
+type TransactionRequestResult =
+  | { kind: "response"; response: rpc.Api.GetTransactionResponse }
+  | { kind: "error"; error: unknown };
+
+async function getTransactionBeforeDeadline(
+  server: rpc.Server,
+  txHash: string,
+  timeoutMs: number,
+  signal?: AbortSignal,
+): Promise<rpc.Api.GetTransactionResponse | undefined> {
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  let onAbort: (() => void) | undefined;
+  const timeoutPromise = new Promise<{ kind: "timeout" }>((resolve) => {
+    timeout = setTimeout(() => resolve({ kind: "timeout" }), timeoutMs);
+  });
+  const abortedPromise = signal
+    ? new Promise<{ kind: "aborted" }>((resolve) => {
+        onAbort = () => resolve({ kind: "aborted" });
+        if (signal.aborted) onAbort();
+        else signal.addEventListener("abort", onAbort, { once: true });
+      })
+    : new Promise<{ kind: "aborted" }>(() => {});
+
+  try {
+    const requestPromise: Promise<TransactionRequestResult> = server
+      .getTransaction(txHash)
+      .then(
+        (response) => ({ kind: "response", response }),
+        (error: unknown) => ({ kind: "error", error }),
+      );
+    const outcome = await Promise.race([
+      requestPromise,
+      timeoutPromise,
+      abortedPromise,
+    ]);
+    if (outcome.kind === "timeout") return undefined;
+    if (outcome.kind === "aborted") {
+      throw signal?.reason || new Error("Transaction confirmation cancelled");
+    }
+    if (outcome.kind === "error") throw outcome.error;
+    return outcome.response;
+  } finally {
+    if (timeout) clearTimeout(timeout);
+    if (onAbort) signal?.removeEventListener("abort", onAbort);
+  }
+}
+
+function waitForTransactionPoll(
+  milliseconds: number,
+  signal?: AbortSignal,
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(signal.reason || new Error("Transaction confirmation cancelled"));
+      return;
+    }
+    const timer = setTimeout(() => {
+      signal?.removeEventListener("abort", onAbort);
+      resolve();
+    }, milliseconds);
+    const onAbort = () => {
+      clearTimeout(timer);
+      signal?.removeEventListener("abort", onAbort);
+      reject(signal?.reason || new Error("Transaction confirmation cancelled"));
+    };
+    signal?.addEventListener("abort", onAbort, { once: true });
+  });
+}
+
 async function waitForTransaction(
   server: rpc.Server,
   txHash: string,
+  phase: string,
+  timeoutSeconds: number,
   signal?: AbortSignal,
 ): Promise<rpc.Api.GetTransactionResponse> {
-  for (let i = 0; i < 30; i++) {
+  const startedAt = Date.now();
+  const deadline = startedAt + timeoutSeconds * 1000;
+  while (Date.now() < deadline) {
     if (signal?.aborted) {
       throw signal.reason || new Error("Transaction confirmation cancelled");
     }
-    const tx = await server.getTransaction(txHash);
+    const remaining = deadline - Date.now();
+    const tx = await getTransactionBeforeDeadline(
+      server,
+      txHash,
+      remaining,
+      signal,
+    );
+    if (!tx) break;
+    if (Date.now() >= deadline) break;
     if (tx.status !== "NOT_FOUND") {
       return tx;
     }
-    await new Promise<void>((resolve, reject) => {
-      const timer = setTimeout(resolve, 1000);
-      if (signal) {
-        const onAbort = () => {
-          clearTimeout(timer);
-          reject(
-            signal.reason || new Error("Transaction confirmation cancelled"),
-          );
-        };
-        if (signal.aborted) {
-          clearTimeout(timer);
-          return reject(
-            signal.reason || new Error("Transaction confirmation cancelled"),
-          );
-        }
-        signal.addEventListener("abort", onAbort, { once: true });
-      }
-    });
+    const pollDelay = Math.min(
+      TRANSACTION_POLL_INTERVAL_MS,
+      deadline - Date.now(),
+    );
+    if (pollDelay > 0) await waitForTransactionPoll(pollDelay, signal);
   }
-  throw new Error(`Transaction ${txHash} not found after 30 seconds`);
+  const elapsedSeconds = ((Date.now() - startedAt) / 1000).toFixed(1);
+  throw new Error(
+    `Transaction confirmation deadline expired during ${phase} (hash=${txHash}, elapsed=${elapsedSeconds}s, timeout=${timeoutSeconds}s)`,
+  );
 }
 
 // A transaction hash is 32 hex-encoded bytes.
@@ -465,16 +550,14 @@ function hashLabel(hash: unknown): string {
 // rejections (ERROR) and temporary rejections (TRY_AGAIN_LATER) fail before any
 // confirmation polling; PENDING/DUPLICATE with a valid hash use the existing
 // confirmation path; any other response fails closed.
-async function submitAndConfirmWithHash(
+async function submitAndConfirm(
   server: rpc.Server,
   prepared: Transaction,
   phase: string,
   rpcUrl: string,
+  timeoutSeconds: number,
   signal?: AbortSignal,
-): Promise<{
-  confirmed: rpc.Api.GetSuccessfulTransactionResponse;
-  txHash: string;
-}> {
+): Promise<rpc.Api.GetSuccessfulTransactionResponse> {
   if (signal?.aborted) {
     throw signal.reason || new Error(`${phase} cancelled`);
   }
@@ -510,29 +593,18 @@ async function submitAndConfirmWithHash(
       `${phase} submission returned an invalid response (status=${status}): missing or invalid transaction hash`,
     );
   }
-  const confirmed = await waitForTransaction(server, submission.hash, signal);
+  const confirmed = await waitForTransaction(
+    server,
+    submission.hash,
+    phase,
+    timeoutSeconds,
+    signal,
+  );
   if (confirmed.status !== rpc.Api.GetTransactionStatus.SUCCESS) {
     throw new Error(
       `${phase} transaction ${submission.hash} did not succeed (status=${confirmed.status})`,
     );
   }
-  return { confirmed, txHash: submission.hash };
-}
-
-async function submitAndConfirm(
-  server: rpc.Server,
-  prepared: Transaction,
-  phase: string,
-  rpcUrl: string,
-  signal?: AbortSignal,
-): Promise<rpc.Api.GetSuccessfulTransactionResponse> {
-  const { confirmed } = await submitAndConfirmWithHash(
-    server,
-    prepared,
-    phase,
-    rpcUrl,
-    signal,
-  );
   return confirmed;
 }
 
@@ -696,7 +768,7 @@ export function resolveContractWasmPath(
       resolved = altPath;
     } else {
       throw new Error(
-        `WASM file not found at path: ${resolved}. Did you run 'stellar contract build'?`,
+        `WASM not found: ${resolved}\nBuild the contract before running measurements.`,
       );
     }
   }
@@ -770,7 +842,7 @@ async function probeContractCode(
  *  Returns the committed create return XDR, or the verified instance address
  *  when the instance already existed.
  */
-export interface EnsureContractDeployedOptions {
+export async function ensureContractDeployed(options: {
   server: rpc.Server;
   deployer: Keypair;
   deployerAddress: Address;
@@ -779,314 +851,120 @@ export interface EnsureContractDeployedOptions {
   salt: Buffer;
   contractId: string;
   rpcUrl: string;
+  deploymentTimeoutSeconds?: number;
   signal?: AbortSignal;
   /** Minimum remaining TTL (ledgers) for a reused instance and its code. */
   minTtlLedgers?: number;
-  /** Network passphrase used for transaction construction and deployer locking. */
-  networkPassphrase?: string;
-  /** Refuse reusing an already-deployed instance (required when setup invocations will run). */
-  requireFreshDeployment?: boolean;
-}
-
-export async function ensureContractDeployed(
-  options: EnsureContractDeployedOptions,
-): Promise<Pick<SetupResult, "source" | "return_xdr">> {
+}): Promise<Pick<SetupResult, "source" | "return_xdr">> {
   const { server, deployer, deployerAddress, wasmBytes, wasmHash, salt } =
     options;
+  const deploymentTimeoutSeconds =
+    options.deploymentTimeoutSeconds ?? DEFAULT_DEPLOYMENT_TIMEOUT_SECONDS;
+  validateDeploymentTimeoutSeconds(deploymentTimeoutSeconds);
   if (options.minTtlLedgers !== undefined) {
     assertValidMinTtl(options.minTtlLedgers);
   }
-  const minTtlLedgers =
-    options.minTtlLedgers ?? DEFAULT_MIN_CONTRACT_TTL_LEDGERS;
-
-  const network = options.networkPassphrase ?? SUPPORTED_NETWORK_PASSPHRASE;
-  return await withDeployerLock(network, deployer.publicKey(), async () => {
-    const probe = await probeContractInstance(server, options.contractId);
-    if (probe.deployed) {
-      if (options.requireFreshDeployment) {
-        throw new Error(
-          `Contract ${options.contractId} is already deployed on the network; refusing to run setup invocations against pre-existing state`,
-        );
-      }
-      assertReusableTtl({
-        label: "instance",
-        contractId: options.contractId,
-        liveUntilLedgerSeq: probe.liveUntilLedgerSeq,
-        latestLedger: probe.latestLedger,
-        minTtlLedgers,
-      });
-      const code = await probeContractCode(
-        server,
-        wasmHash,
-        options.contractId,
-      );
-      assertReusableTtl({
-        label: "code",
-        contractId: options.contractId,
-        ...code,
-        minTtlLedgers,
-      });
-      console.log(`Already deployed at ${options.contractId}`);
-      return {
-        source: "existing_instance",
-        return_xdr: Address.fromString(options.contractId)
-          .toScVal()
-          .toXDR("base64"),
-      };
-    }
-
-    console.log(`Installing WASM...`);
-    let account = await server.getAccount(deployer.publicKey());
-
-    // 1. Upload WASM
-    const uploadTx = new TransactionBuilder(account, {
-      fee: "1000000",
-      networkPassphrase: network,
-    })
-      .addOperation(Operation.uploadContractWasm({ wasm: wasmBytes }))
-      .setTimeout(30)
-      .build();
-
-    let preparedUpload;
-    try {
-      preparedUpload = await server.prepareTransaction(uploadTx);
-    } catch (err: any) {
-      console.error(
-        `WASM upload preparation failed at ${sanitizeEndpoint(options.rpcUrl)}: ${redactEndpointSecrets(String(err?.message ?? err), options.rpcUrl)}`,
-      );
-      throw err;
-    }
-    preparedUpload.sign(deployer);
-    await submitAndConfirm(
-      server,
-      preparedUpload,
-      "WASM upload",
-      options.rpcUrl,
-      options.signal,
-    );
-
-    console.log(`WASM installed. Deploying contract instance...`);
-    account = await server.getAccount(deployer.publicKey());
-
-    // 2. Create contract instance
-    const createTx = new TransactionBuilder(account, {
-      fee: "1000000",
-      networkPassphrase: network,
-    })
-      .addOperation(
-        Operation.createCustomContract({
-          wasmHash,
-          address: deployerAddress,
-          salt,
-        }),
-      )
-      .setTimeout(30)
-      .build();
-
-    const preparedCreate = await server.prepareTransaction(createTx);
-    preparedCreate.sign(deployer);
-    const created = await submitAndConfirm(
-      server,
-      preparedCreate,
-      "contract creation",
-      options.rpcUrl,
-      options.signal,
-    );
-    const result = created.returnValue;
-    const observedAddress =
-      result instanceof xdr.ScVal && result.switch().name === "scvAddress"
-        ? Address.fromScVal(result).toString()
-        : undefined;
-    if (!result || observedAddress !== options.contractId) {
-      throw new Error(
-        `Contract creation receipt address mismatch (expected=${options.contractId}, observed=${observedAddress ?? "no address"})`,
-      );
-    }
-    console.log(`Deployed at ${options.contractId}`);
+  const probe = await probeContractInstance(server, options.contractId);
+  if (probe.deployed) {
+    const minTtlLedgers =
+      options.minTtlLedgers ?? DEFAULT_MIN_CONTRACT_TTL_LEDGERS;
+    assertReusableTtl({
+      label: "instance",
+      contractId: options.contractId,
+      liveUntilLedgerSeq: probe.liveUntilLedgerSeq,
+      latestLedger: probe.latestLedger,
+      minTtlLedgers,
+    });
+    const code = await probeContractCode(server, wasmHash, options.contractId);
+    assertReusableTtl({
+      label: "code",
+      contractId: options.contractId,
+      ...code,
+      minTtlLedgers,
+    });
+    console.log(`Already deployed at ${options.contractId}`);
     return {
-      source: "created",
-      return_xdr: result.toXDR("base64"),
+      source: "existing_instance",
+      return_xdr: Address.fromString(options.contractId)
+        .toScVal()
+        .toXDR("base64"),
     };
-  });
-}
-
-/** Confirmed receipt for one committed setup invocation.
- *  Setup transaction costs are never included in benchmark metrics.
- */
-export interface SetupInvocationReceipt {
-  step: number;
-  id?: string;
-  function_name: string;
-  tx_hash: string;
-  ledger?: number;
-  return_xdr?: string;
-}
-
-/** Validate that a prepared setup transaction only requires deployer
- *  source-account authorization (no external/non-source-account signers).
- */
-function assertSupportedSetupAuthorization(
-  prepared: Transaction,
-  phase: string,
-): void {
-  const operations = (prepared as { operations?: unknown }).operations;
-  if (!Array.isArray(operations)) return;
-  for (const op of operations) {
-    if (
-      !op ||
-      typeof op !== "object" ||
-      (op as { type?: unknown }).type !== "invokeHostFunction"
-    ) {
-      continue;
-    }
-    const authEntries = (op as { auth?: unknown }).auth;
-    if (!Array.isArray(authEntries)) continue;
-    for (const entry of authEntries) {
-      const credSwitch =
-        typeof (entry as { credentials?: unknown })?.credentials === "function"
-          ? (
-              entry as {
-                credentials(): { switch(): { name: string } };
-              }
-            )
-              .credentials()
-              ?.switch?.()?.name
-          : undefined;
-      if (
-        credSwitch !== undefined &&
-        credSwitch !== "sorobanCredentialsSourceAccount"
-      ) {
-        throw new Error(
-          `${phase} requires unsupported authorization (${credSwitch}); standalone committed setup supports only deployer source-account authorization`,
-        );
-      }
-    }
   }
-}
 
-/** Prepare, sign, submit, and confirm a contract's setup invocations in order.
- *  Always uses the deployer account and requires confirmed SUCCESS inclusion
- *  for each step before continuing. Setup consumption is excluded from
- *  benchmark metrics.
- */
-export async function commitSetupInvocations(options: {
-  server: rpc.Server;
-  deployer: Keypair;
-  contractId: string;
-  logicalId: string;
-  setupInvocations: SetupInvocationSpec[];
-  setupResults?: ReadonlyMap<string, SetupResult>;
-  rpcUrl: string;
-  signal?: AbortSignal;
-}): Promise<SetupInvocationReceipt[]> {
-  const {
+  console.log(`Installing WASM...`);
+  let account = await server.getAccount(deployer.publicKey());
+
+  // 1. Upload WASM
+  const uploadTx = new TransactionBuilder(account, {
+    fee: "1000000",
+    networkPassphrase: SUPPORTED_NETWORK_PASSPHRASE,
+  })
+    .addOperation(Operation.uploadContractWasm({ wasm: wasmBytes }))
+    .setTimeout(30)
+    .build();
+
+  let preparedUpload;
+  try {
+    preparedUpload = await server.prepareTransaction(uploadTx);
+  } catch (err: any) {
+    console.error(
+      `WASM upload preparation failed at ${sanitizeEndpoint(options.rpcUrl)}: ${redactEndpointSecrets(String(err?.message ?? err), options.rpcUrl)}`,
+    );
+    throw err;
+  }
+  preparedUpload.sign(deployer);
+  await submitAndConfirm(
     server,
-    deployer,
-    contractId,
-    logicalId,
-    setupInvocations,
-    setupResults,
-    rpcUrl,
-    signal,
-  } = options;
-  const receipts: SetupInvocationReceipt[] = [];
+    preparedUpload,
+    "WASM upload",
+    options.rpcUrl,
+    deploymentTimeoutSeconds,
+    options.signal,
+  );
 
-  for (let i = 0; i < setupInvocations.length; i++) {
-    const setupCall = setupInvocations[i];
-    const stepLabel = setupCall.id
-      ? `${setupCall.id} (${setupCall.function_name})`
-      : `#${i + 1} (${setupCall.function_name})`;
-    const phase = `setup invocation ${stepLabel} on ${logicalId}`;
+  console.log(`WASM installed. Deploying contract instance...`);
+  account = await server.getAccount(deployer.publicKey());
 
-    if (signal?.aborted) {
-      throw signal.reason || new Error(`${phase} cancelled`);
-    }
+  // 2. Create contract instance
+  const createTx = new TransactionBuilder(account, {
+    fee: "1000000",
+    networkPassphrase: SUPPORTED_NETWORK_PASSPHRASE,
+  })
+    .addOperation(
+      Operation.createCustomContract({
+        wasmHash,
+        address: deployerAddress,
+        salt,
+      }),
+    )
+    .setTimeout(30)
+    .build();
 
-    const argsSc = setupCall.args.map((arg) => {
-      if (!("binding" in arg)) return toScVal(arg);
-      if (!setupResults) {
-        throw new Error(
-          `Setup bindings are not available in this setup path: ${setupCall.function_name} binds "${arg.binding.contract}"`,
-        );
-      }
-      return resolveBinding(
-        arg.binding,
-        arg.type.toLowerCase(),
-        setupResults.get(arg.binding.contract),
-      );
-    });
-
-    let account;
-    try {
-      account = await server.getAccount(deployer.publicKey());
-    } catch (err: any) {
-      if (signal?.aborted) {
-        throw signal.reason || new Error(`${phase} cancelled`);
-      }
-      throw new Error(
-        `${phase} failed to load deployer account at ${sanitizeEndpoint(rpcUrl)}: ${redactEndpointSecrets(String(err?.message ?? err), rpcUrl)}`,
-      );
-    }
-
-    const setupTx = new TransactionBuilder(account, {
-      fee: "1000000",
-      networkPassphrase: SUPPORTED_NETWORK_PASSPHRASE,
-    })
-      .addOperation(
-        Operation.invokeContractFunction({
-          contract: contractId,
-          function: setupCall.function_name,
-          args: argsSc,
-        }),
-      )
-      .setTimeout(30)
-      .build();
-
-    let prepared: Transaction;
-    try {
-      prepared = await server.prepareTransaction(setupTx);
-    } catch (err: any) {
-      if (signal?.aborted) {
-        throw signal.reason || new Error(`${phase} cancelled`);
-      }
-      throw new Error(
-        `${phase} preparation failed at ${sanitizeEndpoint(rpcUrl)}: ${redactEndpointSecrets(String(err?.message ?? err), rpcUrl)}`,
-      );
-    }
-
-    assertSupportedSetupAuthorization(prepared, phase);
-    prepared.sign(deployer);
-
-    const { confirmed, txHash } = await submitAndConfirmWithHash(
-      server,
-      prepared,
-      phase,
-      rpcUrl,
-      signal,
+  const preparedCreate = await server.prepareTransaction(createTx);
+  preparedCreate.sign(deployer);
+  const created = await submitAndConfirm(
+    server,
+    preparedCreate,
+    "contract creation",
+    options.rpcUrl,
+    deploymentTimeoutSeconds,
+    options.signal,
+  );
+  const result = created.returnValue;
+  const observedAddress =
+    result instanceof xdr.ScVal && result.switch().name === "scvAddress"
+      ? Address.fromScVal(result).toString()
+      : undefined;
+  if (!result || observedAddress !== options.contractId) {
+    throw new Error(
+      `Contract creation receipt address mismatch (expected=${options.contractId}, observed=${observedAddress ?? "no address"})`,
     );
-
-    const returnXdr =
-      confirmed.returnValue instanceof xdr.ScVal
-        ? confirmed.returnValue.toXDR("base64")
-        : undefined;
-    const ledger =
-      typeof confirmed.ledger === "number" ? confirmed.ledger : undefined;
-
-    console.log(
-      `Committed ${phase} (tx=${txHash}${ledger !== undefined ? `, ledger=${ledger}` : ""})`,
-    );
-
-    receipts.push({
-      step: i,
-      ...(setupCall.id !== undefined ? { id: setupCall.id } : {}),
-      function_name: setupCall.function_name,
-      tx_hash: txHash,
-      ...(ledger !== undefined ? { ledger } : {}),
-      ...(returnXdr !== undefined ? { return_xdr: returnXdr } : {}),
-    });
   }
-
-  return receipts;
+  console.log(`Deployed at ${options.contractId}`);
+  return {
+    source: "created",
+    return_xdr: result.toXDR("base64"),
+  };
 }
 
 /** Build the simulated invocation transaction for one contract case.
@@ -1171,6 +1049,8 @@ export interface RunMeasurementOptions {
   sdkVersion?: string;
   /** Soroban RPC endpoint. Defaults to localhost:8000/rpc. */
   rpcUrl?: string;
+  /** Per-transaction deployment confirmation deadline in seconds (1–600; default 30). */
+  deploymentTimeoutSeconds?: number;
   /**
    * Absolute path to a reusable file that persists the deployer keypair
    * between base and head runs so both use the same funded on-chain account.
@@ -1193,8 +1073,6 @@ export interface RunMeasurementOptions {
   /** Optional cancellation signal. */
   signal?: AbortSignal;
   allowCrossTargetSubstitution?: boolean;
-  /** Optional network passphrase override. Defaults to SUPPORTED_NETWORK_PASSPHRASE. */
-  networkPassphrase?: string;
 }
 
 const WASM_MAGIC = Buffer.from([
@@ -1241,7 +1119,7 @@ export function resolveWasmPath(
   }
 
   throw new Error(
-    `WASM file not found at path: ${wasmPath}. Did you run 'stellar contract build'?`,
+    `WASM not found: ${wasmPath}\nBuild the contract before running measurements.`,
   );
 }
 
@@ -1282,47 +1160,6 @@ export function validateWasmArtifact(
   }
 
   return { resolvedPath };
-}
-
-/**
- * Preflight every literal (non-binding) setup invocation argument before any
- * key creation, account funding, WASM upload, or deployment side effect.
- */
-export function preflightSetupArguments(
-  fixtureId: string,
-  contracts: Array<{
-    wasm_path: string;
-    id?: string;
-    logical_id?: string;
-    setup_invocations?: SetupInvocationSpec[];
-  }>,
-): void {
-  const errors: string[] = [];
-
-  for (const contract of contracts) {
-    const contractLabel =
-      contract.logical_id ??
-      (contract.id ? `id:${contract.id}` : `wasm:${contract.wasm_path}`);
-    (contract.setup_invocations ?? []).forEach((setup, setupIndex) => {
-      const stepLabel = setup.id ? `id:${setup.id}` : `setup[${setupIndex}]`;
-      setup.args.forEach((arg, argIndex) => {
-        if ("binding" in arg) return;
-        try {
-          toScVal(arg);
-        } catch (err: any) {
-          errors.push(
-            `[${fixtureId} / ${contractLabel} / ${stepLabel} (${setup.function_name}) arg ${argIndex}] ${err instanceof Error ? err.message : String(err)}`,
-          );
-        }
-      });
-    });
-  }
-
-  if (errors.length > 0) {
-    throw new Error(
-      `Preflight validation failed for configured setup invocations:\n${errors.join("\n")}`,
-    );
-  }
 }
 
 /**
@@ -1386,6 +1223,9 @@ export async function runMeasurement(
   if (opts.signal?.aborted) {
     throw opts.signal.reason || new Error("Measurement cancelled by caller");
   }
+  if (opts.deploymentTimeoutSeconds !== undefined) {
+    validateDeploymentTimeoutSeconds(opts.deploymentTimeoutSeconds);
+  }
 
   // Reject an unusable TTL window before reading fixtures, creating a key or
   // touching the network.
@@ -1421,9 +1261,6 @@ async function measureWithKeyFile(
     fixturesSpec.contracts,
   );
 
-  // Preflight literal setup invocation arguments before any key or network side effect.
-  preflightSetupArguments(fixturesSpec.fixture_id, fixturesSpec.contracts);
-
   // Preflight every configured contract WASM BEFORE funding or deploying anything (#119, #120)
   const resolvedWasmPaths = preflightContractArtifacts(
     fixturesDir,
@@ -1452,10 +1289,8 @@ async function measureWithKeyFile(
     }
   }
 
-  // Setup phase: commit every deployment and its ordered setup invocations in
-  // dependency order before any measured invocation. Setup transaction
-  // consumption is never included in benchmark metrics. A failed prerequisite
-  // aborts all of its dependents.
+  // Setup phase: commit every deployment in dependency order before any
+  // measured invocation. A failed prerequisite aborts all of its dependents.
   const setupResults = new Map<string, SetupResult>();
   const deployments = new Map<
     string,
@@ -1470,16 +1305,8 @@ async function measureWithKeyFile(
     console.log(`WASM: ${wasmPath}`);
     console.log(`WASM SHA256: ${wasmSha256}`);
 
-    const setupInvocations = contractSpec.setup_invocations ?? [];
-    const hasSetupInvocations = setupInvocations.length > 0;
-
-    // Contracts with setup invocations deploy with a fresh random salt so each
-    // run commits setup against isolated state without colliding across
-    // revisions or partial prior runs. Stateless contracts retain the
-    // deterministic WASM-hash salt.
-    const salt = hasSetupInvocations
-      ? crypto.randomBytes(32)
-      : crypto.createHash("sha256").update(wasmHash).digest();
+    // Deterministic salt based on WASM hash — same WASM always gets same contract ID
+    const salt = crypto.createHash("sha256").update(wasmHash).digest();
     const contractId = calculateContractId(deployer.publicKey(), salt);
 
     console.log(`Contract ID: ${contractId}`);
@@ -1494,24 +1321,10 @@ async function measureWithKeyFile(
         salt,
         contractId,
         rpcUrl: effectiveRpcUrl,
+        deploymentTimeoutSeconds: opts.deploymentTimeoutSeconds,
         signal: opts.signal,
         minTtlLedgers: opts.minTtlLedgers,
-        networkPassphrase:
-          opts.networkPassphrase ?? SUPPORTED_NETWORK_PASSPHRASE,
-        requireFreshDeployment: hasSetupInvocations,
       });
-      if (hasSetupInvocations) {
-        await commitSetupInvocations({
-          server,
-          deployer,
-          contractId,
-          logicalId: contractSpec.logical_id,
-          setupInvocations,
-          setupResults,
-          rpcUrl: effectiveRpcUrl,
-          signal: opts.signal,
-        });
-      }
     } catch (err) {
       const aborted = dependentsOf(contractSpec, setupOrder);
       if (opts.signal?.aborted || aborted.length === 0) throw err;
@@ -1622,12 +1435,7 @@ export {
   SingleRecordValidationResult,
   RecordValidationResult,
 } from "./record-schema";
-export {
-  FixturesSpecSchema,
-  formatZodError,
-  getFixturesJsonSchema,
-  WEIGHIN_FIXTURES_JSON_SCHEMA,
-} from "./config";
+export { getFixturesJsonSchema, WEIGHIN_FIXTURES_JSON_SCHEMA } from "./config";
 export type { SdkAssociation } from "./sdk-version";
 export {
   discoverSdkAssociations,
@@ -1637,9 +1445,3 @@ export {
   parseSdkVersionsFromLock,
   readSdkVersionsFromLock,
 } from "./sdk-version";
-export {
-  withDeployerLock,
-  acquireDeployerLock,
-  deployerLockManager,
-  DeployerLockManager,
-} from "./deployer-lock";

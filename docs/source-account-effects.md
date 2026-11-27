@@ -63,8 +63,10 @@ const report = await measureSourceAccountEffects({
 
 The keys above are examples. Every account must exist on the measured network.
 At least two distinct accounts are required, and the first one is the
-baseline. The same source account can also be used for a single measured run
-through the measurement API:
+baseline. Set `deploymentTimeoutSeconds` in either measurement options object
+to bound each deployment confirmation (1–600 seconds, default 30). The same
+source account can also be used for a single measured run through the
+measurement API:
 
 ```ts
 import { runMeasurement } from "weighin";

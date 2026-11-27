@@ -47,6 +47,13 @@ inputs:
   required: false
   
 
+  deployment-timeout-seconds:
+    description: >
+      Maximum time to wait for each submitted deployment transaction to appear
+      in RPC. Must be an integer from 1 to 600 seconds. Defaults to 30 seconds.
+    required: false
+    default: '30'
+
   github-token:
     description: >
       Optional token for posting a benchmark comment directly. Omit it when

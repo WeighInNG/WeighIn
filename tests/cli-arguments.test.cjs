@@ -36,6 +36,7 @@ test("CLI --help and -h print offline usage and exit successfully", (t) => {
       /Usage: weighin \[options\] \[fixtures\.json\] \[results\.json\]/,
     );
     assert.match(result.stdout, /--rpc-url <url>/);
+    assert.match(result.stdout, /--deployment-timeout-seconds <n>/);
     assert.match(result.stdout, /--output <path>/);
     assert.match(result.stdout, /default: weighin-fixtures\.json/);
     assert.match(result.stdout, /default: weighin-results\.json/);
@@ -64,6 +65,18 @@ test("CLI rejects invalid usage before fixture or network side effects", (t) => 
     { args: ["--unknown"], message: /Unknown option: --unknown/ },
     { args: ["--rpc-url"], message: /--rpc-url requires a value/ },
     {
+      args: ["--deployment-timeout-seconds"],
+      message: /--deployment-timeout-seconds requires a value/,
+    },
+    {
+      args: ["--deployment-timeout-seconds", "601"],
+      message: /between 1 and 600 seconds/,
+    },
+    {
+      args: ["--deployment-timeout-seconds", "1.5"],
+      message: /integer between 1 and 600 seconds/,
+    },
+    {
       args: ["--rpc-url", "--output", "out.json"],
       message: /--rpc-url requires a value/,
     },
@@ -83,6 +96,15 @@ test("CLI rejects invalid usage before fixture or network side effects", (t) => 
     {
       args: ["--rpc-url", "a", "--rpc-url", "b"],
       message: /Duplicate option: --rpc-url/,
+    },
+    {
+      args: [
+        "--deployment-timeout-seconds",
+        "5",
+        "--deployment-timeout-seconds",
+        "6",
+      ],
+      message: /Duplicate option: --deployment-timeout-seconds/,
     },
     {
       args: ["--output", "a.json", "--output", "b.json"],
