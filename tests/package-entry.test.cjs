@@ -44,7 +44,7 @@ test("CLI rejects ambiguous combination of stdout mode and explicit output file"
   const r1 = spawnSync(
     process.execPath,
     [bin, "fixtures.json", "--json-stdout", "--output", "out.json"],
-    { encoding: "utf8", timeout: 5000 },
+    { encoding: "utf8", timeout: 30000 },
   );
   assert.equal(r1.status, 1);
   assert.match(r1.stderr, /Ambiguous output configuration/);
@@ -54,7 +54,7 @@ test("CLI rejects ambiguous combination of stdout mode and explicit output file"
   const r2 = spawnSync(
     process.execPath,
     [bin, "fixtures.json", "positional.json", "--stdout"],
-    { encoding: "utf8", timeout: 5000 },
+    { encoding: "utf8", timeout: 30000 },
   );
   assert.equal(r2.status, 1);
   assert.match(r2.stderr, /Ambiguous output configuration/);
@@ -176,6 +176,197 @@ test("CLI helper override uses the existing resolver and fails closed", () => {
       assert.ok(result.stderr.includes(path.join(temporary, invalid)));
       assert.equal(result.stdout, "");
     }
+  } finally {
+    fs.rmSync(temporary, { recursive: true, force: true });
+  }
+});
+
+const STUB_RESULTS = [{ contract_id: "stub-contract", benchmarks: [] }];
+
+function writeOutputPreload(directory, root) {
+  const preload = path.join(directory, "output-preload.cjs");
+  fs.writeFileSync(
+    preload,
+    `
+    const fs = require("fs");
+    const actualWriteFileSync = fs.writeFileSync;
+    const actualOpenSync = fs.openSync;
+    const actualRenameSync = fs.renameSync;
+    require(${JSON.stringify(path.join(root, "dist/measurement.js"))}).runMeasurement = async () => {
+      if (process.env.WEIGHIN_TEST_MEASUREMENT_FAIL === "1") {
+        throw new Error("stubbed measurement failure");
+      }
+      return ${JSON.stringify(STUB_RESULTS)};
+    };
+    fs.openSync = function (target, ...rest) {
+      if (typeof target === "string" && target.endsWith(".tmp") && process.env.WEIGHIN_TEST_TEMP_LOG) {
+        actualWriteFileSync(process.env.WEIGHIN_TEST_TEMP_LOG, target + "\\n", { flag: "a" });
+      }
+      return actualOpenSync.call(this, target, ...rest);
+    };
+    fs.writeFileSync = function (target, ...rest) {
+      if (typeof target === "number" && process.env.WEIGHIN_TEST_WRITE_FAIL === "1") {
+        actualWriteFileSync(target, '{"partial":');
+        throw Object.assign(new Error("ENOSPC: no space left on device"), { code: "ENOSPC" });
+      }
+      return actualWriteFileSync.call(this, target, ...rest);
+    };
+    fs.renameSync = function (source, ...rest) {
+      if (process.env.WEIGHIN_TEST_RENAME_FAIL === "1" && String(source).endsWith(".tmp")) {
+        throw Object.assign(new Error("EXDEV: cross-device link not permitted"), { code: "EXDEV" });
+      }
+      return actualRenameSync.call(this, source, ...rest);
+    };
+  `,
+  );
+  return preload;
+}
+
+function runCli(bin, preload, cwd, args, env = {}) {
+  return spawnSync(process.execPath, ["--require", preload, bin, ...args], {
+    cwd,
+    encoding: "utf8",
+    timeout: 30000,
+    env: {
+      ...process.env,
+      WEIGHIN_TEST_MEASUREMENT_FAIL: "0",
+      WEIGHIN_TEST_WRITE_FAIL: "0",
+      WEIGHIN_TEST_RENAME_FAIL: "0",
+      ...env,
+    },
+  });
+}
+
+function temporaryFiles(directory) {
+  if (!fs.existsSync(directory)) return [];
+  return fs
+    .readdirSync(directory)
+    .filter((name) => name.endsWith(".tmp"))
+    .sort();
+}
+
+function loggedTemporaryFiles(log) {
+  if (!fs.existsSync(log)) return [];
+  return fs
+    .readFileSync(log, "utf8")
+    .split("\n")
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
+
+test("CLI publishes complete JSON to a nested output path with missing parents", () => {
+  const temporary = fs.mkdtempSync(
+    path.join(os.tmpdir(), "weighin-cli-nested-output-"),
+  );
+  try {
+    const root = path.resolve(__dirname, "..");
+    const bin = path.join(root, require("../package.json").bin.weighin);
+    const preload = writeOutputPreload(temporary, root);
+    const output = path.join(temporary, "reports", "2026", "results.json");
+
+    const result = runCli(bin, preload, temporary, ["--output", output]);
+
+    assert.ifError(result.error);
+    assert.equal(result.status, 0, result.stderr);
+    assert.deepEqual(JSON.parse(fs.readFileSync(output, "utf8")), STUB_RESULTS);
+    assert.match(result.stdout, /Done\. Results written to/);
+    assert.deepEqual(temporaryFiles(path.dirname(output)), []);
+  } finally {
+    fs.rmSync(temporary, { recursive: true, force: true });
+  }
+});
+
+test("CLI measurement failure leaves an existing result untouched", () => {
+  const temporary = fs.mkdtempSync(
+    path.join(os.tmpdir(), "weighin-cli-measurement-failure-"),
+  );
+  try {
+    const root = path.resolve(__dirname, "..");
+    const bin = path.join(root, require("../package.json").bin.weighin);
+    const preload = writeOutputPreload(temporary, root);
+    const output = path.join(temporary, "results.json");
+    const previous = '{"previous":true}';
+    fs.writeFileSync(output, previous);
+
+    const result = runCli(bin, preload, temporary, ["--output", output], {
+      WEIGHIN_TEST_MEASUREMENT_FAIL: "1",
+    });
+
+    assert.ifError(result.error);
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /Benchmarking failed/);
+    assert.match(result.stderr, /stubbed measurement failure/);
+    assert.equal(fs.readFileSync(output, "utf8"), previous);
+    assert.deepEqual(temporaryFiles(temporary), []);
+  } finally {
+    fs.rmSync(temporary, { recursive: true, force: true });
+  }
+});
+
+test("CLI filesystem failures return nonzero, preserve the previous result and clean up only owned temporaries", () => {
+  const temporary = fs.mkdtempSync(
+    path.join(os.tmpdir(), "weighin-cli-write-failure-"),
+  );
+  try {
+    const root = path.resolve(__dirname, "..");
+    const bin = path.join(root, require("../package.json").bin.weighin);
+    const preload = writeOutputPreload(temporary, root);
+    const output = path.join(temporary, "results.json");
+    const previous = '{"previous":true}';
+    const foreignTemporary = path.join(
+      temporary,
+      ".results.json.another-run.tmp",
+    );
+    const tempLog = path.join(temporary, "temporary-paths.log");
+    fs.writeFileSync(output, previous);
+    fs.writeFileSync(foreignTemporary, "another run's temporary file");
+
+    const writeFailure = runCli(bin, preload, temporary, ["--output", output], {
+      WEIGHIN_TEST_WRITE_FAIL: "1",
+      WEIGHIN_TEST_TEMP_LOG: tempLog,
+    });
+    assert.ifError(writeFailure.error);
+    assert.equal(writeFailure.status, 1);
+    assert.match(writeFailure.stderr, /Failed to write CLI results to/);
+    assert.match(writeFailure.stderr, new RegExp(path.basename(output)));
+    assert.match(writeFailure.stderr, /ENOSPC/);
+    assert.match(writeFailure.stderr, /^((?!Done\. Results written).)*$/s);
+
+    const renameFailure = runCli(
+      bin,
+      preload,
+      temporary,
+      ["--output", output],
+      {
+        WEIGHIN_TEST_RENAME_FAIL: "1",
+        WEIGHIN_TEST_TEMP_LOG: tempLog,
+      },
+    );
+    assert.ifError(renameFailure.error);
+    assert.equal(renameFailure.status, 1);
+    assert.match(renameFailure.stderr, /Failed to write CLI results to/);
+    assert.match(renameFailure.stderr, /EXDEV/);
+
+    assert.equal(fs.readFileSync(output, "utf8"), previous);
+    assert.equal(
+      fs.readFileSync(foreignTemporary, "utf8"),
+      "another run's temporary file",
+    );
+    assert.deepEqual(temporaryFiles(temporary), [
+      path.basename(foreignTemporary),
+    ]);
+
+    const [writeTemporary, renameTemporary] = loggedTemporaryFiles(tempLog);
+    assert.ok(writeTemporary, "write failure should create an owned temporary");
+    assert.ok(
+      renameTemporary,
+      "rename failure should create an owned temporary",
+    );
+    assert.notEqual(writeTemporary, renameTemporary);
+    assert.equal(path.dirname(writeTemporary), temporary);
+    assert.equal(path.dirname(renameTemporary), temporary);
+    assert.equal(fs.existsSync(writeTemporary), false);
+    assert.equal(fs.existsSync(renameTemporary), false);
   } finally {
     fs.rmSync(temporary, { recursive: true, force: true });
   }

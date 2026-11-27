@@ -12,6 +12,7 @@ import { enforceThresholds, loadConfig } from "./threshold";
 import { discoverSdkAssociations, formatSdkVersions } from "./sdk-version";
 import { redactEndpointSecrets, sanitizeEndpoint } from "./endpoint";
 import { runDoctor, formatDoctorReport } from "./doctor";
+import { writeFileAtomically } from "./atomic-file";
 
 function getGitCommit(): string {
   try {
@@ -531,11 +532,19 @@ async function main() {
     if (jsonStdout) {
       process.stdout.write(JSON.stringify(headResults, null, 2) + "\n");
     } else if (outputPath) {
-      fs.writeFileSync(
-        outputPath,
-        JSON.stringify(headResults, null, 2),
-        "utf8",
-      );
+      try {
+        writeFileAtomically(outputPath, JSON.stringify(headResults, null, 2), {
+          onCleanupError: (temporaryPath, error) =>
+            console.error(
+              `Could not remove temporary result file ${temporaryPath}: ${error.message}`,
+            ),
+        });
+      } catch (error: any) {
+        throw new Error(
+          `Failed to write CLI results to ${outputPath}: ${error.message}`,
+          { cause: error },
+        );
+      }
       console.log(`Done. Results written to ${outputPath}`);
     }
 
