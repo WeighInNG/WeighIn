@@ -23,7 +23,7 @@ jobs:
           node-version: 24
           cache: npm
       - name: Setup Rust toolchain
-        uses: dtolnay/rust-toolchain@d1031067263f94b142dd6c0ce24c5eb9d02d52a0
+        uses: dtolnay/rust-toolchain@df2a88e9fe4098bad09cb42c3dec7187f15861fc
         with:
           toolchain: '1.95.0'
           targets: wasm32v1-none
@@ -75,7 +75,7 @@ jobs:
           node-version: 24
           cache: npm
       - name: Setup Rust toolchain
-        uses: dtolnay/rust-toolchain@d1031067263f94b142dd6c0ce24c5eb9d02d52a0
+        uses: dtolnay/rust-toolchain@df2a88e9fe4098bad09cb42c3dec7187f15861fc
         with:
           toolchain: '1.95.0'
       - name: Fetch locked native helper crates
@@ -108,7 +108,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@d1031067263f94b142dd6c0ce24c5eb9d02d52a0
+        uses: dtolnay/rust-toolchain@df2a88e9fe4098bad09cb42c3dec7187f15861fc
         with:
           # Pin to the same channel declared in rust-toolchain.toml
           toolchain: "1.95.0"
